@@ -2,3 +2,4 @@
 - Conditions pour combattre un autre dresseur
 - Récompenses après avoir battu un dresseur
 - Support des formes de pokemon
+- Permettre au dresseur de pouvoir mega évoluer leur Pokémon si le Pokémon possède une mega gemme
