@@ -23,6 +23,9 @@ package matheo1712.cobbletrainers
  * @param battleStartMessage Sent to the player when the battle starts (optional).
  * @param battleEndWinMessage Sent when the player wins (optional).
  * @param battleEndLoseMessage Sent when the player loses (optional).
+ * @param battleMusic Sound ID played to the players for the duration of the battle. Defaults
+ *   to the track shipped by the mod; set it to `null` or `""` for a silent trainer, or to your
+ *   own sound ID — provided by a resource pack — for another track.
  */
 data class TrainerDefinition(
     val name: String = "Trainer",
@@ -35,7 +38,8 @@ data class TrainerDefinition(
     val canBattle: Boolean = true,
     val battleStartMessage: String? = null,
     val battleEndWinMessage: String? = null,
-    val battleEndLoseMessage: String? = null
+    val battleEndLoseMessage: String? = null,
+    val battleMusic: String? = TrainerBattleMusic.DEFAULT_TRACK
 )
 
 /**

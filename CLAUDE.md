@@ -11,6 +11,11 @@ pour les mixins. Aucun code client-only : tout tourne côté serveur logique.
 Le code, les commentaires et les logs sont en **anglais**. Tout texte affiché au joueur
 passe par `assets/cobblemon-trainers/lang/` — jamais de littéral en dur.
 
+La doc utilisateur est en français : `README.md` (installation, commandes) et
+`docs/DATAPACK.md` (guide complet de création de datapack). Ce qui touche au format des
+dresseurs — nouveau champ, nouvelle règle de parsing — se répercute dans `docs/DATAPACK.md`,
+qui est la référence ; le README n'en garde qu'un résumé.
+
 ## Commandes
 
 ```bash
@@ -51,14 +56,16 @@ curl -s "https://api.modrinth.com/v2/version/<ID>" | python -c "import sys,json;
 ## Architecture
 
 Flux complet : JSON de datapack → `TrainerDefinition` → `NPCEntity` Cobblemon →
-messages de combat.
+messages et musique de combat.
 
 - **`CobblemonTrainers`** — `ModInitializer`. Enregistre `/spawntrainer`, branche
   `TrainerReloadListener` sur le gestionnaire de ressources `SERVER_DATA` (ce qui couvre
   à la fois le chargement initial et `/reload`), et enregistre les listeners de combat
   dans un `try/catch` car ils dépendent de la présence de Cobblemon.
 - **`TrainerRegistry`** — map en mémoire `ResourceLocation -> TrainerDefinition`, alimentée
-  uniquement par les datapacks (`data/<namespace>/trainers/<nom>.json`, y compris ceux du
+  uniquement par les datapacks (`data/<namespace>/cobblemontrainers/trainers/<nom>.json`, y
+  compris ceux du mod ; tout ce que le mod lit dans un pack est regroupé sous
+  `cobblemontrainers/`, ce qui évite toute collision avec un `data/<ns>/trainers/` d'un autre
   mod). Il n'y a volontairement pas de couche de config sur disque. Comme dans les
   registres de Cobblemon, seul le nom de fichier compte : les sous-dossiers ne font pas
   partie de l'ID. Une erreur de parsing est loguée et le dresseur ignoré, sans faire
@@ -71,8 +78,42 @@ messages de combat.
   reconstruisant une chaîne de propriétés Cobblemon (`"pikachu level=88 ability=static …"`)
   passée à `PokemonProperties.parse`.
 - **`TrainerSpawner`** — construit et fait apparaître le `NPCEntity`.
-- **`TrainerBattleEventHandler`** — s'abonne à `CobblemonEvents.BATTLE_STARTED_POST` et
-  `BATTLE_VICTORY` et envoie les messages configurés.
+- **`TrainerBattleEventHandler`** — s'abonne à `CobblemonEvents.BATTLE_STARTED_POST`,
+  `BATTLE_VICTORY` et `BATTLE_FLED` : messages configurés, et musique de combat. Cobblemon
+  n'a pas d'événement « combat terminé » unique, d'où les deux abonnements de fin — en
+  oublier un laisserait la musique tourner.
+- **`TrainerBattleMusic`** — envoie `ClientboundSoundPacket` / `ClientboundStopSoundPacket`
+  aux joueurs du combat.
+
+### Musique de combat
+
+Le son voyage dans un `Holder.direct(SoundEvent.createVariableRangeEvent(id))` : rien n'est
+enregistré dans `BuiltInRegistries.SOUND_EVENT`, donc un datapack peut nommer n'importe
+quelle piste sans que le mod la connaisse. C'est le client qui résout le nom, il faut donc
+un **resource pack** pour une piste maison — le jar du mod en est un, ce qui fait marcher
+`TrainerBattleMusic.DEFAULT_TRACK` sans rien configurer.
+
+Rien n'est mémorisé côté serveur : `stop` se contente de couper la piste que nomme la
+définition. Conséquence assumée : une piste modifiée par `/reload` en plein combat continue
+jusqu'à la fin du combat.
+
+Points à ne pas redécouvrir :
+
+- **`sounds.json` n'a pas de champ `category`.** La catégorie est choisie à l'envoi, ici
+  `SoundSource.MUSIC` (curseur *Musique* du joueur).
+- **L'exclusivité passe par un `ClientboundStopSoundPacket(null, MUSIC)`** envoyé juste avant
+  la piste — un nom nul veut dire « toute la catégorie », d'où l'ordre strict des deux
+  paquets. Ça règle aussi la suite : le `MusicManager` du client voit sa piste disparaître et
+  retire un délai avant la prochaine, une bonne dizaine de minutes pour la musique de
+  surface. C'est le plus près de l'exclusif qu'un serveur puisse faire — lancer la musique
+  d'ambiance est une décision du client.
+- **`"stream": true` est obligatoire** sur un morceau long, sinon Minecraft charge tout le
+  fichier en mémoire.
+- **Un `.ogg` stéréo est joué sans atténuation**, position ignorée — exactement ce qu'on veut
+  pour une musique. La position envoyée (celle du joueur) n'est qu'un repli pour une piste
+  mono.
+- **Pas de boucle.** `isLooping` est une décision de `SoundInstance`, côté client, et le mod
+  n'a pas de code client : un combat plus long que la piste finit en silence.
 
 ### Textes et traductions
 
@@ -136,7 +177,8 @@ Ces points ne se devinent pas depuis notre code seul et ont chacun causé un bug
 
 `data/cobblemon-trainers/npcs/` contient les classes NPC du mod, un détail
 d'implémentation : les datapacks n'en déclarent jamais et `TrainerDefinition` n'a plus de
-champ `npcClass`. Leur interaction est `cobblemon-trainers:battle`, implémentée par
+champ `npcClass`. Ces fichiers restent hors de `cobblemontrainers/` contrairement aux dresseurs :
+le dossier est imposé par le `resourcePath` de `NPCClasses`, le registre de Cobblemon. Leur interaction est `cobblemon-trainers:battle`, implémentée par
 `TrainerBattleInteraction` : un clic droit lance le combat et renvoie au joueur les erreurs
 de `BattleBuilder`. Le MoLang `q.npc.start_battle` faisait la même chose mais avalait les
 erreurs, d'où un clic droit totalement muet quand le joueur n'avait pas de Pokémon.

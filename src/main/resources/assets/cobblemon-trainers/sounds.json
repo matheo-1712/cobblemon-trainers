@@ -1,0 +1,11 @@
+{
+  "battle_music.corvault": {
+    "subtitle": "cobblemon-trainers.subtitles.battle_music",
+    "sounds": [
+      {
+        "name": "cobblemon-trainers:battle_music/corvault_battle",
+        "stream": true
+      }
+    ]
+  }
+}
