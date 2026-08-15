@@ -10,7 +10,7 @@ code.
 | | Version |
 | --- | --- |
 | Minecraft | 1.21.1 |
-| Fabric Loader | ≥ 0.19.3 |
+| Fabric Loader | ≥ 0.17.2 |
 | Java | 21 (exactement — Cobblemon refuse les autres) |
 | Cobblemon | ≥ 1.7.3 |
 | Fabric API | requis |
@@ -34,6 +34,9 @@ nom seul quand il n'est pas ambigu ; l'autocomplétion propose les dresseurs cha
 Un clic droit sur le dresseur lance le combat, sur fond de musique de combat. Si le combat
 ne peut pas démarrer (pas de Pokémon dans ton équipe, combat déjà en cours, dresseur sans
 équipe), la raison s'affiche dans le chat.
+
+Tuer ou supprimer un dresseur pendant le combat met fin à la rencontre au lieu de laisser le
+joueur enfermé face à un adversaire absent.
 
 ## Déclarer un dresseur
 
@@ -68,8 +71,12 @@ référence de tous les champs, format d'équipe Showdown, skins, musique, tradu
 erreurs fréquentes.
 
 Un pack d'exemple couvrant chaque option vit dans
-`run/saves/New World/datapacks/cobblemonrlm/`, avec son resource pack dans
-`run/resourcepacks/cobblemonrlm/`.
+[`examples/cobblemonrlm/`](examples/cobblemonrlm) : un seul dossier qui fait à la fois
+datapack (`data/`) et resource pack (`assets/`).
+
+Un pack peut être un dossier, un `.zip` ou un `.jar` — Minecraft n'accepte que les deux
+premiers, le mod ajoute le `.jar` pour qu'une archive unique puisse être déposée dans
+`datapacks/` comme dans `resourcepacks/`.
 
 ## Développement
 

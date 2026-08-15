@@ -78,10 +78,10 @@ messages et musique de combat.
   reconstruisant une chaîne de propriétés Cobblemon (`"pikachu level=88 ability=static …"`)
   passée à `PokemonProperties.parse`.
 - **`TrainerSpawner`** — construit et fait apparaître le `NPCEntity`.
-- **`TrainerBattleEventHandler`** — s'abonne à `CobblemonEvents.BATTLE_STARTED_POST`,
-  `BATTLE_VICTORY` et `BATTLE_FLED` : messages configurés, et musique de combat. Cobblemon
-  n'a pas d'événement « combat terminé » unique, d'où les deux abonnements de fin — en
-  oublier un laisserait la musique tourner.
+- **`TrainerBattleEventHandler`** — s'abonne à `CobblemonEvents.BATTLE_STARTED_POST` pour
+  le message de début et la musique, et à `BATTLE_VICTORY` pour le message de fin. Il
+  surveille aussi la mort et la suppression des entités, pour arrêter le combat d'un
+  dresseur qui quitte le monde (voir plus bas).
 - **`TrainerBattleMusic`** — envoie `ClientboundSoundPacket` / `ClientboundStopSoundPacket`
   aux joueurs du combat.
 
@@ -155,8 +155,9 @@ Ces points ne se devinent pas depuis notre code seul et ont chacun causé un bug
   `NPCEntity.interaction` est surchargeable par entité, pas `autoHealParty`.
 - **Clés de stats.** `PokemonProperties` dérive ses clés des constantes de l'enum
   `Stats` : `hp`, `attack`, `defence`, `special_attack`, `special_defence`, `speed`,
-  suffixées `_ev` / `_iv`. Les abréviations Showdown (`atk`, `spa`, …) sont ignorées
-  silencieusement.
+  suffixées `_ev` / `_iv`. Les abréviations Showdown (`atk`, `spa`, …) ne veulent rien dire
+  pour Cobblemon et seraient ignorées silencieusement, d'où la table `STAT_NAMES` de
+  `ShowdownTeamParser` qui les traduit avant de construire la chaîne de propriétés.
 - **`held_item` passe par le `ItemParser` vanilla**, qui préfixe `minecraft:` par défaut.
   Un objet Cobblemon sans namespace lève une `CommandSyntaxException` pendant la
   construction de l'équipe.
@@ -210,12 +211,44 @@ repasse par `server.execute` pour écrire dans l'entité. Il faut poser les aspe
 déterminent le rig utilisé au rendu. Un échec est silencieux, le NPC garde son skin par
 défaut. `skin.type` n'accepte que `player_username` ou `player_uuid`.
 
+### Fin de combat
+
+Cobblemon n'expose **aucun** événement « combat terminé » : `BATTLE_VICTORY` et
+`BATTLE_FLED` ne couvrent que deux sorties sur quatre, et `/stopbattle` comme un abandon
+n'en déclenchent aucune. Le seul point de passage commun est
+`PokemonBattle.end()` → `BattleRegistry.closeBattle` → `battle.onEndHandlers`. C'est donc
+là qu'est coupée la musique, via un handler ajouté à `BATTLE_STARTED_POST`. Ne pas revenir
+à un abonnement par type de fin : c'est ce qui laissait la musique tourner après un
+`/stopbattle`.
+
+Un dresseur qui meurt ou disparaît pendant un combat laisserait le joueur enfermé face à un
+acteur sans entité. `ServerLivingEntityEvents.AFTER_DEATH` et
+`ServerEntityEvents.ENTITY_UNLOAD` (filtré sur `removalReason.shouldDestroy()`, pour qu'un
+déchargement de chunk ne compte pas) appellent `battle.stop()` sur les `npc.battleIds`. Les
+deux se déclenchent pour un même dresseur tué, c'est voulu : le combat déjà fermé n'est plus
+dans le registre, donc l'opération est idempotente. Le filtre `TrainerRegistry.findByAspects`
+évite de toucher aux NPC qui ne viennent pas du mod.
+
 ### Mixins
 
-`ExampleMixin` est le stub du template Fabric, sans effet. Le mod ne repose sur aucun
-mixin réel ; tout passe par les API publiques Fabric et Cobblemon.
+`ExampleMixin` est le stub du template Fabric, sans effet.
+
+`PackDetectorMixin` est le seul mixin réel : il fait accepter les archives `.jar` à
+`PackDetector.detectPackResources`, unique endroit où Minecraft filtre sur `.zip`. Tout le
+reste de la chaîne marche déjà — `FilePackResources` ouvre le fichier avec `ZipFile`, qui se
+moque de l'extension. `PackDetector` étant partagé par toutes les sources sur dossier, ça
+vaut pour `datapacks/` comme pour `resourcepacks/` : une même archive peut servir des deux
+côtés, ce qui est exactement ce qu'un pack livrant dresseurs + traductions + musique
+demande.
+
+Loom remappe les mixins statiquement (pas de refmap dans le jar) : après un changement,
+vérifier dans `build/libs/*.jar` que la cible est bien passée en intermediary
+(`detectPackResources` → `method_52441`, `PackDetector` → `class_8621`).
 
 ## Limites connues
 
 `ShowdownTeamParser` ne traduit pas les formes régionales notées à la Showdown
 (`Raichu-Alola`) vers les aspects Cobblemon.
+
+Le `.ogg` du pack d'exemple `examples/cobblemonrlm/` n'est pas versionné : il faut en
+déposer un soi-même pour entendre la musique de `jacinthe`.

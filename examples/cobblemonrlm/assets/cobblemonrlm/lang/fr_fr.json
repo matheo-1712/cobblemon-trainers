@@ -1,0 +1,37 @@
+{
+  "trainer.cobblemonrlm.solo_ace.name": "Ace du Solo",
+  "trainer.cobblemonrlm.solo_ace.battle_start": "Un contre un, pas d'excuse.",
+  "trainer.cobblemonrlm.solo_ace.win": "Propre. Tu mérites la victoire.",
+  "trainer.cobblemonrlm.solo_ace.lose": "Reviens quand tu auras affûté ton équipe.",
+
+  "trainer.cobblemonrlm.duo_tacticien.name": "Tacticien du Duo",
+  "trainer.cobblemonrlm.duo_tacticien.battle_start": "Deux fronts à la fois. Bonne chance.",
+  "trainer.cobblemonrlm.duo_tacticien.win": "Tu as géré les deux flancs. Bravo.",
+  "trainer.cobblemonrlm.duo_tacticien.lose": "Tu n'as regardé qu'une moitié du terrain.",
+
+  "trainer.cobblemonrlm.trio_marathon.name": "Marathonienne du Trio",
+  "trainer.cobblemonrlm.trio_marathon.battle_start": "Trois de front, et mon équipe ne se soigne pas entre deux essais.",
+  "trainer.cobblemonrlm.trio_marathon.win": "Tu m'as usée jusqu'au bout. C'est mérité.",
+  "trainer.cobblemonrlm.trio_marathon.lose": "Recommence : mes Pokémon garderont leurs blessures.",
+
+  "trainer.cobblemonrlm.debutant.name": "Débutant",
+
+  "trainer.cobblemonrlm.skin_par_uuid.name": "Dresseur au skin par UUID",
+  "trainer.cobblemonrlm.skin_par_uuid.battle_start": "Mon apparence vient d'un UUID, pas d'un pseudo.",
+  "trainer.cobblemonrlm.skin_par_uuid.win": "Bien joué.",
+  "trainer.cobblemonrlm.skin_par_uuid.lose": "Encore un effort.",
+
+  "trainer.cobblemonrlm.pnj_pacifiste.name": "Villageoise pacifiste",
+
+  "trainer.cobblemonrlm.polyglotte.name": "La Polyglotte",
+  "trainer.cobblemonrlm.polyglotte.battle_start": "Je parle ta langue — ce texte vient du resource pack.",
+  "trainer.cobblemonrlm.polyglotte.win": "Bien joué, dans toutes les langues.",
+  "trainer.cobblemonrlm.polyglotte.lose": "Reviens quand tu auras un peu progressé.",
+
+  "trainer.cobblemonrlm.jacinthe.name": "Jacinthe",
+  "trainer.cobblemonrlm.jacinthe.battle_start": "Écoute bien : ce thème n'est joué que pour les combats qui comptent.",
+  "trainer.cobblemonrlm.jacinthe.win": "Tu as tenu jusqu'à la dernière mesure. Chapeau.",
+  "trainer.cobblemonrlm.jacinthe.lose": "La musique s'arrête ici. Reviens quand tu seras prêt à la finir.",
+
+  "cobblemonrlm.subtitles.jacinthe_battle": "Thème de combat de Jacinthe"
+}

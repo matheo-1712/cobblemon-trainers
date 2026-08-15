@@ -1,0 +1,11 @@
+{
+  "battle_music.jacinthe": {
+    "subtitle": "cobblemonrlm.subtitles.jacinthe_battle",
+    "sounds": [
+      {
+        "name": "cobblemonrlm:battle_music/jacinthe_battle",
+        "stream": true
+      }
+    ]
+  }
+}

@@ -3,7 +3,8 @@
 	"package": "matheo1712.cobbletrainers.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
-		"ExampleMixin"
+		"ExampleMixin",
+		"PackDetectorMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

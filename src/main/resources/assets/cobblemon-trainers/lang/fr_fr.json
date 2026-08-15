@@ -4,6 +4,7 @@
   "cobblemon-trainers.command.spawn_trainer.invalid_position": "Position invalide pour invoquer un dresseur.",
   "cobblemon-trainers.command.spawn_trainer.spawn_failed": "Impossible d'invoquer le dresseur. Consulte les logs du serveur pour le détail.",
   "cobblemon-trainers.chat.trainer_message": "[%s] %s",
+  "cobblemon-trainers.chat.trainer_gone": "Le dresseur a quitté le combat. La rencontre s'arrête.",
   "cobblemon-trainers.npc.interaction.battle": "Combat de dresseur",
   "cobblemon-trainers.subtitles.battle_music": "Musique de combat de dresseur",
   "trainer.cobblemon-trainers.rerebleue.name": "RereBleue",

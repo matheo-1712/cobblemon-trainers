@@ -63,7 +63,11 @@ Où poser le pack :
 | Un monde solo | `saves/<monde>/datapacks/mon_pack/` |
 | Un serveur | `world/datapacks/mon_pack/` |
 
-Un dossier ou un `.zip`, les deux marchent.
+Un dossier, un `.zip` ou un `.jar`, les trois marchent — Minecraft n'accepte que les deux
+premiers, le mod ajoute le `.jar`. Ce n'est pas qu'une commodité : un pack qui livre des
+dresseurs **et** leurs traductions ou leur musique est à la fois un datapack et un resource
+pack, et une seule archive peut alors être déposée dans `datapacks/` comme dans
+`resourcepacks/`.
 
 ## Le premier dresseur
 
@@ -176,10 +180,11 @@ Deux détails qui piègent :
 
 - **Les objets tenus sans namespace reçoivent `cobblemon:`** : `Light Ball` devient
   `cobblemon:light_ball`. Pour un objet vanilla, écris-le en entier (`minecraft:stick`).
-- **Les abréviations Showdown des stats ne sont pas comprises.** Les clés attendues sont
-  celles de Cobblemon : `hp`, `attack`, `defence`, `special_attack`, `special_defence`,
-  `speed`. Une ligne `EVs: 252 Atk` passe donc à la trappe sans prévenir — écris
-  `EVs: 252 Attack`.
+- **Les abréviations Showdown des stats sont traduites par le mod**, pas par Cobblemon :
+  `HP`, `Atk`, `Def`, `SpA`, `SpD`, `Spe` deviennent `hp`, `attack`, `defence`,
+  `special_attack`, `special_defence`, `speed`. Les noms longs (`Attack`, `Defense`,
+  `Speed`) passent aussi. En revanche une abréviation hors de cette liste est ignorée en
+  silence, comme n'importe quelle ligne inconnue.
 
 ## Format de combat
 
@@ -194,7 +199,7 @@ le combat et affiche la raison dans le chat.
 ## Skins
 
 ```json
-"skin": { "type": "player_username", "value": "Dinnerbone" }
+"skin": { "type": "player_username", "value": "Notch" }
 "skin": { "type": "player_uuid",     "value": "069a79f4-44e9-4726-a5be-fca90e38aaf5" }
 ```
 
@@ -205,7 +210,8 @@ raison est écrite dans les logs — le reste du dresseur fonctionne normalement
 ## Musique de combat
 
 Au début du combat, une musique est envoyée aux joueurs qui y participent, et coupée à la
-fin — victoire, défaite ou fuite. **Rien d'autre ne joue en même temps** : ce qui passait
+fin — quelle qu'elle soit : victoire, défaite, fuite, `/stopbattle`, ou un dresseur qui
+disparaît en pleine rencontre. **Rien d'autre ne joue en même temps** : ce qui passait
 dans la catégorie *Musique* est arrêté juste avant, et Minecraft attend une bonne dizaine de
 minutes avant de relancer sa musique d'ambiance, donc un combat se déroule sur ton thème
 seul.
@@ -323,13 +329,15 @@ côté client.
 | `Loaded 0 trainer(s)` | `pack.mcmeta` absent ou `pack_format` incorrect — le pack entier est ignoré par Minecraft |
 | Le dresseur s'appelle `trainer.mon_pack.red.name` en jeu | Resource pack absent ou désactivé, ou clé absente du fichier lang |
 | Le combat en double est refusé | Moins de 2 Pokémon d'un des deux côtés, le tien compris |
-| Une stat EV/IV semble ignorée | Abréviation Showdown (`Atk`, `SpA`) au lieu du nom Cobblemon |
+| Une stat EV/IV semble ignorée | Nom de stat hors de la liste reconnue — voir le tableau du format d'équipe |
 | Aucune musique | Piste absente du resource pack, ou ID qui ne correspond pas à la clé de `sounds.json` |
 | Le skin reste Steve | Pseudo inexistant ou API Mojang injoignable — voir les logs |
 
 ## Un exemple complet
 
 Le dépôt contient un pack d'exemple couvrant chaque option, dresseur par dresseur :
-`run/saves/New World/datapacks/cobblemonrlm/`, avec son resource pack dans
-`run/resourcepacks/cobblemonrlm/`. La dresseuse `jacinthe` y montre le cas complet :
-équipe de six, textes traduits et musique de combat fournie par le pack.
+[`examples/cobblemonrlm/`](../examples/cobblemonrlm). Un seul dossier qui sert des deux
+côtés — `data/` pour les dresseurs, `assets/` pour les traductions et la musique. La
+dresseuse `jacinthe` y montre le cas complet : équipe de six, textes traduits et
+`battleMusic` pointant sur une piste du pack. Le `.ogg` n'est pas livré, à toi de déposer
+le tien au chemin indiqué dans le README du pack.
