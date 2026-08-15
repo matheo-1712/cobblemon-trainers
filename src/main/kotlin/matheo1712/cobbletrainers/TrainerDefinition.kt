@@ -7,30 +7,35 @@ package matheo1712.cobbletrainers
  * players as translatable components: put a translation key there and add it to your
  * datapack's language files to localise it, or put plain text and it is displayed as is.
  *
+ * Datapacks never declare an NPC class: every trainer uses one of the two shipped by the mod.
+ * The settings that used to live there — battle format, AI difficulty, party healing — are
+ * fields of the trainer instead.
+ *
  * @param name Display name shown above the trainer.
  * @param skin Skin configuration (Minecraft username or UUID).
  * @param team Showdown-formatted team. An empty entry (`""`) separates two Pokémon.
  * @param level Trainer level, also the default level of Pokémon that do not state one.
+ * @param battleFormat How many Pokémon fight at once: `singles`, `doubles` or `triples`.
+ * @param skill Battle AI difficulty, from 0 to 5. This is *not* the trainer level, see [level].
+ * @param autoHealParty Whether the trainer team is healed to full when a battle starts and
+ *   again once it ends. With false, damage carries over between fights.
  * @param canBattle Whether the trainer can battle. When false the interaction is disabled.
  * @param battleStartMessage Sent to the player when the battle starts (optional).
  * @param battleEndWinMessage Sent when the player wins (optional).
  * @param battleEndLoseMessage Sent when the player loses (optional).
- * @param npcClass ResourceLocation of a Cobblemon NPC class. Defaults to `cobblemon-trainers:trainer`.
- *
- * Note: healing the team after a battle is not configurable per trainer in Cobblemon 1.7.3 —
- * it depends on `autoHealParty` on the NPC class. To change it, define your own NPC class in
- * `data/<namespace>/npcs/` and point [npcClass] at it.
  */
 data class TrainerDefinition(
     val name: String = "Trainer",
     val skin: TrainerSkin = TrainerSkin(),
     val team: List<String> = emptyList(),
     val level: Int = 1,
+    val battleFormat: String = "singles",
+    val skill: Int = 5,
+    val autoHealParty: Boolean = true,
     val canBattle: Boolean = true,
     val battleStartMessage: String? = null,
     val battleEndWinMessage: String? = null,
-    val battleEndLoseMessage: String? = null,
-    val npcClass: String? = null
+    val battleEndLoseMessage: String? = null
 )
 
 /**

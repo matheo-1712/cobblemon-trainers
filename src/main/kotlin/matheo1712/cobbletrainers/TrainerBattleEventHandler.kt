@@ -7,7 +7,6 @@ import com.cobblemon.mod.common.entity.npc.NPCBattleActor
 import com.cobblemon.mod.common.entity.npc.NPCEntity
 import net.minecraft.ChatFormatting
 import net.minecraft.network.chat.Component
-import net.minecraft.resources.ResourceLocation
 
 /**
  * Sends the configured messages when a trainer battle starts and ends.
@@ -49,19 +48,13 @@ object TrainerBattleEventHandler {
     private fun resolveTrainer(actors: List<BattleActor>): Pair<TrainerDefinition, NPCEntity>? {
         val npcActor = actors.filterIsInstance<NPCBattleActor>().firstOrNull() ?: return null
         val npcEntity = npcActor.npc
-
-        val aspect = npcEntity.aspects.find { it.startsWith(CobblemonTrainers.TRAINER_ASPECT_PREFIX) }
-            ?: return null
-        val trainerId = ResourceLocation.tryParse(aspect.removePrefix(CobblemonTrainers.TRAINER_ASPECT_PREFIX))
-            ?: return null
-
-        val definition = TrainerRegistry.get(trainerId) ?: return null
+        val definition = TrainerRegistry.findByAspects(npcEntity.aspects) ?: return null
         return definition to npcEntity
     }
 
     /**
-     * Both the trainer name and the message are treated as translation keys, so datapacks can
-     * localise them. Plain text falls back to itself when no translation exists.
+     * Both the trainer name and the message are treated as translation keys, resolved on the
+     * client. Plain text falls back to itself when no translation exists.
      */
     private fun broadcast(players: List<PlayerBattleActor>, trainerName: String, message: String?) {
         if (message.isNullOrBlank()) return

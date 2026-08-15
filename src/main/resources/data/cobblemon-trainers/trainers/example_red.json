@@ -8,7 +8,6 @@
   "battleStartMessage": "...(silence) ...",
   "battleEndWinMessage": "... ... ... (Red nods respectfully)",
   "battleEndLoseMessage": "You're not ready yet. Train more.",
-  "npcClass": "cobblemon-trainers:trainer",
   "team": [
     "Pikachu @ Light Ball\nAbility: Static\nLevel: 88\nShiny: No\nGender: M\nEVs: 4 HP / 252 SpA / 252 Spe\nTimid Nature\nIVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe\n- Thunderbolt\n- Volt Tackle\n- Iron Tail\n- Quick Attack",
     "Espeon @ Expert Belt\nAbility: Magic Bounce\nLevel: 84\nGender: M\nEVs: 4 HP / 252 SpA / 252 Spe\nTimid Nature\n- Psychic\n- Shadow Ball\n- Calm Mind\n- Morning Sun",

@@ -1,0 +1,13 @@
+{
+  "hitbox": "player",
+  "resourceIdentifier": "cobblemon:standard",
+  "interaction": {
+    "type": "cobblemon-trainers:battle"
+  },
+  "battleConfiguration": {
+    "canChallenge": true
+  },
+  "autoHealParty": false,
+  "canDespawn": false,
+  "skill": 5
+}

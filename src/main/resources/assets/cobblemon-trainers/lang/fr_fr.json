@@ -3,13 +3,18 @@
   "cobblemon-trainers.command.spawn_trainer.unknown_trainer": "Dresseur introuvable. Vérifie les ID dans data/<namespace>/trainers/ de tes datapacks.",
   "cobblemon-trainers.command.spawn_trainer.invalid_position": "Position invalide pour invoquer un dresseur.",
   "cobblemon-trainers.command.spawn_trainer.spawn_failed": "Impossible d'invoquer le dresseur. Consulte les logs du serveur pour le détail.",
-
   "cobblemon-trainers.chat.trainer_message": "[%s] %s",
-
   "cobblemon-trainers.npc.interaction.battle": "Combat de dresseur",
-
   "trainer.cobblemon-trainers.rerebleue.name": "RereBleue",
   "trainer.cobblemon-trainers.rerebleue.battle_start": "L'océan n'a aucun secret pour moi. Montre-moi ce que tu vaux !",
   "trainer.cobblemon-trainers.rerebleue.win": "Belle vague ! Tu m'as submergé.",
-  "trainer.cobblemon-trainers.rerebleue.lose": "La marée était contre toi. Reviens quand tu seras prêt."
+  "trainer.cobblemon-trainers.rerebleue.lose": "La marée était contre toi. Reviens quand tu seras prêt.",
+  "trainer.cobblemon-trainers.theazertor.name": "TheAzertor",
+  "trainer.cobblemon-trainers.theazertor.battle_start": "Deux à la fois — j'espère que tu suis !",
+  "trainer.cobblemon-trainers.theazertor.win": "Du beau jeu en double. Je n'ai rien à ajouter.",
+  "trainer.cobblemon-trainers.theazertor.lose": "Viser une seule cible ne suffit pas ici.",
+  "trainer.cobblemon-trainers.kagumi.name": "Kagumi",
+  "trainer.cobblemon-trainers.kagumi.battle_start": "Trois contre trois. Voyons si tu tiens la pression.",
+  "trainer.cobblemon-trainers.kagumi.win": "Tu as lu tout le terrain. Bien joué.",
+  "trainer.cobblemon-trainers.kagumi.lose": "Ça fait beaucoup à surveiller, n'est-ce pas ?"
 }

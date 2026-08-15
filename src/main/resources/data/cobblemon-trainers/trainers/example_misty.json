@@ -8,7 +8,6 @@
   "battleStartMessage": "Alright, my policy is an all-out offensive with Water-type Pokémon!",
   "battleEndWinMessage": "Hm, you're still a novice but you may have potential.",
   "battleEndLoseMessage": "You're not ready for the Water Badge yet! Come back when you've trained more!",
-  "npcClass": "cobblemon-trainers:trainer",
   "team": [
     "Starmie @ Mystic Water\nAbility: Illuminate\nLevel: 54\nEVs: 4 HP / 252 SpA / 252 Spe\nTimid Nature\n- Surf\n- Ice Beam\n- Psychic\n- Rapid Spin",
     "Golduck @ Choice Specs\nAbility: Cloud Nine\nLevel: 52\nGender: M\nEVs: 4 HP / 252 SpA / 252 Spe\nModest Nature\n- Surf\n- Psychic\n- Ice Beam\n- Focus Blast",

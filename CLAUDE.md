@@ -64,7 +64,9 @@ messages de combat.
   partie de l'ID. Une erreur de parsing est loguée et le dresseur ignoré, sans faire
   échouer les autres.
 - **`TrainerDefinition` / `TrainerSkin`** — data classes Gson. Tous les champs ont une
-  valeur par défaut, donc un JSON partiel reste valide.
+  valeur par défaut, donc un JSON partiel reste valide. Attention à ne pas confondre
+  `level` (niveau des Pokémon) et `skill` (difficulté de l'IA, 0-5, passée à
+  `StrongBattleAI`).
 - **`ShowdownTeamParser`** — convertit du format Showdown en `PokemonProperties` en
   reconstruisant une chaîne de propriétés Cobblemon (`"pikachu level=88 ability=static …"`)
   passée à `PokemonProperties.parse`.
@@ -87,6 +89,12 @@ Les champs `name` et `battleEndWinMessage` & co. d'un dresseur sont eux aussi pa
 quelle quand aucune traduction n'existe, donc du texte brut dans le JSON continue de
 s'afficher normalement, tandis qu'un pack peut fournir une vraie clé. `rerebleue.json` est
 l'exemple traduit, les `example_*.json` restent en texte brut.
+
+**Une seule voie de traduction, côté client.** Un datapack qui veut traduire ses dresseurs
+livre un resource pack à côté (`assets/<namespace>/lang/<code>.json`). Une résolution côté
+serveur, lisant les lang depuis le datapack, a existé puis été retirée volontairement : elle
+faisait deux chemins concurrents pour le même résultat, et ne savait de toute façon pas
+traduire le nom flottant par joueur.
 
 ### Contraintes de l'API NPC de Cobblemon 1.7.3
 
@@ -124,17 +132,27 @@ Ces points ne se devinent pas depuis notre code seul et ont chacun causé un bug
   (`assets/cobblemon/bedrock/npcs/variations/standard/50_standard_player.json`) : notre
   classe doit donc pointer explicitement `"resourceIdentifier": "cobblemon:standard"`.
 
-### Le NPCClass du mod
+### Les NPCClass du mod
 
-`data/cobblemon-trainers/npcs/trainer.json` définit la classe utilisée par défaut. Son
-interaction est `cobblemon-trainers:battle`, implémentée par [TrainerBattleInteraction] :
-un clic droit lance un combat en simple et renvoie au joueur les erreurs de `BattleBuilder`.
-Le MoLang `q.npc.start_battle` faisait la même chose mais avalait les erreurs, d'où un clic
-droit totalement muet quand le joueur n'avait pas de Pokémon.
+`data/cobblemon-trainers/npcs/` contient les classes NPC du mod, un détail
+d'implémentation : les datapacks n'en déclarent jamais et `TrainerDefinition` n'a plus de
+champ `npcClass`. Leur interaction est `cobblemon-trainers:battle`, implémentée par
+`TrainerBattleInteraction` : un clic droit lance le combat et renvoie au joueur les erreurs
+de `BattleBuilder`. Le MoLang `q.npc.start_battle` faisait la même chose mais avalait les
+erreurs, d'où un clic droit totalement muet quand le joueur n'avait pas de Pokémon.
 
-C'est dans ce JSON que se règlent le soin après combat (`autoHealParty`), le niveau d'IA
-(`skill`) et le `resourceIdentifier`. Un dresseur peut viser une autre classe via son champ
-`npcClass`.
+Une seule instance d'interaction est partagée par tous les dresseurs, donc le format de
+combat n'y est pas figé : `interact()` retrouve la définition via
+`TrainerRegistry.findByAspects(npc.aspects)` et lit son `battleFormat`. Le `skill` est lui
+posé par entité (`NPCEntity.skill`, qui prime sur celui de la classe).
+
+`autoHealParty` est le seul réglage qui ne peut pas être posé par entité : Cobblemon le lit
+sur la classe, à deux endroits (`NPCBattleActor` avant le combat, `PokemonBattle` après).
+Le mod livre donc **deux classes**, `trainer.json` et `trainer_no_heal.json`, identiques à ce
+booléen près, et `TrainerSpawner` choisit selon le champ `autoHealParty` du dresseur. Si tu
+modifies l'une, modifie l'autre.
+
+Reste propre à ces JSON : `resourceIdentifier`.
 
 ### Liaison NPC → dresseur
 

@@ -3,13 +3,18 @@
   "cobblemon-trainers.command.spawn_trainer.unknown_trainer": "Unknown trainer. Check the trainer IDs in data/<namespace>/trainers/ of your datapacks.",
   "cobblemon-trainers.command.spawn_trainer.invalid_position": "Invalid position for spawning a trainer.",
   "cobblemon-trainers.command.spawn_trainer.spawn_failed": "Could not spawn the trainer. See the server log for details.",
-
   "cobblemon-trainers.chat.trainer_message": "[%s] %s",
-
   "cobblemon-trainers.npc.interaction.battle": "Trainer Battle",
-
   "trainer.cobblemon-trainers.rerebleue.name": "RereBleue",
   "trainer.cobblemon-trainers.rerebleue.battle_start": "The ocean holds no secrets from me. Show me what you've got!",
   "trainer.cobblemon-trainers.rerebleue.win": "What a wave! You washed me away.",
-  "trainer.cobblemon-trainers.rerebleue.lose": "The tide was against you. Come back when you're ready."
+  "trainer.cobblemon-trainers.rerebleue.lose": "The tide was against you. Come back when you're ready.",
+  "trainer.cobblemon-trainers.theazertor.name": "TheAzertor",
+  "trainer.cobblemon-trainers.theazertor.battle_start": "Two at a time — hope you can keep track!",
+  "trainer.cobblemon-trainers.theazertor.win": "Clean doubles play. I have nothing to add.",
+  "trainer.cobblemon-trainers.theazertor.lose": "One target at a time is not enough here.",
+  "trainer.cobblemon-trainers.kagumi.name": "Kagumi",
+  "trainer.cobblemon-trainers.kagumi.battle_start": "Three on three. Let's see how you handle the pressure.",
+  "trainer.cobblemon-trainers.kagumi.win": "You read the whole field. Well fought.",
+  "trainer.cobblemon-trainers.kagumi.lose": "Too much to watch at once, isn't it?"
 }

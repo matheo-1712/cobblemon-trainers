@@ -80,17 +80,41 @@ empêcher le chargement des autres.
 | Champ | Défaut | Rôle |
 | --- | --- | --- |
 | `name` | `Trainer` | Nom affiché au-dessus du dresseur |
-| `level` | `1` | Niveau du dresseur, et niveau des Pokémon sans ligne `Level:` |
+| `level` | `1` | Niveau appliqué aux Pokémon qui n'ont **pas** de ligne `Level:` |
 | `team` | `[]` | L'équipe, au format Showdown (voir ci-dessous) |
 | `skin.type` | `player_username` | `player_username` ou `player_uuid` |
 | `skin.value` | `Steve` | Pseudo ou UUID dont le skin est repris |
+| `battleFormat` | `singles` | Nombre de Pokémon simultanés : `singles`, `doubles`, `triples` |
+| `skill` | `5` | Difficulté de l'IA de combat, de 0 à 5 |
+| `autoHealParty` | `true` | Soigne l'équipe du dresseur avant et après chaque combat |
 | `canBattle` | `true` | À `false`, le clic droit ne fait rien |
 | `battleStartMessage` | — | Envoyé au joueur au début du combat |
 | `battleEndWinMessage` | — | Envoyé si le joueur gagne |
 | `battleEndLoseMessage` | — | Envoyé si le joueur perd |
-| `npcClass` | `cobblemon-trainers:trainer` | NPCClass Cobblemon utilisé |
 
 Tous les champs sont facultatifs : un JSON partiel reste valide.
+
+`skill` et `level` sont deux choses différentes : `skill` est l'intelligence de l'IA qui
+joue le combat, `level` ne sert que de valeur de repli pour les Pokémon dont l'entrée
+Showdown ne précise pas `Level:`. Si toute ton équipe indique son niveau, `level` n'a aucun
+effet visible.
+
+`autoHealParty` agit aux deux bouts du combat : l'équipe du dresseur démarre au maximum de
+ses PV, et elle est re-soignée une fois le combat terminé. À `false`, les dégâts et les PP
+consommés persistent d'un combat à l'autre — utile pour un dresseur qu'on affronte en
+plusieurs tentatives.
+
+### Format de combat
+
+`battleFormat` accepte `singles`, `doubles` et `triples`, ainsi que les alias `solo`, `duo`
+et `trio`. Une valeur non reconnue retombe sur `singles` avec un avertissement dans les logs.
+
+Un combat en double demande au moins 2 Pokémon de chaque côté, un triple au moins 3 — pour
+le dresseur **comme** pour le joueur. Si l'une des deux équipes est trop courte, Cobblemon
+refuse le combat et affiche la raison dans le chat.
+
+Les dresseurs `theazertor` (double) et `kagumi` (triple) fournis par le mod servent
+d'exemples.
 
 ### Traduire les textes d'un dresseur
 
@@ -98,13 +122,32 @@ Tous les champs sont facultatifs : un JSON partiel reste valide.
 au joueur comme textes traduisibles. Deux usages :
 
 - **Texte brut** — `"name": "Red"` s'affiche tel quel, dans toutes les langues.
-- **Clé de traduction** — `"name": "trainer.mon_pack.red.name"`, avec la clé déclarée dans
-  `assets/mon_pack/lang/en_us.json`, `fr_fr.json`, etc. Chaque joueur voit alors le texte
-  dans la langue de son jeu.
+- **Clé de traduction** — `"name": "trainer.mon_pack.red.name"`, définie dans un resource
+  pack livré à côté du datapack.
 
-Le dresseur `rerebleue` fourni par le mod utilise cette seconde forme ; les `example_*`
-utilisent la première. Les messages de la commande et les erreurs de combat sont eux
-toujours traduits, via les fichiers lang du mod et de Cobblemon.
+Les clés sont résolues par le client, comme n'importe quel texte de Minecraft. Range-les
+dans `assets/<namespace>/lang/<code>.json` :
+
+```
+mon_resource_pack/
+└── assets/mon_pack/lang/
+    ├── en_us.json
+    └── fr_fr.json
+```
+
+```json
+{
+  "trainer.mon_pack.red.name": "Red",
+  "trainer.mon_pack.red.battle_start": "..."
+}
+```
+
+Chaque joueur voit alors le texte dans la langue de son jeu, **nom flottant du dresseur
+compris**. Sur un serveur, `resource-pack` dans `server.properties` permet de le distribuer
+automatiquement.
+
+Les messages de la commande et les erreurs de combat sont eux toujours traduits, via les
+fichiers lang du mod et de Cobblemon.
 
 ### Format d'équipe
 
@@ -128,39 +171,6 @@ Lignes reconnues, en plus de la première :
 
 Les objets tenus sans namespace reçoivent `cobblemon:` — `Light Ball` devient
 `cobblemon:light_ball`. Toute autre ligne est ignorée en silence.
-
-## Personnaliser le comportement du dresseur
-
-Le mod fournit son propre NPCClass, `data/cobblemon-trainers/npcs/trainer.json` :
-
-```json
-{
-  "hitbox": "player",
-  "resourceIdentifier": "cobblemon:standard",
-  "interaction": { "type": "cobblemon-trainers:battle" },
-  "battleConfiguration": { "canChallenge": true },
-  "autoHealParty": true,
-  "canDespawn": false,
-  "skill": 5
-}
-```
-
-Garde `resourceIdentifier` sur `cobblemon:standard` : c'est ce qui indique au client
-d'utiliser les modèles Steve/Alex texturés dynamiquement. Sans lui, les dresseurs perdent
-leur skin de joueur.
-
-Certains réglages ne sont pas modifiables par dresseur dans Cobblemon 1.7.3 — ils vivent
-sur le NPCClass. C'est le cas du soin de l'équipe après le combat (`autoHealParty`) et du
-niveau de l'IA (`skill`, de 0 à 5). Pour les changer, copie ce fichier dans ton datapack
-sous ton propre namespace, ajuste-le, et pointe dessus via `npcClass` :
-
-```json
-{ "name": "Blue", "npcClass": "mon_pack:dresseur_coriace", "team": [] }
-```
-
-L'interaction `cobblemon-trainers:battle` est fournie par le mod ; elle lance un combat en
-simple et affiche les erreurs éventuelles. Tu peux la remplacer par n'importe quelle
-interaction Cobblemon (`dialogue`, `script`, `custom_script`, `none`).
 
 ## Développement
 

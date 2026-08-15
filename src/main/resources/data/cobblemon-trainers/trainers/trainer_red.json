@@ -1,6 +1,5 @@
 {
   "name": "Red",
-  "npcClass": "cobblemon-trainers:trainer",
   "level": 88,
   "skin": {
     "type": "player_username",
