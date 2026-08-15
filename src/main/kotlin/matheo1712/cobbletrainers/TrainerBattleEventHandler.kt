@@ -5,22 +5,20 @@ import com.cobblemon.mod.common.api.events.CobblemonEvents
 import com.cobblemon.mod.common.battles.actor.PlayerBattleActor
 import com.cobblemon.mod.common.entity.npc.NPCBattleActor
 import com.cobblemon.mod.common.entity.npc.NPCEntity
+import net.minecraft.ChatFormatting
 import net.minecraft.network.chat.Component
 import net.minecraft.resources.ResourceLocation
-import org.slf4j.LoggerFactory
 
 /**
- * Envoie les messages configurés au début et à la fin des combats de dresseurs.
+ * Sends the configured messages when a trainer battle starts and ends.
  *
- * L'acteur d'un NPC en combat est un [NPCBattleActor], qui expose directement l'entité —
- * inutile de la retrouver par UUID. Attention : [NPCBattleActor] n'hérite pas de
- * `TrainerBattleActor`, les deux dérivent séparément de `AIBattleActor`.
+ * The battle actor of an NPC is an [NPCBattleActor], which exposes the entity directly — no
+ * need to look it up by UUID. Note that [NPCBattleActor] does not extend `TrainerBattleActor`;
+ * both derive separately from `AIBattleActor`.
  */
 object TrainerBattleEventHandler {
 
-    private val LOGGER = LoggerFactory.getLogger("CobbleTrainers/Events")
-
-    /** Enregistre les listeners. Appelé depuis [CobblemonTrainers.onInitialize]. */
+    /** Registers the listeners. Called from [CobblemonTrainers.onInitialize]. */
     fun register() {
         CobblemonEvents.BATTLE_STARTED_POST.subscribe { event ->
             handleBattleStart(event.battle.actors.toList())
@@ -29,8 +27,6 @@ object TrainerBattleEventHandler {
         CobblemonEvents.BATTLE_VICTORY.subscribe { event ->
             handleBattleVictory(event.battle.actors.toList(), event.winners.toList())
         }
-
-        LOGGER.info("Listeners d'événements de combat enregistrés.")
     }
 
     private fun handleBattleStart(actors: List<BattleActor>) {
@@ -49,7 +45,7 @@ object TrainerBattleEventHandler {
         broadcast(players, definition.name, message)
     }
 
-    /** Retrouve la définition du dresseur à partir de l'aspect posé au spawn. */
+    /** Finds the trainer definition from the aspect applied at spawn time. */
     private fun resolveTrainer(actors: List<BattleActor>): Pair<TrainerDefinition, NPCEntity>? {
         val npcActor = actors.filterIsInstance<NPCBattleActor>().firstOrNull() ?: return null
         val npcEntity = npcActor.npc
@@ -63,10 +59,18 @@ object TrainerBattleEventHandler {
         return definition to npcEntity
     }
 
+    /**
+     * Both the trainer name and the message are treated as translation keys, so datapacks can
+     * localise them. Plain text falls back to itself when no translation exists.
+     */
     private fun broadcast(players: List<PlayerBattleActor>, trainerName: String, message: String?) {
         if (message.isNullOrBlank()) return
+
+        val name = Component.translatable(trainerName).withStyle(ChatFormatting.GOLD)
+        val line = CobblemonTrainers.lang("chat.trainer_message", name, Component.translatable(message))
+
         players.mapNotNull { it.entity }.forEach { player ->
-            player.sendSystemMessage(Component.literal("§6[$trainerName]§r $message"))
+            player.sendSystemMessage(line)
         }
     }
 }

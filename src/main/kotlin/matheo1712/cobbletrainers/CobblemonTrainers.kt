@@ -4,61 +4,66 @@ import net.fabricmc.api.ModInitializer
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper
 import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener
+import net.minecraft.network.chat.Component
+import net.minecraft.network.chat.MutableComponent
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.packs.PackType
 import net.minecraft.server.packs.resources.ResourceManager
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 /**
- * Point d'entrée principal du mod Cobblemon Trainers.
+ * Main entrypoint of the Cobblemon Trainers mod.
  *
- * Ce mod ajoute des dresseurs Pokémon configurables à Cobblemon. Les dresseurs se déclarent
- * dans un datapack : `data/<namespace>/trainers/<nom>.json`.
+ * The mod adds configurable Pokémon trainers to Cobblemon. Trainers are declared in
+ * datapacks, at `data/<namespace>/trainers/<name>.json`.
  *
- * Fonctionnalités :
- * - Équipes au format Showdown
- * - Skins de joueur Minecraft (par pseudo ou UUID)
- * - Messages de début/fin de combat
- * - Commande `/spawntrainer <id>` pour invoquer un dresseur
+ * Features:
+ * - Showdown-formatted teams
+ * - Minecraft player skins (by username or UUID)
+ * - Battle start and end messages
+ * - `/spawntrainer <id>` to summon a trainer
  */
 object CobblemonTrainers : ModInitializer {
 
     const val MOD_ID: String = "cobblemon-trainers"
 
     /**
-     * Préfixe de l'aspect qui relie une entité NPC à sa définition de dresseur.
-     * Les aspects appliqués sont sauvegardés en NBT, donc le lien survit à un redémarrage.
+     * Prefix of the aspect linking an NPC entity to its trainer definition.
+     * Applied aspects are saved to NBT, so the link survives a restart.
      */
     const val TRAINER_ASPECT_PREFIX = "trainer_id:"
 
-    private val LOGGER = LoggerFactory.getLogger(MOD_ID)
+    @JvmField
+    val LOGGER: Logger = LoggerFactory.getLogger(MOD_ID)
 
     override fun onInitialize() {
-        LOGGER.info("=== Cobblemon Trainers — Initialisation ===")
-
         CommandRegistrationCallback.EVENT.register { dispatcher, _, _ ->
             SpawnTrainerCommand.register(dispatcher)
-            LOGGER.info("Commande /spawntrainer enregistrée.")
         }
 
-        // Le gestionnaire de ressources couvre à la fois le chargement initial des datapacks
-        // au démarrage du serveur et les rechargements déclenchés par /reload.
+        // The resource manager covers both the initial datapack load on server start and
+        // reloads triggered by /reload.
         ResourceManagerHelper.get(PackType.SERVER_DATA).registerReloadListener(TrainerReloadListener)
 
-        // Ces deux enregistrements dépendent de Cobblemon : on isole l'échec éventuel.
-        // L'interaction doit être connue avant la lecture des datapacks.
+        // Both registrations depend on Cobblemon, so isolate a possible failure.
+        // The interaction must be known before datapacks are read.
         try {
             TrainerBattleInteraction.register()
             TrainerBattleEventHandler.register()
         } catch (e: Exception) {
-            LOGGER.error("Impossible d'enregistrer les listeners de combat. Cobblemon est-il installé ? ${e.message}")
+            LOGGER.error("Failed to register battle hooks. Is Cobblemon installed?", e)
         }
 
-        LOGGER.info("=== Cobblemon Trainers — Prêt ! ===")
+        LOGGER.info("Cobblemon Trainers initialized")
     }
 
     fun id(path: String): ResourceLocation =
         ResourceLocation.fromNamespaceAndPath(MOD_ID, path)
+
+    /** Builds a translatable component from a key inside the mod's namespace. */
+    fun lang(key: String, vararg args: Any): MutableComponent =
+        Component.translatable("$MOD_ID.$key", *args)
 
     private object TrainerReloadListener : SimpleSynchronousResourceReloadListener {
         override fun getFabricId(): ResourceLocation = id(TrainerRegistry.DATAPACK_DIRECTORY)

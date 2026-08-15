@@ -1,21 +1,25 @@
 package matheo1712.cobbletrainers
 
 /**
- * Définit les propriétés d'un dresseur chargées depuis un fichier JSON.
+ * Properties of a trainer, loaded from a JSON file.
  *
- * @param name Le nom affiché du dresseur dans le monde.
- * @param skin Configuration du skin (pseudo ou UUID Minecraft).
- * @param team Liste de Pokémon au format Showdown. Une entrée vide (`""`) sépare deux Pokémon.
- * @param level Niveau du dresseur, utilisé comme niveau par défaut des Pokémon qui n'en précisent pas.
- * @param canBattle Si le dresseur peut engager un combat. À `false`, l'interaction est désactivée.
- * @param battleStartMessage Message envoyé au joueur au début du combat (optionnel).
- * @param battleEndWinMessage Message envoyé si le joueur gagne (optionnel).
- * @param battleEndLoseMessage Message envoyé si le joueur perd (optionnel).
- * @param npcClass ResourceLocation d'un NPCClass Cobblemon. Par défaut `cobblemon-trainers:trainer`.
+ * [name], [battleStartMessage], [battleEndWinMessage] and [battleEndLoseMessage] are sent to
+ * players as translatable components: put a translation key there and add it to your
+ * datapack's language files to localise it, or put plain text and it is displayed as is.
  *
- * Note : le soin de l'équipe après un combat n'est pas configurable par dresseur dans
- * Cobblemon 1.7.3 — il dépend de `autoHealParty` sur le NPCClass. Pour le changer, définis
- * ton propre NPCClass dans `data/<namespace>/npcs/` et référence-le via [npcClass].
+ * @param name Display name shown above the trainer.
+ * @param skin Skin configuration (Minecraft username or UUID).
+ * @param team Showdown-formatted team. An empty entry (`""`) separates two Pokémon.
+ * @param level Trainer level, also the default level of Pokémon that do not state one.
+ * @param canBattle Whether the trainer can battle. When false the interaction is disabled.
+ * @param battleStartMessage Sent to the player when the battle starts (optional).
+ * @param battleEndWinMessage Sent when the player wins (optional).
+ * @param battleEndLoseMessage Sent when the player loses (optional).
+ * @param npcClass ResourceLocation of a Cobblemon NPC class. Defaults to `cobblemon-trainers:trainer`.
+ *
+ * Note: healing the team after a battle is not configurable per trainer in Cobblemon 1.7.3 —
+ * it depends on `autoHealParty` on the NPC class. To change it, define your own NPC class in
+ * `data/<namespace>/npcs/` and point [npcClass] at it.
  */
 data class TrainerDefinition(
     val name: String = "Trainer",
@@ -30,14 +34,14 @@ data class TrainerDefinition(
 )
 
 /**
- * Configuration du skin du dresseur.
+ * Skin configuration of a trainer.
  *
- * Types supportés :
- * - `"player_username"` : utilise le skin du joueur Minecraft correspondant au pseudo.
- * - `"player_uuid"` : utilise le skin du joueur Minecraft correspondant à l'UUID.
+ * Supported types:
+ * - `"player_username"`: uses the skin of the Minecraft player with that username.
+ * - `"player_uuid"`: uses the skin of the Minecraft player with that UUID.
  *
- * @param type Le type de skin.
- * @param value La valeur du skin (pseudo ou UUID).
+ * @param type The skin type.
+ * @param value The skin value (username or UUID).
  */
 data class TrainerSkin(
     val type: String = "player_username",

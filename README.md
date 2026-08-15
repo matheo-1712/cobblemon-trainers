@@ -92,6 +92,20 @@ empêcher le chargement des autres.
 
 Tous les champs sont facultatifs : un JSON partiel reste valide.
 
+### Traduire les textes d'un dresseur
+
+`name`, `battleStartMessage`, `battleEndWinMessage` et `battleEndLoseMessage` sont envoyés
+au joueur comme textes traduisibles. Deux usages :
+
+- **Texte brut** — `"name": "Red"` s'affiche tel quel, dans toutes les langues.
+- **Clé de traduction** — `"name": "trainer.mon_pack.red.name"`, avec la clé déclarée dans
+  `assets/mon_pack/lang/en_us.json`, `fr_fr.json`, etc. Chaque joueur voit alors le texte
+  dans la langue de son jeu.
+
+Le dresseur `rerebleue` fourni par le mod utilise cette seconde forme ; les `example_*`
+utilisent la première. Les messages de la commande et les erreurs de combat sont eux
+toujours traduits, via les fichiers lang du mod et de Cobblemon.
+
 ### Format d'équipe
 
 Le tableau `team` accepte deux écritures, y compris mélangées :
