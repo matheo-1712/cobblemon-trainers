@@ -1,10 +1,11 @@
 {
   "cobblemon-trainers.command.spawn_trainer.success": "Spawned trainer %s at %s, %s, %s",
-  "cobblemon-trainers.command.spawn_trainer.unknown_trainer": "Unknown trainer. Check the trainer IDs in data/<namespace>/trainers/ of your datapacks.",
+  "cobblemon-trainers.command.spawn_trainer.unknown_trainer": "Unknown trainer. Check the trainer IDs in data/<namespace>/cobblemontrainers/trainers/ of your datapacks.",
   "cobblemon-trainers.command.spawn_trainer.invalid_position": "Invalid position for spawning a trainer.",
   "cobblemon-trainers.command.spawn_trainer.spawn_failed": "Could not spawn the trainer. See the server log for details.",
   "cobblemon-trainers.chat.trainer_message": "[%s] %s",
   "cobblemon-trainers.npc.interaction.battle": "Trainer Battle",
+  "cobblemon-trainers.subtitles.battle_music": "Trainer battle music",
   "trainer.cobblemon-trainers.rerebleue.name": "RereBleue",
   "trainer.cobblemon-trainers.rerebleue.battle_start": "The ocean holds no secrets from me. Show me what you've got!",
   "trainer.cobblemon-trainers.rerebleue.win": "What a wave! You washed me away.",

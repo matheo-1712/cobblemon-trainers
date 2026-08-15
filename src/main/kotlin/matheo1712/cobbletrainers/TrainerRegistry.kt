@@ -10,20 +10,24 @@ import java.io.File
  * In-memory registry of the available trainers.
  *
  * Trainers come from datapacks only: any pack may provide
- * `data/<namespace>/trainers/<name>.json`, including the mod itself. The trainer ID is
- * `<namespace>:<name>`. A pack loaded later overrides a trainer with the same ID, following
- * the usual datapack stacking rules.
+ * `data/<namespace>/cobblemontrainers/trainers/<name>.json`, including the mod itself. The trainer
+ * ID is `<namespace>:<name>`. A pack loaded later overrides a trainer with the same ID,
+ * following the usual datapack stacking rules.
  *
  * As in Cobblemon's own registries, only the file name matters: a trainer stored at
- * `trainers/kanto/red.json` gets the ID `<namespace>:red`.
+ * `cobblemontrainers/trainers/kanto/red.json` gets the ID `<namespace>:red`.
  *
  * Reloading is driven by the server resource manager (see [CobblemonTrainers.onInitialize]),
  * so `/reload` reloads trainers too.
  */
 object TrainerRegistry {
 
-    /** Directory scanned inside datapacks, under `data/<namespace>/`. */
-    const val DATAPACK_DIRECTORY = "trainers"
+    /**
+     * Directory scanned inside datapacks, under `data/<namespace>/`. Everything the mod reads
+     * from a pack lives under `cobblemontrainers/`, so a pack that also declares trainers for
+     * another mod cannot collide with ours.
+     */
+    const val DATAPACK_DIRECTORY = "cobblemontrainers/trainers"
 
     private const val JSON_EXTENSION = ".json"
 
