@@ -1,0 +1,20 @@
+{
+  "name": "Misty",
+  "skin": {
+    "type": "player_username",
+    "value": "Misty"
+  },
+  "canBattle": true,
+  "battleStartMessage": "Alright, my policy is an all-out offensive with Water-type Pokémon!",
+  "battleEndWinMessage": "Hm, you're still a novice but you may have potential.",
+  "battleEndLoseMessage": "You're not ready for the Water Badge yet! Come back when you've trained more!",
+  "npcClass": "cobblemon-trainers:trainer",
+  "team": [
+    "Starmie @ Mystic Water\nAbility: Illuminate\nLevel: 54\nEVs: 4 HP / 252 SpA / 252 Spe\nTimid Nature\n- Surf\n- Ice Beam\n- Psychic\n- Rapid Spin",
+    "Golduck @ Choice Specs\nAbility: Cloud Nine\nLevel: 52\nGender: M\nEVs: 4 HP / 252 SpA / 252 Spe\nModest Nature\n- Surf\n- Psychic\n- Ice Beam\n- Focus Blast",
+    "Gyarados @ Dragon Fang\nAbility: Intimidate\nLevel: 56\nGender: M\nEVs: 4 HP / 252 Atk / 252 Spe\nAdamant Nature\n- Waterfall\n- Dragon Dance\n- Ice Fang\n- Earthquake",
+    "Lapras @ Leftovers\nAbility: Shell Armor\nLevel: 52\nGender: F\nEVs: 252 HP / 4 SpA / 252 SpD\nCalm Nature\n- Surf\n- Ice Beam\n- Thunderbolt\n- Perish Song",
+    "Politoed @ Choice Band\nAbility: Water Absorb\nLevel: 50\nGender: F\nEVs: 252 HP / 252 Atk / 4 Spe\nAdamant Nature\n- Waterfall\n- Belly Drum\n- Return\n- Ice Punch",
+    "Vaporeon @ Leftovers\nAbility: Water Absorb\nLevel: 50\nGender: F\nEVs: 252 HP / 252 SpA / 4 SpD\nModest Nature\n- Surf\n- Shadow Ball\n- Wish\n- Heal Bell"
+  ]
+}

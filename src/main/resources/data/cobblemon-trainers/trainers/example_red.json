@@ -1,0 +1,20 @@
+{
+  "name": "Red",
+  "skin": {
+    "type": "player_username",
+    "value": "Red"
+  },
+  "canBattle": true,
+  "battleStartMessage": "...(silence) ...",
+  "battleEndWinMessage": "... ... ... (Red nods respectfully)",
+  "battleEndLoseMessage": "You're not ready yet. Train more.",
+  "npcClass": "cobblemon-trainers:trainer",
+  "team": [
+    "Pikachu @ Light Ball\nAbility: Static\nLevel: 88\nShiny: No\nGender: M\nEVs: 4 HP / 252 SpA / 252 Spe\nTimid Nature\nIVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe\n- Thunderbolt\n- Volt Tackle\n- Iron Tail\n- Quick Attack",
+    "Espeon @ Expert Belt\nAbility: Magic Bounce\nLevel: 84\nGender: M\nEVs: 4 HP / 252 SpA / 252 Spe\nTimid Nature\n- Psychic\n- Shadow Ball\n- Calm Mind\n- Morning Sun",
+    "Snorlax @ Leftovers\nAbility: Immunity\nLevel: 82\nGender: M\nEVs: 252 HP / 252 Def / 4 SpD\nBold Nature\n- Body Slam\n- Rest\n- Sleep Talk\n- Earthquake",
+    "Venusaur @ Black Sludge\nAbility: Chlorophyll\nLevel: 84\nGender: M\nEVs: 4 HP / 252 SpA / 252 Spe\nModest Nature\n- Leaf Storm\n- Sludge Bomb\n- Sleep Powder\n- Leech Seed",
+    "Charizard @ Choice Specs\nAbility: Blaze\nLevel: 84\nGender: M\nEVs: 4 HP / 252 SpA / 252 Spe\nTimid Nature\n- Flamethrower\n- Air Slash\n- Focus Blast\n- Ancient Power",
+    "Blastoise @ Assault Vest\nAbility: Torrent\nLevel: 84\nGender: M\nEVs: 252 HP / 4 SpA / 252 SpD\nCalm Nature\n- Scald\n- Dark Pulse\n- Ice Beam\n- Flash Cannon"
+  ]
+}

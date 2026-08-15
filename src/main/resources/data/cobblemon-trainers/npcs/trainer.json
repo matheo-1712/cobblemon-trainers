@@ -1,0 +1,13 @@
+{
+  "hitbox": "player",
+  "interaction": {
+    "type": "custom_script",
+    "script": "q.npc.start_battle(q.player);"
+  },
+  "battleConfiguration": {
+    "canChallenge": true
+  },
+  "autoHealParty": true,
+  "canDespawn": false,
+  "skill": 5
+}

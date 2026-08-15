@@ -1,0 +1,33 @@
+{
+	"schemaVersion": 1,
+	"id": "cobblemon-trainers",
+	"version": "${version}",
+	"name": "Cobblemon Trainers",
+	"description": "Ajoute des dresseurs Pokémon configurables à Cobblemon avec des équipes au format Showdown.",
+	"authors": [
+		"matheo1712"
+	],
+	"contact": {},
+	"license": "CC0-1.0",
+	"icon": "assets/cobblemon-trainers/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			{
+				"value": "matheo1712.cobbletrainers.CobblemonTrainers",
+				"adapter": "kotlin"
+			}
+		]
+	},
+	"mixins": [
+		"cobblemon-trainers.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.19.3",
+		"minecraft": "~1.21.1",
+		"java": ">=21",
+		"fabric-api": "*",
+		"fabric-language-kotlin": "*",
+		"cobblemon": ">=1.7.3"
+	}
+}
