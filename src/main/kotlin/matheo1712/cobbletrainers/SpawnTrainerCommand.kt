@@ -2,11 +2,11 @@ package matheo1712.cobbletrainers
 
 import com.mojang.brigadier.Command
 import com.mojang.brigadier.CommandDispatcher
-import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.context.CommandContext
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType
 import net.minecraft.commands.CommandSourceStack
 import net.minecraft.commands.Commands
+import net.minecraft.commands.arguments.ResourceLocationArgument
 import net.minecraft.commands.arguments.coordinates.Vec3Argument
 import net.minecraft.core.BlockPos
 import net.minecraft.network.chat.Component
@@ -45,15 +45,20 @@ object SpawnTrainerCommand {
             Commands.literal(NAME)
                 .requires { it.hasPermission(2) }
                 .then(
-                    Commands.argument(ARG_ID, StringArgumentType.string())
+                    // ResourceLocationArgument, et pas une chaîne : Brigadier refuse les
+                    // deux-points dans un mot non quoté, ce qui casse `namespace:nom`.
+                    Commands.argument(ARG_ID, ResourceLocationArgument.id())
                         .suggests { _, builder ->
                             val ids = TrainerRegistry.allIds()
-                            ids.forEach { builder.suggest(it.toString()) }
-                            // Nom court quand il n'est pas ambigu entre plusieurs namespaces.
-                            ids.groupBy { it.path }
-                                .filterValues { it.size == 1 }
-                                .keys
-                                .forEach { builder.suggest(it) }
+                            val byName = ids.groupBy { it.path }
+                            ids.forEach { id ->
+                                // Nom court tant qu'il est sans ambiguïté, sinon ID complet.
+                                // Dès que le joueur tape un `:`, on ne propose que les ID complets.
+                                val ambiguous = byName.getValue(id.path).size > 1
+                                builder.suggest(
+                                    if (ambiguous || builder.remaining.contains(':')) id.toString() else id.path
+                                )
+                            }
                             builder.buildFuture()
                         }
                         .then(
@@ -67,7 +72,7 @@ object SpawnTrainerCommand {
 
     private fun execute(context: CommandContext<CommandSourceStack>, pos: Vec3): Int {
         val source = context.source
-        val input = StringArgumentType.getString(context, ARG_ID)
+        val input = ResourceLocationArgument.getId(context, ARG_ID)
 
         val trainerId = TrainerRegistry.resolveId(input) ?: throw TRAINER_NOT_FOUND.create()
         val definition = TrainerRegistry.get(trainerId) ?: throw TRAINER_NOT_FOUND.create()

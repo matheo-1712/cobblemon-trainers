@@ -1,8 +1,8 @@
 {
   "hitbox": "player",
+  "resourceIdentifier": "cobblemon:standard",
   "interaction": {
-    "type": "custom_script",
-    "script": "q.npc.start_battle(q.player);"
+    "type": "cobblemon-trainers:battle"
   },
   "battleConfiguration": {
     "canChallenge": true

@@ -6,6 +6,8 @@ import com.cobblemon.mod.common.api.npc.partyproviders.SimplePartyProvider
 import com.cobblemon.mod.common.entity.npc.NPCEntity
 import com.cobblemon.mod.common.entity.npc.NPCPlayerModelType
 import com.cobblemon.mod.common.entity.npc.NPCPlayerTexture
+import com.mojang.authlib.GameProfile
+import com.mojang.authlib.ProfileLookupCallback
 import net.minecraft.network.chat.Component
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.MinecraftServer
@@ -142,9 +144,7 @@ object TrainerSpawner {
 
     private fun resolveProfileId(server: MinecraftServer, skin: TrainerSkin): UUID? {
         val uuid = when (skin.type.lowercase()) {
-            "player_username" ->
-                server.profileCache?.get(skin.value)?.orElse(null)?.id
-                    ?: server.playerList.getPlayerByName(skin.value)?.uuid
+            "player_username" -> lookupByName(server, skin.value)
 
             "player_uuid" ->
                 try {
@@ -166,11 +166,47 @@ object TrainerSpawner {
         return uuid
     }
 
+    /**
+     * Résout un pseudo en UUID Mojang.
+     *
+     * Le cache de profils du serveur ne suffit pas : hors ligne, il fabrique un UUID de
+     * version 3 dérivé du pseudo, que l'API de session ne connaît pas. On interroge alors
+     * directement le dépôt de profils, comme le fait Cobblemon.
+     */
+    private fun lookupByName(server: MinecraftServer, name: String): UUID? {
+        val cached = server.profileCache?.get(name)?.orElse(null)?.id
+        if (cached != null && cached.version() == 4) return cached
+
+        var resolved: UUID? = null
+        try {
+            server.profileRepository.findProfilesByNames(arrayOf(name), object : ProfileLookupCallback {
+                override fun onProfileLookupSucceeded(profile: GameProfile) {
+                    resolved = profile.id
+                }
+
+                override fun onProfileLookupFailed(profileName: String, exception: Exception) {
+                    LOGGER.warn("Profil Mojang introuvable pour '$profileName' : ${exception.message}")
+                }
+            })
+        } catch (e: Exception) {
+            LOGGER.warn("Échec de la recherche du profil '$name' : ${e.message}")
+        }
+        return resolved
+    }
+
     /** Télécharge la texture du joueur depuis Mojang. Bloquant : à appeler hors du thread serveur. */
     private fun fetchTexture(server: MinecraftServer, uuid: UUID): NPCPlayerTexture? {
         return try {
-            val profile = server.sessionService.fetchProfile(uuid, false)?.profile ?: return null
-            val skin = server.sessionService.getTextures(profile).skin ?: return null
+            val profile = server.sessionService.fetchProfile(uuid, false)?.profile
+            if (profile == null) {
+                LOGGER.warn("Aucun profil de session Mojang pour l'UUID $uuid.")
+                return null
+            }
+            val skin = server.sessionService.getTextures(profile).skin
+            if (skin == null) {
+                LOGGER.warn("Le profil $uuid n'a aucune texture de skin.")
+                return null
+            }
             val model = NPCPlayerModelType.valueOf((skin.getMetadata("model") ?: "default").uppercase())
             val bytes = URI(skin.url).toURL().openStream().use { it.readBytes() }
             NPCPlayerTexture(bytes, model)

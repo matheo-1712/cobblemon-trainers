@@ -46,8 +46,10 @@ object CobblemonTrainers : ModInitializer {
         // au démarrage du serveur et les rechargements déclenchés par /reload.
         ResourceManagerHelper.get(PackType.SERVER_DATA).registerReloadListener(TrainerReloadListener)
 
-        // Les événements de combat dépendent de Cobblemon : on isole l'échec éventuel.
+        // Ces deux enregistrements dépendent de Cobblemon : on isole l'échec éventuel.
+        // L'interaction doit être connue avant la lecture des datapacks.
         try {
+            TrainerBattleInteraction.register()
             TrainerBattleEventHandler.register()
         } catch (e: Exception) {
             LOGGER.error("Impossible d'enregistrer les listeners de combat. Cobblemon est-il installé ? ${e.message}")

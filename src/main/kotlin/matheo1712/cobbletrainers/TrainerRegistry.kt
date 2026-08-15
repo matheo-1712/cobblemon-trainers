@@ -97,19 +97,20 @@ object TrainerRegistry {
         ResourceLocation.tryParse("$namespace:$name")
 
     /**
-     * Résout l'ID écrit par un joueur.
+     * Résout l'ID saisi dans la commande.
      *
-     * Un ID complet (`namespace:nom`) est utilisé tel quel. Un nom seul est cherché d'abord
-     * dans le namespace du mod, puis dans les autres namespaces.
+     * Brigadier donne toujours un [ResourceLocation] complet : un nom seul y arrive sous le
+     * namespace `minecraft`. On tente donc l'ID exact, puis, si le namespace est celui par
+     * défaut, le namespace du mod et enfin n'importe quel namespace ayant ce nom.
      */
-    fun resolveId(input: String): ResourceLocation? {
-        if (input.contains(':')) {
-            return ResourceLocation.tryParse(input)?.takeIf { it in trainers }
-        }
-        buildId(CobblemonTrainers.MOD_ID, input)
+    fun resolveId(input: ResourceLocation): ResourceLocation? {
+        if (input in trainers) return input
+        if (input.namespace != ResourceLocation.DEFAULT_NAMESPACE) return null
+
+        buildId(CobblemonTrainers.MOD_ID, input.path)
             ?.takeIf { it in trainers }
             ?.let { return it }
-        return trainers.keys.firstOrNull { it.path == input }
+        return trainers.keys.firstOrNull { it.path == input.path }
     }
 
     fun get(id: ResourceLocation): TrainerDefinition? = trainers[id]
