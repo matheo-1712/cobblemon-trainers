@@ -2,30 +2,29 @@ package matheo1712.cobbletrainers
 
 import com.cobblemon.mod.common.api.pokemon.PokemonProperties
 import net.minecraft.network.chat.Component
-import org.slf4j.LoggerFactory
 import java.util.Locale
 
 /**
- * Convertit une équipe au format Pokémon Showdown en [PokemonProperties] pour Cobblemon.
+ * Converts a Pokémon Showdown team into Cobblemon [PokemonProperties].
  *
- * La stratégie est de reconstruire une chaîne de propriétés Cobblemon
- * (`"pikachu level=88 ability=static ..."`) puis de déléguer à [PokemonProperties.parse].
- * Les valeurs pouvant contenir des espaces (surnom, objet tenu) sont assignées directement
- * sur l'objet résultant, car le parseur de Cobblemon découpe la chaîne sur les espaces.
+ * The strategy is to rebuild a Cobblemon property string
+ * (`"pikachu level=88 ability=static ..."`) and hand it to [PokemonProperties.parse]. Values
+ * that may contain spaces (nickname, held item) are assigned directly on the resulting
+ * object, because Cobblemon's property parser splits on spaces.
  *
- * Limite connue : les formes régionales notées à la Showdown (`Raichu-Alola`) ne sont pas
- * traduites vers les aspects Cobblemon.
+ * Known limitation: Showdown-style regional forms (`Raichu-Alola`) are not translated into
+ * Cobblemon aspects.
  */
 object ShowdownTeamParser {
 
-    private val LOGGER = LoggerFactory.getLogger("CobbleTrainers/ShowdownParser")
+    private val LOGGER = CobblemonTrainers.LOGGER
 
-    /** Namespace appliqué aux objets tenus qui n'en précisent pas. */
+    /** Namespace applied to held items that do not specify one. */
     private const val DEFAULT_ITEM_NAMESPACE = "cobblemon"
 
     /**
-     * Abréviations Showdown vers les noms de statistiques attendus par [PokemonProperties],
-     * qui les dérive des constantes de l'enum `Stats` de Cobblemon.
+     * Showdown abbreviations mapped to the stat names [PokemonProperties] expects, which it
+     * derives from the constants of Cobblemon's `Stats` enum.
      */
     private val STAT_NAMES = mapOf(
         "hp" to "hp",
@@ -48,17 +47,17 @@ object ShowdownTeamParser {
     private val NICKNAME_SPECIES = Regex("""^(.+?)\s*\((.+?)\)$""")
 
     /**
-     * Convertit le tableau `team` d'un dresseur en [PokemonProperties].
+     * Converts a trainer's `team` array into [PokemonProperties].
      *
-     * Deux écritures sont acceptées, y compris mélangées :
-     * - une entrée par Pokémon, avec ses lignes séparées par `\n` ;
-     * - une entrée par ligne, les Pokémon étant séparés par une entrée vide (`""`).
+     * Two layouts are accepted, and may be mixed:
+     * - one entry per Pokémon, its lines separated by `\n`;
+     * - one entry per line, Pokémon separated by an empty entry (`""`).
      */
     fun parse(teamEntries: List<String>): List<PokemonProperties> {
         val text = buildString {
             for (entry in teamEntries) {
                 if (entry.contains('\n')) {
-                    // Entrée auto-suffisante : on l'isole par des lignes vides.
+                    // Self-contained entry: isolate it with blank lines.
                     append('\n').append(entry).append("\n\n")
                 } else {
                     append(entry).append('\n')
@@ -69,8 +68,8 @@ object ShowdownTeamParser {
     }
 
     /**
-     * Convertit un texte complet d'équipe Showdown en une liste de [PokemonProperties].
-     * Les Pokémon sont séparés par une ligne vide.
+     * Converts a full Showdown team text into a list of [PokemonProperties].
+     * Pokémon are separated by a blank line.
      */
     fun parse(showdownText: String): List<PokemonProperties> {
         val result = mutableListOf<PokemonProperties>()
@@ -79,7 +78,7 @@ object ShowdownTeamParser {
             try {
                 result.add(parsePokemon(block))
             } catch (e: Exception) {
-                LOGGER.warn("Impossible de parser un Pokémon : ${e.message}\nBloc : ${block.joinToString("\n")}")
+                LOGGER.warn("Failed to parse a Pokémon: {}\n{}", e.message, block.joinToString("\n"))
             }
         }
 
@@ -106,11 +105,11 @@ object ShowdownTeamParser {
         return blocks
     }
 
-    /** Parse un bloc de lignes représentant un seul Pokémon. */
+    /** Parses a block of lines describing a single Pokémon. */
     private fun parsePokemon(lines: List<String>): PokemonProperties {
         val builder = StringBuilder()
 
-        // Première ligne : "Surnom (Espèce) (M) @ Objet"
+        // First line: "Nickname (Species) (M) @ Item"
         val firstLine = lines.first()
         val atIndex = firstLine.indexOf('@')
         val namePart = (if (atIndex >= 0) firstLine.substring(0, atIndex) else firstLine).trim()
@@ -130,8 +129,8 @@ object ShowdownTeamParser {
                 species = nicknameSpeciesGender.groupValues[2].trim()
                 gender = nicknameSpeciesGender.groupValues[3]
             }
-            // Doit passer avant le motif "Surnom (Espèce)", sinon "Pikachu (M)"
-            // serait lu comme l'espèce "M" surnommée "Pikachu".
+            // Must be tested before the "Nickname (Species)" pattern, otherwise "Pikachu (M)"
+            // reads as the species "M" nicknamed "Pikachu".
             speciesGender != null -> {
                 species = speciesGender.groupValues[1].trim()
                 gender = speciesGender.groupValues[2]
@@ -163,8 +162,8 @@ object ShowdownTeamParser {
                 line.startsWith("Level:", ignoreCase = true) ->
                     line.substringAfter(':').trim().toIntOrNull()?.let { builder.append(" level=$it") }
 
-                // Showdown note le genre entre parenthèses sur la première ligne, mais
-                // beaucoup d'exports utilisent aussi une ligne dédiée.
+                // Showdown puts the gender in parentheses on the first line, but many exports
+                // also use a dedicated line.
                 line.startsWith("Gender:", ignoreCase = true) -> {
                     when (line.substringAfter(':').trim().uppercase(Locale.ROOT)) {
                         "M" -> builder.append(" gender=male")
@@ -200,8 +199,8 @@ object ShowdownTeamParser {
 
         val properties = PokemonProperties.parse(builder.toString())
 
-        // Assignés après coup : ces valeurs peuvent contenir des espaces, que le parseur
-        // de propriétés de Cobblemon utilise comme séparateur.
+        // Assigned afterwards: these values may contain spaces, which Cobblemon's property
+        // parser uses as a separator.
         if (nickname.isNotBlank() && !nickname.equals(species, ignoreCase = true)) {
             properties.nickname = Component.literal(nickname)
         }
@@ -212,18 +211,19 @@ object ShowdownTeamParser {
         return properties
     }
 
-    /** "Light Ball" -> "cobblemon:light_ball". Un namespace explicite est conservé tel quel. */
+    /** "Light Ball" -> "cobblemon:light_ball". An explicit namespace is kept as is. */
     private fun normalizeItem(raw: String): String {
         val cleaned = raw.trim().replace(' ', '_').lowercase(Locale.ROOT)
         return if (cleaned.contains(':')) cleaned else "$DEFAULT_ITEM_NAMESPACE:$cleaned"
     }
 
-    /** "Quick Attack" -> "quickattack", forme attendue par les registres de Cobblemon. */
+    /** "Quick Attack" -> "quickattack", the form Cobblemon's registries expect. */
     private fun normalizeName(raw: String): String =
         raw.trim().replace(" ", "").lowercase(Locale.ROOT)
 
     /**
-     * Traduit "252 SpA / 4 SpD / 252 Spe" en ` special_attack_ev=252 special_defence_ev=4 speed_ev=252`.
+     * Turns "252 SpA / 4 SpD / 252 Spe" into
+     * ` special_attack_ev=252 special_defence_ev=4 speed_ev=252`.
      */
     private fun appendStats(builder: StringBuilder, statsString: String, suffix: String) {
         for (part in statsString.split("/")) {
@@ -233,7 +233,7 @@ object ShowdownTeamParser {
             val value = tokens[0].toIntOrNull() ?: continue
             val statName = STAT_NAMES[tokens[1].lowercase(Locale.ROOT)]
             if (statName == null) {
-                LOGGER.warn("Statistique inconnue ignorée : '${tokens[1]}'")
+                LOGGER.warn("Ignoring unknown stat '{}'", tokens[1])
                 continue
             }
 

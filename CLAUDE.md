@@ -8,8 +8,8 @@ Mod Fabric pour Minecraft 1.21.1 qui ajoute des dresseurs Pokémon configurables
 Cobblemon 1.7.3. Code principal en Kotlin (`matheo1712.cobbletrainers`), un stub Java
 pour les mixins. Aucun code client-only : tout tourne côté serveur logique.
 
-Les commentaires, logs et messages en jeu sont rédigés en français — conserver cette
-convention.
+Le code, les commentaires et les logs sont en **anglais**. Tout texte affiché au joueur
+passe par `assets/cobblemon-trainers/lang/` — jamais de littéral en dur.
 
 ## Commandes
 
@@ -24,12 +24,13 @@ convention.
 Sur Windows, utiliser `.\gradlew.bat`.
 
 Il n'existe pas de source set `src/test` — `build` ne lance donc aucun test.
-Toute vérification passe par `runClient`/`runServer` : les mondes et mods de dev vivent
-dans `run/` (gitignoré), avec le jar Cobblemon déjà présent dans `run/mods/`.
+Toute vérification passe par `runClient`/`runServer`, dont les mondes vivent dans `run/`
+(gitignoré). **Ne pas mettre de jar Cobblemon dans `run/mods/`** : il est déjà fourni par
+`modImplementation`, et le doublon fait planter le client au démarrage.
 
-Le CI (`.github/workflows/build.yml`) fait un simple `./gradlew build` sur JDK 25, mais
-le projet cible **Java 21** (`options.release = 21`, `JvmTarget.JVM_21`, mixins en
-`JAVA_21`) — ne pas utiliser d'API postérieure à 21.
+Le projet cible **Java 21**, imposé par un toolchain Gradle dans `build.gradle.kts`.
+Cobblemon déclare `depends: java [21]`, une version exacte : sans le toolchain, `runClient`
+hérite du JDK de Gradle et le loader refuse de démarrer. Le CI utilise le même JDK 21.
 
 ## Versions
 
@@ -49,7 +50,7 @@ curl -s "https://api.modrinth.com/v2/version/<ID>" | python -c "import sys,json;
 
 ## Architecture
 
-Flux complet : JSON (datapack ou config) → `TrainerDefinition` → `NPCEntity` Cobblemon →
+Flux complet : JSON de datapack → `TrainerDefinition` → `NPCEntity` Cobblemon →
 messages de combat.
 
 - **`CobblemonTrainers`** — `ModInitializer`. Enregistre `/spawntrainer`, branche
@@ -70,6 +71,22 @@ messages de combat.
 - **`TrainerSpawner`** — construit et fait apparaître le `NPCEntity`.
 - **`TrainerBattleEventHandler`** — s'abonne à `CobblemonEvents.BATTLE_STARTED_POST` et
   `BATTLE_VICTORY` et envoie les messages configurés.
+
+### Textes et traductions
+
+Un seul logger, `CobblemonTrainers.LOGGER` (nommé d'après le mod id, donc les lignes
+sortent en `(cobblemon-trainers)` dans le log Minecraft), avec des messages en anglais et
+des paramètres SLF4J `{}` plutôt que de l'interpolation.
+
+Côté joueur, `CobblemonTrainers.lang(key, vararg args)` construit un `Component.translatable`
+préfixé par le mod id. Les clés vivent dans `assets/cobblemon-trainers/lang/en_us.json`
+(référence) et `fr_fr.json`.
+
+Les champs `name` et `battleEndWinMessage` & co. d'un dresseur sont eux aussi passés à
+`Component.translatable`. C'est volontaire et sans risque : Minecraft affiche la clé telle
+quelle quand aucune traduction n'existe, donc du texte brut dans le JSON continue de
+s'afficher normalement, tandis qu'un pack peut fournir une vraie clé. `rerebleue.json` est
+l'exemple traduit, les `example_*.json` restent en texte brut.
 
 ### Contraintes de l'API NPC de Cobblemon 1.7.3
 
@@ -110,10 +127,14 @@ Ces points ne se devinent pas depuis notre code seul et ont chacun causé un bug
 ### Le NPCClass du mod
 
 `data/cobblemon-trainers/npcs/trainer.json` définit la classe utilisée par défaut. Son
-interaction est un `custom_script` MoLang (`q.npc.start_battle(q.player);`) : un clic droit
-lance un combat en simple. C'est là qu'il faut toucher pour changer le format de combat,
-le soin (`autoHealParty`) ou le niveau d'IA (`skill`). Un dresseur peut viser une autre
-classe via son champ `npcClass`.
+interaction est `cobblemon-trainers:battle`, implémentée par [TrainerBattleInteraction] :
+un clic droit lance un combat en simple et renvoie au joueur les erreurs de `BattleBuilder`.
+Le MoLang `q.npc.start_battle` faisait la même chose mais avalait les erreurs, d'où un clic
+droit totalement muet quand le joueur n'avait pas de Pokémon.
+
+C'est dans ce JSON que se règlent le soin après combat (`autoHealParty`), le niveau d'IA
+(`skill`) et le `resourceIdentifier`. Un dresseur peut viser une autre classe via son champ
+`npcClass`.
 
 ### Liaison NPC → dresseur
 

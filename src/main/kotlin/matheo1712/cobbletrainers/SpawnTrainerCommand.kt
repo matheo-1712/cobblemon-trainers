@@ -4,6 +4,7 @@ import com.mojang.brigadier.Command
 import com.mojang.brigadier.CommandDispatcher
 import com.mojang.brigadier.context.CommandContext
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType
+import net.minecraft.ChatFormatting
 import net.minecraft.commands.CommandSourceStack
 import net.minecraft.commands.Commands
 import net.minecraft.commands.arguments.ResourceLocationArgument
@@ -14,15 +15,15 @@ import net.minecraft.world.level.Level
 import net.minecraft.world.phys.Vec3
 
 /**
- * Commande `/spawntrainer` permettant d'invoquer un dresseur en jeu.
+ * `/spawntrainer`, which summons a trainer in game.
  *
- * Usage :
- * - `/spawntrainer <trainer_id>` — spawn à la position actuelle du commandeur
- * - `/spawntrainer <trainer_id> <x> <y> <z>` — spawn à des coordonnées précises
+ * Usage:
+ * - `/spawntrainer <trainer_id>` — spawns at the caller's position
+ * - `/spawntrainer <trainer_id> <x> <y> <z>` — spawns at explicit coordinates
  *
- * L'ID accepte la forme complète `namespace:nom` ou le nom seul.
+ * The ID accepts either the full `namespace:name` form or the bare name.
  *
- * Permission level : 2 (operators)
+ * Permission level: 2 (operators)
  */
 object SpawnTrainerCommand {
 
@@ -30,30 +31,27 @@ object SpawnTrainerCommand {
     private const val ARG_ID = "trainer_id"
     private const val ARG_POS = "pos"
 
-    private val TRAINER_NOT_FOUND = SimpleCommandExceptionType(
-        Component.literal("Dresseur introuvable ! Vérifie l'ID dans data/<namespace>/trainers/ de tes datapacks.")
-    )
-    private val INVALID_POS = SimpleCommandExceptionType(
-        Component.literal("Position invalide pour le spawn du dresseur.")
-    )
-    private val SPAWN_FAILED = SimpleCommandExceptionType(
-        Component.literal("Échec du spawn du dresseur. Consulte les logs du serveur pour le détail.")
-    )
+    private val TRAINER_NOT_FOUND =
+        SimpleCommandExceptionType(CobblemonTrainers.lang("command.spawn_trainer.unknown_trainer"))
+    private val INVALID_POS =
+        SimpleCommandExceptionType(CobblemonTrainers.lang("command.spawn_trainer.invalid_position"))
+    private val SPAWN_FAILED =
+        SimpleCommandExceptionType(CobblemonTrainers.lang("command.spawn_trainer.spawn_failed"))
 
     fun register(dispatcher: CommandDispatcher<CommandSourceStack>) {
         dispatcher.register(
             Commands.literal(NAME)
                 .requires { it.hasPermission(2) }
                 .then(
-                    // ResourceLocationArgument, et pas une chaîne : Brigadier refuse les
-                    // deux-points dans un mot non quoté, ce qui casse `namespace:nom`.
+                    // ResourceLocationArgument rather than a string: Brigadier rejects colons
+                    // in an unquoted word, which breaks `namespace:name`.
                     Commands.argument(ARG_ID, ResourceLocationArgument.id())
                         .suggests { _, builder ->
                             val ids = TrainerRegistry.allIds()
                             val byName = ids.groupBy { it.path }
                             ids.forEach { id ->
-                                // Nom court tant qu'il est sans ambiguïté, sinon ID complet.
-                                // Dès que le joueur tape un `:`, on ne propose que les ID complets.
+                                // Short name while unambiguous, full ID otherwise. As soon as
+                                // the player types a colon, only suggest full IDs.
                                 val ambiguous = byName.getValue(id.path).size > 1
                                 builder.suggest(
                                     if (ambiguous || builder.remaining.contains(':')) id.toString() else id.path
@@ -91,11 +89,15 @@ object SpawnTrainerCommand {
             trainerId = trainerId
         ) ?: throw SPAWN_FAILED.create()
 
+        val name = Component.translatable(definition.name).withStyle(ChatFormatting.GOLD)
         source.sendSuccess(
             {
-                Component.literal(
-                    "✅ Dresseur §6${definition.name}§r spawné avec succès en " +
-                        "§a${pos.x.toInt()}, ${pos.y.toInt()}, ${pos.z.toInt()}§r !"
+                CobblemonTrainers.lang(
+                    "command.spawn_trainer.success",
+                    name,
+                    Component.literal(pos.x.toInt().toString()).withStyle(ChatFormatting.GREEN),
+                    Component.literal(pos.y.toInt().toString()).withStyle(ChatFormatting.GREEN),
+                    Component.literal(pos.z.toInt().toString()).withStyle(ChatFormatting.GREEN)
                 )
             },
             true
@@ -105,5 +107,5 @@ object SpawnTrainerCommand {
     }
 }
 
-// Extension utilitaire pour convertir Vec3 en BlockPos
+// Small helper to turn a Vec3 into a BlockPos
 private fun Vec3.toBlockPos() = BlockPos(this.x.toInt(), this.y.toInt(), this.z.toInt())

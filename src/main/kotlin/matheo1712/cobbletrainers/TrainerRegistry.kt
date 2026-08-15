@@ -4,31 +4,29 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.packs.resources.ResourceManager
-import org.slf4j.LoggerFactory
 import java.io.File
 
 /**
- * Registre en mémoire des dresseurs disponibles.
+ * In-memory registry of the available trainers.
  *
- * Les dresseurs viennent exclusivement des datapacks : n'importe quel pack peut fournir
- * `data/<namespace>/trainers/<nom>.json`, y compris le mod lui-même. L'ID du dresseur est
- * `<namespace>:<nom>`. Un pack chargé plus tard écrase un dresseur de même ID, selon les
- * règles habituelles d'empilement des datapacks.
+ * Trainers come from datapacks only: any pack may provide
+ * `data/<namespace>/trainers/<name>.json`, including the mod itself. The trainer ID is
+ * `<namespace>:<name>`. A pack loaded later overrides a trainer with the same ID, following
+ * the usual datapack stacking rules.
  *
- * Comme pour les registres de Cobblemon, seul le nom de fichier compte : un dresseur rangé
- * dans `trainers/kanto/red.json` reçoit l'ID `<namespace>:red`.
+ * As in Cobblemon's own registries, only the file name matters: a trainer stored at
+ * `trainers/kanto/red.json` gets the ID `<namespace>:red`.
  *
- * Le rechargement est piloté par le gestionnaire de ressources du serveur (voir
- * [CobblemonTrainers.onInitialize]), donc `/reload` recharge aussi les dresseurs.
+ * Reloading is driven by the server resource manager (see [CobblemonTrainers.onInitialize]),
+ * so `/reload` reloads trainers too.
  */
 object TrainerRegistry {
 
-    /** Dossier scanné dans les datapacks, sous `data/<namespace>/`. */
+    /** Directory scanned inside datapacks, under `data/<namespace>/`. */
     const val DATAPACK_DIRECTORY = "trainers"
 
     private const val JSON_EXTENSION = ".json"
 
-    private val LOGGER = LoggerFactory.getLogger("CobbleTrainers/Registry")
     private val GSON: Gson = GsonBuilder().setPrettyPrinting().create()
 
     private val trainers = mutableMapOf<ResourceLocation, TrainerDefinition>()
@@ -40,7 +38,7 @@ object TrainerRegistry {
             .forEach { (location, resource) ->
                 val id = buildId(location.namespace, File(location.path).nameWithoutExtension)
                 if (id == null) {
-                    LOGGER.error("Nom de dresseur invalide, fichier ignoré : $location")
+                    CobblemonTrainers.LOGGER.error("Invalid trainer name, skipping file: {}", location)
                     return@forEach
                 }
                 try {
@@ -49,25 +47,28 @@ object TrainerRegistry {
                             trainers[id] = GSON.fromJson(reader, TrainerDefinition::class.java)
                         }
                     }
-                    LOGGER.info("Dresseur chargé : $id")
                 } catch (e: Exception) {
-                    LOGGER.error("Erreur lors du chargement du dresseur $location : ${e.message}", e)
+                    CobblemonTrainers.LOGGER.error("Failed to load trainer {}", location, e)
                 }
             }
 
-        LOGGER.info("${trainers.size} dresseur(s) chargé(s) : ${trainers.keys.joinToString(", ")}")
+        CobblemonTrainers.LOGGER.info(
+            "Loaded {} trainer(s): {}",
+            trainers.size,
+            trainers.keys.joinToString(", ")
+        )
     }
 
-    /** Construit un ID en renvoyant null plutôt qu'en levant si le nom contient des caractères interdits. */
+    /** Builds an ID, returning null instead of throwing when the name has illegal characters. */
     private fun buildId(namespace: String, name: String): ResourceLocation? =
         ResourceLocation.tryParse("$namespace:$name")
 
     /**
-     * Résout l'ID saisi dans la commande.
+     * Resolves the ID typed in the command.
      *
-     * Brigadier donne toujours un [ResourceLocation] complet : un nom seul y arrive sous le
-     * namespace `minecraft`. On tente donc l'ID exact, puis, si le namespace est celui par
-     * défaut, le namespace du mod et enfin n'importe quel namespace ayant ce nom.
+     * Brigadier always yields a complete [ResourceLocation]: a bare name arrives under the
+     * `minecraft` namespace. So try the exact ID first, then, if the namespace is the default
+     * one, the mod namespace and finally any namespace holding that name.
      */
     fun resolveId(input: ResourceLocation): ResourceLocation? {
         if (input in trainers) return input

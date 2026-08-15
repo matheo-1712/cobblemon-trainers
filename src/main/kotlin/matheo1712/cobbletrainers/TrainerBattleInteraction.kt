@@ -5,16 +5,15 @@ import com.cobblemon.mod.common.battles.BattleBuilder
 import com.cobblemon.mod.common.entity.npc.NPCEntity
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.RegistryFriendlyByteBuf
-import net.minecraft.network.chat.Component
 import net.minecraft.server.level.ServerPlayer
 
 /**
- * Interaction de NPC qui lance un combat de dresseur au clic droit.
+ * NPC interaction that starts a trainer battle on right-click.
  *
- * Cobblemon fournit déjà `q.npc.start_battle(...)` en MoLang, mais cette fonction avale
- * les erreurs : si le joueur n'a pas de Pokémon, s'il est déjà en combat ou si le dresseur
- * n'a pas d'équipe, rien ne se passe et rien n'est affiché. Passer par du Kotlin permet de
- * renvoyer au joueur les messages d'erreur de Cobblemon.
+ * Cobblemon already provides `q.npc.start_battle(...)` in MoLang, but that function swallows
+ * errors: if the player has no Pokémon, is already battling, or the trainer has no team,
+ * nothing happens and nothing is shown. Going through Kotlin lets us forward Cobblemon's own
+ * error messages to the player, already localised by Cobblemon's language files.
  */
 class TrainerBattleInteraction : NPCInteractConfiguration {
 
@@ -28,7 +27,7 @@ class TrainerBattleInteraction : NPCInteractConfiguration {
         return true
     }
 
-    // Rien à synchroniser : l'interaction n'a aucun paramètre.
+    // Nothing to sync: the interaction has no parameters.
     override fun encode(buffer: RegistryFriendlyByteBuf) = Unit
     override fun decode(buffer: RegistryFriendlyByteBuf) = Unit
     override fun writeToNBT(compoundTag: CompoundTag) = Unit
@@ -37,17 +36,17 @@ class TrainerBattleInteraction : NPCInteractConfiguration {
     override fun isDifferentTo(other: NPCInteractConfiguration): Boolean = other !is TrainerBattleInteraction
 
     companion object {
-        /** Valeur du champ `type` dans le JSON du NPCClass. */
+        /** Value of the `type` field in the NPC class JSON. */
         const val TYPE = "cobblemon-trainers:battle"
 
         /**
-         * À appeler à l'initialisation du mod : le type doit être connu avant que les
-         * datapacks ne soient lus, sinon la désérialisation du NPCClass échoue.
+         * Call this on mod initialization: the type must be known before datapacks are read,
+         * otherwise deserializing the NPC class fails.
          */
         fun register() {
             NPCInteractConfiguration.register(
                 type = TYPE,
-                displayName = Component.literal("Combat de dresseur"),
+                displayName = CobblemonTrainers.lang("npc.interaction.battle"),
                 clazz = TrainerBattleInteraction::class.java
             )
         }

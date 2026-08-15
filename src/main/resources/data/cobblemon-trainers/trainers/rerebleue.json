@@ -1,5 +1,5 @@
 {
-  "name": "RereBleue",
+  "name": "trainer.cobblemon-trainers.rerebleue.name",
   "npcClass": "cobblemon-trainers:trainer",
   "level": 62,
   "skin": {
@@ -7,9 +7,9 @@
     "value": "RereBleue"
   },
   "canBattle": true,
-  "battleStartMessage": "L'océan n'a aucun secret pour moi. Montre-moi ce que tu vaux !",
-  "battleEndWinMessage": "Belle vague ! Tu m'as submergé.",
-  "battleEndLoseMessage": "La marée était contre toi. Reviens quand tu seras prêt.",
+  "battleStartMessage": "trainer.cobblemon-trainers.rerebleue.battle_start",
+  "battleEndWinMessage": "trainer.cobblemon-trainers.rerebleue.win",
+  "battleEndLoseMessage": "trainer.cobblemon-trainers.rerebleue.lose",
   "team": [
     "Gyarados (M) @ Leftovers",
     "Ability: Intimidate",
