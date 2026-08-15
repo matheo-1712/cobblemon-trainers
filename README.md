@@ -36,13 +36,10 @@ dans le chat.
 
 ## Déclarer un dresseur
 
-Deux emplacements, tous deux rechargés par `/reload` :
-
-- **Datapack** — `data/<namespace>/trainers/<nom>.json`. L'ID du dresseur est
-  `<namespace>:<nom>`. C'est la méthode recommandée pour distribuer des dresseurs.
-- **Config** — `config/cobblemon-trainers/trainers/<nom>.json`. Chargé sous le namespace
-  `cobblemon-trainers`, ce qui écrase un dresseur du même nom fourni par le mod. Pratique
-  pour bricoler sans construire de datapack.
+Les dresseurs se déclarent dans un datapack : `data/<namespace>/trainers/<nom>.json`.
+L'ID du dresseur est `<namespace>:<nom>`, et `/reload` les recharge sans redémarrer.
+Un pack chargé plus tard écrase un dresseur de même ID, selon les règles habituelles
+d'empilement des datapacks.
 
 Seul le nom de fichier compte : `trainers/kanto/red.json` donne l'ID `<namespace>:red`.
 Un fichier invalide est ignoré et l'erreur est écrite dans les logs du serveur, sans

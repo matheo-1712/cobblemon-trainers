@@ -2,7 +2,6 @@ package matheo1712.cobbletrainers
 
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
-import net.fabricmc.loader.api.FabricLoader
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.packs.resources.ResourceManager
 import org.slf4j.LoggerFactory
@@ -11,11 +10,10 @@ import java.io.File
 /**
  * Registre en mémoire des dresseurs disponibles.
  *
- * Deux sources, chargées dans cet ordre :
- * 1. Les datapacks — n'importe quel pack peut fournir `data/<namespace>/trainers/<nom>.json`,
- *    y compris le mod lui-même. L'ID du dresseur est alors `<namespace>:<nom>`.
- * 2. Le dossier de config `config/cobblemon-trainers/trainers/<nom>.json`, chargé sous le
- *    namespace `cobblemon-trainers` — il écrase donc le dresseur de même nom fourni par le mod.
+ * Les dresseurs viennent exclusivement des datapacks : n'importe quel pack peut fournir
+ * `data/<namespace>/trainers/<nom>.json`, y compris le mod lui-même. L'ID du dresseur est
+ * `<namespace>:<nom>`. Un pack chargé plus tard écrase un dresseur de même ID, selon les
+ * règles habituelles d'empilement des datapacks.
  *
  * Comme pour les registres de Cobblemon, seul le nom de fichier compte : un dresseur rangé
  * dans `trainers/kanto/red.json` reçoit l'ID `<namespace>:red`.
@@ -33,22 +31,11 @@ object TrainerRegistry {
     private val LOGGER = LoggerFactory.getLogger("CobbleTrainers/Registry")
     private val GSON: Gson = GsonBuilder().setPrettyPrinting().create()
 
-    private val configDir: File
-        get() = FabricLoader.getInstance().configDir
-            .resolve(CobblemonTrainers.MOD_ID)
-            .resolve(DATAPACK_DIRECTORY)
-            .toFile()
-
     private val trainers = mutableMapOf<ResourceLocation, TrainerDefinition>()
 
     fun reload(manager: ResourceManager) {
         trainers.clear()
-        loadFromDatapacks(manager)
-        loadFromConfig()
-        LOGGER.info("${trainers.size} dresseur(s) chargé(s) : ${trainers.keys.joinToString(", ")}")
-    }
 
-    private fun loadFromDatapacks(manager: ResourceManager) {
         manager.listResources(DATAPACK_DIRECTORY) { path -> path.path.endsWith(JSON_EXTENSION) }
             .forEach { (location, resource) ->
                 val id = buildId(location.namespace, File(location.path).nameWithoutExtension)
@@ -62,34 +49,13 @@ object TrainerRegistry {
                             trainers[id] = GSON.fromJson(reader, TrainerDefinition::class.java)
                         }
                     }
-                    LOGGER.info("Dresseur chargé (datapack) : $id")
+                    LOGGER.info("Dresseur chargé : $id")
                 } catch (e: Exception) {
                     LOGGER.error("Erreur lors du chargement du dresseur $location : ${e.message}", e)
                 }
             }
-    }
 
-    private fun loadFromConfig() {
-        if (!configDir.exists()) {
-            configDir.mkdirs()
-            LOGGER.info("Répertoire de config créé : ${configDir.absolutePath}")
-            return
-        }
-
-        val files = configDir.listFiles { f -> f.extension == "json" } ?: return
-        for (file in files) {
-            val id = buildId(CobblemonTrainers.MOD_ID, file.nameWithoutExtension)
-            if (id == null) {
-                LOGGER.error("Nom de fichier invalide pour un dresseur, ignoré : ${file.name}")
-                continue
-            }
-            try {
-                trainers[id] = GSON.fromJson(file.readText(), TrainerDefinition::class.java)
-                LOGGER.info("Dresseur chargé (config) : $id")
-            } catch (e: Exception) {
-                LOGGER.error("Erreur lors du chargement du dresseur ${file.name} : ${e.message}", e)
-            }
-        }
+        LOGGER.info("${trainers.size} dresseur(s) chargé(s) : ${trainers.keys.joinToString(", ")}")
     }
 
     /** Construit un ID en renvoyant null plutôt qu'en levant si le nom contient des caractères interdits. */

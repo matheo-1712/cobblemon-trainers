@@ -31,7 +31,7 @@ object SpawnTrainerCommand {
     private const val ARG_POS = "pos"
 
     private val TRAINER_NOT_FOUND = SimpleCommandExceptionType(
-        Component.literal("Dresseur introuvable ! Vérifie l'ID dans les datapacks ou config/cobblemon-trainers/trainers/")
+        Component.literal("Dresseur introuvable ! Vérifie l'ID dans data/<namespace>/trainers/ de tes datapacks.")
     )
     private val INVALID_POS = SimpleCommandExceptionType(
         Component.literal("Position invalide pour le spawn du dresseur.")

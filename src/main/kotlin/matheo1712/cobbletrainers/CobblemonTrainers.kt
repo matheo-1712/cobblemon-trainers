@@ -13,8 +13,7 @@ import org.slf4j.LoggerFactory
  * Point d'entrée principal du mod Cobblemon Trainers.
  *
  * Ce mod ajoute des dresseurs Pokémon configurables à Cobblemon. Les dresseurs se déclarent
- * soit dans un datapack (`data/<namespace>/trainers/<nom>.json`), soit dans la config
- * (`config/cobblemon-trainers/trainers/<nom>.json`).
+ * dans un datapack : `data/<namespace>/trainers/<nom>.json`.
  *
  * Fonctionnalités :
  * - Équipes au format Showdown

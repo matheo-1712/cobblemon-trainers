@@ -56,13 +56,12 @@ messages de combat.
   `TrainerReloadListener` sur le gestionnaire de ressources `SERVER_DATA` (ce qui couvre
   à la fois le chargement initial et `/reload`), et enregistre les listeners de combat
   dans un `try/catch` car ils dépendent de la présence de Cobblemon.
-- **`TrainerRegistry`** — map en mémoire `ResourceLocation -> TrainerDefinition`.
-  Deux sources, dans cet ordre : les datapacks (`data/<namespace>/trainers/<nom>.json`,
-  y compris ceux du mod) puis `config/cobblemon-trainers/trainers/<nom>.json`, chargé sous
-  le namespace du mod — **la config écrase donc le dresseur de même nom fourni par le
-  mod.** Comme dans les registres de Cobblemon, seul le nom de fichier compte : les
-  sous-dossiers ne font pas partie de l'ID. Une erreur de parsing est loguée et le
-  dresseur ignoré, sans faire échouer les autres.
+- **`TrainerRegistry`** — map en mémoire `ResourceLocation -> TrainerDefinition`, alimentée
+  uniquement par les datapacks (`data/<namespace>/trainers/<nom>.json`, y compris ceux du
+  mod). Il n'y a volontairement pas de couche de config sur disque. Comme dans les
+  registres de Cobblemon, seul le nom de fichier compte : les sous-dossiers ne font pas
+  partie de l'ID. Une erreur de parsing est loguée et le dresseur ignoré, sans faire
+  échouer les autres.
 - **`TrainerDefinition` / `TrainerSkin`** — data classes Gson. Tous les champs ont une
   valeur par défaut, donc un JSON partiel reste valide.
 - **`ShowdownTeamParser`** — convertit du format Showdown en `PokemonProperties` en
@@ -100,6 +99,13 @@ Ces points ne se devinent pas depuis notre code seul et ont chacun causé un bug
   après `parse`, jamais via la chaîne.
 - **Il n'existe pas de classe `cobblemon:humanoid`.** Cobblemon 1.7.3 ne livre que
   `ai_test`, `kitchen_sink`, `sacchi` et `standard`.
+- **`resourceIdentifier` pilote le rendu.** Laissé vide, `NPCClasses.reload` le remplace
+  par l'ID de la classe — donc `cobblemon-trainers:trainer`, pour lequel aucun asset
+  n'existe, et le skin de joueur n'apparaît jamais. Les variations qui associent
+  `model-default` / `model-slim` aux modèles Steve/Alex avec `"texture": "variable"` sont
+  déclarées sous le nom `cobblemon:standard`
+  (`assets/cobblemon/bedrock/npcs/variations/standard/50_standard_player.json`) : notre
+  classe doit donc pointer explicitement `"resourceIdentifier": "cobblemon:standard"`.
 
 ### Le NPCClass du mod
 
