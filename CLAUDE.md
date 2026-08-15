@@ -229,17 +229,39 @@ deux se déclenchent pour un même dresseur tué, c'est voulu : le combat déjà
 dans le registre, donc l'opération est idempotente. Le filtre `TrainerRegistry.findByAspects`
 évite de toucher aux NPC qui ne viennent pas du mod.
 
+### Livrer un pack
+
+Trois voies, toutes prises en charge et **délibérément laissées au choix de l'auteur du
+pack** — ne pas en privilégier une dans la doc :
+
+| Voie | Emplacement | Formats | Charge | Fichier qui décide |
+| --- | --- | --- | --- | --- |
+| Mod | `mods/` | `.jar` | `data/` et `assets/` | `fabric.mod.json` |
+| Datapack | `<monde>/datapacks/` | dossier, `.zip`, `.jar` | `data/` | `pack.mcmeta` |
+| Resource pack | `resourcepacks/` | dossier, `.zip`, `.jar` | `assets/` | `pack.mcmeta` |
+
+Une archive peut porter les deux fichiers et servir aux trois : c'est ce que fait
+`examples/cobblemonrlm/`.
+
+La voie `mods/` ne demande aucun code à nous — Fabric expose chaque mod chargé sous les deux
+`PackType` (`ModResourcePackCreator` de `fabric-resource-loader-v0`), et un pack n'a besoin
+que d'un `fabric.mod.json` sans `entrypoints`. **Ne pas écrire de scan de `mods/`.**
+
+Le piège, et la raison d'un pack « qui ne se charge pas » sans rien dans les logs : sans
+`fabric.mod.json`, `ModDiscoverer$ModScanTask.computeJarFile` renvoie `null` et le loader
+saute le jar en silence — ni erreur, ni avertissement.
+
 ### Mixins
 
 `ExampleMixin` est le stub du template Fabric, sans effet.
 
-`PackDetectorMixin` est le seul mixin réel : il fait accepter les archives `.jar` à
-`PackDetector.detectPackResources`, unique endroit où Minecraft filtre sur `.zip`. Tout le
-reste de la chaîne marche déjà — `FilePackResources` ouvre le fichier avec `ZipFile`, qui se
+`PackDetectorMixin` est le seul mixin réel. Il fait accepter les archives `.jar` à
+`PackDetector.detectPackResources`, unique endroit où Minecraft filtre sur `.zip` — tout le
+reste de la chaîne marche déjà, `FilePackResources` ouvrant le fichier avec `ZipFile`, qui se
 moque de l'extension. `PackDetector` étant partagé par toutes les sources sur dossier, ça
-vaut pour `datapacks/` comme pour `resourcepacks/` : une même archive peut servir des deux
-côtés, ce qui est exactement ce qu'un pack livrant dresseurs + traductions + musique
-demande.
+vaut pour `datapacks/` comme pour `resourcepacks/`, ce qui est le but : un auteur qui a
+construit un `.jar` pour `mods/` peut le déposer tel quel aux deux autres emplacements sans
+réempaqueter en `.zip`.
 
 Loom remappe les mixins statiquement (pas de refmap dans le jar) : après un changement,
 vérifier dans `build/libs/*.jar` que la cible est bien passée en intermediary

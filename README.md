@@ -74,9 +74,18 @@ Un pack d'exemple couvrant chaque option vit dans
 [`examples/cobblemonrlm/`](examples/cobblemonrlm) : un seul dossier qui fait à la fois
 datapack (`data/`) et resource pack (`assets/`).
 
-Un pack peut être un dossier, un `.zip` ou un `.jar` — Minecraft n'accepte que les deux
-premiers, le mod ajoute le `.jar` pour qu'une archive unique puisse être déposée dans
-`datapacks/` comme dans `resourcepacks/`.
+Trois façons de livrer un pack, au choix de son auteur :
+
+| Voie | Emplacement | Formats | Charge |
+| --- | --- | --- | --- |
+| Mod | `mods/` | `.jar` (avec un `fabric.mod.json`) | `data/` **et** `assets/` |
+| Datapack | `saves/<monde>/datapacks/`, `world/datapacks/` | dossier, `.zip`, `.jar` | `data/` |
+| Resource pack | `resourcepacks/` | dossier, `.zip`, `.jar` | `assets/` |
+
+Le `.jar` est accepté partout grâce au mod — Minecraft ne connaît que le dossier et le
+`.zip`. Une même archive peut porter `pack.mcmeta` et `fabric.mod.json` et servir aux trois.
+Le détail et les pièges sont dans
+[docs/DATAPACK.md](docs/DATAPACK.md#où-poser-le-pack).
 
 ## Développement
 

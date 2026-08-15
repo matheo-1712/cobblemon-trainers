@@ -56,18 +56,63 @@ Trois règles à retenir :
 - Un pack chargé plus tard écrase un dresseur de même ID, comme n'importe quelle ressource
   de datapack.
 
-Où poser le pack :
+### Où poser le pack
 
-| | Chemin |
-| --- | --- |
-| Un monde solo | `saves/<monde>/datapacks/mon_pack/` |
-| Un serveur | `world/datapacks/mon_pack/` |
+Trois voies, toutes prises en charge. Aucune n'est « la bonne » : choisis selon ce que ton
+pack contient et comment tu veux le distribuer.
 
-Un dossier, un `.zip` ou un `.jar`, les trois marchent — Minecraft n'accepte que les deux
-premiers, le mod ajoute le `.jar`. Ce n'est pas qu'une commodité : un pack qui livre des
-dresseurs **et** leurs traductions ou leur musique est à la fois un datapack et un resource
-pack, et une seule archive peut alors être déposée dans `datapacks/` comme dans
-`resourcepacks/`.
+| Voie | Emplacement | Formats | Charge | Activation |
+| --- | --- | --- | --- | --- |
+| Mod | `mods/` | `.jar` | `data/` **et** `assets/` | automatique, dans tous les mondes |
+| Datapack | `saves/<monde>/datapacks/` ou `world/datapacks/` | dossier, `.zip`, `.jar` | `data/` | par monde, activé à la découverte |
+| Resource pack | `resourcepacks/` | dossier, `.zip`, `.jar` | `assets/` | à cocher dans les options du jeu |
+
+Le `.jar` est accepté partout grâce au mod : Minecraft ne connaît que le dossier et le
+`.zip`. Rien ne t'oblige à t'en servir — un `.zip` fait exactement le même travail dans
+`datapacks/` et `resourcepacks/`.
+
+Ce qui décide, c'est le contenu du pack :
+
+- **Que des dresseurs** (`data/` seul) — la voie datapack suffit. Un dossier ou un `.zip`
+  dans `datapacks/`, rien d'autre à faire.
+- **Des dresseurs + des traductions ou de la musique** (`data/` et `assets/`) — il faut les
+  deux moitiés. Soit tu livres la même archive deux fois, dans `datapacks/` et dans
+  `resourcepacks/`, soit tu la livres une seule fois dans `mods/`, ce qui règle les deux d'un
+  coup et évite au joueur d'aller cocher le resource pack.
+
+Les trois voies peuvent cohabiter dans **une seule archive** : `fabric.mod.json` sert à la
+première, `pack.mcmeta` aux deux autres, et ni l'un ni l'autre ne gêne là où il ne sert pas.
+C'est ce que fait `examples/cobblemonrlm/`, déposable tel quel aux trois endroits.
+
+#### Le `fabric.mod.json` de la voie `mods/`
+
+À la racine de l'archive, à côté de `pack.mcmeta` :
+
+```json
+{
+	"schemaVersion": 1,
+	"id": "mon_pack",
+	"version": "1.0.0",
+	"name": "Mon pack de dresseurs",
+	"environment": "*",
+	"depends": {
+		"fabricloader": ">=0.17.2",
+		"minecraft": "~1.21.1",
+		"cobblemon-trainers": "*"
+	}
+}
+```
+
+Aucun code, aucun `entrypoints` : c'est un mod sans classes, uniquement des ressources.
+Fabric expose alors chaque mod chargé sous les deux types de pack. `id` doit être en
+minuscules (`[a-z0-9_-]`) et unique. Le `depends` sur `cobblemon-trainers` n'est pas
+obligatoire mais recommandé : sans lui, le pack se charge en silence dans une partie qui n'a
+pas le mod, et les dresseurs n'existent nulle part.
+
+> **Sans `fabric.mod.json`, un jar posé dans `mods/` est ignoré sans le moindre message.**
+> Fabric ne le reconnaît pas comme un mod et passe au suivant : ni erreur, ni avertissement
+> dans les logs. C'est le piège numéro un — et il ne concerne que `mods/` : dans
+> `datapacks/`, c'est `pack.mcmeta` qui compte, et `fabric.mod.json` n'y sert à rien.
 
 ## Le premier dresseur
 
@@ -226,16 +271,20 @@ Sans rien écrire, tes dresseurs utilisent la piste fournie par le mod.
 
 ### Livrer sa propre piste
 
-Le son est joué par le client, donc **le datapack ne suffit pas** : il faut un resource pack
-à côté. Le `.ogg` et son entrée `sounds.json` y vont ensemble.
+Le son est joué par le client, donc **`data/` ne suffit pas** : le `.ogg` et son entrée
+`sounds.json` vivent sous `assets/`, la partie resource pack.
 
 ```
-mon_resource_pack/
-├── pack.mcmeta                            ← "pack_format": 34 en 1.21.1
+mon_pack/
+├── pack.mcmeta                            ← "pack_format": 34 côté resource pack en 1.21.1
 └── assets/mon_pack/
     ├── sounds.json
     └── sounds/battle_music/champion.ogg
 ```
+
+Selon la voie choisie (voir [Où poser le pack](#où-poser-le-pack)), ce `assets/` part dans
+la même archive que `data/` — voie `mods/` — ou dans une copie déposée à part dans
+`resourcepacks/`.
 
 `sounds.json` :
 
@@ -276,11 +325,12 @@ sous-titres activés.
 au joueur comme textes traduisibles. Deux usages, au choix, dresseur par dresseur :
 
 - **Texte brut** — `"name": "Red"` s'affiche tel quel, dans toutes les langues.
-- **Clé de traduction** — `"name": "trainer.mon_pack.red.name"`, définie dans le resource
-  pack livré à côté du datapack.
+- **Clé de traduction** — `"name": "trainer.mon_pack.red.name"`, définie sous `assets/`, la
+  partie resource pack (même remarque que pour la musique : selon la voie choisie, elle
+  voyage avec `data/` ou dans une copie posée dans `resourcepacks/`).
 
 ```
-mon_resource_pack/
+mon_pack/
 └── assets/mon_pack/lang/
     ├── en_us.json
     └── fr_fr.json
@@ -326,7 +376,8 @@ côté client.
 | Symptôme | Cause probable |
 | --- | --- |
 | Le dresseur n'apparaît pas dans l'autocomplétion | Mauvais dossier : il faut `data/<ns>/cobblemontrainers/trainers/`, pas `data/<ns>/trainers/` |
-| `Loaded 0 trainer(s)` | `pack.mcmeta` absent ou `pack_format` incorrect — le pack entier est ignoré par Minecraft |
+| `Loaded 0 trainer(s)` depuis `datapacks/` | `pack.mcmeta` absent ou `pack_format` incorrect — le pack entier est ignoré par Minecraft |
+| Un jar posé dans `mods/` n'a aucun effet, et les logs ne disent rien | `fabric.mod.json` absent de la racine de l'archive : Fabric ne le voit pas comme un mod et l'ignore sans un mot |
 | Le dresseur s'appelle `trainer.mon_pack.red.name` en jeu | Resource pack absent ou désactivé, ou clé absente du fichier lang |
 | Le combat en double est refusé | Moins de 2 Pokémon d'un des deux côtés, le tien compris |
 | Une stat EV/IV semble ignorée | Nom de stat hors de la liste reconnue — voir le tableau du format d'équipe |
@@ -336,8 +387,8 @@ côté client.
 ## Un exemple complet
 
 Le dépôt contient un pack d'exemple couvrant chaque option, dresseur par dresseur :
-[`examples/cobblemonrlm/`](../examples/cobblemonrlm). Un seul dossier qui sert des deux
-côtés — `data/` pour les dresseurs, `assets/` pour les traductions et la musique. La
-dresseuse `jacinthe` y montre le cas complet : équipe de six, textes traduits et
-`battleMusic` pointant sur une piste du pack. Le `.ogg` n'est pas livré, à toi de déposer
-le tien au chemin indiqué dans le README du pack.
+[`examples/cobblemonrlm/`](../examples/cobblemonrlm). Il porte `pack.mcmeta` **et**
+`fabric.mod.json`, donc la même archive marche aux trois emplacements — à zipper tel quel.
+La dresseuse `jacinthe` y montre le cas complet : équipe de six, textes traduits et
+`battleMusic` pointant sur une piste du pack. Le `.ogg` n'est pas livré, à toi de déposer le
+tien au chemin indiqué dans le README du pack.

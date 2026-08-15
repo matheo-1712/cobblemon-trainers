@@ -7,18 +7,30 @@ des options disponibles. Sers-t'en comme point de départ : copie le dossier, re
 ## L'installer
 
 Ce pack est à la fois un **datapack** (les dresseurs, sous `data/`) et un **resource pack**
-(les traductions et la musique, sous `assets/`). Un seul dossier, deux rôles — c'est
-volontaire, et c'est ce que le mod permet.
+(les traductions et la musique, sous `assets/`). Il porte donc `pack.mcmeta` *et*
+`fabric.mod.json` : la même archive marche aux trois emplacements, à toi de choisir.
 
-| | Où |
+Zippe le contenu de ce dossier — les fichiers à la racine de l'archive, pas le dossier
+lui-même :
+
+```bash
+cd examples/cobblemonrlm && zip -r ../../cobblemonrlm-1.0.0.jar .
+```
+
+| Où poser l'archive | Ce que ça charge |
 | --- | --- |
-| Monde solo | `saves/<monde>/datapacks/cobblemonrlm/` et `resourcepacks/cobblemonrlm/` |
-| Serveur | `world/datapacks/cobblemonrlm/`, le resource pack distribué via `resource-pack` dans `server.properties` |
+| `mods/` (en `.jar`) | tout, actif partout sans rien cocher |
+| `saves/<monde>/datapacks/` | les dresseurs seuls |
+| `resourcepacks/`, à activer dans les options | les traductions et la musique |
 
-Un dossier, un `.zip` ou un `.jar` : les trois marchent, aux deux emplacements. Archiver le
-pack une fois et déposer la même archive des deux côtés est le plus simple.
+Les deux dernières lignes vont ensemble : c'est le même résultat que la première, en deux
+fichiers au lieu d'un. Le `.jar` n'est pas obligatoire hors de `mods/` — un `.zip` fait
+exactement le même travail dans `datapacks/` et `resourcepacks/`.
 
 Ensuite, en jeu : `/reload`, puis `/spawntrainer cobblemonrlm:<id>`.
+
+Attention : dans `mods/`, c'est `fabric.mod.json` qui compte, et **sans lui Fabric ignore le
+jar sans le moindre message.** Dans `datapacks/` et `resourcepacks/`, c'est `pack.mcmeta`.
 
 ## Les dresseurs
 
