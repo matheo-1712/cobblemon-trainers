@@ -1,3 +1,4 @@
 - Un bloc qui enregistre et fera toujours spawn un dresseur spécifique
 - Conditions pour combattre un autre dresseur
 - Récompenses après avoir battu un dresseur
+- Support des formes de pokemon
