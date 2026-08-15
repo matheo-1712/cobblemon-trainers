@@ -21,8 +21,18 @@ import java.util.UUID
  */
 object TrainerSpawner {
 
-    /** NPC class used when a trainer does not specify one. Shipped by the mod. */
-    val DEFAULT_NPC_CLASS: ResourceLocation = CobblemonTrainers.id("trainer")
+    /**
+     * The NPC classes shipped by the mod. Datapacks configure trainers, never NPC classes:
+     * what used to be worth changing there now lives on [TrainerDefinition].
+     *
+     * Battle format and AI difficulty are applied per entity, so they need no variant. Party
+     * healing is the exception: Cobblemon only reads `autoHealParty` from the class
+     * (`NPCBattleActor` and `PokemonBattle` both go through `npc.npc.autoHealParty`), so the
+     * mod ships one class per value of that boolean. Keep the two files identical apart from
+     * `autoHealParty`.
+     */
+    val NPC_CLASS_HEALING: ResourceLocation = CobblemonTrainers.id("trainer")
+    val NPC_CLASS_NO_HEALING: ResourceLocation = CobblemonTrainers.id("trainer_no_heal")
 
     private val LOGGER = CobblemonTrainers.LOGGER
 
@@ -38,12 +48,12 @@ object TrainerSpawner {
         definition: TrainerDefinition,
         trainerId: ResourceLocation
     ): NPCEntity? {
-        // 1. Resolve the NPC class. No fallback to an arbitrary class: failing loudly beats
-        //    spawning an NPC that behaves unpredictably.
-        val npcClassId = definition.npcClass?.let { ResourceLocation.tryParse(it) } ?: DEFAULT_NPC_CLASS
+        // 1. Resolve the NPC class shipped by the mod. No fallback to an arbitrary class:
+        //    failing loudly beats spawning an NPC that behaves unpredictably.
+        val npcClassId = if (definition.autoHealParty) NPC_CLASS_HEALING else NPC_CLASS_NO_HEALING
         val npcClass = NPCClasses.getByIdentifier(npcClassId) ?: run {
             LOGGER.error(
-                "Unknown NPC class {}. Available classes: {}",
+                "NPC class {} is missing — is the mod's data pack loaded? Available classes: {}",
                 npcClassId,
                 NPCClasses.classes.joinToString(", ") { it.id.toString() }
             )
@@ -56,7 +66,7 @@ object TrainerSpawner {
         npc.moveTo(position.x, position.y, position.z, npc.yRot, npc.xRot)
 
         // 3. Display name. The npc.npc setter assigns a random one from the class, so this
-        //    has to come after. Translatable so datapacks may use a lang key.
+        //    has to come after. Translatable so a resource pack may localise it.
         npc.customName = Component.translatable(definition.name)
 
         // 4. Tag the entity with its trainer ID. Applied aspects are serialized to NBT, which
@@ -69,14 +79,18 @@ object TrainerSpawner {
             npc.interaction = NoneNPCInteractionConfiguration()
         }
 
-        // 6. initialize() resets `party` to whatever the NPC class provides, so the trainer
+        // 6. Battle AI difficulty, overridden per entity so every trainer can differ while
+        //    sharing one NPC class. Cobblemon clamps it to 0..5 anyway.
+        npc.skill = definition.skill.coerceIn(0, 5)
+
+        // 7. initialize() resets `party` to whatever the NPC class provides, so the trainer
         //    team has to be assigned afterwards.
         npc.initialize(definition.level)
 
         applyTeam(npc, definition, trainerId)
         npc.updateAspects()
 
-        // 7. The skin arrives asynchronously, after the entity is spawned.
+        // 8. The skin arrives asynchronously, after the entity is spawned.
         applySkin(server, npc, definition.skin)
 
         if (!level.addFreshEntity(npc)) {

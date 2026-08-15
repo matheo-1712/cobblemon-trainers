@@ -80,6 +80,18 @@ object TrainerRegistry {
         return trainers.keys.firstOrNull { it.path == input.path }
     }
 
+    /**
+     * Finds the trainer tagged on an NPC entity through its applied aspects.
+     *
+     * The aspect is written at spawn time and saved to NBT, so the link survives a restart.
+     */
+    fun findByAspects(aspects: Collection<String>): TrainerDefinition? {
+        val aspect = aspects.find { it.startsWith(CobblemonTrainers.TRAINER_ASPECT_PREFIX) } ?: return null
+        val id = ResourceLocation.tryParse(aspect.removePrefix(CobblemonTrainers.TRAINER_ASPECT_PREFIX))
+            ?: return null
+        return trainers[id]
+    }
+
     fun get(id: ResourceLocation): TrainerDefinition? = trainers[id]
     fun allIds(): Set<ResourceLocation> = trainers.keys.toSet()
     fun all(): Map<ResourceLocation, TrainerDefinition> = trainers.toMap()

@@ -1,6 +1,5 @@
 {
   "name": "trainer.cobblemon-trainers.rerebleue.name",
-  "npcClass": "cobblemon-trainers:trainer",
   "level": 62,
   "skin": {
     "type": "player_username",
