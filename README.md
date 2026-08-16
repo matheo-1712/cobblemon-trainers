@@ -43,7 +43,7 @@ joueur enfermé face à un adversaire absent.
 ## Déclarer un dresseur
 
 Les dresseurs se déclarent dans un datapack, à
-`data/<namespace>/cobblemontrainers/trainers/<nom>.json`. L'ID du dresseur est
+`data/<namespace>/cobblemontrainers/<nom>.json`. L'ID du dresseur est
 `<namespace>:<nom>`, et `/reload` les recharge sans redémarrer.
 
 ```json
@@ -67,6 +67,9 @@ Les dresseurs se déclarent dans un datapack, à
 Tous les champs sont facultatifs. Les autres réglages disponibles : format de combat
 (`singles`, `doubles`, `triples`), difficulté de l'IA, soin de l'équipe entre les combats,
 messages de début et de fin, musique de combat, et des textes traduisibles par clé.
+
+Une forme — régionale, méga, fakemon d'un autre pack — s'obtient avec une ligne `Aspects:`,
+qui reprend la syntaxe de `/pokespawn` : `"Aspects: rlm, poison"` pour un Haxorus RLM Poison.
 
 **➜ Le guide complet est dans [docs/DATAPACK.md](docs/DATAPACK.md)** : arborescence,
 référence de tous les champs, format d'équipe Showdown, skins, musique, traductions, et les
@@ -123,8 +126,9 @@ pour la configuration de l'IDE.
 
 ## Limites connues
 
-- Les formes régionales notées à la Showdown (`Raichu-Alola`) ne sont pas traduites vers
-  les aspects Cobblemon.
+- Les formes se déclarent par leurs aspects (`Aspects: rlm, poison`), pas par le suffixe
+  Showdown du nom d'espèce (`Raichu-Alola`), qui ne se distingue pas des espèces dont le nom
+  contient un tiret (`Ho-Oh`, `Porygon-Z`).
 - Les skins sont récupérés depuis l'API Mojang : ils nécessitent un accès réseau et un
   pseudo existant. En cas d'échec, le dresseur garde le skin par défaut et la raison est
   écrite dans les logs.

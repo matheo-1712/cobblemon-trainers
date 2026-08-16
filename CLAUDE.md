@@ -65,10 +65,11 @@ messages et musique de combat.
   à la fois le chargement initial et `/reload`), et enregistre les listeners de combat
   dans un `try/catch` car ils dépendent de la présence de Cobblemon.
 - **`TrainerRegistry`** — map en mémoire `ResourceLocation -> TrainerDefinition`, alimentée
-  uniquement par les datapacks (`data/<namespace>/cobblemontrainers/trainers/<nom>.json`, y
-  compris ceux du mod ; tout ce que le mod lit dans un pack est regroupé sous
-  `cobblemontrainers/`, ce qui évite toute collision avec un `data/<ns>/trainers/` d'un autre
-  mod). Il n'y a volontairement pas de couche de config sur disque. Comme dans les
+  uniquement par les datapacks (`data/<namespace>/cobblemontrainers/<nom>.json`, y compris
+  ceux du mod). Le dossier est à un seul niveau sous le namespace, comme les `species/` et
+  `npcs/` de Cobblemon, mais nommé d'après le mod plutôt que `trainers/` : un `trainers/`
+  générique entrerait en collision avec un autre mod qui lirait le même dossier. Il n'y a
+  volontairement pas de couche de config sur disque. Comme dans les
   registres de Cobblemon, seul le nom de fichier compte : les sous-dossiers ne font pas
   partie de l'ID. Une erreur de parsing est loguée et le dresseur ignoré, sans faire
   échouer les autres.
@@ -307,7 +308,35 @@ Loom remappe les mixins statiquement (pas de refmap dans le jar) : après un cha
 vérifier dans `build/libs/*.jar` que la cible est bien passée en intermediary
 (`detectPackResources` → `method_52441`, `PackDetector` → `class_8621`).
 
+### Formes et aspects
+
+Une forme Cobblemon n'est pas une espèce : c'est la même espèce portant d'autres **aspects**,
+et `Pokemon.updateForm()` choisit la forme via `Species.getForm(aspects)`. La ligne
+`Aspects:` du format d'équipe les déclare, et `ShowdownTeamParser` les réinjecte dans la
+chaîne de propriétés (`rlm=true`, ou `appliance=wash` tel quel pour une caractéristique à
+choix) — la même syntaxe que `/pokespawn`, donc testable en jeu.
+
+Points à ne pas redécouvrir :
+
+- **Passer par les propriétés est la seule voie qui tient.** `PokemonProperties.form` est
+  écrasé : `commonApply` pose la forme puis appelle `updateAspects()`, qui la recalcule
+  depuis les aspects. Et `PokemonProperties.aspects` n'est jamais appliqué, il ne sert qu'à
+  `matches`. Seules les caractéristiques d'espèce produisent des aspects durables.
+- **L'aspect d'une forme n'est pas toujours le nom de sa propriété.** Rotom-Lavage a
+  l'aspect `wash-appliance`, produit par la caractéristique à choix `appliance` réglée sur
+  `wash` : impossible de dériver la propriété depuis l'aspect sans lire l'`aspectFormat` du
+  fournisseur. D'où le passe-plat pour les valeurs contenant `=`.
+- **Un aspect inconnu est validé ici, pas par Cobblemon.** `PokemonProperties.parse` jette
+  sans un mot une clé qu'aucune caractéristique ne déclare. La liste vient de
+  `CustomPokemonProperty.properties`, que `SpeciesFeatures.reload` alimente avec chaque
+  fournisseur qui est un `CustomPokemonPropertyType` — donc peuplée par les datapacks, et
+  seulement consultable une fois le serveur chargé (l'équipe est construite à l'apparition
+  du dresseur, c'est bon).
+
 ## Limites connues
 
-`ShowdownTeamParser` ne traduit pas les formes régionales notées à la Showdown
-(`Raichu-Alola`) vers les aspects Cobblemon.
+`ShowdownTeamParser` ne traduit pas le suffixe de forme des exports Showdown
+(`Raichu-Alola`, `Rotom-Wash`) : rien ne le distingue d'une espèce dont le nom contient un
+tiret (`Ho-Oh`, `Porygon-Z`, `Jangmo-o`) sans interroger le registre des espèces, et le
+suffixe ne donne de toute façon pas la propriété d'une caractéristique à choix. Les formes
+passent par `Aspects:`.

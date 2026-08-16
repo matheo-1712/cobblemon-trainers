@@ -1,6 +1,6 @@
 {
   "cobblemon-trainers.command.spawn_trainer.success": "Spawned trainer %s at %s, %s, %s",
-  "cobblemon-trainers.command.spawn_trainer.unknown_trainer": "Unknown trainer. Check the trainer IDs in data/<namespace>/cobblemontrainers/trainers/ of your datapacks.",
+  "cobblemon-trainers.command.spawn_trainer.unknown_trainer": "Unknown trainer. Check the trainer IDs in data/<namespace>/cobblemontrainers/ of your datapacks.",
   "cobblemon-trainers.command.spawn_trainer.invalid_position": "Invalid position for spawning a trainer.",
   "cobblemon-trainers.command.spawn_trainer.spawn_failed": "Could not spawn the trainer. See the server log for details.",
   "cobblemon-trainers.chat.trainer_message": "[%s] %s",
