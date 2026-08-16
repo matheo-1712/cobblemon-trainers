@@ -396,8 +396,10 @@ affiche la clé telle quelle — un bon moyen de repérer une clé oubliée.
 ```
 
 `/reload` recharge les dresseurs sans redémarrer. L'autocomplétion de `/spawntrainer`
-propose les dresseurs effectivement chargés : si le tien n'y apparaît pas, c'est qu'il n'a
-pas été lu — la raison est dans les logs du serveur.
+propose les dresseurs effectivement chargés, sous leur ID complet `<pack>:<dresseur>` : si le
+tien n'y apparaît pas, c'est qu'il n'a pas été lu — la raison est dans les logs du serveur.
+Et si le namespace affiché n'est pas celui que tu attendais, c'est qu'un autre pack fournit
+un dresseur de même nom.
 
 Au chargement, le mod écrit une ligne récapitulative :
 

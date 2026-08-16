@@ -28,8 +28,10 @@ Fabric API et Fabric Language Kotlin. Le mod fonctionne côté serveur comme en 
 /spawntrainer <id> <x> <y> <z>
 ```
 
-Niveau de permission 2 (opérateur). L'`id` accepte la forme complète `namespace:nom` ou le
-nom seul quand il n'est pas ambigu ; l'autocomplétion propose les dresseurs chargés.
+Niveau de permission 2 (opérateur). L'autocomplétion propose les dresseurs chargés sous leur
+ID complet, `<pack>:<dresseur>` — le namespace étant le pack d'où vient le dresseur, on voit
+d'un coup d'œil qui fournit quoi. À la frappe, le nom seul suffit quand il n'est pas ambigu,
+et la recherche porte sur les deux moitiés : `jac` retrouve `mon_pack:jacinthe`.
 
 Un clic droit sur le dresseur lance le combat, sur fond de musique de combat. Si le combat
 ne peut pas démarrer (pas de Pokémon dans ton équipe, combat déjà en cours, dresseur sans

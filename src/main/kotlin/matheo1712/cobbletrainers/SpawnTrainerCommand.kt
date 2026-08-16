@@ -7,6 +7,7 @@ import com.mojang.brigadier.exceptions.SimpleCommandExceptionType
 import net.minecraft.ChatFormatting
 import net.minecraft.commands.CommandSourceStack
 import net.minecraft.commands.Commands
+import net.minecraft.commands.SharedSuggestionProvider
 import net.minecraft.commands.arguments.ResourceLocationArgument
 import net.minecraft.commands.arguments.coordinates.Vec3Argument
 import net.minecraft.core.BlockPos
@@ -47,17 +48,16 @@ object SpawnTrainerCommand {
                     // in an unquoted word, which breaks `namespace:name`.
                     Commands.argument(ARG_ID, ResourceLocationArgument.id())
                         .suggests { _, builder ->
-                            val ids = TrainerRegistry.allIds()
-                            val byName = ids.groupBy { it.path }
-                            ids.forEach { id ->
-                                // Short name while unambiguous, full ID otherwise. As soon as
-                                // the player types a colon, only suggest full IDs.
-                                val ambiguous = byName.getValue(id.path).size > 1
-                                builder.suggest(
-                                    if (ambiguous || builder.remaining.contains(':')) id.toString() else id.path
-                                )
-                            }
-                            builder.buildFuture()
+                            // Always the full `namespace:name`. The namespace *is* the pack a
+                            // trainer comes from, so it is the only thing that tells apart two
+                            // packs shipping the same file name — and it shows at a glance
+                            // which pack provides what. Typing the bare name still works:
+                            // `resolveId` falls back to it.
+                            //
+                            // suggestResource also filters on what has been typed, matching the
+                            // path as well as the namespace, so `jac` still finds
+                            // `mon_pack:jacinthe`.
+                            SharedSuggestionProvider.suggestResource(TrainerRegistry.allIds(), builder)
                         }
                         .then(
                             Commands.argument(ARG_POS, Vec3Argument.vec3())
