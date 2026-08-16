@@ -209,6 +209,13 @@ Ces points ne se devinent pas depuis notre code seul et ont chacun causé un bug
 - **Le parseur de propriétés découpe sur les espaces.** Les valeurs qui peuvent en
   contenir (surnom, objet tenu) sont assignées directement sur l'objet `PokemonProperties`
   après `parse`, jamais via la chaîne.
+- **`PokemonProperties.copy()` perd le surnom**, donc `SimplePartyProvider` aussi. `copy()`
+  est un aller-retour `saveToJSON` → `loadFromJSON`, et ce couple ne connaît pas `nickname`
+  (contrairement à `saveToNBT`/`loadFromNBT` et à `asString`) : le champ repart nul, sans un
+  mot. `provide()` commence par ce `copy()`, d'où un surnom Showdown correctement parsé mais
+  jamais visible en combat. `TrainerSpawner.applyTeam` remplit donc lui-même le
+  `NPCPartyStore` — le reste de `provide()` n'est que le niveau par défaut et la création du
+  store.
 - **Il n'existe pas de classe `cobblemon:humanoid`.** Cobblemon 1.7.3 ne livre que
   `ai_test`, `kitchen_sink`, `sacchi` et `standard`.
 - **`resourceIdentifier` pilote le rendu.** Laissé vide, `NPCClasses.reload` le remplace
