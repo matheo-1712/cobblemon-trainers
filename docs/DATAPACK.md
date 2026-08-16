@@ -58,35 +58,50 @@ Trois règles à retenir :
 
 ### Où poser le pack
 
-Trois voies, toutes prises en charge. Aucune n'est « la bonne » : choisis selon ce que ton
-pack contient et comment tu veux le distribuer.
+Trois voies. Aucune n'est « la bonne » : choisis selon ce que ton pack contient et comment tu
+veux le distribuer.
 
 | Voie | Emplacement | Formats | Charge | Activation |
 | --- | --- | --- | --- | --- |
-| Mod | `mods/` | `.jar` | `data/` **et** `assets/` | automatique, dans tous les mondes |
+| Dossier des mods | `mods/` | dossier, `.zip`, `.jar` | `data/` **et** `assets/` | automatique, dans tous les mondes |
 | Datapack | `saves/<monde>/datapacks/` ou `world/datapacks/` | dossier, `.zip`, `.jar` | `data/` | par monde, activé à la découverte |
 | Resource pack | `resourcepacks/` | dossier, `.zip`, `.jar` | `assets/` | à cocher dans les options du jeu |
 
-Le `.jar` est accepté partout grâce au mod : Minecraft ne connaît que le dossier et le
-`.zip`. Rien ne t'oblige à t'en servir — un `.zip` fait exactement le même travail dans
-`datapacks/` et `resourcepacks/`.
-
 Ce qui décide, c'est le contenu du pack :
 
-- **Que des dresseurs** (`data/` seul) — la voie datapack suffit. Un dossier ou un `.zip`
-  dans `datapacks/`, rien d'autre à faire.
-- **Des dresseurs + des traductions ou de la musique** (`data/` et `assets/`) — il faut les
-  deux moitiés. Soit tu livres la même archive deux fois, dans `datapacks/` et dans
-  `resourcepacks/`, soit tu la livres une seule fois dans `mods/`, ce qui règle les deux d'un
-  coup et évite au joueur d'aller cocher le resource pack.
+- **Que des dresseurs** (`data/` seul) — n'importe laquelle des deux premières voies suffit.
+- **Des dresseurs + des traductions ou de la musique** (`data/` et `assets/`) — `mods/` est la
+  seule voie qui charge les deux moitiés en un fichier. Sinon il faut livrer la même archive
+  deux fois, dans `datapacks/` **et** dans `resourcepacks/`, et le joueur doit aller cocher le
+  resource pack.
 
-Les trois voies peuvent cohabiter dans **une seule archive** : `fabric.mod.json` sert à la
-première, `pack.mcmeta` aux deux autres, et ni l'un ni l'autre ne gêne là où il ne sert pas.
-C'est ce que fait `examples/cobblemonrlm/`, déposable tel quel aux trois endroits.
+#### `mods/` : un pack, rien d'autre
 
-#### Le `fabric.mod.json` de la voie `mods/`
+Un pack posé dans `mods/` n'a besoin **que de son `pack.mcmeta`**. Pas de `fabric.mod.json`,
+pas de code, pas de manipulation : le mod ramasse tout dossier ou archive du dossier des mods
+qui porte un `pack.mcmeta`, et l'expose à la fois comme datapack et comme resource pack.
 
-À la racine de l'archive, à côté de `pack.mcmeta` :
+```
+mon_pack.jar
+├── pack.mcmeta
+├── data/mon_pack/cobblemontrainers/trainers/…
+└── assets/mon_pack/{lang,sounds,sounds.json}
+```
+
+Le pack apparaît dans `/datapack list` et dans l'écran des resource packs sous l'ID
+`mods/<nom de fichier>`. Le `.jar` n'a rien de particulier ici — un dossier ou un `.zip` font
+pareil ; c'est juste le format le plus commode à distribuer.
+
+Ça vaut pour le client comme pour le serveur, chacun lisant son propre dossier `mods/` :
+un serveur y trouve les dresseurs, un joueur qui y met la même archive y trouve en plus les
+traductions et la musique.
+
+#### Le `fabric.mod.json`, si tu en veux un
+
+Ajouter un `fabric.mod.json` à la racine reste possible, et change qui charge le pack : Fabric
+le prend alors pour un mod à part entière et l'expose lui-même sous les deux types, le mod
+laissant la main. Même résultat, avec un avantage — pouvoir déclarer une dépendance, donc une
+erreur claire au démarrage plutôt qu'un pack chargé pour rien :
 
 ```json
 {
@@ -103,16 +118,38 @@ C'est ce que fait `examples/cobblemonrlm/`, déposable tel quel aux trois endroi
 }
 ```
 
-Aucun code, aucun `entrypoints` : c'est un mod sans classes, uniquement des ressources.
-Fabric expose alors chaque mod chargé sous les deux types de pack. `id` doit être en
-minuscules (`[a-z0-9_-]`) et unique. Le `depends` sur `cobblemon-trainers` n'est pas
-obligatoire mais recommandé : sans lui, le pack se charge en silence dans une partie qui n'a
-pas le mod, et les dresseurs n'existent nulle part.
+Aucun `entrypoints` : c'est un mod sans classes. `id` doit être en minuscules
+(`[a-z0-9_-]`) et unique.
 
-> **Sans `fabric.mod.json`, un jar posé dans `mods/` est ignoré sans le moindre message.**
-> Fabric ne le reconnaît pas comme un mod et passe au suivant : ni erreur, ni avertissement
-> dans les logs. C'est le piège numéro un — et il ne concerne que `mods/` : dans
-> `datapacks/`, c'est `pack.mcmeta` qui compte, et `fabric.mod.json` n'y sert à rien.
+> Attention si tu prends cette voie : un `fabric.mod.json` **mal formé** fait échouer le
+> démarrage du jeu, alors qu'un pack sans ce fichier se charge tranquillement. Si tu n'as pas
+> besoin de la dépendance, ne mets pas le fichier.
+
+#### `pack_format` d'une archive qui sert des deux côtés
+
+Les valeurs diffèrent selon le type en 1.21.1 : **48** côté données, **34** côté ressources.
+Un pack qui porte `data/` et `assets/` déclare donc un intervalle, sinon l'écran des resource
+packs l'affiche comme incompatible :
+
+```json
+{
+  "pack": {
+    "pack_format": 48,
+    "supported_formats": { "min_inclusive": 34, "max_inclusive": 48 },
+    "description": "Mes dresseurs"
+  }
+}
+```
+
+Un pack qui ne sert que de datapack n'en a pas besoin : `pack_format: 48` suffit.
+
+#### Ce que `datapacks/` ne fera jamais
+
+Le dossier `datapacks/` d'un monde est déclaré en `PackType.SERVER_DATA` et rien d'autre : un
+`assets/` posé là n'est jamais lu, qu'il soit dans un dossier, un `.zip` ou un `.jar`. Les
+traductions et la musique sont résolues par le client, qui ne regarde jamais dans le dossier
+d'un monde — et sur un serveur, il n'a même pas le fichier. C'est précisément ce que la voie
+`mods/` contourne.
 
 ## Le premier dresseur
 
@@ -377,7 +414,9 @@ côté client.
 | --- | --- |
 | Le dresseur n'apparaît pas dans l'autocomplétion | Mauvais dossier : il faut `data/<ns>/cobblemontrainers/trainers/`, pas `data/<ns>/trainers/` |
 | `Loaded 0 trainer(s)` depuis `datapacks/` | `pack.mcmeta` absent ou `pack_format` incorrect — le pack entier est ignoré par Minecraft |
-| Un jar posé dans `mods/` n'a aucun effet, et les logs ne disent rien | `fabric.mod.json` absent de la racine de l'archive : Fabric ne le voit pas comme un mod et l'ignore sans un mot |
+| Un pack posé dans `mods/` n'a aucun effet | `pack.mcmeta` absent de la **racine** de l'archive, ou rangé sous un dossier intermédiaire parce que le dossier a été zippé au lieu de son contenu |
+| Les dresseurs se chargent, mais pas la musique ni les traductions | L'archive est dans `datapacks/`. Ce dossier n'est lu **que** comme données, jamais comme ressources — le format n'y change rien. Pose-la dans `mods/`, ou une copie dans `resourcepacks/` |
+| Le pack est au bon endroit et la musique reste muette | Le `.ogg` manque de l'archive, ou son chemin ne correspond pas au `name` de `sounds.json` (`<ns>:battle_music/x` → `assets/<ns>/sounds/battle_music/x.ogg`) |
 | Le dresseur s'appelle `trainer.mon_pack.red.name` en jeu | Resource pack absent ou désactivé, ou clé absente du fichier lang |
 | Le combat en double est refusé | Moins de 2 Pokémon d'un des deux côtés, le tien compris |
 | Une stat EV/IV semble ignorée | Nom de stat hors de la liste reconnue — voir le tableau du format d'équipe |
@@ -387,8 +426,7 @@ côté client.
 ## Un exemple complet
 
 Le dépôt contient un pack d'exemple couvrant chaque option, dresseur par dresseur :
-[`examples/cobblemonrlm/`](../examples/cobblemonrlm). Il porte `pack.mcmeta` **et**
-`fabric.mod.json`, donc la même archive marche aux trois emplacements — à zipper tel quel.
+[`examples/cobblemonrlm/`](../examples/cobblemonrlm). Zippe son contenu, renomme en `.jar`,
+pose-le dans `mods/` : c'est tout.
 La dresseuse `jacinthe` y montre le cas complet : équipe de six, textes traduits et
-`battleMusic` pointant sur une piste du pack. Le `.ogg` n'est pas livré, à toi de déposer le
-tien au chemin indiqué dans le README du pack.
+`battleMusic` pointant sur une piste livrée par le pack, `.ogg` compris.

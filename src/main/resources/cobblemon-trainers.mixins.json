@@ -4,7 +4,11 @@
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
 		"ExampleMixin",
-		"PackDetectorMixin"
+		"PackDetectorMixin",
+		"PackRepositoryMixin"
+	],
+	"client": [
+		"client.MinecraftMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

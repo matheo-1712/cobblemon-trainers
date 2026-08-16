@@ -7,30 +7,28 @@ des options disponibles. Sers-t'en comme point de départ : copie le dossier, re
 ## L'installer
 
 Ce pack est à la fois un **datapack** (les dresseurs, sous `data/`) et un **resource pack**
-(les traductions et la musique, sous `assets/`). Il porte donc `pack.mcmeta` *et*
-`fabric.mod.json` : la même archive marche aux trois emplacements, à toi de choisir.
-
-Zippe le contenu de ce dossier — les fichiers à la racine de l'archive, pas le dossier
-lui-même :
+(les traductions et la musique, sous `assets/`). Zippe le contenu de ce dossier — les fichiers
+à la racine de l'archive, pas le dossier lui-même — renomme en `.jar`, et pose-le dans
+`mods/`, à côté de `cobblemon-trainers` :
 
 ```bash
-cd examples/cobblemonrlm && zip -r ../../cobblemonrlm-1.0.0.jar .
+cd examples/cobblemonrlm && zip -r ../../cobblemonrlm.jar .
 ```
+
+C'est tout. Pas de `fabric.mod.json`, pas de resource pack à cocher : le mod lit les deux
+moitiés. En jeu, `/reload` puis `/spawntrainer cobblemonrlm:<id>`.
+
+Les autres emplacements marchent aussi, si tu préfères :
 
 | Où poser l'archive | Ce que ça charge |
 | --- | --- |
-| `mods/` (en `.jar`) | tout, actif partout sans rien cocher |
+| `mods/` | tout, actif partout sans rien cocher |
 | `saves/<monde>/datapacks/` | les dresseurs seuls |
 | `resourcepacks/`, à activer dans les options | les traductions et la musique |
 
-Les deux dernières lignes vont ensemble : c'est le même résultat que la première, en deux
-fichiers au lieu d'un. Le `.jar` n'est pas obligatoire hors de `mods/` — un `.zip` fait
-exactement le même travail dans `datapacks/` et `resourcepacks/`.
-
-Ensuite, en jeu : `/reload`, puis `/spawntrainer cobblemonrlm:<id>`.
-
-Attention : dans `mods/`, c'est `fabric.mod.json` qui compte, et **sans lui Fabric ignore le
-jar sans le moindre message.** Dans `datapacks/` et `resourcepacks/`, c'est `pack.mcmeta`.
+Les deux dernières lignes vont ensemble : même résultat que la première, en deux fichiers au
+lieu d'un. Le dossier `datapacks/` d'un monde ne lit **que** `data/` — un `assets/` posé là
+est ignoré, quel que soit le format.
 
 ## Les dresseurs
 
@@ -65,12 +63,14 @@ donc il vit sous `assets/`.
 ```
 assets/cobblemonrlm/
 ├── sounds.json                                 ← déclare battle_music.jacinthe
-└── sounds/battle_music/jacinthe_battle.ogg     ← à fournir toi-même
+└── sounds/battle_music/jacinthe_battle.ogg
 ```
 
-**Le `.ogg` n'est pas livré ici** — pas de piste dont la licence permettrait de la
-redistribuer dans ce dépôt. Dépose la tienne à ce chemin exact, en Ogg Vorbis. Sans elle,
-`jacinthe` se bat en silence : le reste du dresseur fonctionne normalement.
+Le chemin du `.ogg` doit correspondre exactement au `name` de `sounds.json` :
+`cobblemonrlm:battle_music/jacinthe_battle` se résout en
+`assets/cobblemonrlm/sounds/battle_music/jacinthe_battle.ogg`. Un fichier absent ou mal placé
+ne produit aucune erreur visible — le combat se déroule simplement en silence, le reste du
+dresseur fonctionnant normalement.
 
 Le dresseur ne connaît que la clé déclarée dans `sounds.json` :
 `"battleMusic": "cobblemonrlm:battle_music.jacinthe"`. Les autres dresseurs du pack ne

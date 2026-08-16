@@ -78,14 +78,18 @@ Trois façons de livrer un pack, au choix de son auteur :
 
 | Voie | Emplacement | Formats | Charge |
 | --- | --- | --- | --- |
-| Mod | `mods/` | `.jar` (avec un `fabric.mod.json`) | `data/` **et** `assets/` |
+| Dossier des mods | `mods/` | dossier, `.zip`, `.jar` | `data/` **et** `assets/` |
 | Datapack | `saves/<monde>/datapacks/`, `world/datapacks/` | dossier, `.zip`, `.jar` | `data/` |
 | Resource pack | `resourcepacks/` | dossier, `.zip`, `.jar` | `assets/` |
 
-Le `.jar` est accepté partout grâce au mod — Minecraft ne connaît que le dossier et le
-`.zip`. Une même archive peut porter `pack.mcmeta` et `fabric.mod.json` et servir aux trois.
-Le détail et les pièges sont dans
-[docs/DATAPACK.md](docs/DATAPACK.md#où-poser-le-pack).
+Deux ajouts du mod par rapport à Minecraft : le `.jar` est accepté partout (le jeu ne connaît
+que le dossier et le `.zip`), et surtout **un pack posé dans `mods/` est lu tel quel, avec son
+seul `pack.mcmeta`** — sans `fabric.mod.json`, sans code. C'est la seule voie qui charge d'un
+coup les dresseurs et leurs traductions et musique, en un fichier que le joueur dépose sans
+rien cocher.
+
+Le dossier `datapacks/` d'un monde, lui, ne lit que `data/`, jamais `assets/`. Le détail et
+les pièges sont dans [docs/DATAPACK.md](docs/DATAPACK.md#où-poser-le-pack).
 
 ## Développement
 

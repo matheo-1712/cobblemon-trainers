@@ -5,8 +5,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Projet
 
 Mod Fabric pour Minecraft 1.21.1 qui ajoute des dresseurs Pokémon configurables à
-Cobblemon 1.7.3. Code principal en Kotlin (`matheo1712.cobbletrainers`), un stub Java
-pour les mixins. Aucun code client-only : tout tourne côté serveur logique.
+Cobblemon 1.7.3. Code principal en Kotlin (`matheo1712.cobbletrainers`), les mixins en Java.
+Tout tourne côté serveur logique, à une exception près : `client.MinecraftMixin`, qui branche
+la lecture des `assets/` d'un pack posé dans `mods/` (voir « Livrer un pack »). Aucun
+entrypoint client, aucun rendu.
 
 Le code, les commentaires et les logs sont en **anglais**. Tout texte affiché au joueur
 passe par `assets/cobblemon-trainers/lang/` — jamais de littéral en dur.
@@ -113,7 +115,7 @@ Points à ne pas redécouvrir :
   pour une musique. La position envoyée (celle du joueur) n'est qu'un repli pour une piste
   mono.
 - **Pas de boucle.** `isLooping` est une décision de `SoundInstance`, côté client, et le mod
-  n'a pas de code client : un combat plus long que la piste finit en silence.
+  ne touche pas au moteur audio : un combat plus long que la piste finit en silence.
 
 ### Textes et traductions
 
@@ -231,25 +233,63 @@ dans le registre, donc l'opération est idempotente. Le filtre `TrainerRegistry.
 
 ### Livrer un pack
 
-Trois voies, toutes prises en charge et **délibérément laissées au choix de l'auteur du
-pack** — ne pas en privilégier une dans la doc :
+Trois voies, toutes prises en charge et **laissées au choix de l'auteur du pack** — ne pas en
+privilégier une dans la doc, sauf à dire que `mods/` est la seule qui charge les deux moitiés.
 
-| Voie | Emplacement | Formats | Charge | Fichier qui décide |
+| Voie | Emplacement | Formats | Charge | Fichier requis |
 | --- | --- | --- | --- | --- |
-| Mod | `mods/` | `.jar` | `data/` et `assets/` | `fabric.mod.json` |
+| Dossier des mods | `mods/` | dossier, `.zip`, `.jar` | `data/` et `assets/` | `pack.mcmeta` |
 | Datapack | `<monde>/datapacks/` | dossier, `.zip`, `.jar` | `data/` | `pack.mcmeta` |
 | Resource pack | `resourcepacks/` | dossier, `.zip`, `.jar` | `assets/` | `pack.mcmeta` |
 
-Une archive peut porter les deux fichiers et servir aux trois : c'est ce que fait
-`examples/cobblemonrlm/`.
+`ModsFolderPackSource` est ce qui rend la première ligne vraie **sans `fabric.mod.json`** :
+une `RepositorySource` qui balaie le dossier des mods et expose ce qu'elle y trouve sous les
+deux `PackType`. Sans elle, Fabric ne regarde que les jars portant un `fabric.mod.json` et
+saute les autres en silence (`ModDiscoverer$ModScanTask.computeJarFile` renvoie `null`, rien
+n'est logué) — c'était la cause d'un pack « qui ne se charge pas » sans le moindre message.
 
-La voie `mods/` ne demande aucun code à nous — Fabric expose chaque mod chargé sous les deux
-`PackType` (`ModResourcePackCreator` de `fabric-resource-loader-v0`), et un pack n'a besoin
-que d'un `fabric.mod.json` sans `entrypoints`. **Ne pas écrire de scan de `mods/`.**
+Elle est branchée par deux mixins, parce qu'il n'existe aucune API pour ajouter une source
+après construction :
 
-Le piège, et la raison d'un pack « qui ne se charge pas » sans rien dans les logs : sans
-`fabric.mod.json`, `ModDiscoverer$ModScanTask.computeJarFile` renvoie `null` et le loader
-saute le jar en silence — ni erreur, ni avertissement.
+- `PackRepositoryMixin` (commun) — `@Inject` en fin de `<init>`, réécrit le champ `sources`.
+  Un `ServerPacksSource` dans la liste identifie un dépôt de données ; couvrir le constructeur
+  plutôt que ses appelants attrape d'un coup le serveur dédié, le serveur intégré et l'écran
+  de création de monde.
+- `client.MinecraftMixin` (client) — `@ModifyArg` sur le tableau varargs du constructeur de
+  `Minecraft`. Déclaré dans le tableau `client` du mixins.json, pas dans `mixins` : il cible
+  une classe client et ferait échouer le chargement sur un serveur dédié. Le dépôt client est
+  identifié par construction, ce qui évite de nommer `ClientPackSource` dans un mixin commun.
+
+Points à ne pas redécouvrir :
+
+- **`PackSelectionConfig.required` doit être `true` côté ressources, `false` côté données.**
+  `Minecraft.reloadResourcePacks` passe par `PackRepository.reload()`, dont `rebuildSelected`
+  ne réinsère que les packs *required* : un pack seulement « ajoutable automatiquement » y
+  serait découvert puis retiré de la sélection au premier F3+T. Côté données au contraire,
+  `MinecraftServer.configurePackRepository` lit `PackSource.shouldAddAutomatically`, ce qui
+  active le pack tout en laissant `/datapack disable` utilisable.
+- **Les archives portant un `fabric.mod.json` sont ignorées** par cette source : Fabric les
+  charge lui-même et les expose déjà sous les deux types (`ModResourcePackCreator` de
+  `fabric-resource-loader-v0`). Les ramasser ici les enregistrerait deux fois.
+- **Un pack sans contenu pour le type demandé est écarté** (`getNamespaces(packType)` vide),
+  pour qu'un pack de données seules n'apparaisse pas dans l'écran des resource packs.
+- Le dossier des mods vient de `-Dfabric.modsFolder` sinon de `gameDir/mods`, et le
+  `DirectoryValidator` de `allowed_symlinks.txt`, comme vanilla.
+
+**Le format d'archive n'élargit pas ce qu'un *emplacement* charge.** Le dossier `datapacks/`
+d'un monde est un `FolderRepositorySource` en `PackType.SERVER_DATA` uniquement : un `assets/`
+posé là n'est jamais lu, `.jar` ou pas. `PackDetectorMixin` fait accepter le `.jar` comme
+conteneur, il ne change pas le `PackType` de la source.
+
+Ne pas essayer de brancher le dossier d'un monde sur le gestionnaire de ressources client :
+ça a été écrit une fois puis retiré. C'était faisable (une `RepositorySource` alimentée par
+`ServerLifecycleEvents`), mais ça ne marche qu'en solo — sur un serveur le client n'a pas le
+fichier — donc un pack se comporterait différemment en solo et en multi. `mods/` n'a pas ce
+défaut : chaque côté lit son propre dossier.
+
+`pack_format` diffère par type en 1.21.1 : 48 côté données, 34 côté ressources. Une archive
+qui sert des deux côtés déclare `supported_formats` en intervalle, sinon l'écran des resource
+packs l'affiche comme incompatible. C'est ce que fait `examples/cobblemonrlm/pack.mcmeta`.
 
 ### Mixins
 
@@ -271,6 +311,3 @@ vérifier dans `build/libs/*.jar` que la cible est bien passée en intermediary
 
 `ShowdownTeamParser` ne traduit pas les formes régionales notées à la Showdown
 (`Raichu-Alola`) vers les aspects Cobblemon.
-
-Le `.ogg` du pack d'exemple `examples/cobblemonrlm/` n'est pas versionné : il faut en
-déposer un soi-même pour entendre la musique de `jacinthe`.
