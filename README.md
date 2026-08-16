@@ -1,8 +1,8 @@
 # Cobblemon Trainers
 
 Mod Fabric qui ajoute des dresseurs Pokémon configurables à Cobblemon. Chaque dresseur est
-un fichier JSON : une équipe au format Showdown, un skin de joueur Minecraft, des messages
-et une musique de combat. Les dresseurs se déclarent dans un datapack, donc sans toucher au
+un fichier JSON : une équipe au format Showdown, un skin — celui d'un compte Minecraft ou une
+image livrée par le pack —, des messages et une musique de combat. Les dresseurs se déclarent dans un datapack, donc sans toucher au
 code.
 
 ## Prérequis
@@ -158,9 +158,10 @@ sans risque : sans jeton, il écrit ce qu'il aurait envoyé dans `build/mod-publ
 - Les formes se déclarent par leurs aspects (`Aspects: rlm, poison`), pas par le suffixe
   Showdown du nom d'espèce (`Raichu-Alola`), qui ne se distingue pas des espèces dont le nom
   contient un tiret (`Ho-Oh`, `Porygon-Z`).
-- Les skins sont récupérés depuis l'API Mojang : ils nécessitent un accès réseau et un
-  pseudo existant. En cas d'échec, le dresseur garde le skin par défaut et la raison est
-  écrite dans les logs.
+- Les skins `player_username` et `player_uuid` sont récupérés depuis l'API Mojang : ils
+  nécessitent un accès réseau et un pseudo existant. En cas d'échec, le dresseur garde le
+  skin par défaut et la raison est écrite dans les logs. Le type `texture`, lui, n'a besoin
+  de rien d'autre que d'une image dans le pack.
 - La musique de combat ne boucle pas : un combat plus long que la piste finit en silence.
   Faire boucler un son est une décision du client, et le mod n'a pas de code client.
 

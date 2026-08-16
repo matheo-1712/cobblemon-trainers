@@ -2,6 +2,7 @@ package matheo1712.cobbletrainers
 
 import net.fabricmc.loader.api.FabricLoader
 import net.minecraft.network.chat.Component
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.packs.PackLocationInfo
 import net.minecraft.server.packs.PackSelectionConfig
 import net.minecraft.server.packs.PackType
@@ -34,9 +35,6 @@ import java.util.function.Consumer
  * twice.
  */
 class ModsFolderPackSource private constructor(private val packType: PackType) : RepositorySource {
-
-    /** Distinguishes these from a `file/<name>` pack of the `datapacks/` folder. */
-    private val idPrefix = "mods/"
 
     private val kind = if (packType == PackType.SERVER_DATA) "data" else "resource"
 
@@ -71,12 +69,7 @@ class ModsFolderPackSource private constructor(private val packType: PackType) :
 
     private fun createPack(path: Path, supplier: Pack.ResourcesSupplier): Pack? {
         val name = path.fileName.toString()
-        val info = PackLocationInfo(
-            idPrefix + name,
-            Component.literal(name),
-            PackSource.BUILT_IN,
-            Optional.empty()
-        )
+        val info = locationInfo(path)
 
         if (!isOurs(supplier, info)) return null
 
@@ -109,6 +102,62 @@ class ModsFolderPackSource private constructor(private val packType: PackType) :
 
         @JvmField
         val CLIENT_RESOURCES: ModsFolderPackSource = ModsFolderPackSource(PackType.CLIENT_RESOURCES)
+
+        /** Distinguishes these from a `file/<name>` pack of the `datapacks/` folder. */
+        private const val ID_PREFIX = "mods/"
+
+        /**
+         * Reads one file out of the packs of `mods/`, outside of any pack repository.
+         *
+         * A trainer texture has to be read by the logical server — see [TrainerTextures] — and
+         * no server-side resource manager ever looks at `assets/`. The scan is the same one
+         * [loadPacks] performs, minus the `fabric.mod.json` filter: an archive Fabric did load
+         * is already on the classpath, where the caller looks first, so reading it here would
+         * only ever repeat that answer.
+         *
+         * @return the file content, or null when no pack of the folder holds it.
+         */
+        fun readResource(packType: PackType, location: ResourceLocation): ByteArray? {
+            val folder = MODS_FOLDER
+            if (!Files.isDirectory(folder)) return null
+
+            var found: ByteArray? = null
+            try {
+                FolderRepositorySource.discoverPacks(folder, VALIDATOR) { path, supplier ->
+                    if (found == null) {
+                        found = readResource(supplier, locationInfo(path), packType, location)
+                    }
+                }
+            } catch (e: Exception) {
+                CobblemonTrainers.LOGGER.warn("Failed to scan {} for {}: {}", folder, location, e.message)
+            }
+            return found
+        }
+
+        private fun readResource(
+            supplier: Pack.ResourcesSupplier,
+            info: PackLocationInfo,
+            packType: PackType,
+            location: ResourceLocation
+        ): ByteArray? =
+            try {
+                supplier.openPrimary(info).use { resources ->
+                    resources.getResource(packType, location)?.get()?.use { it.readBytes() }
+                }
+            } catch (e: Exception) {
+                CobblemonTrainers.LOGGER.warn("Could not read {} from {}: {}", location, info.id(), e.message)
+                null
+            }
+
+        private fun locationInfo(path: Path): PackLocationInfo {
+            val name = path.fileName.toString()
+            return PackLocationInfo(
+                ID_PREFIX + name,
+                Component.literal(name),
+                PackSource.BUILT_IN,
+                Optional.empty()
+            )
+        }
 
         /** Honours `-Dfabric.modsFolder`, the way the loader itself locates the folder. */
         private val MODS_FOLDER: Path by lazy {

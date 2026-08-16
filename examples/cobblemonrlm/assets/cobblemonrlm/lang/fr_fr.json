@@ -21,6 +21,11 @@
   "trainer.cobblemonrlm.skin_par_uuid.win": "Bien joué.",
   "trainer.cobblemonrlm.skin_par_uuid.lose": "Encore un effort.",
 
+  "trainer.cobblemonrlm.skin_texture.name": "Aventurier de passage",
+  "trainer.cobblemonrlm.skin_texture.battle_start": "Mon skin est livré avec ce pack — aucun compte Mojang derrière.",
+  "trainer.cobblemonrlm.skin_texture.win": "Bien combattu, voyageur.",
+  "trainer.cobblemonrlm.skin_texture.lose": "La route est longue. Entraîne-toi, puis retrouve-moi.",
+
   "trainer.cobblemonrlm.pnj_pacifiste.name": "Villageoise pacifiste",
 
   "trainer.cobblemonrlm.polyglotte.name": "La Polyglotte",
