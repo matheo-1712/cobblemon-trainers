@@ -257,11 +257,29 @@ appliqués sont sérialisés en NBT, donc le lien survit à un redémarrage.
 
 ### Skins
 
-`applySkin` résout le profil et télécharge la texture Mojang sur un thread daemon, puis
-repasse par `server.execute` pour écrire dans l'entité. Il faut poser les aspects
-`model-default` / `model-slim` en même temps que `NPC_PLAYER_TEXTURE` : ce sont eux qui
-déterminent le rig utilisé au rendu. Un échec est silencieux, le NPC garde son skin par
-défaut. `skin.type` n'accepte que `player_username` ou `player_uuid`.
+`applySkin` résout la texture sur un thread daemon, puis repasse par `server.execute` pour
+écrire dans l'entité. Il faut poser les aspects `model-default` / `model-slim` en même temps
+que `NPC_PLAYER_TEXTURE` : ce sont eux qui déterminent le rig utilisé au rendu. Un échec est
+silencieux, le NPC garde son skin par défaut.
+
+`skin.type` accepte `player_username`, `player_uuid` (profil Mojang, téléchargement réseau)
+et `texture` (une image de pack, lue par `TrainerTextures`).
+
+Points à ne pas redécouvrir sur `texture` :
+
+- **`NPC_PLAYER_TEXTURE` transporte les octets du PNG**, pas un chemin : le client n'a rien à
+  résoudre, donc un pack posé sur le serveur seul habille quand même les dresseurs de tout le
+  monde. C'est la raison d'être de ce type de skin, et ce qui le rend indépendant du réseau
+  Mojang.
+- **L'image doit être lisible côté serveur**, ce qui exclut les gestionnaires de ressources :
+  celui du serveur ne connaît que `data/`, celui du client n'existe pas sur un serveur dédié.
+  `TrainerTextures` lit donc le classpath (assets du mod et de tout ce que Fabric a chargé),
+  puis les packs de `mods/` via `ModsFolderPackSource.readResource`. Un pack rangé dans
+  `resourcepacks/` ou `datapacks/` est hors de portée, et c'est irréductible.
+- **Le gabarit vient du JSON** (`skin.model`, `default` ou `slim`) : contrairement à un profil
+  Mojang, une image seule ne dit pas sur quel rig la dessiner.
+- Le mod livre `assets/cobblemon-trainers/textures/trainers/example.png` pour que la voie soit
+  testable sans fabriquer un skin.
 
 ### Fin de combat
 

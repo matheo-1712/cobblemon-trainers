@@ -1,0 +1,30 @@
+{
+  "name": "trainer.cobblemonrlm.skin_texture.name",
+  "level": 34,
+  "skill": 3,
+  "skin": {
+    "type": "texture",
+    "value": "cobblemonrlm:textures/trainers/aventurier.png",
+    "model": "default"
+  },
+  "battleStartMessage": "trainer.cobblemonrlm.skin_texture.battle_start",
+  "battleEndWinMessage": "trainer.cobblemonrlm.skin_texture.win",
+  "battleEndLoseMessage": "trainer.cobblemonrlm.skin_texture.lose",
+  "team": [
+    "Sudowoodo (M) @ Sitrus Berry",
+    "Ability: Rock Head",
+    "Level: 34",
+    "Adamant Nature",
+    "- Rock Slide",
+    "- Wood Hammer",
+    "- Sucker Punch",
+    "",
+    "Noctowl (F) @ Eviolite",
+    "Ability: Insomnia",
+    "Level: 35",
+    "Modest Nature",
+    "- Air Slash",
+    "- Hypnosis",
+    "- Extrasensory"
+  ]
+}

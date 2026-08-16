@@ -21,6 +21,11 @@
   "trainer.cobblemonrlm.skin_par_uuid.win": "Nicely played.",
   "trainer.cobblemonrlm.skin_par_uuid.lose": "A little more effort.",
 
+  "trainer.cobblemonrlm.skin_texture.name": "Wandering Adventurer",
+  "trainer.cobblemonrlm.skin_texture.battle_start": "My skin ships with this pack — no Mojang account behind it.",
+  "trainer.cobblemonrlm.skin_texture.win": "Well fought, traveller.",
+  "trainer.cobblemonrlm.skin_texture.lose": "The road is long. Train, then find me again.",
+
   "trainer.cobblemonrlm.pnj_pacifiste.name": "Peaceful Villager",
 
   "trainer.cobblemonrlm.polyglotte.name": "The Polyglot",

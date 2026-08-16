@@ -143,17 +143,16 @@ object TrainerSpawner {
     }
 
     /**
-     * Applies a Minecraft player skin to the NPC.
+     * Applies a skin to the NPC.
      *
-     * Profile lookup and texture download run on a dedicated thread; only the application to
-     * the entity goes back through the server thread. On failure the NPC keeps the default
-     * skin of its class.
+     * Profile lookup, texture download and pack reads all run on a dedicated thread; only the
+     * application to the entity goes back through the server thread. On failure the NPC keeps
+     * the default skin of its class.
      */
     private fun applySkin(server: MinecraftServer, npc: NPCEntity, skin: TrainerSkin) {
         Thread {
             try {
-                val uuid = resolveProfileId(server, skin) ?: return@Thread
-                val texture = fetchTexture(server, uuid) ?: return@Thread
+                val texture = resolveTexture(server, skin) ?: return@Thread
 
                 server.execute {
                     if (!npc.isAlive) return@execute
@@ -174,22 +173,81 @@ object TrainerSpawner {
         }.start()
     }
 
+    /** Turns a skin declaration into the texture that will be synced to the clients. */
+    private fun resolveTexture(server: MinecraftServer, skin: TrainerSkin): NPCPlayerTexture? =
+        when (skin.type.lowercase()) {
+            "texture" -> readPackTexture(skin)
+
+            "player_username", "player_uuid" ->
+                resolveProfileId(server, skin)?.let { fetchTexture(server, it) }
+
+            else -> {
+                LOGGER.warn(
+                    "Unknown skin type '{}'. Use 'player_username', 'player_uuid' or 'texture'.",
+                    skin.type
+                )
+                null
+            }
+        }
+
+    /**
+     * Loads a skin image shipped in a pack. The bytes are sent to the clients with the entity,
+     * so nothing has to be installed on their side — see [TrainerTextures].
+     */
+    private fun readPackTexture(skin: TrainerSkin): NPCPlayerTexture? {
+        val location = ResourceLocation.tryParse(skin.value)
+        if (location == null) {
+            LOGGER.warn(
+                "Invalid texture location '{}'. Expected <namespace>:<path>, " +
+                    "e.g. cobblemon-trainers:textures/trainers/example.png",
+                skin.value
+            )
+            return null
+        }
+
+        val bytes = TrainerTextures.read(location)
+        if (bytes == null) {
+            LOGGER.warn(
+                "Texture {} was not found. It has to be reachable by the server: ship it in " +
+                    "assets/{}/{} inside a pack of the mods folder.",
+                location,
+                location.namespace,
+                location.path
+            )
+            return null
+        }
+
+        return NPCPlayerTexture(bytes, parseModel(skin))
+    }
+
+    /**
+     * The player rig the texture is drawn on. Unlike a Mojang skin, an image in a pack does not
+     * come with that information, so the trainer states it.
+     */
+    private fun parseModel(skin: TrainerSkin): NPCPlayerModelType =
+        when (skin.model.lowercase()) {
+            "default" -> NPCPlayerModelType.DEFAULT
+            "slim" -> NPCPlayerModelType.SLIM
+            else -> {
+                LOGGER.warn(
+                    "Unknown skin model '{}'. Use 'default' or 'slim'. Falling back to default.",
+                    skin.model
+                )
+                NPCPlayerModelType.DEFAULT
+            }
+        }
+
     private fun resolveProfileId(server: MinecraftServer, skin: TrainerSkin): UUID? {
         val uuid = when (skin.type.lowercase()) {
             "player_username" -> lookupByName(server, skin.value)
 
-            "player_uuid" ->
+            else ->
                 try {
                     UUID.fromString(skin.value)
                 } catch (e: IllegalArgumentException) {
                     LOGGER.warn("Invalid UUID: {}", skin.value)
                     null
                 }
-
-            else -> {
-                LOGGER.warn("Unknown skin type '{}'. Use 'player_username' or 'player_uuid'.", skin.type)
-                null
-            }
         }
 
         if (uuid == null) {

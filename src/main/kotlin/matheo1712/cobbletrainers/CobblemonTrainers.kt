@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory
  *
  * Features:
  * - Showdown-formatted teams
- * - Minecraft player skins (by username or UUID)
+ * - Skins: a Minecraft player (by username or UUID), or an image shipped in a pack
  * - Battle start and end messages
  * - Battle music
  * - Item rewards on victory, and one-shot trainers that turn down a rematch

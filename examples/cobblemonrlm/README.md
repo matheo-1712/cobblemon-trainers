@@ -40,6 +40,7 @@ est ignoré, quel que soit le format.
 | `cobblemonrlm:trio_marathon` | Combat en triple via l'alias `trio`, `autoHealParty: false` — les dégâts persistent d'un combat à l'autre. Six Pokémon |
 | `cobblemonrlm:debutant` | `skill` 0 (IA la plus faible), bas niveau, aucun message, aucun skin défini |
 | `cobblemonrlm:skin_par_uuid` | `skin.type` en `player_uuid` au lieu du pseudo |
+| `cobblemonrlm:skin_texture` | `skin.type` en `texture` : une image livrée par le pack, `assets/cobblemonrlm/textures/trainers/aventurier.png`. Aucun accès réseau, aucun compte Mojang |
 | `cobblemonrlm:pnj_pacifiste` | `canBattle: false` — le clic droit ne déclenche rien. Aussi `tracked: false`, donc absent de `/listtrainers` : il n'y a rien à battre chez lui |
 | `cobblemonrlm:champion_unique` | `canRebattle: false` et une liste de `rewards` — un combat unique par joueur, avec un butin remis à la victoire. Une fois battu, il refuse la revanche et le dit dans le chat, y compris si tu le réinvoques |
 | `cobblemonrlm:recompense_unique` | L'autre moitié du couple : rejouable autant qu'on veut, mais `rewardOnce: true` — la récompense ne tombe qu'à la première victoire |
@@ -83,3 +84,24 @@ comparer les deux à la suite.
 
 Détail à connaître : au début du combat, tout ce qui jouait dans la catégorie *Musique* est
 coupé, thème de combat compris s'il en restait un. Rien ne se superpose.
+
+## Le skin de `skin_texture`
+
+```
+assets/cobblemonrlm/textures/trainers/aventurier.png
+```
+
+Un skin de joueur classique, en 64×64 : le fichier que tu téléverserais sur ton compte
+Minecraft. Le dresseur le désigne par son emplacement complet sous `assets/` :
+
+```json
+"skin": { "type": "texture", "value": "cobblemonrlm:textures/trainers/aventurier.png" }
+```
+
+Contrairement aux traductions et à la musique, cette image est lue par le **serveur**, qui
+l'envoie ensuite avec le dresseur : un joueur qui n'a pas le pack voit quand même le bon
+skin. En contrepartie, elle doit être posée là où le serveur regarde, c'est-à-dire dans
+`mods/` — le pack dans `resourcepacks/` seul ne suffit pas.
+
+Ajoute `"model": "slim"` si ton image est dessinée pour le gabarit Alex (bras de 3 pixels) ;
+sans ce champ, c'est le gabarit Steve qui est utilisé.

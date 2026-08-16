@@ -74,6 +74,9 @@ Ce qui décide, c'est le contenu du pack :
   seule voie qui charge les deux moitiés en un fichier. Sinon il faut livrer la même archive
   deux fois, dans `datapacks/` **et** dans `resourcepacks/`, et le joueur doit aller cocher le
   resource pack.
+- **Des dresseurs habillés d'une image du pack** (`skin.type: texture`) — `mods/` est
+  obligatoire, et le doublon `datapacks/` + `resourcepacks/` ne remplace pas : l'image est lue
+  par le serveur, qui ne regarde que là. Voir [Skins](#skins).
 
 #### `mods/` : un pack, rien d'autre
 
@@ -196,8 +199,9 @@ Puis, en jeu :
 | `name` | `Trainer` | Nom affiché au-dessus du dresseur |
 | `level` | `1` | Niveau appliqué aux Pokémon qui n'ont **pas** de ligne `Level:` |
 | `team` | `[]` | L'équipe, au format Showdown |
-| `skin.type` | `player_username` | `player_username` ou `player_uuid` |
-| `skin.value` | `Steve` | Pseudo ou UUID dont le skin est repris |
+| `skin.type` | `player_username` | `player_username`, `player_uuid` ou `texture` |
+| `skin.value` | `Steve` | Pseudo, UUID, ou chemin d'une image livrée par un pack |
+| `skin.model` | `default` | Gabarit portant l'image : `default` (Steve) ou `slim` (Alex). Lu pour `texture` seulement |
 | `battleFormat` | `singles` | Nombre de Pokémon simultanés : `singles`, `doubles`, `triples` |
 | `skill` | `5` | Difficulté de l'IA de combat, de 0 à 5 |
 | `autoHealParty` | `true` | Soigne l'équipe du dresseur avant et après chaque combat |
@@ -452,14 +456,57 @@ le combat et affiche la raison dans le chat.
 
 ## Skins
 
+Trois façons d'habiller un dresseur : deux qui empruntent le skin d'un compte Minecraft, une
+qui utilise une image que tu livres toi-même.
+
 ```json
 "skin": { "type": "player_username", "value": "Notch" }
 "skin": { "type": "player_uuid",     "value": "069a79f4-44e9-4726-a5be-fca90e38aaf5" }
+"skin": { "type": "texture",         "value": "mon_pack:textures/trainers/red.png" }
 ```
 
-Le skin est téléchargé depuis l'API Mojang au moment de l'apparition : il faut donc un accès
-réseau et un compte existant. En cas d'échec, le dresseur garde le skin par défaut et la
-raison est écrite dans les logs — le reste du dresseur fonctionne normalement.
+Avec `player_username` et `player_uuid`, le skin est téléchargé depuis l'API Mojang au moment
+de l'apparition : il faut donc un accès réseau et un compte existant.
+
+En cas d'échec, quel que soit le type, le dresseur garde le skin par défaut et la raison est
+écrite dans les logs — le reste du dresseur fonctionne normalement.
+
+### Une image livrée par le pack
+
+`texture` prend le chemin complet du fichier sous `assets/`, namespace en tête :
+`mon_pack:textures/trainers/red.png` désigne
+`assets/mon_pack/textures/trainers/red.png`. Le sous-dossier est libre ; l'extension `.png`,
+elle, fait partie du chemin et doit être écrite.
+
+```
+mon_pack/
+├── pack.mcmeta
+├── assets/
+│   └── mon_pack/
+│       └── textures/
+│           └── trainers/
+│               └── red.png           ← skin de joueur, 64×64
+└── data/
+    └── mon_pack/
+        └── cobblemontrainers/
+            └── red.json
+```
+
+Le fichier est un **skin de joueur ordinaire**, celui que tu téléverserais sur ton compte :
+un PNG 64×64 avec transparence. Le dresseur est rendu sur le gabarit Steve, ou sur celui
+d'Alex — bras de 3 pixels — si tu ajoutes `"model": "slim"`.
+
+Deux choses distinguent cette voie des traductions et de la musique :
+
+- **L'image est lue par le serveur**, qui l'envoie ensuite aux clients avec le dresseur. Un
+  joueur qui n'a pas ton pack voit quand même le bon skin.
+- **Elle doit donc être posée là où le serveur regarde** : dans `mods/`, ou dans un `.jar`
+  chargé comme mod. Un pack rangé dans `resourcepacks/` seul est hors de portée — c'est le
+  client qui lit ce dossier, et il n'est jamais interrogé ici. Le dresseur reste alors en
+  skin par défaut, avec l'explication dans les logs du serveur.
+
+Sans image à toi, le mod en fournit une pour essayer :
+`cobblemon-trainers:textures/trainers/example.png`.
 
 ## Musique de combat
 
@@ -604,6 +651,7 @@ côté client.
 | Une stat EV/IV semble ignorée | Nom de stat hors de la liste reconnue — voir le tableau du format d'équipe |
 | Aucune musique | Piste absente du resource pack, ou ID qui ne correspond pas à la clé de `sounds.json` |
 | Le skin reste Steve | Pseudo inexistant ou API Mojang injoignable — voir les logs |
+| Le skin `texture` reste celui par défaut | Chemin qui ne correspond à aucun fichier (l'extension `.png` en fait partie), ou pack posé dans `resourcepacks/` ou `datapacks/` au lieu de `mods/` : le serveur ne lit l'image que là — voir les logs |
 
 ## Un exemple complet
 
