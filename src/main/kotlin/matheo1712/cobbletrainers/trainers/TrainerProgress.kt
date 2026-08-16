@@ -35,7 +35,6 @@ class TrainerProgress : SavedData() {
 
     /**
      * Records a victory.
-     *
      * @return true when this was the player's first win over that trainer.
      */
     fun recordVictory(trainer: ResourceLocation, player: UUID): Boolean {

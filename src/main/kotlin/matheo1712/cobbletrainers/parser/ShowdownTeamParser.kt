@@ -229,21 +229,7 @@ object ShowdownTeamParser {
         raw.split(ASPECT_SEPARATOR).map { normalizeName(it) }.filter { it.isNotEmpty() }
 
     /**
-     * Appends one aspect to the property string.
-     *
-     * An aspect comes from a species feature, so it is turned back into the property that
-     * drives that feature — the same syntax `/pokespawn` takes, which is what makes a team
-     * line testable in game before it is written to a datapack. A flag feature is a bare key
-     * (`rlm` -> `rlm=true`); a choice feature already carries its value (`appliance=wash`)
-     * and is passed through.
-     *
-     * Cobblemon drops a property whose key no feature declares, without a word, so an unknown
-     * key is logged here: a typo would otherwise show up as a Pokémon quietly wearing its base
-     * form. Features are registered from datapacks
-     * ([com.cobblemon.mod.common.api.pokemon.feature.SpeciesFeatures] registers every provider
-     * that is a [com.cobblemon.mod.common.api.properties.CustomPokemonPropertyType]), so the
-     * list is only meaningful once the server has loaded them — which it has by the time a
-     * trainer spawns.
+     * Parse aspect aspect:
      */
     private fun appendAspect(builder: StringBuilder, aspect: String) {
         val key = aspect.substringBefore('=')

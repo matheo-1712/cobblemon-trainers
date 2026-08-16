@@ -45,10 +45,6 @@ object TrainerBattleMusic {
      * Starts the music for every player of the battle, alone: whatever else was playing in
      * the [SoundSource.MUSIC] category is cut first, so the battle theme never overlaps the
      * vanilla background music (see [silenceOtherMusic]).
-     *
-     * The shipped track is stereo, and Minecraft plays stereo sounds without attenuation, so
-     * the position sent is only a fallback for a mono replacement track. Sending the player's
-     * own position keeps such a track at full volume too.
      */
     fun start(track: String?, players: List<ServerPlayer>) {
         val sound = parse(track) ?: return
@@ -75,13 +71,6 @@ object TrainerBattleMusic {
     /**
      * Stops everything already playing in the music category, our own track included — hence
      * the strict ordering with the packet that starts it.
-     *
-     * A null sound name means "the whole category" on the client side. This also settles what
-     * happens *after*: the client `MusicManager` notices its track is gone and waits for a
-     * fresh delay before picking another one, and that delay is a good ten minutes for
-     * overworld music. Long enough that a battle is over well before Minecraft tries again,
-     * which is as close to exclusive as a server can get — starting the vanilla music is a
-     * client decision, and the mod has no client code.
      */
     private fun silenceOtherMusic(player: ServerPlayer) {
         player.connection.send(ClientboundStopSoundPacket(null, SOURCE))

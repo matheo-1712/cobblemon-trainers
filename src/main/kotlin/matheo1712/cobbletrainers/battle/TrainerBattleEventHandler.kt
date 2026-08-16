@@ -41,11 +41,6 @@ object TrainerBattleEventHandler {
             handleBattleVictory(event.battle, event.winners.toList())
         }
 
-        // A trainer that dies or is removed while battling would otherwise leave its opponent
-        // stuck in a fight against an actor whose entity no longer exists. Death fires first and
-        // covers `/kill` and a player beating the NPC up; removal covers everything else
-        // (`/kill` on a corpse, a datapack discarding the entity, …) and is filtered on
-        // `shouldDestroy` so a chunk unload does not count as the trainer leaving.
         ServerLivingEntityEvents.AFTER_DEATH.register { entity, _ -> endBattlesOf(entity) }
         ServerEntityEvents.ENTITY_UNLOAD.register { entity, _ ->
             if (entity.removalReason?.shouldDestroy() == true) endBattlesOf(entity)
@@ -58,12 +53,6 @@ object TrainerBattleEventHandler {
         if (players.isEmpty()) return
 
         TrainerBattleMusic.start(definition.battleMusic, players)
-
-        // Cobblemon has no "battle ended" event, and the two it does fire only cover a victory
-        // and a flight — `/stopbattle` and a forfeit go through neither, which used to leave the
-        // music playing until the track ran out. Every way out ends in `PokemonBattle.end()`,
-        // which calls `BattleRegistry.closeBattle`, which runs these handlers: the one place the
-        // music is guaranteed to be cut.
         battle.onEndHandlers.add { ended ->
             TrainerBattleMusic.stop(definition.battleMusic, ended.players)
         }
@@ -87,11 +76,6 @@ object TrainerBattleEventHandler {
 
     /**
      * Marks the trainer as beaten by every winning player, and hands out its rewards.
-     *
-     * Winners are read from the event rather than from `battle.players` so that, in a battle
-     * fought by several players, only the winning side is rewarded. A player who logged out
-     * mid-battle has no entity left and is skipped: nothing is recorded for them either, so the
-     * trainer is still there to beat when they come back.
      */
     private fun recordVictory(
         trainerId: ResourceLocation,
@@ -111,11 +95,7 @@ object TrainerBattleEventHandler {
 
     /**
      * Ends the battles an entity was taking part in, when that entity is one of our trainers.
-     *
-     * `stop()` is what Cobblemon's own `/stopbattle` calls: it forces a tie in Showdown and runs
-     * the regular end, so the players get their party back and the music stops like any other
-     * ending. Battles already closed are gone from the registry, which makes this idempotent —
-     * death and removal both firing for the same trainer is the normal case.
+     * `stop()` is what Cobblemon's own `/stopbattle`
      */
     private fun endBattlesOf(entity: Entity) {
         if (entity !is NPCEntity) return

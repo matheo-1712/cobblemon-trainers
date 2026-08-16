@@ -33,10 +33,6 @@ class TrainerBattleInteraction : NPCInteractConfiguration {
         val trainerId = TrainerRegistry.idFromAspects(npc.aspects)
         val definition = trainerId?.let { TrainerRegistry.get(it) }
 
-        // A trainer that does not take rematches turns down the challenge here rather than in
-        // Cobblemon: the battle is never built, so the player keeps their party and the music
-        // never starts. The refusal is worth a message — a right-click doing nothing at all is
-        // exactly the silence `TrainerBattleInteraction` exists to avoid.
         if (trainerId != null && definition != null && !definition.canRebattle &&
             TrainerProgress.of(player.server).hasDefeated(trainerId, player.uuid)
         ) {
