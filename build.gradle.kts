@@ -107,24 +107,14 @@ val exampleDatapack = tasks.register<Zip>("exampleDatapack") {
 }
 
 /**
- * Release metadata. Both are overridable from the command line, so the release workflow drives
- * the build without editing a tracked file: `./gradlew publishMods -Prelease_type=beta`.
+ * Release type, overridable from the command line so the release workflow drives the build
+ * without editing a tracked file: `./gradlew publishMods -Prelease_type=beta`.
  */
 val releaseType = when (providers.gradleProperty("release_type").getOrElse("stable").lowercase()) {
 	"alpha" -> ReleaseType.ALPHA
 	"beta" -> ReleaseType.BETA
 	else -> ReleaseType.STABLE
 }
-
-/**
- * A platform is configured once its project ID is filled in `gradle.properties`; leaving one
- * empty simply drops that destination, so the build stays valid before the project exists.
- */
-fun platformId(name: String): String? =
-	providers.gradleProperty(name).orNull?.takeIf { it.isNotBlank() }
-
-val modrinthId = platformId("modrinth_id")
-val curseforgeId = platformId("curseforge_id")
 
 // Captured out here on purpose: inside `publishMods`, `version` is the extension's own
 // property, and interpolating it yields its Gradle description rather than the number.
@@ -147,36 +137,33 @@ publishMods {
 	// A missing token turns the whole thing into a rehearsal: the release assets are written to
 	// build/mod-publish instead of being uploaded. That is what makes `./gradlew publishMods`
 	// safe to run locally, and it is the same code path the workflow takes.
-	dryRun = (modrinthId != null && providers.environmentVariable("MODRINTH_TOKEN").orNull == null) ||
-		(curseforgeId != null && providers.environmentVariable("CURSEFORGE_TOKEN").orNull == null) ||
-		(modrinthId == null && curseforgeId == null)
+	dryRun = providers.environmentVariable("MODRINTH_TOKEN").orNull == null
 
-	if (modrinthId != null) {
-		modrinth {
-			// The placeholder only ever reaches a dry run: a real publication needs the token,
-			// and its absence is exactly what turns dryRun on above.
-			accessToken = providers.environmentVariable("MODRINTH_TOKEN").orElse("dry-run")
-			projectId = modrinthId
-			minecraftVersions.add(providers.gradleProperty("minecraft_version").get())
+	modrinth {
+		// The placeholder only ever reaches a dry run: a real publication needs the token, and
+		// its absence is exactly what turns dryRun on above.
+		accessToken = providers.environmentVariable("MODRINTH_TOKEN").orElse("dry-run")
+		projectId = providers.gradleProperty("modrinth_id")
+		minecraftVersions.add(providers.gradleProperty("minecraft_version").get())
 
-			requires("cobblemon", "fabric-api", "fabric-language-kotlin")
+		// Pinned to the exact versions the mod is built against, straight from
+		// gradle.properties: bumping a dependency there moves the published requirement with it,
+		// and the two can never drift apart.
+		//
+		// Modrinth matches either a version ID or a version number, and refuses the publish
+		// unless exactly one version matches — a typo here fails loudly rather than shipping a
+		// requirement nobody can satisfy. `cobblemon_version` is already a version ID.
+		requires {
+			slug = "cobblemon"
+			version = providers.gradleProperty("cobblemon_version")
 		}
-	}
-
-	if (curseforgeId != null) {
-		curseforge {
-			accessToken = providers.environmentVariable("CURSEFORGE_TOKEN").orElse("dry-run")
-			projectId = curseforgeId
-			projectSlug = providers.gradleProperty("curseforge_slug")
-			minecraftVersions.add(providers.gradleProperty("minecraft_version").get())
-			javaVersions.add(JavaVersion.VERSION_21)
-
-			// The mod is server-side logic, but a client needs the jar too: it carries the
-			// resource pack half (battle music, lang) and the client mixin.
-			client = true
-			server = true
-
-			requires("cobblemon", "fabric-api", "fabric-language-kotlin")
+		requires {
+			slug = "fabric-api"
+			version = providers.gradleProperty("fabric_api_version")
+		}
+		requires {
+			slug = "fabric-language-kotlin"
+			version = providers.gradleProperty("fabric_kotlin_version")
 		}
 	}
 }
