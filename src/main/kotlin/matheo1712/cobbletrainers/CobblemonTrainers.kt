@@ -1,5 +1,10 @@
 package matheo1712.cobbletrainers
 
+import matheo1712.cobbletrainers.battle.TrainerBattleEventHandler
+import matheo1712.cobbletrainers.battle.TrainerBattleInteraction
+import matheo1712.cobbletrainers.command.ListTrainersCommand
+import matheo1712.cobbletrainers.command.SpawnTrainerCommand
+import matheo1712.cobbletrainers.registry.TrainerRegistry
 import net.fabricmc.api.ModInitializer
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper

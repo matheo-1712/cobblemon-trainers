@@ -1,5 +1,6 @@
-package matheo1712.cobbletrainers
+package matheo1712.cobbletrainers.trainers
 
+import matheo1712.cobbletrainers.CobblemonTrainers
 import net.minecraft.ChatFormatting
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.resources.ResourceLocation

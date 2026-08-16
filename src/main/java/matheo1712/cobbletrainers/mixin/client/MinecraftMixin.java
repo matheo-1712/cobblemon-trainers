@@ -1,6 +1,6 @@
 package matheo1712.cobbletrainers.mixin.client;
 
-import matheo1712.cobbletrainers.ModsFolderPackSource;
+import matheo1712.cobbletrainers.datapack_handler.ModsFolderPackSource;
 import net.minecraft.client.Minecraft;
 import net.minecraft.server.packs.repository.RepositorySource;
 import org.spongepowered.asm.mixin.Mixin;

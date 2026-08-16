@@ -1,4 +1,4 @@
-package matheo1712.cobbletrainers
+package matheo1712.cobbletrainers.trainers
 
 import com.cobblemon.mod.common.api.npc.NPCClasses
 import com.cobblemon.mod.common.api.npc.configuration.interaction.NoneNPCInteractionConfiguration
@@ -8,6 +8,8 @@ import com.cobblemon.mod.common.entity.npc.NPCPlayerModelType
 import com.cobblemon.mod.common.entity.npc.NPCPlayerTexture
 import com.mojang.authlib.GameProfile
 import com.mojang.authlib.ProfileLookupCallback
+import matheo1712.cobbletrainers.CobblemonTrainers
+import matheo1712.cobbletrainers.parser.ShowdownTeamParser
 import net.minecraft.network.chat.Component
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.MinecraftServer
@@ -17,7 +19,7 @@ import java.net.URI
 import java.util.UUID
 
 /**
- * Creates and spawns [NPCEntity] instances from a [TrainerDefinition].
+ * Creates and spawns [com.cobblemon.mod.common.entity.npc.NPCEntity] instances from a [TrainerDefinition].
  */
 object TrainerSpawner {
 
@@ -39,7 +41,7 @@ object TrainerSpawner {
     /**
      * Spawns a trainer in the world at the given position.
      *
-     * @return the spawned [NPCEntity], or null on failure.
+     * @return the spawned [com.cobblemon.mod.common.entity.npc.NPCEntity], or null on failure.
      */
     fun spawn(
         server: MinecraftServer,

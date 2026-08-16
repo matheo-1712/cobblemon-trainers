@@ -1,5 +1,6 @@
-package matheo1712.cobbletrainers
+package matheo1712.cobbletrainers.trainers
 
+import matheo1712.cobbletrainers.CobblemonTrainers
 import net.minecraft.core.HolderLookup
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.nbt.ListTag
@@ -20,9 +21,9 @@ import java.util.UUID
  * `mon_pack:champion` beats that trainer, wherever and however many times it stands in the
  * world. Killing one and spawning it again therefore changes nothing.
  *
- * This is world state rather than datapack state, so it lives in a [SavedData] file
+ * This is world state rather than datapack state, so it lives in a [net.minecraft.world.level.saveddata.SavedData] file
  * (`data/cobblemon_trainers_progress.dat` of the overworld) instead of the datapack-fed
- * [TrainerRegistry]: `/reload` must not wipe what players have already achieved.
+ * [matheo1712.cobbletrainers.registry.TrainerRegistry]: `/reload` must not wipe what players have already achieved.
  */
 class TrainerProgress : SavedData() {
 
@@ -34,7 +35,6 @@ class TrainerProgress : SavedData() {
 
     /**
      * Records a victory.
-     *
      * @return true when this was the player's first win over that trainer.
      */
     fun recordVictory(trainer: ResourceLocation, player: UUID): Boolean {

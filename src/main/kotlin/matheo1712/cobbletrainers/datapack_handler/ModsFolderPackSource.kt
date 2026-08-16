@@ -1,5 +1,6 @@
-package matheo1712.cobbletrainers
+package matheo1712.cobbletrainers.datapack_handler
 
+import matheo1712.cobbletrainers.CobblemonTrainers
 import net.fabricmc.loader.api.FabricLoader
 import net.minecraft.network.chat.Component
 import net.minecraft.resources.ResourceLocation
@@ -18,36 +19,12 @@ import java.util.Optional
 import java.util.function.Consumer
 
 /**
- * Loads packs dropped in `mods/` that are not Fabric mods.
- *
- * A pack that ships trainers together with their translations and their battle music is one
- * file that has to reach both the server data manager and the client resource manager. `mods/`
- * is the only folder that feeds both — but Fabric only looks at jars carrying a
- * `fabric.mod.json`, and skips the others in complete silence. So an author had to either wrap
- * their pack in a fake mod or split it in two, dropping the same archive in `datapacks/` and
- * `resourcepacks/`.
- *
- * This source removes that requirement: a directory, `.zip` or `.jar` in `mods/` with a
- * `pack.mcmeta` is picked up as-is, under both [PackType].
- *
- * Archives that *do* carry a `fabric.mod.json` are skipped — Fabric loads those itself and
- * already exposes them under both pack types, so picking them up here would register them
- * twice.
+ * Loads datapacks jar dropped in mods/.
  */
 class ModsFolderPackSource private constructor(private val packType: PackType) : RepositorySource {
 
     private val kind = if (packType == PackType.SERVER_DATA) "data" else "resource"
 
-    /**
-     * Data packs ride on [PackSource.shouldAddAutomatically], which is what
-     * `MinecraftServer.configurePackRepository` reads to enable a freshly discovered pack, and
-     * leaves `/datapack disable` usable.
-     *
-     * Resource packs cannot: `Minecraft.reloadResourcePacks` goes through
-     * `PackRepository.reload()`, whose `rebuildSelected` only re-inserts packs marked
-     * *required*. Anything else would be discovered and then dropped from the selection on the
-     * first F3+T.
-     */
     private val selection = PackSelectionConfig(
         packType == PackType.CLIENT_RESOURCES,
         Pack.Position.TOP,
@@ -109,7 +86,7 @@ class ModsFolderPackSource private constructor(private val packType: PackType) :
         /**
          * Reads one file out of the packs of `mods/`, outside of any pack repository.
          *
-         * A trainer texture has to be read by the logical server — see [TrainerTextures] — and
+         * A trainer texture has to be read by the logical server — see [matheo1712.cobbletrainers.trainers.TrainerTextures] — and
          * no server-side resource manager ever looks at `assets/`. The scan is the same one
          * [loadPacks] performs, minus the `fabric.mod.json` filter: an archive Fabric did load
          * is already on the classpath, where the caller looks first, so reading it here would
@@ -159,14 +136,12 @@ class ModsFolderPackSource private constructor(private val packType: PackType) :
             )
         }
 
-        /** Honours `-Dfabric.modsFolder`, the way the loader itself locates the folder. */
         private val MODS_FOLDER: Path by lazy {
             System.getProperty("fabric.modsFolder")
                 ?.let(Path::of)
                 ?: FabricLoader.getInstance().gameDir.resolve("mods")
         }
 
-        /** The same symlink rules vanilla applies to `datapacks/` and `resourcepacks/`. */
         private val VALIDATOR: DirectoryValidator by lazy {
             LevelStorageSource.parseValidator(
                 FabricLoader.getInstance().gameDir.resolve("allowed_symlinks.txt")

@@ -1,4 +1,6 @@
-package matheo1712.cobbletrainers
+package matheo1712.cobbletrainers.trainers
+
+import matheo1712.cobbletrainers.battle.TrainerBattleMusic
 
 /**
  * Properties of a trainer, loaded from a JSON file.

@@ -17,17 +17,12 @@
   "cobblemon-trainers.subtitles.battle_music": "Trainer battle music",
 
   "trainer.cobblemon-trainers.rerebleue.name": "RereBleue",
-  "trainer.cobblemon-trainers.rerebleue.battle_start": "The ocean holds no secrets from me. Show me what you've got!",
-  "trainer.cobblemon-trainers.rerebleue.win": "What a wave! You washed me away.",
-  "trainer.cobblemon-trainers.rerebleue.lose": "The tide was against you. Come back when you're ready.",
+  "trainer.cobblemon-trainers.rerebleue.battle_start": "Don't ask me why I have an E in my name. Let's battle instead!",
+  "trainer.cobblemon-trainers.rerebleue.win": "Too easy 😎",
+  "trainer.cobblemon-trainers.rerebleue.lose": "Not bad! You did well.",
 
   "trainer.cobblemon-trainers.theazertor.name": "TheAzertor",
-  "trainer.cobblemon-trainers.theazertor.battle_start": "Two at a time — hope you can keep track!",
-  "trainer.cobblemon-trainers.theazertor.win": "Clean doubles play. I have nothing to add.",
-  "trainer.cobblemon-trainers.theazertor.lose": "One target at a time is not enough here.",
-
-  "trainer.cobblemon-trainers.kagumi.name": "Kagumi",
-  "trainer.cobblemon-trainers.kagumi.battle_start": "Three on three. Let's see how you handle the pressure.",
-  "trainer.cobblemon-trainers.kagumi.win": "You read the whole field. Well fought.",
-  "trainer.cobblemon-trainers.kagumi.lose": "Too much to watch at once, isn't it?"
+  "trainer.cobblemon-trainers.theazertor.battle_start": "You need a soul!",
+  "trainer.cobblemon-trainers.theazertor.win": "You need a soul! (Too easy)",
+  "trainer.cobblemon-trainers.theazertor.lose": "You need a soul! (Not bad)"
 }

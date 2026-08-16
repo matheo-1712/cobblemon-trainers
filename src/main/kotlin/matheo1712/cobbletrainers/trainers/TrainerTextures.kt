@@ -1,5 +1,7 @@
-package matheo1712.cobbletrainers
+package matheo1712.cobbletrainers.trainers
 
+import matheo1712.cobbletrainers.CobblemonTrainers
+import matheo1712.cobbletrainers.datapack_handler.ModsFolderPackSource
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.packs.PackType
 
@@ -17,7 +19,7 @@ import net.minecraft.server.packs.PackType
  * 1. **The classpath**, which holds the assets of the mod itself and of everything Fabric
  *    loaded as a mod — including a pack built as a `.jar` with a `fabric.mod.json`.
  * 2. **The packs of `mods/`** that Fabric skipped, read straight off the disk by
- *    [ModsFolderPackSource.readResource].
+ *    [matheo1712.cobbletrainers.datapack_handler.ModsFolderPackSource.readResource].
  *
  * A pack living in `datapacks/` or `resourcepacks/` is out of reach: neither is read by the
  * side that needs the bytes. Ship the texture through `mods/`.
