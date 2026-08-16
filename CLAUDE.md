@@ -385,8 +385,17 @@ Points à ne pas redécouvrir :
 ## Publication
 
 `.github/workflows/release.yml` se déclenche à la **publication d'une release GitHub** :
-il construit, publie sur Modrinth et CurseForge via `./gradlew publishMods`
+il construit, publie sur Modrinth via `./gradlew publishMods`
 (`me.modmuss50.mod-publish-plugin`), puis attache les assets à la release.
+
+**Modrinth est la seule plateforme.** CurseForge a été tenté puis retiré : son API d'upload
+répondait invariablement `Invalid game version ID: 11779 belongs to an invalid dependency`.
+Le plugin envoie quatre catégories d'IDs (version Minecraft, modloader, environnement
+client/server, version Java), toutes résolues depuis la liste de CurseForge elle-même — l'ID
+existe donc, c'est son type que le projet refuse. Retirer `javaVersions` n'a rien changé, ce
+qui laisse le tag d'environnement, que le plugin impose (`client` ou `server`, au moins un).
+Ne pas réessayer sans avoir d'abord identifié 11779 via `GET /api/game/versions` avec un jeton
+CurseForge.
 
 Pour couper une release : publier une release GitHub dont le tag est `v<version>`. Rien à
 bumper avant. Le corps de la release devient le changelog partout, et la case *pre-release*
@@ -394,7 +403,7 @@ choisit entre `stable` et `beta` (`alpha` si le tag contient `alpha`).
 
 **Le tag fait foi pour la version.** Le workflow le passe en `-Pversion`, ce qui alimente
 `project.version`, donc le nom du jar, le `${version}` que `processResources` injecte dans
-`fabric.mod.json`, et le numéro de version sur les deux plateformes. Le `version=` de
+`fabric.mod.json`, et le numéro de version publié. Le `version=` de
 `gradle.properties` n'est plus qu'un défaut pour les builds locaux : il n'a pas besoin de
 suivre, et rien ne le vérifie. Le seul garde-fou est que le tag doit ressembler à un numéro
 (`1.2.3`, avec ou sans `v`), sinon le jar s'appellerait d'après une étiquette du genre
@@ -402,11 +411,16 @@ suivre, et rien ne le vérifie. Le seul garde-fou est que le tag doit ressembler
 
 Points à ne pas redécouvrir :
 
-- **Un ID de projet vide dans `gradle.properties` retire la plateforme** de `publishMods`. Le
-  workflow vérifie l'appariement ID/secret avant de construire : sans ça, un secret manquant
-  ferait basculer `publishMods` en `dryRun` et le workflow finirait vert sans rien publier.
-- **CurseForge veut un ID numérique**, pas le slug (`curseforge_slug` ne sert qu'à l'affichage
-  et au webhook Discord).
+- **Le workflow exige `MODRINTH_TOKEN` avant de construire.** Sans jeton, `publishMods`
+  bascule en `dryRun` et le workflow finirait vert sans rien publier.
+- **Un numéro de version déjà publié sur Modrinth est refusé (409).** Une release qui échoue
+  après l'upload Modrinth ne se rejoue pas sur le même tag : reprendre sur le suivant, ou
+  supprimer la version depuis le tableau de bord.
+- **Les dépendances Modrinth sont épinglées à la version exacte du build**, lue depuis
+  `gradle.properties` (`cobblemon_version`, `fabric_api_version`, `fabric_kotlin_version`) :
+  changer une version de build déplace la contrainte publiée avec elle. Modrinth accepte un ID
+  de version ou un numéro, et refuse la publication si le motif ne correspond pas à exactement
+  une version — une faute de frappe échoue bruyamment.
 - **La release GitHub existe déjà** quand le workflow tourne. Le publisher `github` du plugin
   ne sait que *créer* une release, jamais alimenter une release existante (sauf via l'option
   `parent`, réservée aux sous-projets) : les assets passent donc par `gh release upload`.

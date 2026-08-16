@@ -1,4 +1,4 @@
-# Publishes a release to Modrinth, CurseForge and the GitHub release itself.
+# Publishes a release to Modrinth and to the GitHub release itself.
 #
 # Triggered by publishing a release on GitHub: its tag names the version, its body becomes the
 # changelog on every platform, and the pre-release checkbox picks between a stable and a beta
@@ -66,40 +66,23 @@ jobs:
           echo "type=$type" >> "$GITHUB_OUTPUT"
           echo "Releasing $version as $type"
 
-      # A configured platform whose token is missing would turn publishMods into a dry run and
-      # the workflow would go green having uploaded nothing. Catch it before the long build.
-      #
-      # The reverse — a token with no project ID — is only a warning: it is what a half-finished
-      # setup looks like, and the release still has somewhere to go.
+      # Without the token publishMods falls back to a dry run, and the workflow would go green
+      # having uploaded nothing. Catch it before the long build.
       - name: check the publishing credentials
         env:
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
-          CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
         run: |
-          missing=0
-          check() {
-            id=$(sed -n "s/^$1=//p" gradle.properties)
-            if [ -n "$id" ] && [ -z "$2" ]; then
-              echo "::error::gradle.properties sets $1 but the secret $3 is empty"
-              missing=1
-            elif [ -z "$id" ] && [ -n "$2" ]; then
-              echo "::warning::the secret $3 is set but $1 is empty in gradle.properties, so this platform is skipped"
-            fi
-          }
-
-          check modrinth_id "$MODRINTH_TOKEN" MODRINTH_TOKEN
-          check curseforge_id "$CURSEFORGE_TOKEN" CURSEFORGE_TOKEN
-          exit $missing
+          if [ -z "$MODRINTH_TOKEN" ]; then
+            echo "::error::the secret MODRINTH_TOKEN is empty, nothing would be published"
+            exit 1
+          fi
 
       - name: build
         run: ./gradlew build exampleDatapack "-Pversion=${{ steps.release.outputs.version }}"
 
-      # Modrinth and CurseForge in one task. A destination whose project ID is empty in
-      # gradle.properties is skipped, so this works before both projects exist.
-      - name: publish to modrinth and curseforge
+      - name: publish to modrinth
         env:
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
-          CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
           CHANGELOG: ${{ github.event.release.body }}
         run: |
           ./gradlew publishMods \
