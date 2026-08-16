@@ -40,9 +40,10 @@ est ignoré, quel que soit le format.
 | `cobblemonrlm:debutant` | `skill` 0 (IA la plus faible), bas niveau, aucun message, aucun skin défini |
 | `cobblemonrlm:skin_par_uuid` | `skin.type` en `player_uuid` au lieu du pseudo |
 | `cobblemonrlm:pnj_pacifiste` | `canBattle: false` — le clic droit ne déclenche rien |
+| `cobblemonrlm:formes` | Lignes `Aspects:` : un Raichu d'Alola et un Smogogo de Galar (caractéristiques à drapeau, `alolan` / `galarian`), un Motisma-Lavage (caractéristique à choix, `appliance=wash`) |
 | `cobblemonrlm:polyglotte` | Textes en clés de traduction, fournies par `assets/cobblemonrlm/lang/` — passe ton jeu en anglais puis en français pour voir la différence, nom flottant compris |
 | `cobblemonrlm:jacinthe` | Le cas complet : équipe de six, textes traduits, et `battleMusic` pointant sur une piste du pack plutôt que sur celle du mod |
-| `cobblemonrlm:minimaliste` | JSON réduit au strict minimum : tous les autres champs prennent leur valeur par défaut. Rangé dans `cobblemontrainers/trainers/kanto/`, ce qui **ne change pas** son ID — seul le nom de fichier compte |
+| `cobblemonrlm:minimaliste` | JSON réduit au strict minimum : tous les autres champs prennent leur valeur par défaut. Rangé dans `cobblemontrainers/kanto/`, ce qui **ne change pas** son ID — seul le nom de fichier compte |
 
 ## À savoir
 

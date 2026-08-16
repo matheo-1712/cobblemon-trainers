@@ -1,6 +1,7 @@
 package matheo1712.cobbletrainers
 
 import com.cobblemon.mod.common.api.pokemon.PokemonProperties
+import com.cobblemon.mod.common.api.properties.CustomPokemonProperty
 import net.minecraft.network.chat.Component
 import java.util.Locale
 
@@ -12,8 +13,8 @@ import java.util.Locale
  * that may contain spaces (nickname, held item) are assigned directly on the resulting
  * object, because Cobblemon's property parser splits on spaces.
  *
- * Known limitation: Showdown-style regional forms (`Raichu-Alola`) are not translated into
- * Cobblemon aspects.
+ * Known limitation: Showdown writes a form as a suffix of the species name (`Raichu-Alola`),
+ * which is not translated here — forms are declared with an `Aspects:` line instead.
  */
 object ShowdownTeamParser {
 
@@ -38,6 +39,9 @@ object ShowdownTeamParser {
         "spe" to "speed",
         "speed" to "speed"
     )
+
+    /** Separators accepted between two aspects on an `Aspects:` line. */
+    private val ASPECT_SEPARATOR = Regex("""[,\s]+""")
 
     // Nickname (Species) (M)
     private val NICKNAME_SPECIES_GENDER = Regex("""^(.+?)\s*\((.+?)\)\s*\(([MF])\)$""")
@@ -153,9 +157,13 @@ object ShowdownTeamParser {
         }
 
         val moves = mutableListOf<String>()
+        val aspects = mutableListOf<String>()
 
         for (line in lines.drop(1)) {
             when {
+                line.startsWith("Aspects:", ignoreCase = true) ->
+                    aspects += splitAspects(line.substringAfter(':'))
+
                 line.startsWith("Ability:", ignoreCase = true) ->
                     builder.append(" ability=${normalizeName(line.substringAfter(':'))}")
 
@@ -193,6 +201,10 @@ object ShowdownTeamParser {
             }
         }
 
+        for (aspect in aspects.distinct()) {
+            appendAspect(builder, aspect)
+        }
+
         if (moves.isNotEmpty()) {
             builder.append(" moves=${moves.joinToString(",")}")
         }
@@ -209,6 +221,40 @@ object ShowdownTeamParser {
         }
 
         return properties
+    }
+
+    /** "rlm, poison" -> ["rlm", "poison"]. Spaces separate too, so commas are optional. */
+    private fun splitAspects(raw: String): List<String> =
+        raw.split(ASPECT_SEPARATOR).map { normalizeName(it) }.filter { it.isNotEmpty() }
+
+    /**
+     * Appends one aspect to the property string.
+     *
+     * An aspect comes from a species feature, so it is turned back into the property that
+     * drives that feature — the same syntax `/pokespawn` takes, which is what makes a team
+     * line testable in game before it is written to a datapack. A flag feature is a bare key
+     * (`rlm` -> `rlm=true`); a choice feature already carries its value (`appliance=wash`)
+     * and is passed through.
+     *
+     * Cobblemon drops a property whose key no feature declares, without a word, so an unknown
+     * key is logged here: a typo would otherwise show up as a Pokémon quietly wearing its base
+     * form. Features are registered from datapacks
+     * ([com.cobblemon.mod.common.api.pokemon.feature.SpeciesFeatures] registers every provider
+     * that is a [com.cobblemon.mod.common.api.properties.CustomPokemonPropertyType]), so the
+     * list is only meaningful once the server has loaded them — which it has by the time a
+     * trainer spawns.
+     */
+    private fun appendAspect(builder: StringBuilder, aspect: String) {
+        val key = aspect.substringBefore('=')
+        val known = CustomPokemonProperty.properties.any { type ->
+            type.keys.any { it.equals(key, ignoreCase = true) }
+        }
+        if (!known) {
+            LOGGER.warn("Ignoring unknown aspect '{}': no species feature declares that key", key)
+            return
+        }
+
+        builder.append(' ').append(if (aspect.contains('=')) aspect else "$aspect=true")
     }
 
     /** "Light Ball" -> "cobblemon:light_ball". An explicit namespace is kept as is. */

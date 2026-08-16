@@ -26,12 +26,11 @@ commandes, voir le [README](../README.md).
 mon_pack/
 ├── pack.mcmeta
 └── data/
-    └── mon_pack/                         ← ton namespace
+    └── mon_pack/                     ← ton namespace
         └── cobblemontrainers/
-            └── trainers/
-                ├── red.json              → ID mon_pack:red
-                └── kanto/
-                    └── blue.json         → ID mon_pack:blue
+            ├── red.json              → ID mon_pack:red
+            └── kanto/
+                └── blue.json         → ID mon_pack:blue
 ```
 
 ```json
@@ -47,9 +46,9 @@ mon_pack/
 
 Trois règles à retenir :
 
-- Le dossier lu est `cobblemontrainers/trainers/`, à l'intérieur de ton namespace. Tout ce
-  que le mod lit dans un pack est regroupé sous `cobblemontrainers/`, ce qui évite les
-  collisions avec d'autres mods.
+- Le dossier lu est `cobblemontrainers/`, directement à l'intérieur de ton namespace —
+  au même niveau que les `species/` et `npcs/` de Cobblemon. Il porte le nom du mod plutôt
+  qu'un `trainers/` générique, ce qui évite les collisions avec d'autres mods.
 - L'ID d'un dresseur est `<namespace>:<nom de fichier>`. **Les sous-dossiers n'en font pas
   partie** : `kanto/blue.json` donne `mon_pack:blue`, pas `mon_pack:kanto/blue`. Ils servent
   seulement à ranger, mais attention aux doublons de noms.
@@ -84,7 +83,7 @@ qui porte un `pack.mcmeta`, et l'expose à la fois comme datapack et comme resou
 ```
 mon_pack.jar
 ├── pack.mcmeta
-├── data/mon_pack/cobblemontrainers/trainers/…
+├── data/mon_pack/cobblemontrainers/…
 └── assets/mon_pack/{lang,sounds,sounds.json}
 ```
 
@@ -153,7 +152,7 @@ d'un monde — et sur un serveur, il n'a même pas le fichier. C'est préciséme
 
 ## Le premier dresseur
 
-`data/mon_pack/cobblemontrainers/trainers/red.json` :
+`data/mon_pack/cobblemontrainers/red.json` :
 
 ```json
 {
@@ -247,6 +246,7 @@ Lignes reconnues, en plus de la première :
 | Ligne | Exemple |
 | --- | --- |
 | Première ligne | `Surnom (Espèce) (M) @ Objet` — surnom, genre et objet facultatifs |
+| Forme | `Aspects: rlm, poison` |
 | Talent | `Ability: Static` |
 | Niveau | `Level: 88` |
 | Chromatique | `Shiny: Yes` |
@@ -267,6 +267,59 @@ Deux détails qui piègent :
   `special_attack`, `special_defence`, `speed`. Les noms longs (`Attack`, `Defense`,
   `Speed`) passent aussi. En revanche une abréviation hors de cette liste est ignorée en
   silence, comme n'importe quelle ligne inconnue.
+
+## Formes régionales, méga-évolutions, fakemon : la ligne `Aspects:`
+
+Une forme n'est pas une espèce à part chez Cobblemon : c'est la même espèce portant d'autres
+**aspects**. Un Raichu d'Alola est un `raichu` avec l'aspect `alolan`, un Haxorus RLM Poison
+est un `haxorus` avec les aspects `rlm` et `poison`. La ligne `Aspects:` les liste, séparés
+par des virgules ou de simples espaces :
+
+```json
+"team": [
+  "Haxorus @ Life Orb",
+  "Aspects: rlm, poison",
+  "Ability: Venomedge",
+  "Level: 65",
+  "- Poison Jab",
+  "- Dragon Claw"
+]
+```
+
+**Où trouver les aspects d'une forme.** Ils sont écrits dans le pack qui l'ajoute, dans le
+champ `aspects` de la forme (`data/<ns>/cobblemon/species/…` ou `species_additions/…`) :
+
+```json
+{ "name": "rlm", "aspects": ["rlm", "poison"], "…": "…" }
+```
+
+**Comment vérifier avant d'écrire le JSON.** La ligne `Aspects:` reprend exactement la syntaxe
+de `/pokespawn`, donc un `/pokespawn haxorus rlm=true poison=true` en jeu te dit tout de suite
+si tes aspects sont les bons.
+
+Deux formes d'aspects existent, et la ligne accepte les deux :
+
+| Type de caractéristique | Aspect | À écrire |
+| --- | --- | --- |
+| Drapeau (`"type": "flag"`) | `alolan`, `rlm`, `poison` | `Aspects: alolan` |
+| Choix (`"type": "choice"`) | `wash-appliance`, `attack-forme` | `Aspects: appliance=wash` |
+
+Une caractéristique à choix ne se déclare pas par son aspect mais par son couple
+`caractéristique=valeur` — l'aspect `wash-appliance` de Rotom-Lavage vient de la
+caractéristique `appliance` réglée sur `wash`. Le nom de la caractéristique est celui du
+fichier `data/<ns>/cobblemon/species_features/<nom>.json`.
+
+Trois points à connaître :
+
+- **Un aspect inconnu est ignoré, avec un avertissement dans les logs** (`Ignoring unknown
+  aspect '…'`). C'est le cas si le pack qui définit la forme n'est pas chargé, ou en cas de
+  faute de frappe : le dresseur reçoit alors le Pokémon dans sa forme de base.
+- **Le suffixe Showdown ne suffit pas.** Un export Showdown écrit la forme dans le nom de
+  l'espèce (`Raichu-Alola`, `Rotom-Wash`) ; le mod ne le traduit pas, parce que le suffixe ne
+  se distingue pas des espèces dont le nom contient un tiret (`Ho-Oh`, `Porygon-Z`). Retire
+  le suffixe et mets une ligne `Aspects:`.
+- **La forme n'a besoin de rien d'autre.** Cobblemon choisit la forme à partir des aspects du
+  Pokémon, donc statistiques, types, talents et modèle suivent tout seuls.
 
 ## Format de combat
 
@@ -414,7 +467,7 @@ côté client.
 
 | Symptôme | Cause probable |
 | --- | --- |
-| Le dresseur n'apparaît pas dans l'autocomplétion | Mauvais dossier : il faut `data/<ns>/cobblemontrainers/trainers/`, pas `data/<ns>/trainers/` |
+| Le dresseur n'apparaît pas dans l'autocomplétion | Mauvais dossier : il faut `data/<ns>/cobblemontrainers/`, pas `data/<ns>/trainers/` ni `data/cobblemontrainers/` — `<ns>` est ton namespace, celui du pack |
 | `Loaded 0 trainer(s)` depuis `datapacks/` | `pack.mcmeta` absent ou `pack_format` incorrect — le pack entier est ignoré par Minecraft |
 | Un pack posé dans `mods/` n'a aucun effet | `pack.mcmeta` absent de la **racine** de l'archive, ou rangé sous un dossier intermédiaire parce que le dossier a été zippé au lieu de son contenu |
 | Les dresseurs se chargent, mais pas la musique ni les traductions | L'archive est dans `datapacks/`. Ce dossier n'est lu **que** comme données, jamais comme ressources — le format n'y change rien. Pose-la dans `mods/`, ou une copie dans `resourcepacks/` |

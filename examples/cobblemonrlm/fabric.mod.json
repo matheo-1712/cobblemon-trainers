@@ -1,0 +1,17 @@
+{
+	"schemaVersion": 1,
+	"id": "cobblemonrlm",
+	"version": "1.0.0",
+	"name": "Cobblemon RLM",
+	"description": "Pack d'exemple pour Cobblemon Trainers : dresseurs, traductions et musique de combat.",
+	"authors": [
+		"matheo1712"
+	],
+	"license": "CC0-1.0",
+	"environment": "*",
+	"depends": {
+		"fabricloader": ">=0.17.2",
+		"minecraft": "~1.21.1",
+		"cobblemon-trainers": "*"
+	}
+}

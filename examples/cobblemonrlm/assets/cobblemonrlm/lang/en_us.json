@@ -28,6 +28,11 @@
   "trainer.cobblemonrlm.polyglotte.win": "Well played, in any language.",
   "trainer.cobblemonrlm.polyglotte.lose": "Try again once you have trained a little.",
 
+  "trainer.cobblemonrlm.formes.name": "Form Collector",
+  "trainer.cobblemonrlm.formes.battle_start": "Every one of mine wears a different form. Aspects, not species.",
+  "trainer.cobblemonrlm.formes.win": "Regional or not, you read them all correctly.",
+  "trainer.cobblemonrlm.formes.lose": "Learn the forms, then come back.",
+
   "trainer.cobblemonrlm.jacinthe.name": "Jacinthe",
   "trainer.cobblemonrlm.jacinthe.battle_start": "Listen closely: this theme only plays for battles that matter.",
   "trainer.cobblemonrlm.jacinthe.win": "You held on to the very last bar. Hats off.",

@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory
  * Main entrypoint of the Cobblemon Trainers mod.
  *
  * The mod adds configurable Pokémon trainers to Cobblemon. Trainers are declared in
- * datapacks, at `data/<namespace>/cobblemontrainers/trainers/<name>.json`.
+ * datapacks, at `data/<namespace>/cobblemontrainers/<name>.json`.
  *
  * Features:
  * - Showdown-formatted teams

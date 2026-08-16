@@ -1,6 +1,6 @@
 {
   "cobblemon-trainers.command.spawn_trainer.success": "Dresseur %s invoqué en %s, %s, %s",
-  "cobblemon-trainers.command.spawn_trainer.unknown_trainer": "Dresseur introuvable. Vérifie les ID dans data/<namespace>/cobblemontrainers/trainers/ de tes datapacks.",
+  "cobblemon-trainers.command.spawn_trainer.unknown_trainer": "Dresseur introuvable. Vérifie les ID dans data/<namespace>/cobblemontrainers/ de tes datapacks.",
   "cobblemon-trainers.command.spawn_trainer.invalid_position": "Position invalide pour invoquer un dresseur.",
   "cobblemon-trainers.command.spawn_trainer.spawn_failed": "Impossible d'invoquer le dresseur. Consulte les logs du serveur pour le détail.",
   "cobblemon-trainers.chat.trainer_message": "[%s] %s",
