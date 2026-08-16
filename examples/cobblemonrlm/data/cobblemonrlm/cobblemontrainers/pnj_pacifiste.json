@@ -1,6 +1,7 @@
 {
   "name": "trainer.cobblemonrlm.pnj_pacifiste.name",
   "canBattle": false,
+  "tracked": false,
   "skin": {
     "type": "player_username",
     "value": "Steve"

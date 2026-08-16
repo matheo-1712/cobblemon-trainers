@@ -16,7 +16,8 @@ cd examples/cobblemonrlm && zip -r ../../cobblemonrlm.jar .
 ```
 
 C'est tout. Pas de `fabric.mod.json`, pas de resource pack à cocher : le mod lit les deux
-moitiés. En jeu, `/reload` puis `/spawntrainer cobblemonrlm:<id>`.
+moitiés. En jeu, `/reload` puis `/spawntrainer cobblemonrlm:<id>`. `/listtrainers` montre
+ensuite lesquels tu as vaincus.
 
 Les autres emplacements marchent aussi, si tu préfères :
 
@@ -39,7 +40,9 @@ est ignoré, quel que soit le format.
 | `cobblemonrlm:trio_marathon` | Combat en triple via l'alias `trio`, `autoHealParty: false` — les dégâts persistent d'un combat à l'autre. Six Pokémon |
 | `cobblemonrlm:debutant` | `skill` 0 (IA la plus faible), bas niveau, aucun message, aucun skin défini |
 | `cobblemonrlm:skin_par_uuid` | `skin.type` en `player_uuid` au lieu du pseudo |
-| `cobblemonrlm:pnj_pacifiste` | `canBattle: false` — le clic droit ne déclenche rien |
+| `cobblemonrlm:pnj_pacifiste` | `canBattle: false` — le clic droit ne déclenche rien. Aussi `tracked: false`, donc absent de `/listtrainers` : il n'y a rien à battre chez lui |
+| `cobblemonrlm:champion_unique` | `canRebattle: false` et une liste de `rewards` — un combat unique par joueur, avec un butin remis à la victoire. Une fois battu, il refuse la revanche et le dit dans le chat, y compris si tu le réinvoques |
+| `cobblemonrlm:recompense_unique` | L'autre moitié du couple : rejouable autant qu'on veut, mais `rewardOnce: true` — la récompense ne tombe qu'à la première victoire |
 | `cobblemonrlm:formes` | Lignes `Aspects:` : un Raichu d'Alola et un Smogogo de Galar (caractéristiques à drapeau, `alolan` / `galarian`), un Motisma-Lavage (caractéristique à choix, `appliance=wash`) |
 | `cobblemonrlm:polyglotte` | Textes en clés de traduction, fournies par `assets/cobblemonrlm/lang/` — passe ton jeu en anglais puis en français pour voir la différence, nom flottant compris |
 | `cobblemonrlm:jacinthe` | Le cas complet : équipe de six, textes traduits, et `battleMusic` pointant sur une piste du pack plutôt que sur celle du mod |

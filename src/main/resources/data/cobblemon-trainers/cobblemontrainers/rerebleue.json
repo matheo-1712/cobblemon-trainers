@@ -1,0 +1,17 @@
+{
+  "name": "trainer.cobblemon-trainers.rerebleue.name",
+  "level": 62,
+  "skill": 5,
+  "skin": {
+    "type": "player_username",
+    "value": "RereBleue"
+  },
+  "canBattle": true,
+  "battleMusic": "cobblemonrlm:battle_music.neoflare_battle",
+  "battleStartMessage": "trainer.cobblemon-trainers.rerebleue.battle_start",
+  "battleEndWinMessage": "trainer.cobblemon-trainers.rerebleue.win",
+  "battleEndLoseMessage": "trainer.cobblemon-trainers.rerebleue.lose",
+  "team": [
+ "Ram (Hydreigon) (F) @ Choice Scarf  \nAbility: Levitate  \nTera Type: Dark  \nEVs: 4 HP / 252 SpA / 252 Spe  \nTimid Nature  \nIVs: 0 Atk  \n- Dark Pulse  \n- Draco Meteor  \n- Earth Power  \n- Fire Blast  \n\nMimikyu @ Life Orb  \nAbility: Disguise  \nEVs: 4 HP / 252 Atk / 252 Spe  \nJolly Nature  \n- Play Rough  \n- Shadow Claw  \n- Shadow Sneak  \n- Swords Dance  \n\nLucario @ Life Orb  \nAbility: Inner Focus  \nEVs: 4 HP / 252 Atk / 252 Spe  \nJolly Nature  \n- Close Combat  \n- Swords Dance  \n- Meteor Mash  \n- Extreme Speed  \n\nArcheops @ Sitrus Berry  \nAbility: Defeatist  \nEVs: 4 HP / 252 Atk / 252 Spe  \nJolly Nature  \n- Acrobatics  \n- U-turn  \n- Earthquake  \n- Stone Edge  \n\n"
+  ]
+}

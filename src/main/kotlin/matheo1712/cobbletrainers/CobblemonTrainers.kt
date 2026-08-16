@@ -23,7 +23,9 @@ import org.slf4j.LoggerFactory
  * - Minecraft player skins (by username or UUID)
  * - Battle start and end messages
  * - Battle music
+ * - Item rewards on victory, and one-shot trainers that turn down a rematch
  * - `/spawntrainer <id>` to summon a trainer
+ * - `/listtrainers [player]` to review who has been beaten
  */
 object CobblemonTrainers : ModInitializer {
 
@@ -41,6 +43,7 @@ object CobblemonTrainers : ModInitializer {
     override fun onInitialize() {
         CommandRegistrationCallback.EVENT.register { dispatcher, _, _ ->
             SpawnTrainerCommand.register(dispatcher)
+            ListTrainersCommand.register(dispatcher)
         }
 
         // The resource manager covers both the initial datapack load on server start and

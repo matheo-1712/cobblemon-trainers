@@ -11,12 +11,14 @@ import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents
 import net.minecraft.ChatFormatting
 import net.minecraft.network.chat.Component
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.Entity
 
 /**
- * Drives what surrounds a trainer battle: the configured messages, the battle music, and the
- * fate of a battle whose trainer leaves the world.
+ * Drives what surrounds a trainer battle: the configured messages, the battle music, the
+ * rewards and the record of who beat whom, and the fate of a battle whose trainer leaves the
+ * world.
  *
  * The battle actor of an NPC is an [NPCBattleActor], which exposes the entity directly — no
  * need to look it up by UUID. Note that [NPCBattleActor] does not extend `TrainerBattleActor`;
@@ -65,13 +67,41 @@ object TrainerBattleEventHandler {
     }
 
     private fun handleBattleVictory(battle: PokemonBattle, winners: List<BattleActor>) {
-        val definition = resolveTrainer(battle) ?: return
+        val npc = resolveNpc(battle) ?: return
+        val trainerId = TrainerRegistry.idFromAspects(npc.aspects) ?: return
+        val definition = TrainerRegistry.get(trainerId) ?: return
         val players = battle.players
         if (players.isEmpty()) return
 
         val playerWon = winners.any { it is PlayerBattleActor }
         val message = if (playerWon) definition.battleEndWinMessage else definition.battleEndLoseMessage
         broadcast(players, definition.name, message)
+
+        if (playerWon) recordVictory(trainerId, definition, winners)
+    }
+
+    /**
+     * Marks the trainer as beaten by every winning player, and hands out its rewards.
+     *
+     * Winners are read from the event rather than from `battle.players` so that, in a battle
+     * fought by several players, only the winning side is rewarded. A player who logged out
+     * mid-battle has no entity left and is skipped: nothing is recorded for them either, so the
+     * trainer is still there to beat when they come back.
+     */
+    private fun recordVictory(
+        trainerId: ResourceLocation,
+        definition: TrainerDefinition,
+        winners: List<BattleActor>
+    ) {
+        val players = winners.filterIsInstance<PlayerBattleActor>().mapNotNull { it.entity }
+        if (players.isEmpty()) return
+
+        val progress = TrainerProgress.of(players.first().server)
+        players.forEach { player ->
+            val firstWin = progress.recordVictory(trainerId, player.uuid)
+            if (definition.rewardOnce && !firstWin) return@forEach
+            TrainerRewards.grant(player, definition.rewards)
+        }
     }
 
     /**
@@ -97,10 +127,12 @@ object TrainerBattleEventHandler {
     }
 
     /** Finds the trainer definition from the aspect applied at spawn time. */
-    private fun resolveTrainer(battle: PokemonBattle): TrainerDefinition? {
-        val npcActor = battle.actors.filterIsInstance<NPCBattleActor>().firstOrNull() ?: return null
-        return TrainerRegistry.findByAspects(npcActor.npc.aspects)
-    }
+    private fun resolveTrainer(battle: PokemonBattle): TrainerDefinition? =
+        resolveNpc(battle)?.let { TrainerRegistry.findByAspects(it.aspects) }
+
+    /** The NPC entity fighting in a battle, whether or not it is one of our trainers. */
+    private fun resolveNpc(battle: PokemonBattle): NPCEntity? =
+        battle.actors.filterIsInstance<NPCBattleActor>().firstOrNull()?.npc
 
     /**
      * Both the trainer name and the message are treated as translation keys, resolved on the

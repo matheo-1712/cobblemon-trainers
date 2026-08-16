@@ -58,11 +58,11 @@ curl -s "https://api.modrinth.com/v2/version/<ID>" | python -c "import sys,json;
 ## Architecture
 
 Flux complet : JSON de datapack → `TrainerDefinition` → `NPCEntity` Cobblemon →
-messages et musique de combat.
+messages, musique et récompenses de combat.
 
-- **`CobblemonTrainers`** — `ModInitializer`. Enregistre `/spawntrainer`, branche
-  `TrainerReloadListener` sur le gestionnaire de ressources `SERVER_DATA` (ce qui couvre
-  à la fois le chargement initial et `/reload`), et enregistre les listeners de combat
+- **`CobblemonTrainers`** — `ModInitializer`. Enregistre `/spawntrainer` et `/listtrainers`,
+  branche `TrainerReloadListener` sur le gestionnaire de ressources `SERVER_DATA` (ce qui
+  couvre à la fois le chargement initial et `/reload`), et enregistre les listeners de combat
   dans un `try/catch` car ils dépendent de la présence de Cobblemon.
 - **`TrainerRegistry`** — map en mémoire `ResourceLocation -> TrainerDefinition`, alimentée
   uniquement par les datapacks (`data/<namespace>/cobblemontrainers/<nom>.json`, y compris
@@ -82,9 +82,15 @@ messages et musique de combat.
   passée à `PokemonProperties.parse`.
 - **`TrainerSpawner`** — construit et fait apparaître le `NPCEntity`.
 - **`TrainerBattleEventHandler`** — s'abonne à `CobblemonEvents.BATTLE_STARTED_POST` pour
-  le message de début et la musique, et à `BATTLE_VICTORY` pour le message de fin. Il
-  surveille aussi la mort et la suppression des entités, pour arrêter le combat d'un
-  dresseur qui quitte le monde (voir plus bas).
+  le message de début et la musique, et à `BATTLE_VICTORY` pour le message de fin, les
+  récompenses et l'enregistrement de la victoire. Il surveille aussi la mort et la
+  suppression des entités, pour arrêter le combat d'un dresseur qui quitte le monde (voir
+  plus bas).
+- **`TrainerProgress`** — `SavedData` du monde : qui a battu quel dresseur. Voir « Revanches
+  et récompenses ».
+- **`TrainerRewards`** — remet les objets au vainqueur.
+- **`ListTrainersCommand`** — `/listtrainers [joueur]`, la lecture de `TrainerProgress`
+  côté joueur.
 - **`TrainerBattleMusic`** — envoie `ClientboundSoundPacket` / `ClientboundStopSoundPacket`
   aux joueurs du combat.
 
@@ -117,6 +123,42 @@ Points à ne pas redécouvrir :
   mono.
 - **Pas de boucle.** `isLooping` est une décision de `SoundInstance`, côté client, et le mod
   ne touche pas au moteur audio : un combat plus long que la piste finit en silence.
+
+### Revanches et récompenses
+
+`canRebattle` et `rewardOnce` ont besoin de savoir qui a déjà battu quoi — un état de monde,
+pas de datapack. Il vit donc dans un `SavedData` (`TrainerProgress`, fichier
+`cobblemon_trainers_progress.dat` de l'overworld) et non dans `TrainerRegistry`, que `/reload`
+vide entièrement.
+
+Points à ne pas redécouvrir :
+
+- **La clé est l'ID du dresseur, pas l'UUID de l'entité.** Battre un exemplaire de
+  `mon_pack:champion` les bat tous, et tuer le PNJ ne remet rien à zéro. D'où
+  `TrainerRegistry.idFromAspects`, qui rend l'ID sans exiger qu'une définition le porte
+  encore : un dresseur retiré des datapacks garde son identité, et son entrée survit à un
+  pack désactivé le temps d'une session.
+- **Rien n'est oublié quand une entité disparaît**, contrairement à l'arrêt des combats. La
+  taille est bornée par le nombre de dresseurs × joueurs.
+- **`tracked` masque, il n'empêche pas d'enregistrer.** Un dresseur masqué garde son entrée,
+  sans quoi `canRebattle` et `rewardOnce` cesseraient de marcher pour lui. Tout ce qui
+  présente la progression à un joueur passe par `TrainerRegistry.tracked()` plutôt que
+  `all()` — c'est le point d'entrée que réutilisera l'item de suivi prévu. Les dresseurs de
+  démonstration du mod portent `"tracked": false` : ils sont chargés dans tous les mondes.
+- **`SavedData.Factory` n'accepte pas un `DataFixTypes` nul** : `DimensionDataStorage`
+  le déréférence dès que le fichier existe. `DataFixTypes.LEVEL` fait l'affaire — le
+  DataFixerUpper rend l'entrée telle quelle quand la version lue vaut la version courante,
+  donc c'est un passe-plat.
+- **Le refus de revanche est dans `TrainerBattleInteraction`, avant `BattleBuilder`**, pour
+  que rien ne démarre : ni équipe soignée, ni musique.
+- **Les vainqueurs viennent de l'événement, pas de `battle.players`** : dans un combat à
+  plusieurs joueurs, seul le camp gagnant est récompensé. `PlayerBattleActor.entity` est nul
+  pour un joueur déconnecté ; on ne lui donne rien et on n'enregistre rien, donc le dresseur
+  l'attend toujours.
+- **`Inventory.placeItemBackInInventory` fait tout le travail** de remise : il découpe en
+  piles et jette au sol ce qui ne rentre pas. Mais il **vide l'`ItemStack` qu'on lui passe**,
+  en le découpant jusqu'à zéro : lire son nom ou sa quantité après coup donne « Air » et 0.
+  Le message de récompense est donc construit avant l'appel.
 
 ### Textes et traductions
 

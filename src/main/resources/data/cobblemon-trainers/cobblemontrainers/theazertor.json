@@ -8,6 +8,7 @@
     "value": "TheAzertor"
   },
   "canBattle": true,
+  "tracked": false,
   "battleStartMessage": "trainer.cobblemon-trainers.theazertor.battle_start",
   "battleEndWinMessage": "trainer.cobblemon-trainers.theazertor.win",
   "battleEndLoseMessage": "trainer.cobblemon-trainers.theazertor.lose",
