@@ -86,18 +86,35 @@ object TrainerRegistry {
     }
 
     /**
-     * Finds the trainer tagged on an NPC entity through its applied aspects.
+     * Reads the trainer ID tagged on an NPC entity through its applied aspects.
      *
      * The aspect is written at spawn time and saved to NBT, so the link survives a restart.
+     * The ID is returned whether or not a definition still carries it: a trainer dropped from
+     * the datapacks keeps its identity, which is what [TrainerProgress] is keyed on.
      */
-    fun findByAspects(aspects: Collection<String>): TrainerDefinition? {
+    fun idFromAspects(aspects: Collection<String>): ResourceLocation? {
         val aspect = aspects.find { it.startsWith(CobblemonTrainers.TRAINER_ASPECT_PREFIX) } ?: return null
-        val id = ResourceLocation.tryParse(aspect.removePrefix(CobblemonTrainers.TRAINER_ASPECT_PREFIX))
-            ?: return null
-        return trainers[id]
+        return ResourceLocation.tryParse(aspect.removePrefix(CobblemonTrainers.TRAINER_ASPECT_PREFIX))
     }
+
+    /** Finds the trainer tagged on an NPC entity, or null if it is not one of ours. */
+    fun findByAspects(aspects: Collection<String>): TrainerDefinition? =
+        idFromAspects(aspects)?.let { trainers[it] }
 
     fun get(id: ResourceLocation): TrainerDefinition? = trainers[id]
     fun allIds(): Set<ResourceLocation> = trainers.keys.toSet()
     fun all(): Map<ResourceLocation, TrainerDefinition> = trainers.toMap()
+
+    /**
+     * The trainers a progress listing should show, in ID order.
+     *
+     * Everything that presents progress to a player goes through here rather than [all]: the
+     * demo trainers shipped by this mod and by others are loaded in every world, and a player
+     * has no reason to see them among the trainers they are meant to hunt down. See
+     * [TrainerDefinition.tracked].
+     */
+    fun tracked(): List<Pair<ResourceLocation, TrainerDefinition>> =
+        trainers.filterValues { it.tracked }
+            .toList()
+            .sortedBy { (id, _) -> id.toString() }
 }

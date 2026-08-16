@@ -33,6 +33,16 @@
   "trainer.cobblemonrlm.formes.win": "Regional or not, you read them all correctly.",
   "trainer.cobblemonrlm.formes.lose": "Learn the forms, then come back.",
 
+  "trainer.cobblemonrlm.champion_unique.name": "One-Shot Champion",
+  "trainer.cobblemonrlm.champion_unique.battle_start": "One chance. Beat me and you never see me again.",
+  "trainer.cobblemonrlm.champion_unique.win": "Take these — you have earned every one of them.",
+  "trainer.cobblemonrlm.champion_unique.lose": "Not this time. But the door is still open.",
+
+  "trainer.cobblemonrlm.recompense_unique.name": "Training Partner",
+  "trainer.cobblemonrlm.recompense_unique.battle_start": "Spar with me whenever you like — the prize only comes once.",
+  "trainer.cobblemonrlm.recompense_unique.win": "Good work. Come back for another round any time.",
+  "trainer.cobblemonrlm.recompense_unique.lose": "Shake it off and challenge me again.",
+
   "trainer.cobblemonrlm.jacinthe.name": "Jacinthe",
   "trainer.cobblemonrlm.jacinthe.battle_start": "Listen closely: this theme only plays for battles that matter.",
   "trainer.cobblemonrlm.jacinthe.win": "You held on to the very last bar. Hats off.",

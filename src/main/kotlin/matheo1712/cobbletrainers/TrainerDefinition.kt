@@ -20,6 +20,18 @@ package matheo1712.cobbletrainers
  * @param autoHealParty Whether the trainer team is healed to full when a battle starts and
  *   again once it ends. With false, damage carries over between fights.
  * @param canBattle Whether the trainer can battle. When false the interaction is disabled.
+ * @param canRebattle Whether a player who has already beaten this trainer may fight it again.
+ *   With false, the trainer is a one-shot encounter: it turns down every later challenge from
+ *   the same player. Victories are remembered per trainer ID, so every NPC spawned from this
+ *   definition shares the same record — see [TrainerProgress].
+ * @param tracked Whether the trainer belongs in a progress listing — `/listtrainers` and
+ *   anything built on it. Set it to false for a trainer nobody is meant to hunt down: a demo
+ *   shipped with a mod, a non-fighting NPC, a trainer that never spawns. This is about what is
+ *   shown, not what is stored: victories are recorded either way, so [canRebattle] and
+ *   [rewardOnce] keep working on an untracked trainer.
+ * @param rewards Items handed to the player on victory, in order.
+ * @param rewardOnce Whether [rewards] are limited to the player's first win. Only meaningful
+ *   with [canRebattle] on, which is otherwise what limits the wins.
  * @param battleStartMessage Sent to the player when the battle starts (optional).
  * @param battleEndWinMessage Sent when the player wins (optional).
  * @param battleEndLoseMessage Sent when the player loses (optional).
@@ -36,10 +48,25 @@ data class TrainerDefinition(
     val skill: Int = 5,
     val autoHealParty: Boolean = true,
     val canBattle: Boolean = true,
+    val canRebattle: Boolean = true,
+    val tracked: Boolean = true,
+    val rewards: List<TrainerReward> = emptyList(),
+    val rewardOnce: Boolean = false,
     val battleStartMessage: String? = null,
     val battleEndWinMessage: String? = null,
     val battleEndLoseMessage: String? = null,
     val battleMusic: String? = TrainerBattleMusic.DEFAULT_TRACK
+)
+
+/**
+ * One item handed to the player when they beat the trainer.
+ *
+ * @param item Full item ID, namespace included: `cobblemon:rare_candy`, `minecraft:diamond`.
+ * @param count How many of it. Clamped to a sane range by [TrainerRewards].
+ */
+data class TrainerReward(
+    val item: String = "",
+    val count: Int = 1
 )
 
 /**

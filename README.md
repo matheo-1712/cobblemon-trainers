@@ -26,16 +26,22 @@ Fabric API et Fabric Language Kotlin. Le mod fonctionne côté serveur comme en 
 ```
 /spawntrainer <id>
 /spawntrainer <id> <x> <y> <z>
+/listtrainers [<joueur>]
 ```
 
-Niveau de permission 2 (opérateur). L'autocomplétion propose les dresseurs chargés sous leur
-ID complet, `<pack>:<dresseur>` — le namespace étant le pack d'où vient le dresseur, on voit
-d'un coup d'œil qui fournit quoi. À la frappe, le nom seul suffit quand il n'est pas ambigu,
-et la recherche porte sur les deux moitiés : `jac` retrouve `mon_pack:jacinthe`.
+Niveau de permission 2 (opérateur) pour les deux.
+
+L'autocomplétion de `/spawntrainer` propose les dresseurs chargés sous leur ID complet,
+`<pack>:<dresseur>` — le namespace étant le pack d'où vient le dresseur, on voit d'un coup
+d'œil qui fournit quoi. À la frappe, le nom seul suffit quand il n'est pas ambigu, et la
+recherche porte sur les deux moitiés : `jac` retrouve `mon_pack:jacinthe`.
+
+`/listtrainers` liste les dresseurs à battre et coche ceux qui l'ont été, pour soi ou pour un
+autre joueur.
 
 Un clic droit sur le dresseur lance le combat, sur fond de musique de combat. Si le combat
 ne peut pas démarrer (pas de Pokémon dans ton équipe, combat déjà en cours, dresseur sans
-équipe), la raison s'affiche dans le chat.
+équipe, ou dresseur qui ne prend pas de revanche), la raison s'affiche dans le chat.
 
 Tuer ou supprimer un dresseur pendant le combat met fin à la rencontre au lieu de laisser le
 joueur enfermé face à un adversaire absent.
@@ -68,12 +74,21 @@ Tous les champs sont facultatifs. Les autres réglages disponibles : format de c
 (`singles`, `doubles`, `triples`), difficulté de l'IA, soin de l'équipe entre les combats,
 messages de début et de fin, musique de combat, et des textes traduisibles par clé.
 
+Un dresseur peut aussi remettre des objets à la victoire et refuser la revanche une fois
+battu — `rewards`, `rewardOnce` et `canRebattle`. Ce qu'un joueur a accompli est retenu par ID
+de dresseur : battre un exemplaire de `mon_pack:champion` les bat tous, et le réinvoquer ne
+remet pas le compteur à zéro.
+
+`/listtrainers` liste les dresseurs restants et ceux déjà vaincus. Un dresseur qui n'a rien à
+y faire — démonstration, PNJ qui ne se bat pas — se retire de la liste avec
+`"tracked": false` ; les dresseurs livrés par le mod le sont déjà.
+
 Une forme — régionale, méga, fakemon d'un autre pack — s'obtient avec une ligne `Aspects:`,
 qui reprend la syntaxe de `/pokespawn` : `"Aspects: rlm, poison"` pour un Haxorus RLM Poison.
 
 **➜ Le guide complet est dans [docs/DATAPACK.md](docs/DATAPACK.md)** : arborescence,
-référence de tous les champs, format d'équipe Showdown, skins, musique, traductions, et les
-erreurs fréquentes.
+référence de tous les champs, format d'équipe Showdown, skins, musique, revanches et
+récompenses, traductions, et les erreurs fréquentes.
 
 Un pack d'exemple couvrant chaque option vit dans
 [`examples/cobblemonrlm/`](examples/cobblemonrlm) : un seul dossier qui fait à la fois

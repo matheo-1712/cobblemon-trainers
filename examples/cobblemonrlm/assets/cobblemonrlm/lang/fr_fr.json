@@ -33,6 +33,16 @@
   "trainer.cobblemonrlm.formes.win": "Régionales ou non, tu les as toutes lues correctement.",
   "trainer.cobblemonrlm.formes.lose": "Apprends les formes, puis reviens.",
 
+  "trainer.cobblemonrlm.champion_unique.name": "Champion d'un seul combat",
+  "trainer.cobblemonrlm.champion_unique.battle_start": "Une seule chance. Bats-moi et tu ne me reverras plus.",
+  "trainer.cobblemonrlm.champion_unique.win": "Prends ça — tu as mérité chaque objet.",
+  "trainer.cobblemonrlm.champion_unique.lose": "Pas cette fois. Mais la porte reste ouverte.",
+
+  "trainer.cobblemonrlm.recompense_unique.name": "Partenaire d'entraînement",
+  "trainer.cobblemonrlm.recompense_unique.battle_start": "Reviens t'entraîner quand tu veux — la récompense, elle, ne tombe qu'une fois.",
+  "trainer.cobblemonrlm.recompense_unique.win": "Beau travail. Repasse quand tu veux pour une autre manche.",
+  "trainer.cobblemonrlm.recompense_unique.lose": "Secoue-toi et redéfie-moi.",
+
   "trainer.cobblemonrlm.jacinthe.name": "Jacinthe",
   "trainer.cobblemonrlm.jacinthe.battle_start": "Écoute bien : ce thème n'est joué que pour les combats qui comptent.",
   "trainer.cobblemonrlm.jacinthe.win": "Tu as tenu jusqu'à la dernière mesure. Chapeau.",

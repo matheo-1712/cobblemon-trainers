@@ -12,6 +12,7 @@ commandes, voir le [README](../README.md).
 - [Arborescence](#arborescence)
 - [Le premier dresseur](#le-premier-dresseur)
 - [Tous les champs](#tous-les-champs)
+- [Revanches et récompenses](#revanches-et-récompenses)
 - [Le format d'équipe](#le-format-déquipe)
 - [Format de combat](#format-de-combat)
 - [Skins](#skins)
@@ -201,6 +202,10 @@ Puis, en jeu :
 | `skill` | `5` | Difficulté de l'IA de combat, de 0 à 5 |
 | `autoHealParty` | `true` | Soigne l'équipe du dresseur avant et après chaque combat |
 | `canBattle` | `true` | À `false`, le clic droit ne fait rien |
+| `canRebattle` | `true` | À `false`, un joueur qui l'a battu ne peut plus le redéfier |
+| `tracked` | `true` | À `false`, le dresseur n'apparaît pas dans le suivi de progression |
+| `rewards` | `[]` | Objets remis au joueur à chaque victoire |
+| `rewardOnce` | `false` | À `true`, `rewards` n'est remis qu'à la première victoire |
 | `battleStartMessage` | — | Envoyé au joueur au début du combat |
 | `battleEndWinMessage` | — | Envoyé si le joueur gagne |
 | `battleEndLoseMessage` | — | Envoyé si le joueur perd |
@@ -225,6 +230,120 @@ Deux réglages qu'on confond facilement :
 À `true`, l'équipe du dresseur démarre au maximum de ses PV et se re-soigne une fois le
 combat terminé. À `false`, les dégâts et les PP consommés persistent d'un combat à l'autre —
 pratique pour un boss qu'on use en plusieurs tentatives.
+
+## Revanches et récompenses
+
+Deux réglages indépendants : `canRebattle` décide si on peut redéfier le dresseur une fois
+battu, `rewards` ce qu'on gagne en le battant.
+
+```json
+{
+  "name": "Champion",
+  "canRebattle": false,
+  "rewards": [
+    { "item": "cobblemon:master_ball", "count": 1 },
+    { "item": "cobblemon:rare_candy", "count": 10 },
+    { "item": "minecraft:diamond" }
+  ]
+}
+```
+
+### `canRebattle`
+
+À `false`, le dresseur devient une rencontre unique : dès qu'un joueur l'a battu, ses clics
+droits suivants n'ouvrent plus de combat et il reçoit un message le lui disant. Le combat
+n'est même pas construit, donc rien ne bouge — ni équipe, ni musique.
+
+**Ce qui est retenu, c'est l'ID du dresseur**, `mon_pack:champion`, et non le PNJ posé dans le
+monde. Battre un exemplaire les bat tous : en poser dix sur une carte ne donne pas dix
+combats, et tuer celui qu'on a battu pour le réinvoquer ne remet pas le compteur à zéro.
+
+Trois précisions :
+
+- **Seule une victoire compte.** Une défaite, une fuite, un `/stopbattle` ou un dresseur qui
+  disparaît en plein combat ne marquent rien : le dresseur reste défiable.
+- **C'est par joueur.** Un dresseur battu par l'un reste disponible pour les autres.
+- **La mémoire vit dans le monde**, pas dans le datapack : `/reload` ne l'efface pas, et elle
+  survit à un redémarrage. Renommer un fichier de dresseur change son ID, donc repart de zéro.
+
+### `rewards`
+
+Chaque entrée est un objet et sa quantité :
+
+| Champ | Défaut | Rôle |
+| --- | --- | --- |
+| `item` | — | ID complet de l'objet, **namespace compris** |
+| `count` | `1` | Combien en donner |
+
+Les objets partent dans l'inventaire du joueur ; ce qui n'y tient pas tombe à ses pieds,
+donc une récompense n'est jamais perdue. Chaque objet reçu est annoncé dans le chat.
+
+- **Le namespace est obligatoire** : `cobblemon:rare_candy`, `minecraft:diamond`. Un ID sans
+  namespace est lu comme du `minecraft:`, contrairement aux objets tenus de l'équipe qui
+  reçoivent `cobblemon:` par défaut.
+- **Un objet introuvable est ignoré**, avec un avertissement dans les logs, et les autres
+  récompenses sont quand même remises — typiquement quand le mod qui fournit l'objet n'est
+  pas installé.
+- La quantité est ramenée dans l'intervalle 1–6400, pour qu'une faute de frappe ne noie pas
+  le joueur sous les objets.
+
+### `rewardOnce`
+
+Par défaut, un dresseur rejouable donne ses récompenses **à chaque victoire** — un dresseur
+avec `rewards` et `canRebattle: true` est donc une source infinie d'objets, ce qui est parfois
+voulu et souvent pas. `rewardOnce: true` limite le butin à la première victoire, tout en
+laissant le combat rejouable autant qu'on veut.
+
+Les combinaisons utiles :
+
+| `canRebattle` | `rewardOnce` | Comportement |
+| --- | --- | --- |
+| `false` | peu importe | Un seul combat par joueur, une seule récompense |
+| `true` | `true` | Combat rejouable à volonté, récompense à la première victoire seulement |
+| `true` | `false` | Combat rejouable à volonté, récompense à chaque victoire |
+
+### Le suivi de progression
+
+`/listtrainers [<joueur>]` liste les dresseurs et dit lesquels le joueur a déjà vaincus.
+Sans argument, c'est le joueur qui tape la commande. Niveau de permission 2 (opérateur).
+
+```
+Dresseurs de Steve — 1 / 3 vaincus
+✔ mon_pack:champion — Champion (plus de revanche)
+✘ mon_pack:rival — Rival
+✘ mon_pack:debutant — Débutant
+```
+
+La mention `(plus de revanche)` ne paraît que sur un dresseur déjà battu **et** en
+`canRebattle: false` : c'est le seul cas où la ligne est définitivement close, toutes les
+autres restant défiables.
+
+### `tracked`
+
+Tous les dresseurs chargés n'ont pas vocation à figurer dans cette liste. Les dresseurs de
+démonstration livrés par le mod, ceux d'un pack d'exemple, un PNJ qui ne se bat pas, un
+dresseur qui n'est jamais invoqué : autant de lignes qui parasitent la progression réelle
+d'un joueur. `"tracked": false` les en retire.
+
+```json
+{
+  "name": "Villageoise",
+  "canBattle": false,
+  "tracked": false
+}
+```
+
+Trois points :
+
+- **C'est un réglage d'affichage, pas de mémoire.** Les victoires restent enregistrées, donc
+  `canRebattle` et `rewardOnce` fonctionnent normalement sur un dresseur masqué.
+- **`canBattle: false` ne l'implique pas.** Les deux champs restent indépendants, mais un PNJ
+  qu'on ne peut pas combattre gagne presque toujours à porter les deux.
+- **Les dresseurs livrés par le mod portent déjà `"tracked": false`** — ils sont chargés dans
+  tous les mondes, ta liste ne montre donc que les tiens.
+
+C'est aussi ce champ que liront les futurs suivis de progression, pas seulement
+`/listtrainers`.
 
 ## Le format d'équipe
 
@@ -446,6 +565,7 @@ affiche la clé telle quelle — un bon moyen de repérer une clé oubliée.
 ```
 /reload
 /spawntrainer mon_pack:red
+/listtrainers
 ```
 
 `/reload` recharge les dresseurs sans redémarrer. L'autocomplétion de `/spawntrainer`
@@ -460,6 +580,10 @@ Au chargement, le mod écrit une ligne récapitulative :
 [cobblemon-trainers] Loaded 7 trainer(s): mon_pack:red, mon_pack:blue, …
 ```
 
+`/listtrainers` sert de seconde vérification : il ne montre que les dresseurs en
+`tracked: true`, donc un dresseur chargé mais absent de la liste est un dresseur masqué, pas
+un dresseur manquant.
+
 Un resource pack, lui, ne se recharge pas avec `/reload` : c'est <kbd>F3</kbd>+<kbd>T</kbd>,
 côté client.
 
@@ -473,6 +597,9 @@ côté client.
 | Les dresseurs se chargent, mais pas la musique ni les traductions | L'archive est dans `datapacks/`. Ce dossier n'est lu **que** comme données, jamais comme ressources — le format n'y change rien. Pose-la dans `mods/`, ou une copie dans `resourcepacks/` |
 | Le pack est au bon endroit et la musique reste muette | Le `.ogg` manque de l'archive, ou son chemin ne correspond pas au `name` de `sounds.json` (`<ns>:battle_music/x` → `assets/<ns>/sounds/battle_music/x.ogg`) |
 | Le dresseur s'appelle `trainer.mon_pack.red.name` en jeu | Resource pack absent ou désactivé, ou clé absente du fichier lang |
+| Le clic droit répond « déjà battu » | `canRebattle: false` et ce joueur l'a déjà vaincu. Réinvoquer le dresseur n'y change rien : c'est son ID qui est retenu |
+| Aucune récompense à la victoire | `rewards` absent, `rewardOnce: true` sur une victoire qui n'est pas la première, ou objet introuvable — voir les logs |
+| Le dresseur n'apparaît pas dans `/listtrainers` | `"tracked": false`, ou le dresseur n'est pas chargé du tout — `/spawntrainer` le dira |
 | Le combat en double est refusé | Moins de 2 Pokémon d'un des deux côtés, le tien compris |
 | Une stat EV/IV semble ignorée | Nom de stat hors de la liste reconnue — voir le tableau du format d'équipe |
 | Aucune musique | Piste absente du resource pack, ou ID qui ne correspond pas à la clé de `sounds.json` |
