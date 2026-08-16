@@ -1,9 +1,12 @@
+import me.modmuss50.mpp.ReleaseType
+import net.fabricmc.loom.task.RemapJarTask
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
 	id("net.fabricmc.fabric-loom-remap")
 	`maven-publish`
 	id("org.jetbrains.kotlin.jvm") version "2.4.10"
+	id("me.modmuss50.mod-publish-plugin") version "2.2.0"
 }
 
 repositories {
@@ -75,6 +78,106 @@ tasks.jar {
 
 	from("LICENSE") {
 		rename { "${it}_$projectName" }
+	}
+}
+
+/**
+ * The example pack, zipped as a release asset.
+ *
+ * It stays out of the mod jar deliberately: everything under `data/` in the jar is a datapack
+ * the game loads for every player, so bundling the examples would spawn `cobblemonrlm:` trainers
+ * in worlds that never asked for them. It ships next to the jar instead, for whoever wants a
+ * working pack to copy.
+ *
+ * `fabric.mod.json` is dropped on the way out. It only exists so the folder can be built into a
+ * `.jar` that Fabric loads, and it actively hurts a `.zip`: Fabric ignores archives that are not
+ * `.jar`, while [matheo1712.cobbletrainers.ModsFolderPackSource] skips anything carrying mod
+ * metadata — the pack would load from nowhere. Without it, the same zip works in `mods/`,
+ * `datapacks/` and `resourcepacks/`.
+ */
+val exampleDatapack = tasks.register<Zip>("exampleDatapack") {
+	description = "Packs examples/cobblemonrlm as a release asset."
+	group = "build"
+
+	from("examples/cobblemonrlm") {
+		exclude("fabric.mod.json")
+	}
+	archiveFileName = "exemple_trainer_datapack.zip"
+	destinationDirectory = layout.buildDirectory.dir("dist")
+}
+
+/**
+ * Release metadata. Both are overridable from the command line, so the release workflow drives
+ * the build without editing a tracked file: `./gradlew publishMods -Prelease_type=beta`.
+ */
+val releaseType = when (providers.gradleProperty("release_type").getOrElse("stable").lowercase()) {
+	"alpha" -> ReleaseType.ALPHA
+	"beta" -> ReleaseType.BETA
+	else -> ReleaseType.STABLE
+}
+
+/**
+ * A platform is configured once its project ID is filled in `gradle.properties`; leaving one
+ * empty simply drops that destination, so the build stays valid before the project exists.
+ */
+fun platformId(name: String): String? =
+	providers.gradleProperty(name).orNull?.takeIf { it.isNotBlank() }
+
+val modrinthId = platformId("modrinth_id")
+val curseforgeId = platformId("curseforge_id")
+
+// Captured out here on purpose: inside `publishMods`, `version` is the extension's own
+// property, and interpolating it yields its Gradle description rather than the number.
+val modVersion = project.version.toString()
+
+publishMods {
+	// `remapJar`, not `jar`: the latter still carries named mappings and would crash outside a
+	// development environment.
+	file = tasks.named<RemapJarTask>("remapJar").flatMap { it.archiveFile }
+	displayName = "Cobblemon Trainers $modVersion"
+	version = modVersion
+	type = releaseType
+	modLoaders.add("fabric")
+
+	// The release workflow passes the GitHub release body here. Without it — a local run — the
+	// changelog is a pointer rather than a lie.
+	changelog = providers.environmentVariable("CHANGELOG")
+		.orElse("See https://github.com/matheo-1712/cobblemon-trainers/releases/tag/v$modVersion")
+
+	// A missing token turns the whole thing into a rehearsal: the release assets are written to
+	// build/mod-publish instead of being uploaded. That is what makes `./gradlew publishMods`
+	// safe to run locally, and it is the same code path the workflow takes.
+	dryRun = (modrinthId != null && providers.environmentVariable("MODRINTH_TOKEN").orNull == null) ||
+		(curseforgeId != null && providers.environmentVariable("CURSEFORGE_TOKEN").orNull == null) ||
+		(modrinthId == null && curseforgeId == null)
+
+	if (modrinthId != null) {
+		modrinth {
+			// The placeholder only ever reaches a dry run: a real publication needs the token,
+			// and its absence is exactly what turns dryRun on above.
+			accessToken = providers.environmentVariable("MODRINTH_TOKEN").orElse("dry-run")
+			projectId = modrinthId
+			minecraftVersions.add(providers.gradleProperty("minecraft_version").get())
+
+			requires("cobblemon", "fabric-api", "fabric-language-kotlin")
+		}
+	}
+
+	if (curseforgeId != null) {
+		curseforge {
+			accessToken = providers.environmentVariable("CURSEFORGE_TOKEN").orElse("dry-run")
+			projectId = curseforgeId
+			projectSlug = providers.gradleProperty("curseforge_slug")
+			minecraftVersions.add(providers.gradleProperty("minecraft_version").get())
+			javaVersions.add(JavaVersion.VERSION_21)
+
+			// The mod is server-side logic, but a client needs the jar too: it carries the
+			// resource pack half (battle music, lang) and the client mixin.
+			client = true
+			server = true
+
+			requires("cobblemon", "fabric-api", "fabric-language-kotlin")
+		}
 	}
 }
 

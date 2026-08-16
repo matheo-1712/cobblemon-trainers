@@ -1,0 +1,118 @@
+# Publishes a release to Modrinth, CurseForge and the GitHub release itself.
+#
+# Triggered by publishing a release on GitHub: its tag names the version, its body becomes the
+# changelog on every platform, and the pre-release checkbox picks between a stable and a beta
+# release.
+#
+# The tag must match `version` in gradle.properties — that file is what ends up in
+# fabric.mod.json, so a mismatch would ship a jar claiming the wrong version.
+
+name: release
+on:
+  release:
+    types: [published]
+
+# Attaching the jar and the example pack to the release that triggered the run.
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v6
+
+      - name: validate gradle wrapper
+        uses: gradle/actions/wrapper-validation@v6
+
+      - name: setup jdk
+        uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: 'microsoft'
+
+      - name: make gradle wrapper executable
+        run: chmod +x ./gradlew
+
+      # A pre-release goes out as a beta everywhere; a tag saying alpha as an alpha.
+      - name: resolve the release
+        id: release
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+          PRERELEASE: ${{ github.event.release.prerelease }}
+        run: |
+          version="${TAG#v}"
+          declared=$(sed -n 's/^version=//p' gradle.properties)
+
+          if [ "$version" != "$declared" ]; then
+            echo "::error::tag $TAG means version $version, but gradle.properties declares $declared. Bump it, commit, then re-tag."
+            exit 1
+          fi
+
+          if [ "$PRERELEASE" = "true" ]; then
+            case "$version" in
+              *alpha*) type=alpha ;;
+              *) type=beta ;;
+            esac
+          else
+            type=stable
+          fi
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "type=$type" >> "$GITHUB_OUTPUT"
+          echo "Releasing $version as $type"
+
+      # A configured platform whose token is missing would turn publishMods into a dry run and
+      # the workflow would go green having uploaded nothing. Catch it before the long build.
+      #
+      # The reverse — a token with no project ID — is only a warning: it is what a half-finished
+      # setup looks like, and the release still has somewhere to go.
+      - name: check the publishing credentials
+        env:
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+          CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
+        run: |
+          missing=0
+          check() {
+            id=$(sed -n "s/^$1=//p" gradle.properties)
+            if [ -n "$id" ] && [ -z "$2" ]; then
+              echo "::error::gradle.properties sets $1 but the secret $3 is empty"
+              missing=1
+            elif [ -z "$id" ] && [ -n "$2" ]; then
+              echo "::warning::the secret $3 is set but $1 is empty in gradle.properties, so this platform is skipped"
+            fi
+          }
+
+          check modrinth_id "$MODRINTH_TOKEN" MODRINTH_TOKEN
+          check curseforge_id "$CURSEFORGE_TOKEN" CURSEFORGE_TOKEN
+          exit $missing
+
+      - name: build
+        run: ./gradlew build exampleDatapack
+
+      # Modrinth and CurseForge in one task. A destination whose project ID is empty in
+      # gradle.properties is skipped, so this works before both projects exist.
+      - name: publish to modrinth and curseforge
+        env:
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+          CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
+          CHANGELOG: ${{ github.event.release.body }}
+        run: ./gradlew publishMods -Prelease_type=${{ steps.release.outputs.type }}
+
+      # The release already exists, so its assets are attached here rather than through the
+      # Gradle plugin, which only knows how to create a release of its own.
+      - name: attach the assets to the github release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          # The remapped jar, not the sources one sitting next to it.
+          jar="build/libs/cobblemon-trainers-${{ steps.release.outputs.version }}.jar"
+          pack="build/dist/exemple_trainer_datapack.zip"
+
+          for asset in "$jar" "$pack"; do
+            [ -f "$asset" ] || { echo "::error::$asset was not built"; exit 1; }
+          done
+
+          gh release upload "$TAG" "$jar" "$pack" --clobber
