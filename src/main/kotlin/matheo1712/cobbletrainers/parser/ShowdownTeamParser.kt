@@ -1,15 +1,16 @@
-package matheo1712.cobbletrainers
+package matheo1712.cobbletrainers.parser
 
 import com.cobblemon.mod.common.api.pokemon.PokemonProperties
 import com.cobblemon.mod.common.api.properties.CustomPokemonProperty
+import matheo1712.cobbletrainers.CobblemonTrainers
 import net.minecraft.network.chat.Component
 import java.util.Locale
 
 /**
- * Converts a Pokémon Showdown team into Cobblemon [PokemonProperties].
+ * Converts a Pokémon Showdown team into Cobblemon [com.cobblemon.mod.common.api.pokemon.PokemonProperties].
  *
  * The strategy is to rebuild a Cobblemon property string
- * (`"pikachu level=88 ability=static ..."`) and hand it to [PokemonProperties.parse]. Values
+ * (`"pikachu level=88 ability=static ..."`) and hand it to [com.cobblemon.mod.common.api.pokemon.PokemonProperties.Companion.parse]. Values
  * that may contain spaces (nickname, held item) are assigned directly on the resulting
  * object, because Cobblemon's property parser splits on spaces.
  *
@@ -24,7 +25,7 @@ object ShowdownTeamParser {
     private const val DEFAULT_ITEM_NAMESPACE = "cobblemon"
 
     /**
-     * Showdown abbreviations mapped to the stat names [PokemonProperties] expects, which it
+     * Showdown abbreviations mapped to the stat names [com.cobblemon.mod.common.api.pokemon.PokemonProperties] expects, which it
      * derives from the constants of Cobblemon's `Stats` enum.
      */
     private val STAT_NAMES = mapOf(
@@ -51,7 +52,7 @@ object ShowdownTeamParser {
     private val NICKNAME_SPECIES = Regex("""^(.+?)\s*\((.+?)\)$""")
 
     /**
-     * Converts a trainer's `team` array into [PokemonProperties].
+     * Converts a trainer's `team` array into [com.cobblemon.mod.common.api.pokemon.PokemonProperties].
      *
      * Two layouts are accepted, and may be mixed:
      * - one entry per Pokémon, its lines separated by `\n`;

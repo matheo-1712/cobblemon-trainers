@@ -1,7 +1,9 @@
-package matheo1712.cobbletrainers
+package matheo1712.cobbletrainers.registry
 
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import matheo1712.cobbletrainers.CobblemonTrainers
+import matheo1712.cobbletrainers.trainers.TrainerDefinition
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.packs.resources.ResourceManager
 import java.io.File
@@ -17,7 +19,7 @@ import java.io.File
  * As in Cobblemon's own registries, only the file name matters: a trainer stored at
  * `cobblemontrainers/kanto/red.json` gets the ID `<namespace>:red`.
  *
- * Reloading is driven by the server resource manager (see [CobblemonTrainers.onInitialize]),
+ * Reloading is driven by the server resource manager (see [matheo1712.cobbletrainers.CobblemonTrainers.onInitialize]),
  * so `/reload` reloads trainers too.
  */
 object TrainerRegistry {
@@ -90,7 +92,7 @@ object TrainerRegistry {
      *
      * The aspect is written at spawn time and saved to NBT, so the link survives a restart.
      * The ID is returned whether or not a definition still carries it: a trainer dropped from
-     * the datapacks keeps its identity, which is what [TrainerProgress] is keyed on.
+     * the datapacks keeps its identity, which is what [matheo1712.cobbletrainers.trainers.TrainerProgress] is keyed on.
      */
     fun idFromAspects(aspects: Collection<String>): ResourceLocation? {
         val aspect = aspects.find { it.startsWith(CobblemonTrainers.TRAINER_ASPECT_PREFIX) } ?: return null

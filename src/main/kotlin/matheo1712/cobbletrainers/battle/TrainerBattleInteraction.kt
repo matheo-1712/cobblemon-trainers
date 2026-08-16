@@ -1,9 +1,12 @@
-package matheo1712.cobbletrainers
+package matheo1712.cobbletrainers.battle
 
 import com.cobblemon.mod.common.api.npc.configuration.NPCInteractConfiguration
 import com.cobblemon.mod.common.battles.BattleBuilder
 import com.cobblemon.mod.common.battles.BattleFormat
 import com.cobblemon.mod.common.entity.npc.NPCEntity
+import matheo1712.cobbletrainers.CobblemonTrainers
+import matheo1712.cobbletrainers.trainers.TrainerProgress
+import matheo1712.cobbletrainers.registry.TrainerRegistry
 import net.minecraft.ChatFormatting
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.RegistryFriendlyByteBuf

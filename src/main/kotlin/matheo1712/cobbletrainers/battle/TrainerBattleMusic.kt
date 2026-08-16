@@ -1,5 +1,6 @@
-package matheo1712.cobbletrainers
+package matheo1712.cobbletrainers.battle
 
+import matheo1712.cobbletrainers.CobblemonTrainers
 import net.minecraft.core.Holder
 import net.minecraft.network.protocol.game.ClientboundSoundPacket
 import net.minecraft.network.protocol.game.ClientboundStopSoundPacket
@@ -11,7 +12,7 @@ import net.minecraft.sounds.SoundSource
 /**
  * Plays and stops the battle music of a trainer.
  *
- * The sound packets carry a *direct* [Holder]: the sound never goes through
+ * The sound packets carry a *direct* [net.minecraft.core.Holder]: the sound never goes through
  * `BuiltInRegistries.SOUND_EVENT`, so a datapack may name any track without the mod
  * knowing about it beforehand. Resolving the name is the client's job, exactly as for a
  * registered sound — which means the track has to be provided by a resource pack (the mod
@@ -31,7 +32,7 @@ object TrainerBattleMusic {
     const val DEFAULT_TRACK: String = "cobblemon-trainers:battle_music.corvault"
 
     /**
-     * [SoundSource.MUSIC] puts the track under the player's *Music* volume slider, next to
+     * [net.minecraft.sounds.SoundSource.MUSIC] puts the track under the player's *Music* volume slider, next to
      * the vanilla background music — which keeps playing on its own, the server cannot
      * silence it.
      */

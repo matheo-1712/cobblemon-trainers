@@ -1,5 +1,6 @@
-package matheo1712.cobbletrainers
+package matheo1712.cobbletrainers.datapack_handler
 
+import matheo1712.cobbletrainers.CobblemonTrainers
 import net.fabricmc.loader.api.FabricLoader
 import net.minecraft.network.chat.Component
 import net.minecraft.resources.ResourceLocation
@@ -28,7 +29,7 @@ import java.util.function.Consumer
  * `resourcepacks/`.
  *
  * This source removes that requirement: a directory, `.zip` or `.jar` in `mods/` with a
- * `pack.mcmeta` is picked up as-is, under both [PackType].
+ * `pack.mcmeta` is picked up as-is, under both [net.minecraft.server.packs.PackType].
  *
  * Archives that *do* carry a `fabric.mod.json` are skipped — Fabric loads those itself and
  * already exposes them under both pack types, so picking them up here would register them
@@ -39,7 +40,7 @@ class ModsFolderPackSource private constructor(private val packType: PackType) :
     private val kind = if (packType == PackType.SERVER_DATA) "data" else "resource"
 
     /**
-     * Data packs ride on [PackSource.shouldAddAutomatically], which is what
+     * Data packs ride on [net.minecraft.server.packs.repository.PackSource.shouldAddAutomatically], which is what
      * `MinecraftServer.configurePackRepository` reads to enable a freshly discovered pack, and
      * leaves `/datapack disable` usable.
      *
@@ -109,7 +110,7 @@ class ModsFolderPackSource private constructor(private val packType: PackType) :
         /**
          * Reads one file out of the packs of `mods/`, outside of any pack repository.
          *
-         * A trainer texture has to be read by the logical server — see [TrainerTextures] — and
+         * A trainer texture has to be read by the logical server — see [matheo1712.cobbletrainers.trainers.TrainerTextures] — and
          * no server-side resource manager ever looks at `assets/`. The scan is the same one
          * [loadPacks] performs, minus the `fabric.mod.json` filter: an archive Fabric did load
          * is already on the classpath, where the caller looks first, so reading it here would

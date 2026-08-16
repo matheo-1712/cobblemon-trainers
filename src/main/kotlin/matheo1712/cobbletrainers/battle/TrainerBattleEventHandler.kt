@@ -1,4 +1,4 @@
-package matheo1712.cobbletrainers
+package matheo1712.cobbletrainers.battle
 
 import com.cobblemon.mod.common.api.battles.model.PokemonBattle
 import com.cobblemon.mod.common.api.battles.model.actor.BattleActor
@@ -7,6 +7,11 @@ import com.cobblemon.mod.common.battles.BattleRegistry
 import com.cobblemon.mod.common.battles.actor.PlayerBattleActor
 import com.cobblemon.mod.common.entity.npc.NPCBattleActor
 import com.cobblemon.mod.common.entity.npc.NPCEntity
+import matheo1712.cobbletrainers.CobblemonTrainers
+import matheo1712.cobbletrainers.trainers.TrainerDefinition
+import matheo1712.cobbletrainers.trainers.TrainerProgress
+import matheo1712.cobbletrainers.registry.TrainerRegistry
+import matheo1712.cobbletrainers.trainers.TrainerRewards
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents
 import net.minecraft.ChatFormatting
@@ -20,13 +25,13 @@ import net.minecraft.world.entity.Entity
  * rewards and the record of who beat whom, and the fate of a battle whose trainer leaves the
  * world.
  *
- * The battle actor of an NPC is an [NPCBattleActor], which exposes the entity directly — no
- * need to look it up by UUID. Note that [NPCBattleActor] does not extend `TrainerBattleActor`;
+ * The battle actor of an NPC is an [com.cobblemon.mod.common.entity.npc.NPCBattleActor], which exposes the entity directly — no
+ * need to look it up by UUID. Note that [com.cobblemon.mod.common.entity.npc.NPCBattleActor] does not extend `TrainerBattleActor`;
  * both derive separately from `AIBattleActor`.
  */
 object TrainerBattleEventHandler {
 
-    /** Registers the listeners. Called from [CobblemonTrainers.onInitialize]. */
+    /** Registers the listeners. Called from [matheo1712.cobbletrainers.CobblemonTrainers.onInitialize]. */
     fun register() {
         CobblemonEvents.BATTLE_STARTED_POST.subscribe { event ->
             handleBattleStart(event.battle)

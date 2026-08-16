@@ -1,6 +1,6 @@
 package matheo1712.cobbletrainers.mixin;
 
-import matheo1712.cobbletrainers.ModsFolderPackSource;
+import matheo1712.cobbletrainers.datapack_handler.ModsFolderPackSource;
 import net.minecraft.server.packs.repository.PackRepository;
 import net.minecraft.server.packs.repository.RepositorySource;
 import net.minecraft.server.packs.repository.ServerPacksSource;

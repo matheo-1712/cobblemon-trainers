@@ -1,8 +1,12 @@
-package matheo1712.cobbletrainers
+package matheo1712.cobbletrainers.command
 
 import com.mojang.brigadier.CommandDispatcher
 import com.mojang.brigadier.context.CommandContext
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType
+import matheo1712.cobbletrainers.CobblemonTrainers
+import matheo1712.cobbletrainers.trainers.TrainerDefinition
+import matheo1712.cobbletrainers.trainers.TrainerProgress
+import matheo1712.cobbletrainers.registry.TrainerRegistry
 import net.minecraft.ChatFormatting
 import net.minecraft.commands.CommandSourceStack
 import net.minecraft.commands.Commands
@@ -18,7 +22,7 @@ import net.minecraft.server.level.ServerPlayer
  * - `/listtrainers` — the caller's own record
  * - `/listtrainers <player>` — another player's record
  *
- * What is shown is the same record [TrainerBattleInteraction] reads to turn down a rematch,
+ * What is shown is the same record [matheo1712.cobbletrainers.battle.TrainerBattleInteraction] reads to turn down a rematch,
  * so a trainer marked as defeated with `canRebattle: false` is one the player can no longer
  * challenge — the line says so.
  *
@@ -44,8 +48,6 @@ object ListTrainersCommand {
                     Commands.argument(ARG_TARGET, EntityArgument.player())
                         .executes { ctx -> execute(ctx, EntityArgument.getPlayer(ctx, ARG_TARGET)) }
                 )
-                // Without a target the caller is the subject, so the console has to name one.
-                // `playerOrException` is what says it, with vanilla's own localised message.
                 .executes { ctx -> execute(ctx, ctx.source.playerOrException) }
         )
     }
@@ -56,7 +58,6 @@ object ListTrainersCommand {
 
         if (TrainerRegistry.allIds().isEmpty()) throw NO_TRAINERS.create()
 
-        // Already sorted on the full ID, which groups the trainers by the pack they come from.
         val sorted = TrainerRegistry.tracked()
         if (sorted.isEmpty()) throw NONE_TRACKED.create()
 
@@ -75,8 +76,6 @@ object ListTrainersCommand {
             false
         )
 
-        // One message per trainer rather than one long component: the chat wraps them on its
-        // own, and each line keeps its own hover behaviour.
         sorted.forEach { (id, definition) ->
             val line = entryLine(id, definition, progress.hasDefeated(id, target.uuid))
             source.sendSuccess({ line }, false)
@@ -94,8 +93,6 @@ object ListTrainersCommand {
         val line = CobblemonTrainers.lang(key, Component.literal(id.toString()), Component.translatable(definition.name))
             .withStyle(if (defeated) ChatFormatting.GREEN else ChatFormatting.GRAY)
 
-        // Every other line is still challengeable; a beaten trainer that takes no rematch is
-        // done for good, which is the one case worth spelling out.
         if (defeated && !definition.canRebattle) {
             line.append(
                 CobblemonTrainers.lang("command.list_trainers.no_rematch").withStyle(ChatFormatting.DARK_GRAY)
