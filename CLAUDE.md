@@ -333,6 +333,51 @@ Points à ne pas redécouvrir :
   seulement consultable une fois le serveur chargé (l'équipe est construite à l'apparition
   du dresseur, c'est bon).
 
+## Publication
+
+`.github/workflows/release.yml` se déclenche à la **publication d'une release GitHub** :
+il construit, publie sur Modrinth et CurseForge via `./gradlew publishMods`
+(`me.modmuss50.mod-publish-plugin`), puis attache les assets à la release.
+
+Pour couper une release : mettre `version=` à jour dans `gradle.properties`, commiter, puis
+publier une release GitHub dont le tag est `v<version>`. Le workflow **refuse de continuer si
+le tag et `gradle.properties` divergent** — c'est `gradle.properties` qui alimente
+`fabric.mod.json`, donc un jar publié sous un tag qui ne lui correspond pas mentirait sur sa
+propre version. Le corps de la release devient le changelog partout, et la case *pre-release*
+choisit entre `stable` et `beta` (`alpha` si le tag contient `alpha`).
+
+Points à ne pas redécouvrir :
+
+- **Un ID de projet vide dans `gradle.properties` retire la plateforme** de `publishMods`. Le
+  workflow vérifie l'appariement ID/secret avant de construire : sans ça, un secret manquant
+  ferait basculer `publishMods` en `dryRun` et le workflow finirait vert sans rien publier.
+- **CurseForge veut un ID numérique**, pas le slug (`curseforge_slug` ne sert qu'à l'affichage
+  et au webhook Discord).
+- **La release GitHub existe déjà** quand le workflow tourne. Le publisher `github` du plugin
+  ne sait que *créer* une release, jamais alimenter une release existante (sauf via l'option
+  `parent`, réservée aux sous-projets) : les assets passent donc par `gh release upload`.
+- **`file` pointe sur `remapJar`, pas `jar`.** Le second garde les mappings nommés et planterait
+  hors environnement de développement. `RemapJarTask` dérive de `org.gradle.jvm.tasks.Jar`, pas
+  de `org.gradle.api.tasks.bundling.Jar` — `tasks.named<Jar>(…)` échoue avec l'import par défaut
+  du Kotlin DSL.
+- **Dans le bloc `publishMods`, `version` est la propriété de l'extension**, pas celle du projet :
+  l'interpoler donne sa description Gradle. D'où le `modVersion` capturé au-dessus.
+- Sans jeton, `publishMods` bascule en `dryRun` et écrit dans `build/mod-publish/` — c'est ce qui
+  rend `./gradlew publishMods` sûr en local.
+
+### Le pack d'exemple dans la release
+
+`exampleDatapack` zippe `examples/cobblemonrlm` en `exemple_trainer_datapack.zip`, publié à côté
+du jar. Il reste **hors du jar** : tout ce qui est sous `data/` dans le jar est un datapack que le
+jeu charge pour tout le monde, donc l'embarquer ferait apparaître les dresseurs `cobblemonrlm:`
+dans des mondes qui n'ont rien demandé.
+
+Le zip **exclut `fabric.mod.json`**. Ce fichier n'existe que pour permettre de construire le
+dossier en `.jar` que Fabric charge, et il nuit à un `.zip` : Fabric ignore les archives qui ne
+sont pas des `.jar`, tandis que `ModsFolderPackSource` saute tout ce qui porte des métadonnées de
+mod — le pack ne se chargerait donc de nulle part. Sans lui, le même zip marche dans `mods/`,
+`datapacks/` et `resourcepacks/`.
+
 ## Limites connues
 
 `ShowdownTeamParser` ne traduit pas le suffixe de forme des exports Showdown

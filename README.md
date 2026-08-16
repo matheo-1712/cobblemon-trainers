@@ -124,6 +124,20 @@ curl -s "https://api.modrinth.com/v2/version/<ID>" | python -c "import sys,json;
 Voir aussi la [documentation Fabric](https://docs.fabricmc.net/develop/getting-started/creating-a-project#setting-up)
 pour la configuration de l'IDE.
 
+### Publier une release
+
+Mettre `version=` à jour dans `gradle.properties`, commiter, puis publier une release GitHub
+dont le tag est `v<version>`. Le workflow `release.yml` construit, publie sur Modrinth et
+CurseForge, et attache à la release le jar et `exemple_trainer_datapack.zip` — le pack
+d'exemple, prêt à poser dans `mods/`, `datapacks/` ou `resourcepacks/`.
+
+Le corps de la release sert de changelog sur les trois plateformes, et la case *pre-release*
+publie en beta. Le workflow s'arrête si le tag ne correspond pas à `gradle.properties`.
+
+Secrets attendus par le dépôt : `MODRINTH_TOKEN` et `CURSEFORGE_TOKEN`. En local,
+`./gradlew publishMods` est sans risque : sans jeton, il écrit ce qu'il aurait envoyé dans
+`build/mod-publish/`.
+
 ## Limites connues
 
 - Les formes se déclarent par leurs aspects (`Aspects: rlm, poison`), pas par le suffixe
