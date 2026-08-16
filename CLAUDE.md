@@ -339,12 +339,17 @@ Points à ne pas redécouvrir :
 il construit, publie sur Modrinth et CurseForge via `./gradlew publishMods`
 (`me.modmuss50.mod-publish-plugin`), puis attache les assets à la release.
 
-Pour couper une release : mettre `version=` à jour dans `gradle.properties`, commiter, puis
-publier une release GitHub dont le tag est `v<version>`. Le workflow **refuse de continuer si
-le tag et `gradle.properties` divergent** — c'est `gradle.properties` qui alimente
-`fabric.mod.json`, donc un jar publié sous un tag qui ne lui correspond pas mentirait sur sa
-propre version. Le corps de la release devient le changelog partout, et la case *pre-release*
+Pour couper une release : publier une release GitHub dont le tag est `v<version>`. Rien à
+bumper avant. Le corps de la release devient le changelog partout, et la case *pre-release*
 choisit entre `stable` et `beta` (`alpha` si le tag contient `alpha`).
+
+**Le tag fait foi pour la version.** Le workflow le passe en `-Pversion`, ce qui alimente
+`project.version`, donc le nom du jar, le `${version}` que `processResources` injecte dans
+`fabric.mod.json`, et le numéro de version sur les deux plateformes. Le `version=` de
+`gradle.properties` n'est plus qu'un défaut pour les builds locaux : il n'a pas besoin de
+suivre, et rien ne le vérifie. Le seul garde-fou est que le tag doit ressembler à un numéro
+(`1.2.3`, avec ou sans `v`), sinon le jar s'appellerait d'après une étiquette du genre
+`latest`.
 
 Points à ne pas redécouvrir :
 
