@@ -63,8 +63,8 @@ veux le distribuer.
 | Voie | Emplacement | Formats | Charge | Activation |
 | --- | --- | --- | --- | --- |
 | Dossier des mods | `mods/` | dossier, `.zip`, `.jar` | `data/` **et** `assets/` | automatique, dans tous les mondes |
-| Datapack | `saves/<monde>/datapacks/` ou `world/datapacks/` | dossier, `.zip`, `.jar` | `data/` | par monde, activé à la découverte |
-| Resource pack | `resourcepacks/` | dossier, `.zip`, `.jar` | `assets/` | à cocher dans les options du jeu |
+| Datapack | `saves/<monde>/datapacks/` ou `world/datapacks/` | dossier, `.zip` | `data/` | par monde, activé à la découverte |
+| Resource pack | `resourcepacks/` | dossier, `.zip` | `assets/` | à cocher dans les options du jeu |
 
 Ce qui décide, c'est le contenu du pack :
 
