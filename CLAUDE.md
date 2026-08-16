@@ -5,8 +5,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Projet
 
 Mod Fabric pour Minecraft 1.21.1 qui ajoute des dresseurs Pokémon configurables à
-Cobblemon 1.7.3. Code principal en Kotlin (`matheo1712.cobbletrainers`), un stub Java
-pour les mixins. Aucun code client-only : tout tourne côté serveur logique.
+Cobblemon 1.7.3. Code principal en Kotlin (`matheo1712.cobbletrainers`), les mixins en Java.
+Tout tourne côté serveur logique, à une exception près : `client.MinecraftMixin`, qui branche
+la lecture des `assets/` d'un pack posé dans `mods/` (voir « Livrer un pack »). Aucun
+entrypoint client, aucun rendu.
 
 Le code, les commentaires et les logs sont en **anglais**. Tout texte affiché au joueur
 passe par `assets/cobblemon-trainers/lang/` — jamais de littéral en dur.
@@ -78,10 +80,10 @@ messages et musique de combat.
   reconstruisant une chaîne de propriétés Cobblemon (`"pikachu level=88 ability=static …"`)
   passée à `PokemonProperties.parse`.
 - **`TrainerSpawner`** — construit et fait apparaître le `NPCEntity`.
-- **`TrainerBattleEventHandler`** — s'abonne à `CobblemonEvents.BATTLE_STARTED_POST`,
-  `BATTLE_VICTORY` et `BATTLE_FLED` : messages configurés, et musique de combat. Cobblemon
-  n'a pas d'événement « combat terminé » unique, d'où les deux abonnements de fin — en
-  oublier un laisserait la musique tourner.
+- **`TrainerBattleEventHandler`** — s'abonne à `CobblemonEvents.BATTLE_STARTED_POST` pour
+  le message de début et la musique, et à `BATTLE_VICTORY` pour le message de fin. Il
+  surveille aussi la mort et la suppression des entités, pour arrêter le combat d'un
+  dresseur qui quitte le monde (voir plus bas).
 - **`TrainerBattleMusic`** — envoie `ClientboundSoundPacket` / `ClientboundStopSoundPacket`
   aux joueurs du combat.
 
@@ -113,7 +115,7 @@ Points à ne pas redécouvrir :
   pour une musique. La position envoyée (celle du joueur) n'est qu'un repli pour une piste
   mono.
 - **Pas de boucle.** `isLooping` est une décision de `SoundInstance`, côté client, et le mod
-  n'a pas de code client : un combat plus long que la piste finit en silence.
+  ne touche pas au moteur audio : un combat plus long que la piste finit en silence.
 
 ### Textes et traductions
 
@@ -155,8 +157,9 @@ Ces points ne se devinent pas depuis notre code seul et ont chacun causé un bug
   `NPCEntity.interaction` est surchargeable par entité, pas `autoHealParty`.
 - **Clés de stats.** `PokemonProperties` dérive ses clés des constantes de l'enum
   `Stats` : `hp`, `attack`, `defence`, `special_attack`, `special_defence`, `speed`,
-  suffixées `_ev` / `_iv`. Les abréviations Showdown (`atk`, `spa`, …) sont ignorées
-  silencieusement.
+  suffixées `_ev` / `_iv`. Les abréviations Showdown (`atk`, `spa`, …) ne veulent rien dire
+  pour Cobblemon et seraient ignorées silencieusement, d'où la table `STAT_NAMES` de
+  `ShowdownTeamParser` qui les traduit avant de construire la chaîne de propriétés.
 - **`held_item` passe par le `ItemParser` vanilla**, qui préfixe `minecraft:` par défaut.
   Un objet Cobblemon sans namespace lève une `CommandSyntaxException` pendant la
   construction de l'équipe.
@@ -210,10 +213,99 @@ repasse par `server.execute` pour écrire dans l'entité. Il faut poser les aspe
 déterminent le rig utilisé au rendu. Un échec est silencieux, le NPC garde son skin par
 défaut. `skin.type` n'accepte que `player_username` ou `player_uuid`.
 
+### Fin de combat
+
+Cobblemon n'expose **aucun** événement « combat terminé » : `BATTLE_VICTORY` et
+`BATTLE_FLED` ne couvrent que deux sorties sur quatre, et `/stopbattle` comme un abandon
+n'en déclenchent aucune. Le seul point de passage commun est
+`PokemonBattle.end()` → `BattleRegistry.closeBattle` → `battle.onEndHandlers`. C'est donc
+là qu'est coupée la musique, via un handler ajouté à `BATTLE_STARTED_POST`. Ne pas revenir
+à un abonnement par type de fin : c'est ce qui laissait la musique tourner après un
+`/stopbattle`.
+
+Un dresseur qui meurt ou disparaît pendant un combat laisserait le joueur enfermé face à un
+acteur sans entité. `ServerLivingEntityEvents.AFTER_DEATH` et
+`ServerEntityEvents.ENTITY_UNLOAD` (filtré sur `removalReason.shouldDestroy()`, pour qu'un
+déchargement de chunk ne compte pas) appellent `battle.stop()` sur les `npc.battleIds`. Les
+deux se déclenchent pour un même dresseur tué, c'est voulu : le combat déjà fermé n'est plus
+dans le registre, donc l'opération est idempotente. Le filtre `TrainerRegistry.findByAspects`
+évite de toucher aux NPC qui ne viennent pas du mod.
+
+### Livrer un pack
+
+Trois voies, toutes prises en charge et **laissées au choix de l'auteur du pack** — ne pas en
+privilégier une dans la doc, sauf à dire que `mods/` est la seule qui charge les deux moitiés.
+
+| Voie | Emplacement | Formats | Charge | Fichier requis |
+| --- | --- | --- | --- | --- |
+| Dossier des mods | `mods/` | dossier, `.zip`, `.jar` | `data/` et `assets/` | `pack.mcmeta` |
+| Datapack | `<monde>/datapacks/` | dossier, `.zip`, `.jar` | `data/` | `pack.mcmeta` |
+| Resource pack | `resourcepacks/` | dossier, `.zip`, `.jar` | `assets/` | `pack.mcmeta` |
+
+`ModsFolderPackSource` est ce qui rend la première ligne vraie **sans `fabric.mod.json`** :
+une `RepositorySource` qui balaie le dossier des mods et expose ce qu'elle y trouve sous les
+deux `PackType`. Sans elle, Fabric ne regarde que les jars portant un `fabric.mod.json` et
+saute les autres en silence (`ModDiscoverer$ModScanTask.computeJarFile` renvoie `null`, rien
+n'est logué) — c'était la cause d'un pack « qui ne se charge pas » sans le moindre message.
+
+Elle est branchée par deux mixins, parce qu'il n'existe aucune API pour ajouter une source
+après construction :
+
+- `PackRepositoryMixin` (commun) — `@Inject` en fin de `<init>`, réécrit le champ `sources`.
+  Un `ServerPacksSource` dans la liste identifie un dépôt de données ; couvrir le constructeur
+  plutôt que ses appelants attrape d'un coup le serveur dédié, le serveur intégré et l'écran
+  de création de monde.
+- `client.MinecraftMixin` (client) — `@ModifyArg` sur le tableau varargs du constructeur de
+  `Minecraft`. Déclaré dans le tableau `client` du mixins.json, pas dans `mixins` : il cible
+  une classe client et ferait échouer le chargement sur un serveur dédié. Le dépôt client est
+  identifié par construction, ce qui évite de nommer `ClientPackSource` dans un mixin commun.
+
+Points à ne pas redécouvrir :
+
+- **`PackSelectionConfig.required` doit être `true` côté ressources, `false` côté données.**
+  `Minecraft.reloadResourcePacks` passe par `PackRepository.reload()`, dont `rebuildSelected`
+  ne réinsère que les packs *required* : un pack seulement « ajoutable automatiquement » y
+  serait découvert puis retiré de la sélection au premier F3+T. Côté données au contraire,
+  `MinecraftServer.configurePackRepository` lit `PackSource.shouldAddAutomatically`, ce qui
+  active le pack tout en laissant `/datapack disable` utilisable.
+- **Les archives portant un `fabric.mod.json` sont ignorées** par cette source : Fabric les
+  charge lui-même et les expose déjà sous les deux types (`ModResourcePackCreator` de
+  `fabric-resource-loader-v0`). Les ramasser ici les enregistrerait deux fois.
+- **Un pack sans contenu pour le type demandé est écarté** (`getNamespaces(packType)` vide),
+  pour qu'un pack de données seules n'apparaisse pas dans l'écran des resource packs.
+- Le dossier des mods vient de `-Dfabric.modsFolder` sinon de `gameDir/mods`, et le
+  `DirectoryValidator` de `allowed_symlinks.txt`, comme vanilla.
+
+**Le format d'archive n'élargit pas ce qu'un *emplacement* charge.** Le dossier `datapacks/`
+d'un monde est un `FolderRepositorySource` en `PackType.SERVER_DATA` uniquement : un `assets/`
+posé là n'est jamais lu, `.jar` ou pas. `PackDetectorMixin` fait accepter le `.jar` comme
+conteneur, il ne change pas le `PackType` de la source.
+
+Ne pas essayer de brancher le dossier d'un monde sur le gestionnaire de ressources client :
+ça a été écrit une fois puis retiré. C'était faisable (une `RepositorySource` alimentée par
+`ServerLifecycleEvents`), mais ça ne marche qu'en solo — sur un serveur le client n'a pas le
+fichier — donc un pack se comporterait différemment en solo et en multi. `mods/` n'a pas ce
+défaut : chaque côté lit son propre dossier.
+
+`pack_format` diffère par type en 1.21.1 : 48 côté données, 34 côté ressources. Une archive
+qui sert des deux côtés déclare `supported_formats` en intervalle, sinon l'écran des resource
+packs l'affiche comme incompatible. C'est ce que fait `examples/cobblemonrlm/pack.mcmeta`.
+
 ### Mixins
 
-`ExampleMixin` est le stub du template Fabric, sans effet. Le mod ne repose sur aucun
-mixin réel ; tout passe par les API publiques Fabric et Cobblemon.
+`ExampleMixin` est le stub du template Fabric, sans effet.
+
+`PackDetectorMixin` est le seul mixin réel. Il fait accepter les archives `.jar` à
+`PackDetector.detectPackResources`, unique endroit où Minecraft filtre sur `.zip` — tout le
+reste de la chaîne marche déjà, `FilePackResources` ouvrant le fichier avec `ZipFile`, qui se
+moque de l'extension. `PackDetector` étant partagé par toutes les sources sur dossier, ça
+vaut pour `datapacks/` comme pour `resourcepacks/`, ce qui est le but : un auteur qui a
+construit un `.jar` pour `mods/` peut le déposer tel quel aux deux autres emplacements sans
+réempaqueter en `.zip`.
+
+Loom remappe les mixins statiquement (pas de refmap dans le jar) : après un changement,
+vérifier dans `build/libs/*.jar` que la cible est bien passée en intermediary
+(`detectPackResources` → `method_52441`, `PackDetector` → `class_8621`).
 
 ## Limites connues
 

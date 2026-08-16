@@ -1,0 +1,20 @@
+{
+  "name": "trainer.cobblemonrlm.duo_tacticien.name",
+  "level": 60,
+  "battleFormat": "duo",
+  "skill": 4,
+  "autoHealParty": true,
+  "skin": {
+    "type": "player_username",
+    "value": "jeb_"
+  },
+  "battleStartMessage": "trainer.cobblemonrlm.duo_tacticien.battle_start",
+  "battleEndWinMessage": "trainer.cobblemonrlm.duo_tacticien.win",
+  "battleEndLoseMessage": "trainer.cobblemonrlm.duo_tacticien.lose",
+  "team": [
+    "Togekiss (F) @ Sitrus Berry\nAbility: Serene Grace\nLevel: 61\nEVs: 252 HP / 252 SpA / 4 SpD\nModest Nature\n- Dazzling Gleam\n- Air Slash\n- Follow Me\n- Protect",
+    "Metagross @ Life Orb\nAbility: Clear Body\nLevel: 62\nEVs: 252 Atk / 4 SpD / 252 Spe\nAdamant Nature\n- Meteor Mash\n- Bullet Punch\n- Earthquake\n- Protect",
+    "Rotom (M) @ Choice Scarf\nAbility: Levitate\nLevel: 60\nEVs: 252 HP / 252 SpA / 4 Spe\nModest Nature\n- Thunderbolt\n- Shadow Ball\n- Volt Switch\n- Will-O-Wisp",
+    "Tyranitar (M) @ Assault Vest\nAbility: Sand Stream\nLevel: 60\nEVs: 252 HP / 252 Atk / 4 SpD\nAdamant Nature\n- Rock Slide\n- Crunch\n- Earthquake\n- Ice Punch"
+  ]
+}

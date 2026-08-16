@@ -1,0 +1,15 @@
+{
+  "name": "trainer.cobblemonrlm.pnj_pacifiste.name",
+  "canBattle": false,
+  "skin": {
+    "type": "player_username",
+    "value": "Steve"
+  },
+  "team": [
+    "Chansey (F) @ cobblemon:leftovers",
+    "Ability: Natural Cure",
+    "Level: 40",
+    "- Soft-Boiled",
+    "- Seismic Toss"
+  ]
+}

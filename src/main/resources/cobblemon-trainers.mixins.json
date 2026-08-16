@@ -3,7 +3,12 @@
 	"package": "matheo1712.cobbletrainers.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
-		"ExampleMixin"
+		"ExampleMixin",
+		"PackDetectorMixin",
+		"PackRepositoryMixin"
+	],
+	"client": [
+		"client.MinecraftMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

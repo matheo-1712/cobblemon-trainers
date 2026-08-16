@@ -56,14 +56,100 @@ Trois règles à retenir :
 - Un pack chargé plus tard écrase un dresseur de même ID, comme n'importe quelle ressource
   de datapack.
 
-Où poser le pack :
+### Où poser le pack
 
-| | Chemin |
-| --- | --- |
-| Un monde solo | `saves/<monde>/datapacks/mon_pack/` |
-| Un serveur | `world/datapacks/mon_pack/` |
+Trois voies. Aucune n'est « la bonne » : choisis selon ce que ton pack contient et comment tu
+veux le distribuer.
 
-Un dossier ou un `.zip`, les deux marchent.
+| Voie | Emplacement | Formats | Charge | Activation |
+| --- | --- | --- | --- | --- |
+| Dossier des mods | `mods/` | dossier, `.zip`, `.jar` | `data/` **et** `assets/` | automatique, dans tous les mondes |
+| Datapack | `saves/<monde>/datapacks/` ou `world/datapacks/` | dossier, `.zip`, `.jar` | `data/` | par monde, activé à la découverte |
+| Resource pack | `resourcepacks/` | dossier, `.zip`, `.jar` | `assets/` | à cocher dans les options du jeu |
+
+Ce qui décide, c'est le contenu du pack :
+
+- **Que des dresseurs** (`data/` seul) — n'importe laquelle des deux premières voies suffit.
+- **Des dresseurs + des traductions ou de la musique** (`data/` et `assets/`) — `mods/` est la
+  seule voie qui charge les deux moitiés en un fichier. Sinon il faut livrer la même archive
+  deux fois, dans `datapacks/` **et** dans `resourcepacks/`, et le joueur doit aller cocher le
+  resource pack.
+
+#### `mods/` : un pack, rien d'autre
+
+Un pack posé dans `mods/` n'a besoin **que de son `pack.mcmeta`**. Pas de `fabric.mod.json`,
+pas de code, pas de manipulation : le mod ramasse tout dossier ou archive du dossier des mods
+qui porte un `pack.mcmeta`, et l'expose à la fois comme datapack et comme resource pack.
+
+```
+mon_pack.jar
+├── pack.mcmeta
+├── data/mon_pack/cobblemontrainers/trainers/…
+└── assets/mon_pack/{lang,sounds,sounds.json}
+```
+
+Le pack apparaît dans `/datapack list` et dans l'écran des resource packs sous l'ID
+`mods/<nom de fichier>`. Le `.jar` n'a rien de particulier ici — un dossier ou un `.zip` font
+pareil ; c'est juste le format le plus commode à distribuer.
+
+Ça vaut pour le client comme pour le serveur, chacun lisant son propre dossier `mods/` :
+un serveur y trouve les dresseurs, un joueur qui y met la même archive y trouve en plus les
+traductions et la musique.
+
+#### Le `fabric.mod.json`, si tu en veux un
+
+Ajouter un `fabric.mod.json` à la racine reste possible, et change qui charge le pack : Fabric
+le prend alors pour un mod à part entière et l'expose lui-même sous les deux types, le mod
+laissant la main. Même résultat, avec un avantage — pouvoir déclarer une dépendance, donc une
+erreur claire au démarrage plutôt qu'un pack chargé pour rien :
+
+```json
+{
+	"schemaVersion": 1,
+	"id": "mon_pack",
+	"version": "1.0.0",
+	"name": "Mon pack de dresseurs",
+	"environment": "*",
+	"depends": {
+		"fabricloader": ">=0.17.2",
+		"minecraft": "~1.21.1",
+		"cobblemon-trainers": "*"
+	}
+}
+```
+
+Aucun `entrypoints` : c'est un mod sans classes. `id` doit être en minuscules
+(`[a-z0-9_-]`) et unique.
+
+> Attention si tu prends cette voie : un `fabric.mod.json` **mal formé** fait échouer le
+> démarrage du jeu, alors qu'un pack sans ce fichier se charge tranquillement. Si tu n'as pas
+> besoin de la dépendance, ne mets pas le fichier.
+
+#### `pack_format` d'une archive qui sert des deux côtés
+
+Les valeurs diffèrent selon le type en 1.21.1 : **48** côté données, **34** côté ressources.
+Un pack qui porte `data/` et `assets/` déclare donc un intervalle, sinon l'écran des resource
+packs l'affiche comme incompatible :
+
+```json
+{
+  "pack": {
+    "pack_format": 48,
+    "supported_formats": { "min_inclusive": 34, "max_inclusive": 48 },
+    "description": "Mes dresseurs"
+  }
+}
+```
+
+Un pack qui ne sert que de datapack n'en a pas besoin : `pack_format: 48` suffit.
+
+#### Ce que `datapacks/` ne fera jamais
+
+Le dossier `datapacks/` d'un monde est déclaré en `PackType.SERVER_DATA` et rien d'autre : un
+`assets/` posé là n'est jamais lu, qu'il soit dans un dossier, un `.zip` ou un `.jar`. Les
+traductions et la musique sont résolues par le client, qui ne regarde jamais dans le dossier
+d'un monde — et sur un serveur, il n'a même pas le fichier. C'est précisément ce que la voie
+`mods/` contourne.
 
 ## Le premier dresseur
 
@@ -176,10 +262,11 @@ Deux détails qui piègent :
 
 - **Les objets tenus sans namespace reçoivent `cobblemon:`** : `Light Ball` devient
   `cobblemon:light_ball`. Pour un objet vanilla, écris-le en entier (`minecraft:stick`).
-- **Les abréviations Showdown des stats ne sont pas comprises.** Les clés attendues sont
-  celles de Cobblemon : `hp`, `attack`, `defence`, `special_attack`, `special_defence`,
-  `speed`. Une ligne `EVs: 252 Atk` passe donc à la trappe sans prévenir — écris
-  `EVs: 252 Attack`.
+- **Les abréviations Showdown des stats sont traduites par le mod**, pas par Cobblemon :
+  `HP`, `Atk`, `Def`, `SpA`, `SpD`, `Spe` deviennent `hp`, `attack`, `defence`,
+  `special_attack`, `special_defence`, `speed`. Les noms longs (`Attack`, `Defense`,
+  `Speed`) passent aussi. En revanche une abréviation hors de cette liste est ignorée en
+  silence, comme n'importe quelle ligne inconnue.
 
 ## Format de combat
 
@@ -194,7 +281,7 @@ le combat et affiche la raison dans le chat.
 ## Skins
 
 ```json
-"skin": { "type": "player_username", "value": "Dinnerbone" }
+"skin": { "type": "player_username", "value": "Notch" }
 "skin": { "type": "player_uuid",     "value": "069a79f4-44e9-4726-a5be-fca90e38aaf5" }
 ```
 
@@ -205,7 +292,8 @@ raison est écrite dans les logs — le reste du dresseur fonctionne normalement
 ## Musique de combat
 
 Au début du combat, une musique est envoyée aux joueurs qui y participent, et coupée à la
-fin — victoire, défaite ou fuite. **Rien d'autre ne joue en même temps** : ce qui passait
+fin — quelle qu'elle soit : victoire, défaite, fuite, `/stopbattle`, ou un dresseur qui
+disparaît en pleine rencontre. **Rien d'autre ne joue en même temps** : ce qui passait
 dans la catégorie *Musique* est arrêté juste avant, et Minecraft attend une bonne dizaine de
 minutes avant de relancer sa musique d'ambiance, donc un combat se déroule sur ton thème
 seul.
@@ -220,16 +308,20 @@ Sans rien écrire, tes dresseurs utilisent la piste fournie par le mod.
 
 ### Livrer sa propre piste
 
-Le son est joué par le client, donc **le datapack ne suffit pas** : il faut un resource pack
-à côté. Le `.ogg` et son entrée `sounds.json` y vont ensemble.
+Le son est joué par le client, donc **`data/` ne suffit pas** : le `.ogg` et son entrée
+`sounds.json` vivent sous `assets/`, la partie resource pack.
 
 ```
-mon_resource_pack/
-├── pack.mcmeta                            ← "pack_format": 34 en 1.21.1
+mon_pack/
+├── pack.mcmeta                            ← "pack_format": 34 côté resource pack en 1.21.1
 └── assets/mon_pack/
     ├── sounds.json
     └── sounds/battle_music/champion.ogg
 ```
+
+Selon la voie choisie (voir [Où poser le pack](#où-poser-le-pack)), ce `assets/` part dans
+la même archive que `data/` — voie `mods/` — ou dans une copie déposée à part dans
+`resourcepacks/`.
 
 `sounds.json` :
 
@@ -270,11 +362,12 @@ sous-titres activés.
 au joueur comme textes traduisibles. Deux usages, au choix, dresseur par dresseur :
 
 - **Texte brut** — `"name": "Red"` s'affiche tel quel, dans toutes les langues.
-- **Clé de traduction** — `"name": "trainer.mon_pack.red.name"`, définie dans le resource
-  pack livré à côté du datapack.
+- **Clé de traduction** — `"name": "trainer.mon_pack.red.name"`, définie sous `assets/`, la
+  partie resource pack (même remarque que pour la musique : selon la voie choisie, elle
+  voyage avec `data/` ou dans une copie posée dans `resourcepacks/`).
 
 ```
-mon_resource_pack/
+mon_pack/
 └── assets/mon_pack/lang/
     ├── en_us.json
     └── fr_fr.json
@@ -320,16 +413,20 @@ côté client.
 | Symptôme | Cause probable |
 | --- | --- |
 | Le dresseur n'apparaît pas dans l'autocomplétion | Mauvais dossier : il faut `data/<ns>/cobblemontrainers/trainers/`, pas `data/<ns>/trainers/` |
-| `Loaded 0 trainer(s)` | `pack.mcmeta` absent ou `pack_format` incorrect — le pack entier est ignoré par Minecraft |
+| `Loaded 0 trainer(s)` depuis `datapacks/` | `pack.mcmeta` absent ou `pack_format` incorrect — le pack entier est ignoré par Minecraft |
+| Un pack posé dans `mods/` n'a aucun effet | `pack.mcmeta` absent de la **racine** de l'archive, ou rangé sous un dossier intermédiaire parce que le dossier a été zippé au lieu de son contenu |
+| Les dresseurs se chargent, mais pas la musique ni les traductions | L'archive est dans `datapacks/`. Ce dossier n'est lu **que** comme données, jamais comme ressources — le format n'y change rien. Pose-la dans `mods/`, ou une copie dans `resourcepacks/` |
+| Le pack est au bon endroit et la musique reste muette | Le `.ogg` manque de l'archive, ou son chemin ne correspond pas au `name` de `sounds.json` (`<ns>:battle_music/x` → `assets/<ns>/sounds/battle_music/x.ogg`) |
 | Le dresseur s'appelle `trainer.mon_pack.red.name` en jeu | Resource pack absent ou désactivé, ou clé absente du fichier lang |
 | Le combat en double est refusé | Moins de 2 Pokémon d'un des deux côtés, le tien compris |
-| Une stat EV/IV semble ignorée | Abréviation Showdown (`Atk`, `SpA`) au lieu du nom Cobblemon |
+| Une stat EV/IV semble ignorée | Nom de stat hors de la liste reconnue — voir le tableau du format d'équipe |
 | Aucune musique | Piste absente du resource pack, ou ID qui ne correspond pas à la clé de `sounds.json` |
 | Le skin reste Steve | Pseudo inexistant ou API Mojang injoignable — voir les logs |
 
 ## Un exemple complet
 
 Le dépôt contient un pack d'exemple couvrant chaque option, dresseur par dresseur :
-`run/saves/New World/datapacks/cobblemonrlm/`, avec son resource pack dans
-`run/resourcepacks/cobblemonrlm/`. La dresseuse `jacinthe` y montre le cas complet :
-équipe de six, textes traduits et musique de combat fournie par le pack.
+[`examples/cobblemonrlm/`](../examples/cobblemonrlm). Zippe son contenu, renomme en `.jar`,
+pose-le dans `mods/` : c'est tout.
+La dresseuse `jacinthe` y montre le cas complet : équipe de six, textes traduits et
+`battleMusic` pointant sur une piste livrée par le pack, `.ogg` compris.

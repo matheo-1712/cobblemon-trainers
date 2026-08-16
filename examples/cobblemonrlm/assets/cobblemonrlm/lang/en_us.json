@@ -1,0 +1,37 @@
+{
+  "trainer.cobblemonrlm.solo_ace.name": "Solo Ace",
+  "trainer.cobblemonrlm.solo_ace.battle_start": "One on one. No excuses.",
+  "trainer.cobblemonrlm.solo_ace.win": "Clean. You earned that.",
+  "trainer.cobblemonrlm.solo_ace.lose": "Come back when your team is sharper.",
+
+  "trainer.cobblemonrlm.duo_tacticien.name": "Doubles Tactician",
+  "trainer.cobblemonrlm.duo_tacticien.battle_start": "Two fronts at once. Good luck.",
+  "trainer.cobblemonrlm.duo_tacticien.win": "You handled both flanks. Nicely done.",
+  "trainer.cobblemonrlm.duo_tacticien.lose": "You only watched half the field.",
+
+  "trainer.cobblemonrlm.trio_marathon.name": "Triples Marathoner",
+  "trainer.cobblemonrlm.trio_marathon.battle_start": "Three at a time, and my team does not heal between attempts.",
+  "trainer.cobblemonrlm.trio_marathon.win": "You wore me down. Well deserved.",
+  "trainer.cobblemonrlm.trio_marathon.lose": "Try again: my Pokémon will keep their wounds.",
+
+  "trainer.cobblemonrlm.debutant.name": "Rookie",
+
+  "trainer.cobblemonrlm.skin_par_uuid.name": "UUID Skin Trainer",
+  "trainer.cobblemonrlm.skin_par_uuid.battle_start": "My looks come from a UUID, not a username.",
+  "trainer.cobblemonrlm.skin_par_uuid.win": "Nicely played.",
+  "trainer.cobblemonrlm.skin_par_uuid.lose": "A little more effort.",
+
+  "trainer.cobblemonrlm.pnj_pacifiste.name": "Peaceful Villager",
+
+  "trainer.cobblemonrlm.polyglotte.name": "The Polyglot",
+  "trainer.cobblemonrlm.polyglotte.battle_start": "I speak your language — this text comes from the resource pack.",
+  "trainer.cobblemonrlm.polyglotte.win": "Well played, in any language.",
+  "trainer.cobblemonrlm.polyglotte.lose": "Try again once you have trained a little.",
+
+  "trainer.cobblemonrlm.jacinthe.name": "Jacinthe",
+  "trainer.cobblemonrlm.jacinthe.battle_start": "Listen closely: this theme only plays for battles that matter.",
+  "trainer.cobblemonrlm.jacinthe.win": "You held on to the very last bar. Hats off.",
+  "trainer.cobblemonrlm.jacinthe.lose": "The music stops here. Come back ready to finish it.",
+
+  "cobblemonrlm.subtitles.jacinthe_battle": "Jacinthe's battle theme"
+}

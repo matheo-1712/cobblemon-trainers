@@ -4,6 +4,7 @@
   "cobblemon-trainers.command.spawn_trainer.invalid_position": "Invalid position for spawning a trainer.",
   "cobblemon-trainers.command.spawn_trainer.spawn_failed": "Could not spawn the trainer. See the server log for details.",
   "cobblemon-trainers.chat.trainer_message": "[%s] %s",
+  "cobblemon-trainers.chat.trainer_gone": "The trainer left the battle. The fight is over.",
   "cobblemon-trainers.npc.interaction.battle": "Trainer Battle",
   "cobblemon-trainers.subtitles.battle_music": "Trainer battle music",
   "trainer.cobblemon-trainers.rerebleue.name": "RereBleue",
