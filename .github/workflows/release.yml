@@ -4,8 +4,9 @@
 # changelog on every platform, and the pre-release checkbox picks between a stable and a beta
 # release.
 #
-# The tag must match `version` in gradle.properties — that file is what ends up in
-# fabric.mod.json, so a mismatch would ship a jar claiming the wrong version.
+# The tag is the single source of truth for the version: it is handed to Gradle as `-Pversion`,
+# which is what `processResources` expands into fabric.mod.json. `version` in gradle.properties
+# is only the default a local build falls back on, so nothing has to be bumped before tagging.
 
 name: release
 on:
@@ -43,12 +44,14 @@ jobs:
           PRERELEASE: ${{ github.event.release.prerelease }}
         run: |
           version="${TAG#v}"
-          declared=$(sed -n 's/^version=//p' gradle.properties)
 
-          if [ "$version" != "$declared" ]; then
-            echo "::error::tag $TAG means version $version, but gradle.properties declares $declared. Bump it, commit, then re-tag."
-            exit 1
-          fi
+          # Everything downstream — the jar name, fabric.mod.json, the Modrinth version number —
+          # is built from this string, so a tag like "latest" has to stop here rather than ship a
+          # jar named after it.
+          case "$version" in
+            [0-9]*.[0-9]*) ;;
+            *) echo "::error::tag $TAG does not carry a version number (expected something like v1.2.3)"; exit 1 ;;
+          esac
 
           if [ "$PRERELEASE" = "true" ]; then
             case "$version" in
@@ -89,7 +92,7 @@ jobs:
           exit $missing
 
       - name: build
-        run: ./gradlew build exampleDatapack
+        run: ./gradlew build exampleDatapack "-Pversion=${{ steps.release.outputs.version }}"
 
       # Modrinth and CurseForge in one task. A destination whose project ID is empty in
       # gradle.properties is skipped, so this works before both projects exist.
@@ -98,7 +101,10 @@ jobs:
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
           CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
           CHANGELOG: ${{ github.event.release.body }}
-        run: ./gradlew publishMods -Prelease_type=${{ steps.release.outputs.type }}
+        run: |
+          ./gradlew publishMods \
+            "-Pversion=${{ steps.release.outputs.version }}" \
+            "-Prelease_type=${{ steps.release.outputs.type }}"
 
       # The release already exists, so its assets are attached here rather than through the
       # Gradle plugin, which only knows how to create a release of its own.

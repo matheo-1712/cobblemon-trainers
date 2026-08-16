@@ -141,13 +141,14 @@ pour la configuration de l'IDE.
 
 ### Publier une release
 
-Mettre `version=` à jour dans `gradle.properties`, commiter, puis publier une release GitHub
-dont le tag est `v<version>`. Le workflow `release.yml` construit, publie sur Modrinth et
-CurseForge, et attache à la release le jar et `exemple_trainer_datapack.zip` — le pack
-d'exemple, prêt à poser dans `mods/`, `datapacks/` ou `resourcepacks/`.
+Publier une release GitHub dont le tag est `v<version>`, par exemple `v1.2.3`. Le workflow
+`release.yml` construit, publie sur Modrinth et CurseForge, et attache à la release le jar et
+`exemple_trainer_datapack.zip` — le pack d'exemple, prêt à poser dans `mods/`, `datapacks/` ou
+`resourcepacks/`.
 
-Le corps de la release sert de changelog sur les trois plateformes, et la case *pre-release*
-publie en beta. Le workflow s'arrête si le tag ne correspond pas à `gradle.properties`.
+C'est le tag qui donne la version du mod : rien à mettre à jour avant de tagguer, le `version=`
+de `gradle.properties` n'est que le défaut des builds locaux. Le corps de la release sert de
+changelog sur les trois plateformes, et la case *pre-release* publie en beta.
 
 Secrets attendus par le dépôt : `MODRINTH_TOKEN` et `CURSEFORGE_TOKEN`. En local,
 `./gradlew publishMods` est sans risque : sans jeton, il écrit ce qu'il aurait envoyé dans
