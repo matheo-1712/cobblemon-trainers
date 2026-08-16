@@ -184,7 +184,7 @@ translations, music and custom skin textures in a single file the player just dr
 
 ## Credits
 
-Developed by **Mathéo** ([matheo-1712](https://github.com/matheo-1712)) and contributors.
+Developed by **Mathéo** ([matheo-1712](https://github.com/matheo-1712)).
 
 ## Usage terms
 
@@ -194,14 +194,14 @@ Developed by **Mathéo** ([matheo-1712](https://github.com/matheo-1712)) and con
 - **Datapacks: yes.** Trainer packs you build with this mod are yours — distribute them
   however you want.
 - **Reuploading: no.** Do not republish the mod on Modrinth, CurseForge, or any other
-  distribution site, mirror, or ad-wrapped download page. Link to this page instead — that
-  way everyone gets the real file, the right version, and the changelog with it.
+  distribution site, mirror, or ad-wrapped download page. Link to
+  [this page](https://modrinth.com/mod/cobblemon-trainers) instead — that way everyone gets
+  the real file, the right version, and the changelog with it.
 
 ## Links
 
 - **Source & issues:** [github.com/matheo-1712/cobblemon-trainers](https://github.com/matheo-1712/cobblemon-trainers)
-- **Full datapack guide (in French):** [docs/DATAPACK.md](https://github.com/matheo-1712/cobblemon-trainers/blob/master/docs/DATAPACK.md)
-- **Example pack:** downloadable next to the jar on every release — one folder that works as
+- **Example pack:** [downloadable](https://github.com/matheo-1712/cobblemon-trainers/releases) next to the jar on every release, on assets — one folder that works as
   a datapack and a resource pack at once, covering every option.
 
 Found a bug, or a trainer that won't load? Open an issue on GitHub with your JSON and the
