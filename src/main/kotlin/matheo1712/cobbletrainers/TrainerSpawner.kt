@@ -2,7 +2,7 @@ package matheo1712.cobbletrainers
 
 import com.cobblemon.mod.common.api.npc.NPCClasses
 import com.cobblemon.mod.common.api.npc.configuration.interaction.NoneNPCInteractionConfiguration
-import com.cobblemon.mod.common.api.npc.partyproviders.SimplePartyProvider
+import com.cobblemon.mod.common.api.storage.party.NPCPartyStore
 import com.cobblemon.mod.common.entity.npc.NPCEntity
 import com.cobblemon.mod.common.entity.npc.NPCPlayerModelType
 import com.cobblemon.mod.common.entity.npc.NPCPlayerTexture
@@ -114,6 +114,13 @@ object TrainerSpawner {
      * The team is deliberately set on `npc.party` (the entity store) rather than
      * `npc.npc.party`: the NPC class is a singleton shared by every NPC of that class, so
      * changing its team would replace it for all of them.
+     *
+     * The store is filled here instead of through `SimplePartyProvider`: its `provide()`
+     * starts by calling `PokemonProperties.copy()`, which round-trips through
+     * `saveToJSON`/`loadFromJSON` — and that pair, unlike `saveToNBT`, does not carry
+     * `nickname`, so a Showdown nickname was silently lost on the way to the party. What
+     * `provide()` does beyond that copy is the level default and the store itself, both
+     * reproduced below.
      */
     private fun applyTeam(npc: NPCEntity, definition: TrainerDefinition, trainerId: ResourceLocation) {
         if (definition.team.isEmpty()) return
@@ -124,8 +131,15 @@ object TrainerSpawner {
             return
         }
 
-        val provider = SimplePartyProvider().also { it.pokemon.addAll(pokemonProps) }
-        npc.party = provider.provide(npc, definition.level, emptyList())
+        val party = NPCPartyStore(npc)
+        for (properties in pokemonProps) {
+            // A `Level:` line on the Pokémon wins over the trainer-wide level.
+            if (properties.level == null) {
+                properties.level = definition.level
+            }
+            party.add(properties.create())
+        }
+        npc.party = party
     }
 
     /**
