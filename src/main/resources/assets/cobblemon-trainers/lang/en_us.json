@@ -9,6 +9,21 @@
   "cobblemon-trainers.command.list_trainers.entry.defeated": "✔ %s — %s",
   "cobblemon-trainers.command.list_trainers.entry.pending": "✘ %s — %s",
   "cobblemon-trainers.command.list_trainers.no_rematch": " (no rematch)",
+  "block.cobblemon-trainers.trainer_spawner": "Trainer Spawner",
+  "cobblemon-trainers.item_group": "Cobblemon Trainers",
+  "cobblemon-trainers.item.trainer_spawner.operator_only": "Operators only — creative mode required",
+
+  "cobblemon-trainers.screen.trainer_spawner.title": "Trainer Spawner",
+  "cobblemon-trainers.screen.trainer_spawner.trainer": "Trainer",
+  "cobblemon-trainers.screen.trainer_spawner.trainer.hint": "namespace:name — leave empty for no trainer",
+  "cobblemon-trainers.screen.trainer_spawner.radius": "Leash radius (blocks)",
+  "cobblemon-trainers.screen.trainer_spawner.delay": "Respawn delay (seconds)",
+
+  "cobblemon-trainers.chat.spawner.configured": "Spawner set to %s.",
+  "cobblemon-trainers.chat.spawner.cleared": "Spawner cleared: it no longer spawns anything.",
+  "cobblemon-trainers.chat.spawner.unknown_trainer": "Unknown trainer '%s'. Check the trainer IDs in data/<namespace>/cobblemontrainers/ of your datapacks.",
+  "cobblemon-trainers.chat.spawner.client_required": "Configuring a spawner needs Cobblemon Trainers installed on your client.",
+
   "cobblemon-trainers.chat.trainer_message": "[%s] %s",
   "cobblemon-trainers.chat.trainer_gone": "The trainer left the battle. The fight is over.",
   "cobblemon-trainers.chat.already_defeated": "%s has already been defeated and does not take rematches.",

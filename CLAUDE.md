@@ -6,9 +6,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Mod Fabric pour Minecraft 1.21.1 qui ajoute des dresseurs Pokémon configurables à
 Cobblemon 1.7.3. Code principal en Kotlin (`matheo1712.cobbletrainers`), les mixins en Java.
-Tout tourne côté serveur logique, à une exception près : `client.MinecraftMixin`, qui branche
-la lecture des `assets/` d'un pack posé dans `mods/` (voir « Livrer un pack »). Aucun
-entrypoint client, aucun rendu.
+Presque tout tourne côté serveur logique. Le côté client se limite à trois choses, et il vaut
+mieux que ça reste vrai : `client.MinecraftMixin`, qui branche la lecture des `assets/` d'un
+pack posé dans `mods/` (voir « Livrer un pack ») ; `client.ClientLevelMixin`, qui rend le bloc
+de dresseur visible quand on tient son item ; et l'entrypoint `CobblemonTrainersClient`, dont
+le seul rôle est d'ouvrir l'écran de ce bloc (voir « Le bloc de dresseur »). Aucun rendu
+d'entité, aucun renderer.
 
 Le code, les commentaires et les logs sont en **anglais**. Tout texte affiché au joueur
 passe par `assets/cobblemon-trainers/lang/` — jamais de littéral en dur.
@@ -93,6 +96,13 @@ messages, musique et récompenses de combat.
   côté joueur.
 - **`TrainerBattleMusic`** — envoie `ClientboundSoundPacket` / `ClientboundStopSoundPacket`
   aux joueurs du combat.
+- **`block.TrainerBlocks` / `TrainerSpawnerBlock` / `TrainerSpawnerBlockEntity` /
+  `TrainerSpawnerItem`** — le bloc qui maintient un dresseur en place. Voir « Le bloc de
+  dresseur ».
+- **`network.TrainerSpawnerNetworking`** — les deux `CustomPacketPayload` de l'écran de ce
+  bloc, et la validation côté serveur de ce qui revient.
+- **`client.CobblemonTrainersClient` / `client.TrainerSpawnerScreen`** — l'unique entrypoint
+  client et l'écran qu'il ouvre.
 
 ### Musique de combat
 
@@ -255,6 +265,84 @@ L'ID du dresseur est stocké dans les **aspects** du NPC sous la forme
 `trainer_id:<namespace>:<nom>` (`CobblemonTrainers.TRAINER_ASPECT_PREFIX`). Les aspects
 appliqués sont sérialisés en NBT, donc le lien survit à un redémarrage.
 
+Un dresseur posé par un bloc en porte un second, `trainer_spawner:<BlockPos.asLong()>`
+(`SPAWNER_ASPECT_PREFIX`), pour la même raison : c'est ce qui permet à un bloc de reconnaître
+ses propres restes. `TrainerSpawner.spawn` prend un `extraAspects` pour ça.
+
+### Le bloc de dresseur
+
+`cobblemon-trainers:trainer_spawner` retient un ID de dresseur et remet ce dresseur en place
+chaque fois qu'il manque à l'appel. C'est la seule partie du mod qui a du code client.
+
+**La visibilité façon barrière n'est pas du rendu.** Aucune classe client de vanilla ne
+mentionne `BarrierBlock` : `getRenderShape()` renvoie `INVISIBLE` et le modèle de bloc n'a
+qu'une texture `particle`. Ce qu'on voit est une **particule** `BLOCK_MARKER`, semée par
+`ClientLevel.doAnimateTick` sur les positions au hasard dont le bloc est celui que renvoie
+`ClientLevel.getMarkerParticleTarget()` — laquelle lit `MARKER_PARTICLE_ITEMS`, un
+`Set.of(Items.BARRIER, Items.LIGHT)` privé et immuable. La seule entrée est donc cette
+méthode, d'où `client.ClientLevelMixin` : un `@Inject(HEAD, cancellable)` qui répond notre
+bloc quand la main principale tient son item, et laisse la réponse de vanilla intacte sinon.
+Le modèle du bloc doit exister et ne déclarer qu'une `particle`, sinon la particule dessine la
+texture manquante.
+
+Points à ne pas redécouvrir :
+
+- **Le bloc étend `Block` + `EntityBlock`, pas `BaseEntityBlock`.** `BaseEntityBlock` donnerait
+  `INVISIBLE` gratuitement, mais il ré-abstrait `codec()`, dont les fabriques
+  (`simpleCodec`, `propertiesCodec`) sont `protected static` sur `BlockBehaviour` et donc hors
+  de portée d'une sous-classe Kotlin. `Block.codec()` est concret : le problème disparaît.
+- **Pas de collision, contrairement à la barrière.** Le dresseur apparaît *dans* le bloc ; un
+  bloc solide le repousserait. Le reste des propriétés copie la barrière : incassable hors
+  créatif, `noLootTable`, immunisé aux pistons.
+- **Une seule ligne du build fait du bruit** : `BlockEntityType.Builder.build(null)` avertit en
+  Kotlin, le paramètre Java n'étant pas annoté. `FabricBlockEntityTypeBuilder`, qui évitait ça,
+  est déprécié en faveur de ce même builder. L'avertissement est le moindre mal.
+- **L'écran n'est pas un `MenuType`** : il n'y a pas d'inventaire. Deux `CustomPacketPayload`
+  suffisent, l'un qui porte les réglages du bloc et la liste des dresseurs chargés, l'autre qui
+  ramène ce que le joueur a tapé. Rien n'est mémorisé entre les deux : le bloc est retrouvé
+  depuis la position du paquet de retour, et tout est revalidé là — permission, distance, ID.
+  Un client peut renvoyer autre chose que ce qu'on lui a proposé.
+- **La liste des dresseurs vient du serveur.** Les dresseurs sont des données de datapack : le
+  client n'a pas de `TrainerRegistry` peuplé, même en solo il ne faut pas s'y fier.
+- **Le retour se fait par téléport, la réapparition par spawn.** Un dresseur vivant qui s'est
+  éloigné est ramené (il garde son état) ; un dresseur mort ou disparu est recréé après le
+  délai. Un dresseur en plein combat (`battleIds` non vide) est laissé tranquille.
+- **`respawnAt` ne vide pas `spawnedTrainer`.** Un chunk qui vient de se charger peut ne pas
+  encore avoir ses entités : le tick suivant retrouve le dresseur par UUID et annule la
+  réapparition programmée. Vider l'UUID tout de suite ferait un doublon à chaque rechargement.
+  `respawnAt` n'est pas sauvegardé — c'est un temps de jeu absolu, sans valeur dans un autre
+  monde — et le transitoire `seenAlive` distingue le dresseur qu'on a vu mourir (délai complet)
+  de celui qui n'est pas encore là (`RELOAD_GRACE_TICKS`).
+- **Une structure emporte la configuration toute seule.** `StructureTemplate.fillFromWorld`
+  appelle `saveWithId` et `placeInWorld` rappelle `loadWithComponents` : le NBT du block entity
+  fait le voyage sans qu'on ait rien à écrire. Le piège est l'inverse — l'état d'exécution part
+  avec, et une copie hérite de l'UUID du dresseur de l'original. D'où la règle : `spawnedTrainer`
+  n'est cru que si l'entité porte le `spawnerAspect()` de *cette* position, sinon la copie
+  adopterait le dresseur du bloc source et le téléporterait chez elle. La rotation d'une
+  structure, en revanche, ne tourne pas le `facing` : c'est un float dans le block entity, et
+  vanilla n'offre aucun crochet de rotation pour un block entity (il faudrait une propriété de
+  blockstate).
+- **Le balayage par aspect est le filet de sécurité** : avant chaque spawn et à la casse du
+  bloc, tout NPC portant `trainer_spawner:<pos>` dans la zone est supprimé. Il attrape le
+  dresseur parti dans un chunk déchargé pendant que le bloc, lui, continuait de tourner.
+- **Rien du bloc n'existe pour un non-opérateur**, et ça passe par quatre verrous distincts,
+  tous accrochés à `Player.canUseGameMasterBlocks()` (créatif *et* niveau 2) : le bloc
+  implémente `GameMasterBlock`, ce qui fait refuser la casse par `ServerPlayerGameMode`
+  ; l'item est un `GameMasterBlockItem`, dont `getPlacementState` renvoie null ; `getShape`
+  renvoie une forme vide quand le `EntityCollisionContext` porte un joueur sans droits, donc le
+  rayon du curseur traverse le bloc au lieu d'afficher une boîte de sélection dans le vide ; et
+  le mixin des particules refuse de répondre. L'écran, lui, revalide côté serveur.
+  Ne pas retirer l'un en croyant les autres redondants : ils couvrent chacun un chemin
+  différent (casser, poser, viser, voir).
+- **L'onglet créatif du mod, lui, n'est pas verrouillé, et c'est délibéré.** On peut faire
+  disparaître un onglet en ne remplissant son `displayItems` que si
+  `parameters.hasPermissions()` : un `CATEGORY` vide n'est pas affiché
+  (`CreativeModeTab.shouldDisplay()`). Ça a été essayé et retiré. Ce drapeau est le seul signal
+  de permission qu'un onglet reçoit, et l'écran créatif le calcule comme
+  `canUseGameMasterBlocks() && option operatorItemsTab` — or cette option vaut **false** par
+  défaut, donc l'onglet restait invisible pour l'opérateur à qui il est destiné. Ne pas le
+  remettre sans avoir résolu ça.
+
 ### Skins
 
 `applySkin` résout la texture sur un thread daemon, puis repasse par `server.execute` pour
@@ -363,7 +451,12 @@ packs l'affiche comme incompatible. C'est ce que fait `examples/cobblemonrlm/pac
 
 `ExampleMixin` est le stub du template Fabric, sans effet.
 
-`PackDetectorMixin` est le seul mixin réel. Il fait accepter les archives `.jar` à
+`client.ClientLevelMixin` rend le bloc de dresseur visible quand on tient son item ; il est
+décrit sous « Le bloc de dresseur ». Comme `client.MinecraftMixin` il est déclaré dans le
+tableau `client` du mixins.json : une classe client dans `mixins` ferait échouer le chargement
+sur un serveur dédié.
+
+`PackDetectorMixin` fait accepter les archives `.jar` à
 `PackDetector.detectPackResources`, unique endroit où Minecraft filtre sur `.zip` — tout le
 reste de la chaîne marche déjà, `FilePackResources` ouvrant le fichier avec `ZipFile`, qui se
 moque de l'extension. `PackDetector` étant partagé par toutes les sources sur dossier, ça
@@ -373,7 +466,8 @@ réempaqueter en `.zip`.
 
 Loom remappe les mixins statiquement (pas de refmap dans le jar) : après un changement,
 vérifier dans `build/libs/*.jar` que la cible est bien passée en intermediary
-(`detectPackResources` → `method_52441`, `PackDetector` → `class_8621`).
+(`detectPackResources` → `method_52441`, `PackDetector` → `class_8621` ;
+`getMarkerParticleTarget` → `method_35752`).
 
 ### Formes et aspects
 

@@ -634,6 +634,15 @@ un dresseur manquant.
 Un resource pack, lui, ne se recharge pas avec `/reload` : c'est <kbd>F3</kbd>+<kbd>T</kbd>,
 côté client.
 
+### Poser un dresseur pour de bon
+
+`/spawntrainer` invoque un dresseur de passage : il disparaît quand on le tue. Pour un
+dresseur qui doit tenir un poste, le mod fournit un **bloc de dresseur**
+(`cobblemon-trainers:trainer_spawner`), invisible comme une barrière, qui retient l'ID d'un
+dresseur et le remet en place chaque fois qu'il manque à l'appel. Rien à déclarer dans le
+pack : le bloc se règle en jeu, d'un clic droit. Voir
+[le README](../README.md#le-bloc-de-dresseur).
+
 ## Erreurs fréquentes
 
 | Symptôme | Cause probable |

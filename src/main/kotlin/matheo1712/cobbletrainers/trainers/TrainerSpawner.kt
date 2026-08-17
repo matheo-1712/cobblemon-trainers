@@ -41,6 +41,10 @@ object TrainerSpawner {
     /**
      * Spawns a trainer in the world at the given position.
      *
+     * @param yRot Which way the trainer faces, in degrees.
+     * @param extraAspects Aspects applied on top of the trainer ID one. Used by the trainer
+     *   spawner block to mark the trainers it owns; aspects are saved to NBT, so such a mark
+     *   survives a restart.
      * @return the spawned [com.cobblemon.mod.common.entity.npc.NPCEntity], or null on failure.
      */
     fun spawn(
@@ -48,7 +52,9 @@ object TrainerSpawner {
         level: ServerLevel,
         position: Vec3,
         definition: TrainerDefinition,
-        trainerId: ResourceLocation
+        trainerId: ResourceLocation,
+        yRot: Float = 0f,
+        extraAspects: Collection<String> = emptyList()
     ): NPCEntity? {
         // 1. Resolve the NPC class shipped by the mod. No fallback to an arbitrary class:
         //    failing loudly beats spawning an NPC that behaves unpredictably.
@@ -65,7 +71,11 @@ object TrainerSpawner {
         // 2. Create and position the entity
         val npc = NPCEntity(level)
         npc.npc = npcClass
-        npc.moveTo(position.x, position.y, position.z, npc.yRot, npc.xRot)
+        npc.moveTo(position.x, position.y, position.z, yRot, npc.xRot)
+        // moveTo only sets the entity rotation; without these the trainer stands facing the
+        // right way but with its body and head turned to whatever the defaults were.
+        npc.yBodyRot = yRot
+        npc.yHeadRot = yRot
 
         // 3. Display name. The npc.npc setter assigns a random one from the class, so this
         //    has to come after. Translatable so a resource pack may localise it.
@@ -74,6 +84,7 @@ object TrainerSpawner {
         // 4. Tag the entity with its trainer ID. Applied aspects are serialized to NBT, which
         //    is how the definition is found again after a restart.
         npc.appliedAspects.add(CobblemonTrainers.TRAINER_ASPECT_PREFIX + trainerId)
+        npc.appliedAspects.addAll(extraAspects)
 
         // 5. Cobblemon 1.7.3 no longer reads `canChallenge`: battles are triggered by the NPC
         //    interaction, so disable it at the entity level instead.
@@ -286,7 +297,7 @@ object TrainerSpawner {
         return resolved
     }
 
-    /** Downloads the player texture from Mojang. Blocking: never call it on the server thread. */
+    // Downloads the player texture from Mojang API
     private fun fetchTexture(server: MinecraftServer, uuid: UUID): NPCPlayerTexture? {
         return try {
             val profile = server.sessionService.fetchProfile(uuid, false)?.profile

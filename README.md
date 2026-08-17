@@ -46,6 +46,69 @@ ne peut pas démarrer (pas de Pokémon dans ton équipe, combat déjà en cours,
 Tuer ou supprimer un dresseur pendant le combat met fin à la rencontre au lieu de laisser le
 joueur enfermé face à un adversaire absent.
 
+## Le bloc de dresseur
+
+Un dresseur invoqué par `/spawntrainer` disparaît quand on le tue. Pour un dresseur qui doit
+tenir un poste — un champion d'arène, le PNJ du spawn —, il y a le **bloc de dresseur**
+(`cobblemon-trainers:trainer_spawner`) : il retient quel dresseur invoquer, et le remet
+toujours en place.
+
+Le bloc est **invisible**, exactement comme une barrière : il n'apparaît que si on tient son
+item en main, sous forme de marqueurs sur chaque bloc de dresseur des environs. On le trouve
+dans l'onglet créatif **Cobblemon Trainers**, ou avec :
+
+```
+/give @s cobblemon-trainers:trainer_spawner
+```
+
+C'est un bloc d'opérateur, au même titre qu'un bloc de commande : **tout ce qu'il fait demande
+d'être opérateur *et* en créatif**. Sans ça, l'item ne pose rien, le bloc ne se casse pas, les
+marqueurs n'apparaissent pas même l'item en main, le curseur traverse le bloc sans l'accrocher,
+et le clic droit n'ouvre rien.
+
+> L'onglet créatif, lui, est visible par tous. Le cacher n'était possible qu'en le liant au
+> réglage vanilla *Onglet d'objets d'opérateur*, désactivé par défaut — il aurait disparu pour
+> les opérateurs eux-mêmes. Un item inerte dans un inventaire créatif est le moindre mal.
+
+Pose le bloc là où le dresseur doit se tenir — il n'a pas de collision, le dresseur se tient
+dedans — puis fais un **clic droit** dessus. Il faut le mod installé côté client pour que
+l'écran s'ouvre.
+
+L'écran qui s'ouvre reprend celui du bloc de commande :
+
+| Champ | Ce qu'il fait |
+| --- | --- |
+| **Dresseur** | L'ID du dresseur à invoquer. La liste en dessous montre les dresseurs chargés : cliquer sur l'un d'eux remplit le champ, et taper dedans filtre la liste. Un champ vide éteint le bloc. |
+| **Rayon de retour** | Distance au-delà de laquelle le dresseur est ramené sur son bloc. 12 blocs par défaut, de 1 à 64. |
+| **Délai de réapparition** | Temps d'attente avant qu'un dresseur tué revienne. 30 secondes par défaut, 0 pour un retour immédiat. |
+
+*Entrée* ou *Terminé* valide, *Échap* ou *Annuler* ferme sans rien changer. L'ID accepte la
+forme complète `<pack>:<dresseur>` comme le nom seul, comme `/spawntrainer`.
+
+Ensuite le bloc se débrouille :
+
+- il invoque son dresseur dès qu'il est réglé, et le remet en place chaque fois qu'il manque
+  à l'appel ;
+- un dresseur tué revient après le délai ;
+- un dresseur qui s'éloigne trop est ramené sur son bloc — sauf s'il est en plein combat, où
+  il est laissé tranquille jusqu'à la fin ;
+- casser le bloc emporte son dresseur. Comme une barrière, il ne se casse qu'en créatif et ne
+  se ramasse pas ;
+- le dresseur regarde vers le joueur qui a posé le bloc.
+
+Un dresseur qui refuse la revanche (`canRebattle: false`) reste debout sur son bloc et
+décline poliment : ce qu'un joueur a accompli est retenu par ID de dresseur, pas par entité.
+
+### Dans une structure
+
+Un bloc configuré garde ses réglages quand il part dans une structure : sauvegarde un bâtiment
+avec son bloc de dresseur dedans, et chaque copie posée sort réglée sur le même dresseur, même
+rayon, même délai — et invoque *son* dresseur, pas celui de l'original. Ça vaut pour le bloc
+de structure comme pour `/structure`, et donc aussi pour une structure générée par datapack.
+
+Une limite : le dresseur regarde toujours dans la direction enregistrée, même si la structure
+est posée avec une rotation. Réoriente-le en cassant puis reposant le bloc face à toi.
+
 ## Déclarer un dresseur
 
 Les dresseurs se déclarent dans un datapack, à
@@ -163,7 +226,8 @@ sans risque : sans jeton, il écrit ce qu'il aurait envoyé dans `build/mod-publ
   skin par défaut et la raison est écrite dans les logs. Le type `texture`, lui, n'a besoin
   de rien d'autre que d'une image dans le pack.
 - La musique de combat ne boucle pas : un combat plus long que la piste finit en silence.
-  Faire boucler un son est une décision du client, et le mod n'a pas de code client.
+  Faire boucler un son est une décision du client, prise par le moteur audio auquel le mod ne
+  touche pas.
 
 ## Licence
 
