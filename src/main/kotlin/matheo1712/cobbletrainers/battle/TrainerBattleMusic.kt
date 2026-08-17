@@ -28,24 +28,14 @@ import net.minecraft.sounds.SoundSource
  */
 object TrainerBattleMusic {
 
-    /** Track shipped by the mod, and default value of `battleMusic` on a trainer. */
+    /////////////////////////////////////
+    // CONFIGURATION
+    /////////////////////////////////////
     const val DEFAULT_TRACK: String = "cobblemon-trainers:battle_music.corvault"
-
-    /**
-     * [net.minecraft.sounds.SoundSource.MUSIC] puts the track under the player's *Music* volume slider, next to
-     * the vanilla background music — which keeps playing on its own, the server cannot
-     * silence it.
-     */
     private val SOURCE = SoundSource.MUSIC
-
-    /**
-     * Half volume. A battle theme runs for minutes on top of everything else the player is
-     * listening to, and at 1.0 it drowns the fight it is supposed to underscore. The player's
-     * *Music* slider still scales it from here.
-     */
-    // Volume 1f is TOO HIIIGGGHH i lost my ear :(
-    private const val VOLUME = 0.5f
-
+    /** Volume 1f is TOO HIIIGGGHH i lost my ear :( **/
+    private const val VOLUME = 0.2f
+    /** is speed of battle track **/
     private const val PITCH = 1.0f
 
     /**
