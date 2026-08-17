@@ -23,8 +23,8 @@ import net.minecraft.sounds.SoundSource
  * also why a track edited through `/reload` mid-battle keeps playing until the battle ends.
  *
  * Known limit: the track plays once and does not loop. Looping a sound is a client-side
- * decision ([net.minecraft.client.resources.sounds.SoundInstance.isLooping]) and the mod
- * has no client code.
+ * decision ([net.minecraft.client.resources.sounds.SoundInstance.isLooping]), taken by a sound
+ * engine this mod never touches.
  */
 object TrainerBattleMusic {
 
@@ -38,7 +38,14 @@ object TrainerBattleMusic {
      */
     private val SOURCE = SoundSource.MUSIC
 
-    private const val VOLUME = 1.0f
+    /**
+     * Half volume. A battle theme runs for minutes on top of everything else the player is
+     * listening to, and at 1.0 it drowns the fight it is supposed to underscore. The player's
+     * *Music* slider still scales it from here.
+     */
+    // Volume 1f is TOO HIIIGGGHH i lost my ear :(
+    private const val VOLUME = 0.5f
+
     private const val PITCH = 1.0f
 
     /**
