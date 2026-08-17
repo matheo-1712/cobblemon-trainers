@@ -7,5 +7,14 @@
         "stream": true
       }
     ]
+  },
+  "battle_music.neoflare_battle": {
+    "subtitle": "cobblemon-trainers.subtitles.battle_music",
+    "sounds": [
+      {
+        "name": "cobblemon-trainers:battle_music/neoflare_battle",
+        "stream": true
+      }
+    ]
   }
 }

@@ -2,8 +2,10 @@ package matheo1712.cobbletrainers
 
 import matheo1712.cobbletrainers.battle.TrainerBattleEventHandler
 import matheo1712.cobbletrainers.battle.TrainerBattleInteraction
+import matheo1712.cobbletrainers.block.TrainerBlocks
 import matheo1712.cobbletrainers.command.ListTrainersCommand
 import matheo1712.cobbletrainers.command.SpawnTrainerCommand
+import matheo1712.cobbletrainers.network.TrainerSpawnerNetworking
 import matheo1712.cobbletrainers.registry.TrainerRegistry
 import net.fabricmc.api.ModInitializer
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback
@@ -31,6 +33,7 @@ import org.slf4j.LoggerFactory
  * - Item rewards on victory, and one-shot trainers that turn down a rematch
  * - `/spawntrainer <id>` to summon a trainer
  * - `/listtrainers [player]` to review who has been beaten
+ * - A trainer spawner block, which keeps one trainer standing where it is placed
  */
 object CobblemonTrainers : ModInitializer {
 
@@ -42,6 +45,13 @@ object CobblemonTrainers : ModInitializer {
      */
     const val TRAINER_ASPECT_PREFIX = "trainer_id:"
 
+    /**
+     * Prefix of the aspect linking an NPC entity back to the trainer spawner block that put it
+     * there, followed by [net.minecraft.core.BlockPos.asLong]. Saved to NBT like the one above,
+     * which is what lets a block recognise its own leftovers after a restart.
+     */
+    const val SPAWNER_ASPECT_PREFIX = "trainer_spawner:"
+
     @JvmField
     val LOGGER: Logger = LoggerFactory.getLogger(MOD_ID)
 
@@ -51,12 +61,12 @@ object CobblemonTrainers : ModInitializer {
             ListTrainersCommand.register(dispatcher)
         }
 
-        // The resource manager covers both the initial datapack load on server start and
-        // reloads triggered by /reload.
+        // Register blocks and network
+        TrainerBlocks.register()
+        TrainerSpawnerNetworking.register()
+
         ResourceManagerHelper.get(PackType.SERVER_DATA).registerReloadListener(TrainerReloadListener)
 
-        // Both registrations depend on Cobblemon, so isolate a possible failure.
-        // The interaction must be known before datapacks are read.
         try {
             TrainerBattleInteraction.register()
             TrainerBattleEventHandler.register()
@@ -70,7 +80,6 @@ object CobblemonTrainers : ModInitializer {
     fun id(path: String): ResourceLocation =
         ResourceLocation.fromNamespaceAndPath(MOD_ID, path)
 
-    /** Builds a translatable component from a key inside the mod's namespace. */
     fun lang(key: String, vararg args: Any): MutableComponent =
         Component.translatable("$MOD_ID.$key", *args)
 

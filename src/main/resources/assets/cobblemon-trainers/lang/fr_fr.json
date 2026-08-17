@@ -9,6 +9,21 @@
   "cobblemon-trainers.command.list_trainers.entry.defeated": "✔ %s — %s",
   "cobblemon-trainers.command.list_trainers.entry.pending": "✘ %s — %s",
   "cobblemon-trainers.command.list_trainers.no_rematch": " (plus de revanche)",
+  "block.cobblemon-trainers.trainer_spawner": "Bloc de dresseur",
+  "cobblemon-trainers.item_group": "Cobblemon Trainers",
+  "cobblemon-trainers.item.trainer_spawner.operator_only": "Opérateurs uniquement — créatif requis",
+
+  "cobblemon-trainers.screen.trainer_spawner.title": "Bloc de dresseur",
+  "cobblemon-trainers.screen.trainer_spawner.trainer": "Dresseur",
+  "cobblemon-trainers.screen.trainer_spawner.trainer.hint": "namespace:nom — vide pour aucun dresseur",
+  "cobblemon-trainers.screen.trainer_spawner.radius": "Rayon de retour (blocs)",
+  "cobblemon-trainers.screen.trainer_spawner.delay": "Délai de réapparition (secondes)",
+
+  "cobblemon-trainers.chat.spawner.configured": "Bloc réglé sur %s.",
+  "cobblemon-trainers.chat.spawner.cleared": "Bloc vidé : il n'invoque plus personne.",
+  "cobblemon-trainers.chat.spawner.unknown_trainer": "Dresseur « %s » introuvable. Vérifie les ID dans data/<namespace>/cobblemontrainers/ de tes datapacks.",
+  "cobblemon-trainers.chat.spawner.client_required": "Configurer un bloc de dresseur demande Cobblemon Trainers installé côté client.",
+
   "cobblemon-trainers.chat.trainer_message": "[%s] %s",
   "cobblemon-trainers.chat.trainer_gone": "Le dresseur a quitté le combat. La rencontre s'arrête.",
   "cobblemon-trainers.chat.already_defeated": "%s a déjà été battu et ne prend pas de revanche.",

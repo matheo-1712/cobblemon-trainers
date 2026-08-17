@@ -1,4 +1,3 @@
-- Un bloc qui enregistre et fera toujours spawn un dresseur spécifique
 - Conditions pour combattre un autre dresseur
 - Un item qui liste les dresseurs à battre et ceux déjà vaincus, façon Pokédex — le champ
   `tracked` et `TrainerRegistry.tracked()` existent déjà pour ça

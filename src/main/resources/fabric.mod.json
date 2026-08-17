@@ -17,6 +17,12 @@
 				"value": "matheo1712.cobbletrainers.CobblemonTrainers",
 				"adapter": "kotlin"
 			}
+		],
+		"client": [
+			{
+				"value": "matheo1712.cobbletrainers.client.CobblemonTrainersClient",
+				"adapter": "kotlin"
+			}
 		]
 	},
 	"mixins": [
