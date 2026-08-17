@@ -132,8 +132,10 @@ Create `data/<your_namespace>/cobblemontrainers/red.json` in a datapack:
   "name": "Red",
   "level": 88,
   "skin": { "type": "player_username", "value": "Red" },
-  "battleStartMessage": "Let's settle this.",
-  "battleEndWinMessage": "...It's over.",
+  "battleStartMessage": "trainer.<your_namespace>.red.battle_start",
+  "battleEndWinMessage": "trainer.<your_namespace>.red.win",
+  "battleEndLoseMessage": "trainer.<your_namespace>.red.lose",
+  "battleMusic": "<your_namespace>:battle_music.b2w2_tournament_battle",
   "skill": 5,
   "canRebattle": false,
   "rewards": [

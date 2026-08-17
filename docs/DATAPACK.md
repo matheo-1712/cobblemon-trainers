@@ -163,9 +163,15 @@ d'un monde — et sur un serveur, il n'a même pas le fichier. C'est préciséme
   "name": "Red",
   "level": 88,
   "skin": { "type": "player_username", "value": "Red" },
-  "battleStartMessage": "...",
-  "battleEndWinMessage": "C'est terminé !",
-  "battleEndLoseMessage": "...",
+  "battleStartMessage": "trainer.<your_namespace>.red.battle_start",
+  "battleEndWinMessage": "trainer.<your_namespace>.red.win",
+  "battleEndLoseMessage": "trainer.<your_namespace>.red.lose",
+  "battleMusic": "<your_namespace>:battle_music.b2w2_tournament_battle",
+  "skill": 5,
+  "canRebattle": false,
+  "rewards": [
+    { "item": "cobblemon:master_ball", "count": 1 }
+  ],
   "team": [
     "Pikachu (M) @ Light Ball",
     "Ability: Static",
