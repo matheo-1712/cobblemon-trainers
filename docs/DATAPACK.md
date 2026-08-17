@@ -381,10 +381,20 @@ Lignes reconnues, en plus de la première :
 Toute autre ligne est ignorée en silence — tu peux donc coller un export Showdown tel quel,
 les lignes que le mod ne connaît pas ne gênent pas.
 
-Deux détails qui piègent :
+Trois détails qui piègent :
 
+- **Les noms sont écrits comme sur Showdown**, la ponctuation comprise : `U-turn`,
+  `Will-O-Wisp`, `Farfetch'd`, `Flabébé`, `Mr. Mime` passent tels quels — le mod les convertit
+  en identifiants Cobblemon (`uturn`, `willowisp`, `farfetchd`, `flabebe`, `mrmime`). Une
+  capacité qui n'existe pas est ignorée avec un avertissement dans le log : le Pokémon apparaît
+  avec les autres. Seule exception, le suffixe de forme (`Raichu-Alola`), qui passe par la ligne
+  `Aspects:`.
 - **Les objets tenus sans namespace reçoivent `cobblemon:`** : `Light Ball` devient
   `cobblemon:light_ball`. Pour un objet vanilla, écris-le en entier (`minecraft:stick`).
+  Le nom est converti en identifiant : accents retirés, `'` et `.` supprimés, tout le reste
+  rendu en `_` - `Heavy-Duty Boots` devient `cobblemon:heavy_duty_boots` et `Exp. Share`
+  `cobblemon:exp_share`. Un objet qui n'existe pas est ignoré avec un avertissement dans le
+  log, le Pokémon apparaît quand même les mains vides.
 - **Les abréviations Showdown des stats sont traduites par le mod**, pas par Cobblemon :
   `HP`, `Atk`, `Def`, `SpA`, `SpD`, `Spe` deviennent `hp`, `attack`, `defence`,
   `special_attack`, `special_defence`, `speed`. Les noms longs (`Attack`, `Defense`,
