@@ -9,12 +9,11 @@ import net.minecraft.core.HolderLookup
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerLevel
-import net.minecraft.util.Mth
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.phys.AABB
 import net.minecraft.world.phys.Vec3
-import java.util.UUID
+import java.util.*
 
 /**
  * What a [TrainerSpawnerBlock] remembers, and the loop that keeps its trainer alive.
@@ -45,12 +44,13 @@ class TrainerSpawnerBlockEntity(pos: BlockPos, state: BlockState) :
     var respawnDelaySeconds: Int = DEFAULT_RESPAWN_DELAY_SECONDS
         private set
 
-    /** Yaw the trainer is spawned with, set from whoever placed the block. */
-    var facing: Float = 0f
-        set(value) {
-            field = Mth.wrapDegrees(value)
-            setChanged()
-        }
+    /**
+     * Yaw the trainer is spawned with, read from the block's own facing rather than stored
+     * here. That is what lets a structure turn it: `StructureTemplate` rotates block states
+     * through [TrainerSpawnerBlock.rotate] and would have left a number in this NBT untouched.
+     */
+    private val facing: Float
+        get() = blockState.getValue(TrainerSpawnerBlock.FACING).toYRot()
 
     private var spawnedTrainer: UUID? = null
 
@@ -179,10 +179,14 @@ class TrainerSpawnerBlockEntity(pos: BlockPos, state: BlockState) :
     /**
      * Brings a trainer that has drifted too far back onto its block.
      *
-     * A teleport rather than a fresh spawn: the trainer keeps whatever state it has, and the
-     * player it might be talking to sees it walk back rather than blink out. A trainer in a
-     * battle is left alone — yanking it away mid-fight is worse than letting it stand where it
-     * is until the battle ends.
+     * A teleport rather than a fresh spawn: the trainer keeps its identity and its UUID, so
+     * nothing else has to be rebuilt. Its health is restored on the way, since a respawned one
+     * would have arrived at full — but only the entity's own health. The Pokémon team is left
+     * exactly as it was: whether damage carries over is the trainer's `autoHealParty` to decide,
+     * and healing here would quietly override it.
+     *
+     * A trainer in a battle is left alone: yanking it away mid-fight is worse than letting it
+     * stand where it is until the battle ends.
      */
     private fun keepNear(npc: NPCEntity) {
         if (npc.battleIds.isNotEmpty()) return
@@ -197,6 +201,8 @@ class TrainerSpawnerBlockEntity(pos: BlockPos, state: BlockState) :
         npc.yRot = facing
         npc.yHeadRot = facing
         npc.yBodyRot = facing
+
+        npc.health = npc.maxHealth
     }
 
     /**
@@ -242,7 +248,6 @@ class TrainerSpawnerBlockEntity(pos: BlockPos, state: BlockState) :
         } else {
             DEFAULT_RESPAWN_DELAY_SECONDS
         }
-        facing = tag.getFloat(FACING_KEY)
         spawnedTrainer = if (tag.hasUUID(SPAWNED_KEY)) tag.getUUID(SPAWNED_KEY) else null
         seenAlive = false
     }
@@ -260,7 +265,6 @@ class TrainerSpawnerBlockEntity(pos: BlockPos, state: BlockState) :
         tag.putString(TRAINER_KEY, trainerId?.toString() ?: "")
         tag.putInt(LEASH_KEY, leashRadius)
         tag.putInt(DELAY_KEY, respawnDelaySeconds)
-        tag.putFloat(FACING_KEY, facing)
 
         spawnedTrainer?.let { tag.putUUID(SPAWNED_KEY, it) }
     }
@@ -288,7 +292,6 @@ class TrainerSpawnerBlockEntity(pos: BlockPos, state: BlockState) :
         private const val TRAINER_KEY = "Trainer"
         private const val LEASH_KEY = "LeashRadius"
         private const val DELAY_KEY = "RespawnDelay"
-        private const val FACING_KEY = "Facing"
         private const val SPAWNED_KEY = "SpawnedTrainer"
     }
 }

@@ -305,8 +305,14 @@ Points à ne pas redécouvrir :
 - **La liste des dresseurs vient du serveur.** Les dresseurs sont des données de datapack : le
   client n'a pas de `TrainerRegistry` peuplé, même en solo il ne faut pas s'y fier.
 - **Le retour se fait par téléport, la réapparition par spawn.** Un dresseur vivant qui s'est
-  éloigné est ramené (il garde son état) ; un dresseur mort ou disparu est recréé après le
-  délai. Un dresseur en plein combat (`battleIds` non vide) est laissé tranquille.
+  éloigné est ramené (il garde son identité et son UUID) ; un dresseur mort ou disparu est
+  recréé après le délai. Un dresseur en plein combat (`battleIds` non vide) est laissé
+  tranquille.
+- **Le retour rend la vie de l'entité, pas celle de l'équipe.** `npc.health = npc.maxHealth`,
+  parce qu'un dresseur recréé serait arrivé intact. L'équipe, elle, n'est pas touchée : le
+  report des dégâts d'un combat au suivant est ce que règle `autoHealParty`, et un
+  `PartyStore.heal()` ici l'écraserait en douce. Ça a été écrit puis retiré, ne pas le
+  remettre.
 - **`respawnAt` ne vide pas `spawnedTrainer`.** Un chunk qui vient de se charger peut ne pas
   encore avoir ses entités : le tick suivant retrouve le dresseur par UUID et annule la
   réapparition programmée. Vider l'UUID tout de suite ferait un doublon à chaque rechargement.
@@ -318,10 +324,14 @@ Points à ne pas redécouvrir :
   fait le voyage sans qu'on ait rien à écrire. Le piège est l'inverse — l'état d'exécution part
   avec, et une copie hérite de l'UUID du dresseur de l'original. D'où la règle : `spawnedTrainer`
   n'est cru que si l'entité porte le `spawnerAspect()` de *cette* position, sinon la copie
-  adopterait le dresseur du bloc source et le téléporterait chez elle. La rotation d'une
-  structure, en revanche, ne tourne pas le `facing` : c'est un float dans le block entity, et
-  vanilla n'offre aucun crochet de rotation pour un block entity (il faudrait une propriété de
-  blockstate).
+  adopterait le dresseur du bloc source et le téléporterait chez elle.
+- **L'orientation est une propriété de blockstate, pas un champ du block entity.** C'est la
+  seule raison d'être de `FACING` : `StructureTemplate` fait passer les états par `rotate` et
+  `mirror` du bloc, alors qu'un float rangé dans le NBT du block entity serait recopié tel
+  quel — une structure posée d'un quart de tour aurait ses dresseurs regardant de travers.
+  Le prix est de descendre d'un angle libre à quatre directions, ce qui ne se voit pas.
+  Le block entity lit `blockState.getValue(FACING).toYRot()` : `LevelChunk.setBlockState`
+  appelle `blockEntity.setBlockState` quand seul l'état change, donc la valeur suit.
 - **Le balayage par aspect est le filet de sécurité** : avant chaque spawn et à la casse du
   bloc, tout NPC portant `trainer_spawner:<pos>` dans la zone est supprimé. Il attrape le
   dresseur parti dans un chunk déchargé pendant que le bloc, lui, continuait de tourner.

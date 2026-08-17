@@ -4,10 +4,10 @@
 
 Drop the mod in, and you can populate your world with custom trainers: a full Showdown
 team, a Minecraft skin, custom dialogue, battle music, rewards, and a difficulty setting.
-No code, no recompiling, no in-game editor. Just a datapack and `/reload`.
+No code, no recompiling, no in-game editor. Just a datapack and `/reload`. Then pin a trainer
+to a spot with a spawner block, and it stays there for good.
 
-Works in singleplayer and on servers. Everything runs server-side, so **players don't need
-the mod to see your trainers' skins**.
+Works in singleplayer and on servers. Trainers run server-side, but mod is also needed on client side
 
 ---
 
@@ -15,6 +15,9 @@ the mod to see your trainers' skins**.
 
 - **Real trainer battles.** Right-click a trainer, get a proper Cobblemon battle in
   singles, doubles or triples — with battle music playing over everything else.
+- **Trainers that stay where you put them.** An invisible spawner block holds one trainer in
+  place: kill it and it comes back, walk it away and it returns. Configure it by right-clicking,
+  and it keeps its settings inside a structure.
 - **Showdown teams, pasted in.** Copy an export straight from Pokémon Showdown: items,
   abilities, natures, EVs/IVs, moves, shininess, nicknames. Unknown lines are ignored, so
   it just works.
@@ -27,7 +30,7 @@ the mod to see your trainers' skins**.
   Progress is saved with the world and survives `/reload` and restarts.
 - **Adjustable AI.** Skill from 0 (plays randomly) to 5 (plays to win), independent from
   Pokémon level.
-- **Regional forms, megas, fakemon.** An `Aspects:` line handles any Cobblemon form,
+- **Regional forms, fakemon.** An `Aspects:` line handles any Cobblemon form,
   including ones added by other packs.
 - **Translatable text.** Trainer names and dialogue accept translation keys, so every
   player reads them in their own language — floating nameplate included.
@@ -79,6 +82,44 @@ as a real fight, and as a reference for your own files.
 
 Both require permission level 2 (operator). Autocomplete lists every loaded trainer under its
 full `<pack>:<trainer>` ID, and searches both halves — typing `jac` finds `my_pack:jacinthe`.
+
+---
+
+## Trainers that stay put
+
+A trainer summoned with `/spawntrainer` is gone the moment something kills it. For a trainer
+that has to hold a post — a gym leader, the NPC at spawn — there is the **trainer spawner
+block**, `cobblemon-trainers:trainer_spawner`. It remembers which trainer belongs there and
+puts it back whenever it is missing.
+
+The block is **invisible, exactly like a barrier**: it only shows up as markers while you hold
+its item. Find it in the **Cobblemon Trainers** creative tab, or:
+
+```
+/give @s cobblemon-trainers:trainer_spawner
+```
+
+Place it where the trainer should stand — it has no collision, the trainer stands inside it —
+and **right-click** to open its screen. Pick a trainer from the list of everything loaded, or
+type an ID; set how far it may wander before being pulled back, and how long it waits before
+coming back from the dead.
+
+Then it takes care of itself:
+
+- summons its trainer as soon as it is set, and again whenever one goes missing;
+- a killed trainer returns after the delay (30 seconds by default);
+- a trainer that strays too far is put back on its block at full health, the way a freshly
+  spawned one would arrive. Its Pokémon team is left as it is — that stays `autoHealParty`'s
+  call. A trainer mid-battle is left alone;
+- breaking the block takes its trainer with it;
+- **a configured block keeps its settings inside a structure.** Save a building with one in it
+  and every copy comes out set to the same trainer — and summons its own, not the original's.
+  Placed rotated or mirrored, the trainer turns with the structure.
+
+It is an operator block, like a command block: **everything it does needs operator rights and
+creative mode**. Without them the item places nothing, the block cannot be broken, no markers
+appear, the crosshair passes straight through it, and right-click does nothing. Opening the
+screen also needs the mod installed client-side — everything else works with a vanilla client.
 
 ---
 
@@ -178,7 +219,7 @@ translations, music and custom skin textures in a single file the player just dr
   network access and an existing account. On failure the trainer keeps the default skin and
   the reason goes to the logs. The `texture` type needs nothing but an image in your pack.
 - Battle music doesn't loop: a battle longer than the track ends in silence. Looping is a
-  client-side decision, and this mod has no client code.
+  decision of the client's sound engine, which this mod doesn't touch.
 
 ---
 

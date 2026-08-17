@@ -2,23 +2,27 @@ package matheo1712.cobbletrainers.block
 
 import matheo1712.cobbletrainers.network.TrainerSpawnerNetworking
 import net.minecraft.core.BlockPos
+import net.minecraft.core.Direction
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
-import net.minecraft.util.Mth
 import net.minecraft.world.InteractionResult
-import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.player.Player
-import net.minecraft.world.item.ItemStack
+import net.minecraft.world.item.context.BlockPlaceContext
 import net.minecraft.world.level.BlockGetter
 import net.minecraft.world.level.Level
 import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.EntityBlock
 import net.minecraft.world.level.block.GameMasterBlock
+import net.minecraft.world.level.block.HorizontalDirectionalBlock
+import net.minecraft.world.level.block.Mirror
 import net.minecraft.world.level.block.RenderShape
+import net.minecraft.world.level.block.Rotation
 import net.minecraft.world.level.block.entity.BlockEntity
 import net.minecraft.world.level.block.entity.BlockEntityTicker
 import net.minecraft.world.level.block.entity.BlockEntityType
 import net.minecraft.world.level.block.state.BlockState
+import net.minecraft.world.level.block.state.StateDefinition
+import net.minecraft.world.level.block.state.properties.DirectionProperty
 import net.minecraft.world.phys.BlockHitResult
 import net.minecraft.world.phys.shapes.CollisionContext
 import net.minecraft.world.phys.shapes.EntityCollisionContext
@@ -39,7 +43,31 @@ import net.minecraft.world.phys.shapes.VoxelShape
  */
 class TrainerSpawnerBlock(properties: Properties) : Block(properties), EntityBlock, GameMasterBlock {
 
+    init {
+        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH))
+    }
+
     override fun getRenderShape(state: BlockState): RenderShape = RenderShape.INVISIBLE
+
+    override fun createBlockStateDefinition(builder: StateDefinition.Builder<Block, BlockState>) {
+        builder.add(FACING)
+    }
+
+    /** Faces whoever places it, like a furnace. */
+    override fun getStateForPlacement(context: BlockPlaceContext): BlockState =
+        defaultBlockState().setValue(FACING, context.horizontalDirection.opposite)
+
+    /**
+     * [rotate] and [mirror] are what make a spawner follow a structure that is placed turned
+     * around. They exist for the block state and nothing else — this is why the direction the
+     * trainer faces is a state property rather than a number in the block entity, which
+     * `StructureTemplate` would have carried across unrotated.
+     */
+    override fun rotate(state: BlockState, rotation: Rotation): BlockState =
+        state.setValue(FACING, rotation.rotate(state.getValue(FACING)))
+
+    override fun mirror(state: BlockState, mirror: Mirror): BlockState =
+        state.rotate(mirror.getRotation(state.getValue(FACING)))
 
     /**
      * Hides the block from anyone who may not use it.
@@ -75,22 +103,6 @@ class TrainerSpawnerBlock(properties: Properties) : Block(properties), EntityBlo
         return BlockEntityTicker { tickLevel, _, _, blockEntity ->
             (blockEntity as TrainerSpawnerBlockEntity).serverTick(tickLevel as ServerLevel)
         }
-    }
-
-    /**
-     * The trainer faces whoever placed the block. The block is invisible, so it carries no
-     * facing property a player could read back: the angle lives in the block entity instead.
-     */
-    override fun setPlacedBy(
-        level: Level,
-        pos: BlockPos,
-        state: BlockState,
-        placer: LivingEntity?,
-        stack: ItemStack
-    ) {
-        super.setPlacedBy(level, pos, state, placer, stack)
-        if (level.isClientSide || placer == null) return
-        (level.getBlockEntity(pos) as? TrainerSpawnerBlockEntity)?.facing = Mth.wrapDegrees(placer.yRot + 180f)
     }
 
     /**
@@ -130,5 +142,9 @@ class TrainerSpawnerBlock(properties: Properties) : Block(properties), EntityBlo
             (level.getBlockEntity(pos) as? TrainerSpawnerBlockEntity)?.despawnTrainer()
         }
         super.onRemove(state, level, pos, newState, movedByPiston)
+    }
+
+    companion object {
+        val FACING: DirectionProperty = HorizontalDirectionalBlock.FACING
     }
 }

@@ -90,11 +90,14 @@ Ensuite le bloc se débrouille :
 - il invoque son dresseur dès qu'il est réglé, et le remet en place chaque fois qu'il manque
   à l'appel ;
 - un dresseur tué revient après le délai ;
-- un dresseur qui s'éloigne trop est ramené sur son bloc — sauf s'il est en plein combat, où
-  il est laissé tranquille jusqu'à la fin ;
+- un dresseur qui s'éloigne trop est ramené sur son bloc, sa propre vie remise au maximum
+  comme s'il venait d'être invoqué — sauf s'il est en plein combat, où il est laissé
+  tranquille jusqu'à la fin. Son équipe n'est pas touchée : le report des dégâts d'un combat
+  au suivant reste réglé par `autoHealParty` ;
 - casser le bloc emporte son dresseur. Comme une barrière, il ne se casse qu'en créatif et ne
   se ramasse pas ;
-- le dresseur regarde vers le joueur qui a posé le bloc.
+- le dresseur regarde vers le joueur qui a posé le bloc, et suit ensuite l'orientation de
+  celui-ci.
 
 Un dresseur qui refuse la revanche (`canRebattle: false`) reste debout sur son bloc et
 décline poliment : ce qu'un joueur a accompli est retenu par ID de dresseur, pas par entité.
@@ -106,8 +109,9 @@ avec son bloc de dresseur dedans, et chaque copie posée sort réglée sur le m�
 rayon, même délai — et invoque *son* dresseur, pas celui de l'original. Ça vaut pour le bloc
 de structure comme pour `/structure`, et donc aussi pour une structure générée par datapack.
 
-Une limite : le dresseur regarde toujours dans la direction enregistrée, même si la structure
-est posée avec une rotation. Réoriente-le en cassant puis reposant le bloc face à toi.
+L'orientation suit la structure : pose-la tournée d'un quart de tour ou en miroir, le dresseur
+regarde dans la direction correspondante. Comme un four ou un lit, le bloc n'a que quatre
+directions — il s'oriente vers celui qui le pose.
 
 ## Déclarer un dresseur
 
