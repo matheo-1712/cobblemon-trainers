@@ -1,9 +1,13 @@
 package matheo1712.cobbletrainers.parser
 
+import com.cobblemon.mod.common.api.moves.Moves
 import com.cobblemon.mod.common.api.pokemon.PokemonProperties
 import com.cobblemon.mod.common.api.properties.CustomPokemonProperty
 import matheo1712.cobbletrainers.CobblemonTrainers
+import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.network.chat.Component
+import net.minecraft.resources.ResourceLocation
+import java.text.Normalizer
 import java.util.Locale
 
 /**
@@ -21,13 +25,11 @@ object ShowdownTeamParser {
 
     private val LOGGER = CobblemonTrainers.LOGGER
 
-    /** Namespace applied to held items that do not specify one. */
-    private const val DEFAULT_ITEM_NAMESPACE = "cobblemon"
 
-    /**
-     * Showdown abbreviations mapped to the stat names [com.cobblemon.mod.common.api.pokemon.PokemonProperties] expects, which it
-     * derives from the constants of Cobblemon's `Stats` enum.
-     */
+    /////////////////////////////////////
+    // CONFIGURATION
+    /////////////////////////////////////
+    private const val DEFAULT_ITEM_NAMESPACE = "cobblemon"
     private val STAT_NAMES = mapOf(
         "hp" to "hp",
         "atk" to "attack",
@@ -40,15 +42,12 @@ object ShowdownTeamParser {
         "spe" to "speed",
         "speed" to "speed"
     )
-
-    /** Separators accepted between two aspects on an `Aspects:` line. */
     private val ASPECT_SEPARATOR = Regex("""[,\s]+""")
-
-    // Nickname (Species) (M)
+    private val DIACRITICS = Regex("""\p{M}+""")
+    private val NON_ALPHANUMERIC = Regex("""[^a-z0-9]+""")
+    private val ITEM_ELIDED = Regex("""['’.]""")
     private val NICKNAME_SPECIES_GENDER = Regex("""^(.+?)\s*\((.+?)\)\s*\(([MF])\)$""")
-    // Species (M)
     private val SPECIES_GENDER = Regex("""^(.+?)\s*\(([MF])\)$""")
-    // Nickname (Species)
     private val NICKNAME_SPECIES = Regex("""^(.+?)\s*\((.+?)\)$""")
 
     /**
@@ -134,8 +133,7 @@ object ShowdownTeamParser {
                 species = nicknameSpeciesGender.groupValues[2].trim()
                 gender = nicknameSpeciesGender.groupValues[3]
             }
-            // Must be tested before the "Nickname (Species)" pattern, otherwise "Pikachu (M)"
-            // reads as the species "M" nicknamed "Pikachu".
+
             speciesGender != null -> {
                 species = speciesGender.groupValues[1].trim()
                 gender = speciesGender.groupValues[2]
@@ -171,8 +169,6 @@ object ShowdownTeamParser {
                 line.startsWith("Level:", ignoreCase = true) ->
                     line.substringAfter(':').trim().toIntOrNull()?.let { builder.append(" level=$it") }
 
-                // Showdown puts the gender in parentheses on the first line, but many exports
-                // also use a dedicated line.
                 line.startsWith("Gender:", ignoreCase = true) -> {
                     when (line.substringAfter(':').trim().uppercase(Locale.ROOT)) {
                         "M" -> builder.append(" gender=male")
@@ -196,8 +192,15 @@ object ShowdownTeamParser {
                     builder.append(" nature=${normalizeName(line.dropLast("Nature".length))}")
 
                 line.startsWith("-") -> {
-                    val move = normalizeName(line.removePrefix("-"))
-                    if (move.isNotEmpty()) moves.add(move)
+                    val rawMove = line.removePrefix("-").trim()
+                    val move = normalizeName(rawMove)
+                    when {
+                        move.isEmpty() -> Unit
+                        Moves.getByName(move) == null ->
+                            LOGGER.warn("Ignoring unknown move '{}' (read as '{}')", rawMove, move)
+
+                        else -> moves.add(move)
+                    }
                 }
             }
         }
@@ -212,21 +215,29 @@ object ShowdownTeamParser {
 
         val properties = PokemonProperties.parse(builder.toString())
 
-        // Assigned afterwards: these values may contain spaces, which Cobblemon's property
-        // parser uses as a separator.
         if (nickname.isNotBlank() && !nickname.equals(species, ignoreCase = true)) {
             properties.nickname = Component.literal(nickname)
         }
         if (itemPart.isNotBlank()) {
-            properties.heldItem = normalizeItem(itemPart)
+            val item = normalizeItem(itemPart)
+            if (isRegisteredItem(item)) {
+                properties.heldItem = item
+            } else {
+                LOGGER.warn("Ignoring held item '{}' (read as '{}'): no such item is registered", itemPart.trim(), item)
+            }
         }
 
         return properties
     }
 
-    /** "rlm, poison" -> ["rlm", "poison"]. Spaces separate too, so commas are optional. */
     private fun splitAspects(raw: String): List<String> =
-        raw.split(ASPECT_SEPARATOR).map { normalizeName(it) }.filter { it.isNotEmpty() }
+        raw.split(ASPECT_SEPARATOR).map { normalizeAspect(it) }.filter { it.isNotEmpty() }
+
+    /**
+     * An aspect keeps its punctuation, unlike a species or a move name: it is already written as
+     * an identifier, and `appliance=wash` would lose the pair that makes it mean anything.
+     */
+    private fun normalizeAspect(raw: String): String = raw.trim().lowercase(Locale.ROOT)
 
     /**
      * Parse aspect aspect:
@@ -244,15 +255,38 @@ object ShowdownTeamParser {
         builder.append(' ').append(if (aspect.contains('=')) aspect else "$aspect=true")
     }
 
-    /** "Light Ball" -> "cobblemon:light_ball". An explicit namespace is kept as is. */
     private fun normalizeItem(raw: String): String {
-        val cleaned = raw.trim().replace(' ', '_').lowercase(Locale.ROOT)
-        return if (cleaned.contains(':')) cleaned else "$DEFAULT_ITEM_NAMESPACE:$cleaned"
+        val trimmed = raw.trim()
+        if (!trimmed.contains(':')) {
+            return "$DEFAULT_ITEM_NAMESPACE:${normalizeItemPath(trimmed)}"
+        }
+        val namespace = trimmed.substringBefore(':').trim().lowercase(Locale.ROOT)
+        return "$namespace:${normalizeItemPath(trimmed.substringAfter(':'))}"
     }
 
-    /** "Quick Attack" -> "quickattack", the form Cobblemon's registries expect. */
+    private fun normalizeItemPath(raw: String): String =
+        Normalizer.normalize(raw.trim(), Normalizer.Form.NFD)
+            .replace(DIACRITICS, "")
+            .lowercase(Locale.ROOT)
+            .replace(ITEM_ELIDED, "")
+            .replace(NON_ALPHANUMERIC, "_")
+            .trim('_')
+
+    /** Whether an item id resolves, the same lookup the vanilla `ItemParser` would perform. */
+    private fun isRegisteredItem(id: String): Boolean {
+        val location = ResourceLocation.tryParse(id) ?: return false
+        return BuiltInRegistries.ITEM.containsKey(location)
+    }
+
+    /**
+     * "Quick Attack" -> "quickattack"
+     * "U-turn" -> "uturn"
+     */
     private fun normalizeName(raw: String): String =
-        raw.trim().replace(" ", "").lowercase(Locale.ROOT)
+        Normalizer.normalize(raw.trim(), Normalizer.Form.NFD)
+            .replace(DIACRITICS, "")
+            .lowercase(Locale.ROOT)
+            .replace(NON_ALPHANUMERIC, "")
 
     /**
      * Turns "252 SpA / 4 SpD / 252 Spe" into

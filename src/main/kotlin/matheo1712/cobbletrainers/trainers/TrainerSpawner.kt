@@ -150,7 +150,14 @@ object TrainerSpawner {
             if (properties.level == null) {
                 properties.level = definition.level
             }
-            party.add(properties.create())
+            // create() is where a property the parser accepted meets Cobblemon's registries —
+            // an unknown species or held item throws here. One bad entry costs its Pokémon, not
+            // the trainer, and not the tick that asked for the spawn.
+            try {
+                party.add(properties.create())
+            } catch (e: Exception) {
+                LOGGER.warn("Skipping a Pokémon of trainer {}: {} ({})", trainerId, e.message, properties.asString(" "))
+            }
         }
         npc.party = party
     }

@@ -213,6 +213,15 @@ Ces points ne se devinent pas depuis notre code seul et ont chacun causé un bug
   `@Deprecated` ; `canChallenge` n'apparaît que dans du code commenté. Le combat est
   déclenché par l'`interaction` du NPC, et le soin par `autoHealParty` sur la classe.
   `NPCEntity.interaction` est surchargeable par entité, pas `autoHealParty`.
+- **Un nom Cobblemon ne garde que `[a-z0-9]`.** Espèces, capacités, talents et natures sont
+  nommés d'après leur nom affiché débarrassé de tout le reste, accents compris : `uturn`,
+  `willowisp`, `kingsshield`, `hooh`, `porygonz`, `mrmime`, `farfetchd`, `flabebe`. D'où
+  `normalizeName`, qui décompose en NFD, retire les marques et supprime tout ce qui n'est ni
+  lettre ni chiffre. Retirer les seuls espaces laissait `u-turn`, que rien ne résout et que
+  Cobblemon écarte sans un mot — le parseur vérifie donc aussi chaque capacité avec
+  `Moves.getByName`. Les aspects sont l'exception (`normalizeAspect`, qui se contente de
+  passer en minuscules) : ce sont déjà des identifiants, et `appliance=wash` perdrait sa
+  paire.
 - **Clés de stats.** `PokemonProperties` dérive ses clés des constantes de l'enum
   `Stats` : `hp`, `attack`, `defence`, `special_attack`, `special_defence`, `speed`,
   suffixées `_ev` / `_iv`. Les abréviations Showdown (`atk`, `spa`, …) ne veulent rien dire
@@ -220,7 +229,14 @@ Ces points ne se devinent pas depuis notre code seul et ont chacun causé un bug
   `ShowdownTeamParser` qui les traduit avant de construire la chaîne de propriétés.
 - **`held_item` passe par le `ItemParser` vanilla**, qui préfixe `minecraft:` par défaut.
   Un objet Cobblemon sans namespace lève une `CommandSyntaxException` pendant la
-  construction de l'équipe.
+  construction de l'équipe. Un nom d'objet Showdown est écrit pour un humain
+  (`Heavy-Duty Boots`, `King's Rock`, `Exp. Share`, `Poké Ball`) là où un ID Cobblemon ne
+  contient que `[a-z0-9_]` : `normalizeItem` ne se contente donc pas de traduire les
+  espaces, il retire les accents, élide `'` et `.`, et rend tout le reste en `_`. La même
+  `CommandSyntaxException` remontait jusqu'au tick qui demandait l'apparition, d'où deux
+  filets : le parseur vérifie l'ID dans `BuiltInRegistries.ITEM` et retire l'objet inconnu
+  en le loguant, et `TrainerSpawner.applyTeam` entoure `create()` — un Pokémon fautif coûte
+  sa place dans l'équipe, pas le dresseur.
 - **Le parseur de propriétés découpe sur les espaces.** Les valeurs qui peuvent en
   contenir (surnom, objet tenu) sont assignées directement sur l'objet `PokemonProperties`
   après `parse`, jamais via la chaîne.
