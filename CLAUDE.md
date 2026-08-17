@@ -126,6 +126,11 @@ Points à ne pas redécouvrir :
   retire un délai avant la prochaine, une bonne dizaine de minutes pour la musique de
   surface. C'est le plus près de l'exclusif qu'un serveur puisse faire — lancer la musique
   d'ambiance est une décision du client.
+- **`VOLUME` est volontairement bien en dessous de 1.** Une piste de combat tourne plusieurs
+  minutes par dessus tout le reste ; à 1.0 elle couvre le combat qu'elle accompagne. Le curseur
+  *Musique* du joueur s'applique par dessus. `PITCH`, lui, reste à 1.0 : c'est la vitesse de
+  lecture, borné à `[0.5, 2.0]` par `SoundEngine.calculatePitch`, et il transposerait la piste
+  entière — il n'a rien à voir avec le niveau sonore.
 - **`"stream": true` est obligatoire** sur un morceau long, sinon Minecraft charge tout le
   fichier en mémoire.
 - **Un `.ogg` stéréo est joué sans atténuation**, position ignorée — exactement ce qu'on veut

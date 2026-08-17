@@ -23,22 +23,19 @@ import net.minecraft.sounds.SoundSource
  * also why a track edited through `/reload` mid-battle keeps playing until the battle ends.
  *
  * Known limit: the track plays once and does not loop. Looping a sound is a client-side
- * decision ([net.minecraft.client.resources.sounds.SoundInstance.isLooping]) and the mod
- * has no client code.
+ * decision ([net.minecraft.client.resources.sounds.SoundInstance.isLooping]), taken by a sound
+ * engine this mod never touches.
  */
 object TrainerBattleMusic {
 
-    /** Track shipped by the mod, and default value of `battleMusic` on a trainer. */
+    /////////////////////////////////////
+    // CONFIGURATION
+    /////////////////////////////////////
     const val DEFAULT_TRACK: String = "cobblemon-trainers:battle_music.corvault"
-
-    /**
-     * [net.minecraft.sounds.SoundSource.MUSIC] puts the track under the player's *Music* volume slider, next to
-     * the vanilla background music — which keeps playing on its own, the server cannot
-     * silence it.
-     */
     private val SOURCE = SoundSource.MUSIC
-
-    private const val VOLUME = 1.0f
+    /** Volume 1f is TOO HIIIGGGHH i lost my ear :( **/
+    private const val VOLUME = 0.2f
+    /** is speed of battle track **/
     private const val PITCH = 1.0f
 
     /**
