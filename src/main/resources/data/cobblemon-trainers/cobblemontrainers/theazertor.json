@@ -1,14 +1,13 @@
 {
   "name": "trainer.cobblemon-trainers.theazertor.name",
-  "level": 70,
-  "battleFormat": "doubles",
+  "level": 80,
   "skill": 5,
   "skin": {
     "type": "player_username",
     "value": "TheAzertor"
   },
   "canBattle": true,
-  "tracked": false,
+  "battleMusic": "cobblemon-trainers:battle_music.b2w2_tournament_battle",
   "battleStartMessage": "trainer.cobblemon-trainers.theazertor.battle_start",
   "battleEndWinMessage": "trainer.cobblemon-trainers.theazertor.win",
   "battleEndLoseMessage": "trainer.cobblemon-trainers.theazertor.lose",
