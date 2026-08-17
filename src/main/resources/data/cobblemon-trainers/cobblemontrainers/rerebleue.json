@@ -7,7 +7,7 @@
     "value": "RereBleue"
   },
   "canBattle": true,
-  "battleMusic": "cobblemonrlm:battle_music.neoflare_battle",
+  "battleMusic": "cobblemon-trainers:battle_music.neoflare_battle",
   "battleStartMessage": "trainer.cobblemon-trainers.rerebleue.battle_start",
   "battleEndWinMessage": "trainer.cobblemon-trainers.rerebleue.win",
   "battleEndLoseMessage": "trainer.cobblemon-trainers.rerebleue.lose",
