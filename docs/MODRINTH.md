@@ -62,7 +62,7 @@ single JSON file:
 | ID | Name | Level | Format | Team |
 | --- | --- | --- | --- | --- |
 | `cobblemon-trainers:rerebleue` | **RereBleue** | 80 | Singles | Secret |
-| `cobblemon-trainers:theazertor` | **TheAzertor** | 70 | Doubles | Secret |
+| `cobblemon-trainers:theazertor` | **TheAzertor** | 80 | Singles | Secret |
 
 ```
 /spawntrainer cobblemon-trainers:rerebleue
