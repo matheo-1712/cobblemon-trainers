@@ -61,8 +61,8 @@ single JSON file:
 
 | ID | Name | Level | Format | Team |
 | --- | --- | --- | --- | --- |
-| `cobblemon-trainers:rerebleue` | **RereBleue** | 80 | Singles | Hydreigon (nicknamed Ram), Mimikyu, Lucario, Archeops |
-| `cobblemon-trainers:theazertor` | **TheAzertor** | 70 | Doubles | Metagross, Togekiss, Tyranitar, Rotom |
+| `cobblemon-trainers:rerebleue` | **RereBleue** | 80 | Singles | Secret |
+| `cobblemon-trainers:theazertor` | **TheAzertor** | 70 | Doubles | Secret |
 
 ```
 /spawntrainer cobblemon-trainers:rerebleue
