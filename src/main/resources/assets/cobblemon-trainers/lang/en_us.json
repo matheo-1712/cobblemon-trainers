@@ -10,8 +10,23 @@
   "cobblemon-trainers.command.list_trainers.entry.pending": "✘ %s — %s",
   "cobblemon-trainers.command.list_trainers.no_rematch": " (no rematch)",
   "block.cobblemon-trainers.trainer_spawner": "Trainer Spawner",
+  "item.cobblemon-trainers.battle_phone": "Battle Phone",
   "cobblemon-trainers.item_group": "Cobblemon Trainers",
   "cobblemon-trainers.item.trainer_spawner.operator_only": "Operators only — creative mode required",
+  "cobblemon-trainers.item.battle_phone.tooltip": "Right-click to review the trainers",
+
+  "cobblemon-trainers.screen.battle_phone.title": "Battle Phone",
+  "cobblemon-trainers.screen.battle_phone.all": "All datapacks",
+  "cobblemon-trainers.screen.battle_phone.empty": "No trainer to track in this world.",
+  "cobblemon-trainers.screen.battle_phone.progress": "%s / %s defeated",
+  "cobblemon-trainers.screen.battle_phone.status.defeated": "Defeated",
+  "cobblemon-trainers.screen.battle_phone.status.defeated_final": "Defeated — no rematch",
+  "cobblemon-trainers.screen.battle_phone.status.pending": "Still standing",
+  "cobblemon-trainers.screen.battle_phone.status.no_battle": "Does not battle",
+  "cobblemon-trainers.screen.battle_phone.team": "Level %s — %s Pokémon",
+  "cobblemon-trainers.screen.battle_phone.pokemon": "%s — Lv. %s",
+
+  "cobblemon-trainers.chat.battle_phone.client_required": "The battle phone needs Cobblemon Trainers installed on your client.",
 
   "cobblemon-trainers.screen.trainer_spawner.title": "Trainer Spawner",
   "cobblemon-trainers.screen.trainer_spawner.trainer": "Trainer",
@@ -38,8 +53,8 @@
 
   "trainer.cobblemon-trainers.theazertor.name": "TheAzertor",
   "trainer.cobblemon-trainers.theazertor.battle_start": "You need a soul!",
-  "trainer.cobblemon-trainers.theazertor.win": "You need a soul! (Too easy)",
-  "trainer.cobblemon-trainers.theazertor.lose": "You need a soul! (Not bad)",
+  "trainer.cobblemon-trainers.theazertor.win": "You need a soul! (Not bad)",
+  "trainer.cobblemon-trainers.theazertor.lose": "You need a soul! (Too easy)",
 
   "trainer.cobblemon-trainers.octavien29.name": "Octavien29",
   "trainer.cobblemon-trainers.octavien29.battle_start": "!",

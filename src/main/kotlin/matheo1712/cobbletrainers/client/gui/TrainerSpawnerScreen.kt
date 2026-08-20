@@ -1,4 +1,4 @@
-package matheo1712.cobbletrainers.client
+package matheo1712.cobbletrainers.client.gui
 
 import matheo1712.cobbletrainers.CobblemonTrainers
 import matheo1712.cobbletrainers.block.TrainerSpawnerBlockEntity

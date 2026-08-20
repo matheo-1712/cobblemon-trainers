@@ -314,6 +314,9 @@ Les combinaisons utiles :
 
 ### Le suivi de progression
 
+Deux entrées pour la même donnée : `/listtrainers` pour les opérateurs, le Battle Phone pour
+les joueurs.
+
 `/listtrainers [<joueur>]` liste les dresseurs et dit lesquels le joueur a déjà vaincus.
 Sans argument, c'est le joueur qui tape la commande. Niveau de permission 2 (opérateur).
 
@@ -352,8 +355,19 @@ Trois points :
 - **Les dresseurs livrés par le mod portent déjà `"tracked": false`** — ils sont chargés dans
   tous les mondes, ta liste ne montre donc que les tiens.
 
-C'est aussi ce champ que liront les futurs suivis de progression, pas seulement
-`/listtrainers`.
+L'objet **Battle Phone** (`cobblemon-trainers:battle_phone`) montre la même liste à un joueur
+ordinaire, dans un écran : un onglet par datapack — ton namespace fait donc l'onglet —, le
+skin de chaque dresseur, et son état. Il lit exactement la même chose : `"tracked": false`
+l'en retire aussi.
+
+Il montre aussi **l'équipe d'un dresseur une fois celui-ci vaincu**, modèles à l'appui. Avant
+la victoire, les six cases restent vides — le serveur refuse purement et simplement d'envoyer
+l'équipe, donc rien ne fuite. C'est ton `team` tel qu'il est construit au combat : une forme
+déclarée en `Aspects:` s'affiche avec le bon modèle, un chromatique aussi.
+
+Le skin qu'il affiche est celui que le serveur résout, images de pack comprises : un
+`skin.type: "texture"` livré sur le serveur seul s'affiche chez tout le monde, comme sur le
+dresseur lui-même.
 
 ## Le format d'équipe
 

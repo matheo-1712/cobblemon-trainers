@@ -10,8 +10,23 @@
   "cobblemon-trainers.command.list_trainers.entry.pending": "✘ %s — %s",
   "cobblemon-trainers.command.list_trainers.no_rematch": " (plus de revanche)",
   "block.cobblemon-trainers.trainer_spawner": "Bloc de dresseur",
+  "item.cobblemon-trainers.battle_phone": "Battle Phone",
   "cobblemon-trainers.item_group": "Cobblemon Trainers",
   "cobblemon-trainers.item.trainer_spawner.operator_only": "Opérateurs uniquement — créatif requis",
+  "cobblemon-trainers.item.battle_phone.tooltip": "Clic droit pour consulter les dresseurs",
+
+  "cobblemon-trainers.screen.battle_phone.title": "Battle Phone",
+  "cobblemon-trainers.screen.battle_phone.all": "Tous les datapacks",
+  "cobblemon-trainers.screen.battle_phone.empty": "Aucun dresseur à suivre dans ce monde.",
+  "cobblemon-trainers.screen.battle_phone.progress": "%s / %s vaincus",
+  "cobblemon-trainers.screen.battle_phone.status.defeated": "Vaincu",
+  "cobblemon-trainers.screen.battle_phone.status.defeated_final": "Vaincu — plus de revanche",
+  "cobblemon-trainers.screen.battle_phone.status.pending": "Reste à battre",
+  "cobblemon-trainers.screen.battle_phone.status.no_battle": "Ne combat pas",
+  "cobblemon-trainers.screen.battle_phone.team": "Niveau %s — %s Pokémon",
+  "cobblemon-trainers.screen.battle_phone.pokemon": "%s — N. %s",
+
+  "cobblemon-trainers.chat.battle_phone.client_required": "Le Battle Phone demande Cobblemon Trainers installé côté client.",
 
   "cobblemon-trainers.screen.trainer_spawner.title": "Bloc de dresseur",
   "cobblemon-trainers.screen.trainer_spawner.trainer": "Dresseur",

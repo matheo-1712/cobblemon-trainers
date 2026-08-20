@@ -5,8 +5,11 @@ import matheo1712.cobbletrainers.battle.TrainerBattleInteraction
 import matheo1712.cobbletrainers.block.TrainerBlocks
 import matheo1712.cobbletrainers.command.ListTrainersCommand
 import matheo1712.cobbletrainers.command.SpawnTrainerCommand
+import matheo1712.cobbletrainers.item.TrainerItems
+import matheo1712.cobbletrainers.network.BattlePhoneNetworking
 import matheo1712.cobbletrainers.network.TrainerSpawnerNetworking
 import matheo1712.cobbletrainers.registry.TrainerRegistry
+import matheo1712.cobbletrainers.trainers.TrainerSkins
 import net.fabricmc.api.ModInitializer
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper
@@ -34,6 +37,7 @@ import org.slf4j.LoggerFactory
  * - `/spawntrainer <id>` to summon a trainer
  * - `/listtrainers [player]` to review who has been beaten
  * - A trainer spawner block, which keeps one trainer standing where it is placed
+ * - A battle phone item, the same listing in a screen, for every player
  */
 object CobblemonTrainers : ModInitializer {
 
@@ -61,9 +65,11 @@ object CobblemonTrainers : ModInitializer {
             ListTrainersCommand.register(dispatcher)
         }
 
-        // Register blocks and network
+        // Register blocks, items and network
         TrainerBlocks.register()
+        TrainerItems.register()
         TrainerSpawnerNetworking.register()
+        BattlePhoneNetworking.register()
 
         ResourceManagerHelper.get(PackType.SERVER_DATA).registerReloadListener(TrainerReloadListener)
 
@@ -88,6 +94,8 @@ object CobblemonTrainers : ModInitializer {
 
         override fun onResourceManagerReload(manager: ResourceManager) {
             TrainerRegistry.reload(manager)
+            // A pack may have changed the image behind a skin name we already resolved.
+            TrainerSkins.clearCache()
         }
     }
 }

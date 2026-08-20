@@ -37,7 +37,7 @@ d'œil qui fournit quoi. À la frappe, le nom seul suffit quand il n'est pas amb
 recherche porte sur les deux moitiés : `jac` retrouve `mon_pack:jacinthe`.
 
 `/listtrainers` liste les dresseurs à battre et coche ceux qui l'ont été, pour soi ou pour un
-autre joueur.
+autre joueur. Les joueurs, eux, ont le **Battle Phone** — voir plus bas.
 
 Un clic droit sur le dresseur lance le combat, sur fond de musique de combat. Si le combat
 ne peut pas démarrer (pas de Pokémon dans ton équipe, combat déjà en cours, dresseur sans
@@ -45,6 +45,34 @@ ne peut pas démarrer (pas de Pokémon dans ton équipe, combat déjà en cours,
 
 Tuer ou supprimer un dresseur pendant le combat met fin à la rencontre au lieu de laisser le
 joueur enfermé face à un adversaire absent.
+
+## Le Battle Phone
+
+`/listtrainers` est réservé aux opérateurs. Le **Battle Phone**
+(`cobblemon-trainers:battle_phone`) est la même chose pour tout le monde : un clic droit et
+l'écran liste les dresseurs du monde, le skin de chacun, et dit lesquels sont déjà vaincus.
+
+Les dresseurs sont **triés par datapack** : les flèches en haut de la liste (ou les touches
+gauche et droite) passent d'un pack à l'autre, avec un onglet « tous les datapacks » en
+premier dès qu'il y en a plusieurs — celui-là sépare les packs par un intertitre. Le compteur
+en face donne l'avancement du pack affiché.
+
+Cliquer une ligne montre le dresseur en entier à droite, avec son niveau, la taille de son
+équipe et son état — vaincu, vaincu sans revanche possible, ou encore debout. À côté, six
+cases pour son équipe : elles restent fermées jusqu'à la victoire, puis affichent les modèles
+de ses Pokémon, formes et chromatiques comprises. Passer la souris sur l'une d'elles donne le
+nom et le niveau du Pokémon.
+
+L'objet ne retient rien : il lit la progression du serveur, donc deux exemplaires affichent
+la même chose et le perdre ne perd rien. On le trouve dans l'onglet créatif
+**Cobblemon Trainers**, ou avec :
+
+```
+/give @s cobblemon-trainers:battle_phone
+```
+
+Seuls les dresseurs en `"tracked": true` y apparaissent, comme dans `/listtrainers` — voir
+[docs/DATAPACK.md](docs/DATAPACK.md#tracked).
 
 ## Le bloc de dresseur
 

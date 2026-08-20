@@ -57,18 +57,27 @@ object ShowdownTeamParser {
      * - one entry per Pokémon, its lines separated by `\n`;
      * - one entry per line, Pokémon separated by an empty entry (`""`).
      */
-    fun parse(teamEntries: List<String>): List<PokemonProperties> {
-        val text = buildString {
-            for (entry in teamEntries) {
-                if (entry.contains('\n')) {
-                    // Self-contained entry: isolate it with blank lines.
-                    append('\n').append(entry).append("\n\n")
-                } else {
-                    append(entry).append('\n')
-                }
+    fun parse(teamEntries: List<String>): List<PokemonProperties> = parse(toText(teamEntries))
+
+    /**
+     * How many Pokémon a team declares, without building a single one of them.
+     *
+     * [parse] goes through Cobblemon's registries for every species, move and item, which is
+     * far more than a listing wants when all it needs is the size of the team. The split is
+     * the same one, stopped a step earlier.
+     */
+    fun countPokemon(teamEntries: List<String>): Int = splitIntoBlocks(toText(teamEntries)).size
+
+    /** Flattens a trainer's `team` array into a single Showdown text. */
+    private fun toText(teamEntries: List<String>): String = buildString {
+        for (entry in teamEntries) {
+            if (entry.contains('\n')) {
+                // Self-contained entry: isolate it with blank lines.
+                append('\n').append(entry).append("\n\n")
+            } else {
+                append(entry).append('\n')
             }
         }
-        return parse(text)
     }
 
     /**

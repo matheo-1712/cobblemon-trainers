@@ -1,6 +1,7 @@
 package matheo1712.cobbletrainers.block
 
 import matheo1712.cobbletrainers.CobblemonTrainers
+import matheo1712.cobbletrainers.item.TrainerItems
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup
 import net.minecraft.core.Registry
 import net.minecraft.core.registries.BuiltInRegistries
@@ -82,7 +83,10 @@ object TrainerBlocks {
     val TAB: CreativeModeTab = FabricItemGroup.builder()
         .title(CobblemonTrainers.lang("item_group"))
         .icon { ItemStack(TRAINER_SPAWNER_ITEM) }
-        .displayItems { _, output -> output.accept(TRAINER_SPAWNER_ITEM) }
+        .displayItems { _, output ->
+            output.accept(TrainerItems.BATTLE_PHONE)
+            output.accept(TRAINER_SPAWNER_ITEM)
+        }
         .build()
 
     fun register() {
