@@ -43,6 +43,11 @@
 
   "trainer.cobblemon-trainers.octavien29.name": "Octavien29",
   "trainer.cobblemon-trainers.octavien29.battle_start": "!",
-  "trainer.cobblemon-trainers.octavien29.win": "WIN !!!!",
-  "trainer.cobblemon-trainers.octavien29.lose": "....."
+  "trainer.cobblemon-trainers.octavien29.win": ".....",
+  "trainer.cobblemon-trainers.octavien29.lose": "WIN !!!!",
+
+  "trainer.cobblemon-trainers.kagumi.name": "Kagumi",
+  "trainer.cobblemon-trainers.kagumi.battle_start": "!",
+  "trainer.cobblemon-trainers.kagumi.win": ".....",
+  "trainer.cobblemon-trainers.kagumi.lose": "WIN !!!!"
 }

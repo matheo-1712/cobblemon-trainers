@@ -3,13 +3,13 @@
   "level": 80,
   "skill": 5,
   "skin": {
-    "type": "player_username",
-    "value": "TheAzertor"
+    "type": "player_uuid",
+    "value": "4a575f21-f533-4671-8ef3-aaff4146ff8c"
   },
   "canBattle": true,
   "battleMusic": "cobblemon-trainers:battle_music.b2w2_tournament_battle",
   "battleStartMessage": "trainer.cobblemon-trainers.theazertor.battle_start",
   "battleEndWinMessage": "trainer.cobblemon-trainers.theazertor.win",
   "battleEndLoseMessage": "trainer.cobblemon-trainers.theazertor.lose",
-  "team": ["Lavender (Lycanroc-Dusk) (F) @ Focus Sash  \nAbility: Tough Claws  \nTera Type: Rock  \nEVs: 4 HP / 252 Atk / 252 Spe  \nJolly Nature  \n- Stone Edge  \n- Accelerock  \n- Stealth Rock  \n- Close Combat  \n\nWillow (Leafeon) @ Choice Band  \nAbility: Chlorophyll  \nEVs: 252 Atk / 4 SpD / 252 Spe  \nAdamant Nature  \n- Leaf Blade  \n- X-Scissor  \n- Knock Off  \n- Wish  \n\nAmphinobi (Greninja-Bond) (M) @ Life Orb  \nAbility: Battle Bond  \nEVs: 4 HP / 252 SpA / 252 Spe  \nTimid Nature  \nIVs: 0 Atk  \n- Surf  \n- Ice Beam  \n- Dark Pulse  \n- Sludge Wave  \n\nFlambusard (Talonflame) (M) @ Heavy-Duty Boots  \nAbility: Gale Wings  \nShiny: Yes  \nTera Type: Fire  \nEVs: 252 Atk / 4 Def / 252 Spe  \nJolly Nature  \n- Swords Dance  \n- Brave Bird  \n- Flare Blitz  \n- Taunt  \n\nChompette (Garchomp) (F) @ Loaded Dice  \nAbility: Rough Skin  \nTera Type: Dragon  \nEVs: 252 Atk / 4 SpD / 252 Spe  \nJolly Nature  \n- Scale Shot  \n- Earthquake  \n- Fire Fang  \n- Swords Dance  \n\nMétalosse (Metagross) @ Metagrossite  \nAbility: Clear Body  \nShiny: Yes  \nTera Type: Steel  \nEVs: 232 HP / 100 Atk / 176 Spe  \nJolly Nature  \n- Meteor Mash  \n- Bullet Punch  \n- Psychic Fangs  \n- Rock Slide  "]
+  "team": ["Lavender (Lycanroc) (F) @ Focus Sash  \nAbility: Tough Claws  \nAspects: wolf_form=dusk  \nTera Type: Rock  \nEVs: 4 HP / 252 Atk / 252 Spe  \nJolly Nature  \n- Stone Edge  \n- Accelerock  \n- Stealth Rock  \n- Close Combat  \n\nWillow (Leafeon) @ Choice Band  \nAbility: Chlorophyll  \nEVs: 252 Atk / 4 SpD / 252 Spe  \nAdamant Nature  \n- Leaf Blade  \n- X-Scissor  \n- Knock Off  \n- Wish  \n\nAmphinobi (Greninja) (M) @ Life Orb  \nAbility: Battle Bond  \nAspects: battle_bond=bond  \nEVs: 4 HP / 252 SpA / 252 Spe  \nTimid Nature  \nIVs: 0 Atk  \n- Surf  \n- Ice Beam  \n- Dark Pulse  \n- Sludge Wave  \n\nFlambusard (Talonflame) (M) @ Heavy-Duty Boots  \nAbility: Gale Wings  \nShiny: Yes  \nTera Type: Fire  \nEVs: 252 Atk / 4 Def / 252 Spe  \nJolly Nature  \n- Swords Dance  \n- Brave Bird  \n- Flare Blitz  \n- Taunt  \n\nChompette (Garchomp) (F) @ Loaded Dice  \nAbility: Rough Skin  \nTera Type: Dragon  \nEVs: 252 Atk / 4 SpD / 252 Spe  \nJolly Nature  \n- Scale Shot  \n- Earthquake  \n- Fire Fang  \n- Swords Dance  \n\nMétalosse (Metagross) @ Muscle Band  \nAbility: Clear Body  \nShiny: Yes  \nTera Type: Steel  \nEVs: 232 HP / 100 Atk / 176 Spe  \nJolly Nature  \n- Meteor Mash  \n- Bullet Punch  \n- Psychic Fangs  \n- Rock Slide  "]
 }

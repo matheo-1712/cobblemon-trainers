@@ -3,8 +3,8 @@
   "level": 80,
   "skill": 5,
   "skin": {
-    "type": "player_username",
-    "value": "RereBleue"
+    "type": "player_uuid",
+    "value": "4199c666-1193-49b6-8986-099d872d5adf"
   },
   "canBattle": true,
   "battleMusic": "cobblemon-trainers:battle_music.neoflare_battle",
