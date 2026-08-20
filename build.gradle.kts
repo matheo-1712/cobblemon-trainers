@@ -146,6 +146,15 @@ publishMods {
 		projectId = providers.gradleProperty("modrinth_id")
 		minecraftVersions.add(providers.gradleProperty("minecraft_version").get())
 
+		// Modrinth requires accurate environment metadata (Content Rules 5.1), and since plugin
+		// 2.1.0 it is set here rather than in the version settings on the site.
+		//
+		// Both sides need the mod: the trainers themselves are server-side, but the Battle Phone
+		// and the spawner screen are not optional extras, and Cobblemon is a both-sides mod to
+		// begin with. The `canSend` guards are a courtesy message for a client that is missing
+		// it, not a supported setup.
+		environment = CLIENT_AND_SERVER
+
 		// Pinned to the exact versions the mod is built against, straight from
 		// gradle.properties: bumping a dependency there moves the published requirement with it,
 		// and the two can never drift apart.
