@@ -38,13 +38,24 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
     Screen(CobblemonTrainers.lang("screen.battle_phone.title")) {
 
     /**
-     * A line of the roster. Headers only appear in the tab that holds every datapack at once,
-     * where they are what makes the sort by datapack visible; a tab that is already one
-     * datapack has its name in the selector above. A [Row] holds a whole line of entries,
-     * so a datapack never spills into the columns of the next one.
+     * A line of the roster. A datapack heading only appears in the tab that holds every
+     * datapack at once, where it is what makes the sort by pack visible; a tab that is already
+     * one datapack has its name in the selector above. Category headings appear in both, and
+     * in neither for a pack that files every trainer at its root. A [Row] holds a whole line
+     * of entries, so one group never spills into the columns of the next.
      */
     private sealed class Row(val height: Int) {
-        class Header(val namespace: String) : Row(HEADER_HEIGHT)
+        /**
+         * A heading over a run of trainers: the datapack they come from in the tab that holds
+         * every pack, the category they are filed under everywhere. [primary] is the first of
+         * those two, and the only difference between them is how they are drawn.
+         */
+        class Header(
+            val label: Component,
+            val primary: Boolean,
+            val defeated: Int,
+            val total: Int
+        ) : Row(HEADER_HEIGHT)
         class Trainers(val entries: List<BattlePhoneEntry>) : Row(ROW_HEIGHT)
     }
 
@@ -98,21 +109,56 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
      * twice, and the selector already names the one datapack there is.
      */
     private fun buildGroups(entries: List<BattlePhoneEntry>): List<Group> {
-        // The server sends trainers sorted by ID, so grouping by namespace keeps every tab
-        // sorted without sorting anything again.
+        // The server sends trainers in reading order - by pack, then by category - so grouping
+        // on either keeps every tab sorted without sorting anything again.
         val byNamespace = entries.groupBy { it.id.substringBefore(TRAINER_ID_SEPARATOR) }.toSortedMap()
         val groups = byNamespace.map { (namespace, group) -> Group(namespace, group, rowsOf(group)) }
         if (groups.size <= 1) return groups
 
         val allRows = byNamespace.flatMap { (namespace, group) ->
-            listOf(Row.Header(namespace)) + rowsOf(group)
+            listOf(header(Component.literal(namespace), primary = true, group)) + rowsOf(group)
         }
         return listOf(Group(null, entries, allRows)) + groups
     }
 
-    /** Cuts a datapack's trainers into lines of [LIST_COLUMNS], keeping the server's order. */
-    private fun rowsOf(entries: List<BattlePhoneEntry>): List<Row> =
+    /**
+     * Cuts a datapack's trainers into lines of [LIST_COLUMNS], keeping the server's order and
+     * putting a heading over each run of one category.
+     *
+     * A pack that files everything at its root gets no heading at all, which is the layout
+     * this screen had before categories existed: a heading naming the only group there is
+     * would be a line spent on nothing.
+     */
+    private fun rowsOf(entries: List<BattlePhoneEntry>): List<Row> {
+        val runs = entries.groupConsecutiveBy { it.category }
+        if (runs.size == 1 && runs.first().first.isEmpty()) return lines(entries)
+
+        return runs.flatMap { (category, run) ->
+            val label = when {
+                category.isEmpty() -> UNCATEGORIZED_LABEL
+                else -> Component.translatable(run.first().categoryName.ifEmpty { category })
+            }
+            listOf(header(label, primary = false, run)) + lines(run)
+        }
+    }
+
+    /** A heading carries the score of the run below it - the same counter as the selector's. */
+    private fun header(label: Component, primary: Boolean, run: List<BattlePhoneEntry>): Row.Header =
+        Row.Header(label, primary, run.count { it.defeated }, run.size)
+
+    private fun lines(entries: List<BattlePhoneEntry>): List<Row> =
         entries.chunked(LIST_COLUMNS).map { Row.Trainers(it) }
+
+    /** Cuts a list into the runs of neighbours that answer the same key, order untouched. */
+    private inline fun <T, K> List<T>.groupConsecutiveBy(key: (T) -> K): List<Pair<K, List<T>>> {
+        val runs = mutableListOf<Pair<K, MutableList<T>>>()
+        for (item in this) {
+            val itemKey = key(item)
+            if (runs.isEmpty() || runs.last().first != itemKey) runs.add(itemKey to mutableListOf())
+            runs.last().second.add(item)
+        }
+        return runs.map { (k, items) -> k to items }
+    }
 
     override fun render(guiGraphics: GuiGraphics, mouseX: Int, mouseY: Int, partialTick: Float) {
         super.render(guiGraphics, mouseX, mouseY, partialTick)
@@ -231,18 +277,31 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         }
     }
 
-    /** The datapack a run of trainers comes from, with a rule running to the edge of the panel. */
+    /**
+     * The heading over a run of trainers, with a rule running to the edge of the panel. A
+     * category sits a few pixels in and in a quieter colour than a datapack, so the two read
+     * as two levels in the tab that shows both.
+     */
     private fun renderRowHeader(guiGraphics: GuiGraphics, header: Row.Header, rowY: Int) {
-        val label = trim(Component.literal(header.namespace), LIST_WIDTH - 8)
-        val textX = LIST_X
-        val textY = rowY + HEADER_HEIGHT - font.lineHeight
+        val textX = LIST_X + if (header.primary) 0 else HEADER_INDENT
+        val textY = rowY + HEADER_HEIGHT - HEADER_PADDING_BOTTOM - font.lineHeight
+        val color = if (header.primary) COLOR_HEADER else COLOR_SUBHEADER
 
-        guiGraphics.drawString(font, label, textX, textY, COLOR_HEADER)
+        val score = CobblemonTrainers.lang(
+            "screen.battle_phone.progress",
+            header.defeated,
+            header.total
+        ).string
+        val scoreX = LIST_X + LIST_WIDTH - font.width(score)
+        guiGraphics.drawString(font, score, scoreX, textY, COLOR_TEXT_DIM)
+
+        val label = trim(header.label, scoreX - textX - HEADER_SCORE_GAP)
+        guiGraphics.drawString(font, label, textX, textY, color)
 
         val ruleX = textX + font.width(label) + 4
         val ruleY = textY + font.lineHeight / 2
-        if (ruleX < (LIST_X + LIST_WIDTH)) {
-            guiGraphics.fill(ruleX, ruleY, (LIST_X + LIST_WIDTH), ruleY + 1, COLOR_HEADER_RULE)
+        if (ruleX < scoreX - HEADER_SCORE_GAP) {
+            guiGraphics.fill(ruleX, ruleY, scoreX - HEADER_SCORE_GAP, ruleY + 1, COLOR_HEADER_RULE)
         }
     }
 
@@ -284,7 +343,11 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
             trim(Component.translatable(entry.name), nameWidth),
             nameX,
             rowY + (SLOT_SIZE - font.lineHeight) / 2,
-            if (entry.defeated) COLOR_TEXT else COLOR_TEXT_DIM
+            when {
+                entry.locked -> COLOR_TEXT_LOCKED
+                entry.defeated -> COLOR_TEXT
+                else -> COLOR_TEXT_DIM
+            }
         )
 
         renderMarker(guiGraphics, entry.defeated, columnEnd - MARKER_WIDTH, rowY + (SLOT_SIZE - MARKER_HEIGHT) / 2)
@@ -370,6 +433,13 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
             COLOR_TEXT_DIM
         )
 
+        // A locked trainer has no team to show - the server does not send one - so the space
+        // the party would take says what it would take to unlock it instead.
+        if (entry.locked) {
+            renderRequirements(guiGraphics, entry)
+            return null
+        }
+
         // Models last: they render through their own buffer, so nothing of ours is in flight.
         return renderTeam(guiGraphics, entry, mouseX, mouseY, partialTick)
     }
@@ -433,6 +503,31 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         return tooltip
     }
 
+    /**
+     * What this player still has to do, drawn where the team would be. The lines come from the
+     * server already built as components, so they are read here in the player's own language
+     * without the screen knowing what a requirement is.
+     */
+    private fun renderRequirements(guiGraphics: GuiGraphics, entry: BattlePhoneEntry) {
+        val areaWidth = TEAM_COLUMNS * TEAM_CELL_WIDTH
+        val areaHeight = TEAM_ROWS * TEAM_CELL_HEIGHT
+        val wrapWidth = areaWidth - 2 * REQUIREMENT_INSET
+
+        val heading = font.split(CobblemonTrainers.lang("screen.battle_phone.locked"), wrapWidth)
+        val lines = entry.requirements.flatMap { requirement ->
+            font.split(CobblemonTrainers.lang("requirement.line", requirement), wrapWidth)
+        }
+
+        val total = heading.size + lines.size
+        var lineY = TEAM_TOP + (areaHeight - total * font.lineHeight) / 2
+        val centerX = TEAM_X + areaWidth / 2
+
+        (heading.map { it to COLOR_TEXT } + lines.map { it to COLOR_TEXT_DIM }).forEach { (line, color) ->
+            guiGraphics.drawString(font, line, centerX - font.width(line) / 2, lineY, color)
+            lineY += font.lineHeight
+        }
+    }
+
     private fun renderPokemon(
         guiGraphics: GuiGraphics,
         member: TrainerTeamCache.Member,
@@ -475,9 +570,9 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
      * worth its own line: the player would otherwise keep looking for a fight that is over.
      */
     private fun statusKey(entry: BattlePhoneEntry): String = when {
-        entry.defeated && !entry.canRebattle -> "screen.battle_phone.status.defeated_final"
+        entry.defeated && !entry.rematch -> "screen.battle_phone.status.defeated_final"
         entry.defeated -> "screen.battle_phone.status.defeated"
-        !entry.canBattle -> "screen.battle_phone.status.no_battle"
+        entry.locked -> "screen.battle_phone.status.locked"
         else -> "screen.battle_phone.status.pending"
     }
 
@@ -656,7 +751,19 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         const val PANEL_Y = LOWER_Y + 20
         const val PANEL_HEIGHT = LOWER_HEIGHT - 24
         const val ROW_HEIGHT = 24
-        const val HEADER_HEIGHT = 13
+
+        /**
+         * A heading and the air around it, the 9 being the height of a line of text.
+         *
+         * A heading belongs to the run *below* it, so it has to end up closer to the group it
+         * opens than to the one it closes - and what separates it from the group above is not
+         * [HEADER_PADDING_TOP] alone, the row up there carrying its own slack ([ROW_HEIGHT] is
+         * taller than [SLOT_SIZE]). Counting that in, the gap above is 9 pixels against 6
+         * below, which is why the two numbers here read the wrong way round.
+         */
+        const val HEADER_PADDING_TOP = 5
+        const val HEADER_PADDING_BOTTOM = 6
+        const val HEADER_HEIGHT = HEADER_PADDING_TOP + 9 + HEADER_PADDING_BOTTOM
 
         /** The entry slot is a 25×25 image, drawn smaller so a row stays compact. */
         const val SLOT_TEXTURE_SIZE = 25
@@ -694,6 +801,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
 
         const val TEAM_SLOTS = 6
         const val TEAM_COLUMNS = 3
+        const val TEAM_ROWS = TEAM_SLOTS / TEAM_COLUMNS
         const val TEAM_X = UPPER_X + 92
         const val TEAM_TOP = UPPER_Y + 46
         const val TEAM_CELL_WIDTH = 70
@@ -737,7 +845,18 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         const val COLOR_TEXT = 0xFFE6F4FF.toInt()
         const val COLOR_TEXT_DIM = 0xFF8FB6D0.toInt()
         const val COLOR_HEADER = 0xFF5AAAEB.toInt()
+        const val COLOR_SUBHEADER = 0xFF7FC4E8.toInt()
         const val COLOR_HEADER_RULE = 0x665AAAEB
+        const val COLOR_TEXT_LOCKED = 0xFF6A8AA3.toInt()
+
+        /** How far a category heading sits in from the datapack heading above it. */
+        const val HEADER_INDENT = 6
+
+        /** Clearance kept between a heading and the score at the end of its line. */
+        const val HEADER_SCORE_GAP = 4
+
+        /** Breathing room either side of the requirement lines, which wrap. */
+        const val REQUIREMENT_INSET = 4
 
         const val ELLIPSIS = "…"
 
@@ -745,6 +864,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         const val UNKNOWN = "?"
 
         val ALL_LABEL: Component = CobblemonTrainers.lang("screen.battle_phone.all")
+        val UNCATEGORIZED_LABEL: Component = CobblemonTrainers.lang("category.uncategorized")
         val EMPTY_LABEL: Component = CobblemonTrainers.lang("screen.battle_phone.empty")
 
         fun phoneTexture(name: String): ResourceLocation =

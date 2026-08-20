@@ -1,7 +1,6 @@
 package matheo1712.cobbletrainers.trainers
 
 import com.cobblemon.mod.common.api.npc.NPCClasses
-import com.cobblemon.mod.common.api.npc.configuration.interaction.NoneNPCInteractionConfiguration
 import com.cobblemon.mod.common.api.storage.party.NPCPartyStore
 import com.cobblemon.mod.common.entity.npc.NPCEntity
 import matheo1712.cobbletrainers.CobblemonTrainers
@@ -25,7 +24,7 @@ object TrainerSpawner {
      * healing is the exception: Cobblemon only reads `autoHealParty` from the class
      * (`NPCBattleActor` and `PokemonBattle` both go through `npc.npc.autoHealParty`), so the
      * mod ships one class per value of that boolean. Keep the two files identical apart from
-     * `autoHealParty`.
+     * trainer's `battle.healParty`.
      */
     val NPC_CLASS_HEALING: ResourceLocation = CobblemonTrainers.id("trainer")
     val NPC_CLASS_NO_HEALING: ResourceLocation = CobblemonTrainers.id("trainer_no_heal")
@@ -52,7 +51,7 @@ object TrainerSpawner {
     ): NPCEntity? {
         // 1. Resolve the NPC class shipped by the mod. No fallback to an arbitrary class:
         //    failing loudly beats spawning an NPC that behaves unpredictably.
-        val npcClassId = if (definition.autoHealParty) NPC_CLASS_HEALING else NPC_CLASS_NO_HEALING
+        val npcClassId = if (definition.battle.healParty) NPC_CLASS_HEALING else NPC_CLASS_NO_HEALING
         val npcClass = NPCClasses.getByIdentifier(npcClassId) ?: run {
             LOGGER.error(
                 "NPC class {} is missing - is the mod's data pack loaded? Available classes: {}",
@@ -80,24 +79,18 @@ object TrainerSpawner {
         npc.appliedAspects.add(CobblemonTrainers.TRAINER_ASPECT_PREFIX + trainerId)
         npc.appliedAspects.addAll(extraAspects)
 
-        // 5. Cobblemon 1.7.3 no longer reads `canChallenge`: battles are triggered by the NPC
-        //    interaction, so disable it at the entity level instead.
-        if (!definition.canBattle) {
-            npc.interaction = NoneNPCInteractionConfiguration()
-        }
-
-        // 6. Battle AI difficulty, overridden per entity so every trainer can differ while
+        // 5. Battle AI difficulty, overridden per entity so every trainer can differ while
         //    sharing one NPC class. Cobblemon clamps it to 0..5 anyway.
-        npc.skill = definition.skill.coerceIn(0, 5)
+        npc.skill = definition.battle.difficulty.coerceIn(0, 5)
 
-        // 7. initialize() resets `party` to whatever the NPC class provides, so the trainer
+        // 6. initialize() resets `party` to whatever the NPC class provides, so the trainer
         //    team has to be assigned afterwards.
-        npc.initialize(definition.level)
+        npc.initialize(definition.battle.level)
 
         applyTeam(npc, definition, trainerId)
         npc.updateAspects()
 
-        // 8. The skin arrives asynchronously, after the entity is spawned.
+        // 7. The skin arrives asynchronously, after the entity is spawned.
         applySkin(server, npc, definition.skin)
 
         if (!level.addFreshEntity(npc)) {
@@ -142,7 +135,7 @@ object TrainerSpawner {
         for (properties in pokemonProps) {
             // A `Level:` line on the Pokémon wins over the trainer-wide level.
             if (properties.level == null) {
-                properties.level = definition.level
+                properties.level = definition.battle.level
             }
             // create() is where a property the parser accepted meets Cobblemon's registries -
             // an unknown species or held item throws here. One bad entry costs its Pokémon, not

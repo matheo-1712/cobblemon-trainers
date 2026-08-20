@@ -4,12 +4,15 @@ import matheo1712.cobbletrainers.CobblemonTrainers
 import matheo1712.cobbletrainers.parser.ShowdownTeamParser
 import matheo1712.cobbletrainers.registry.TrainerRegistry
 import matheo1712.cobbletrainers.trainers.TrainerDefinition
+import matheo1712.cobbletrainers.trainers.TrainerLock
 import matheo1712.cobbletrainers.trainers.TrainerProgress
 import matheo1712.cobbletrainers.trainers.TrainerSkins
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.ChatFormatting
 import net.minecraft.network.RegistryFriendlyByteBuf
+import net.minecraft.network.chat.Component
+import net.minecraft.network.chat.ComponentSerialization
 import net.minecraft.network.codec.StreamCodec
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload
 import net.minecraft.resources.ResourceLocation
@@ -55,15 +58,23 @@ object BattlePhoneNetworking {
         }
 
         val progress = TrainerProgress.of(player.server)
-        val entries = TrainerRegistry.tracked().map { (id, definition) ->
+        val entries = TrainerRegistry.listed().mapNotNull { (id, definition) ->
+            val missing = TrainerLock.unmet(player, id, definition)
+            // A hidden trainer is not sent at all, rather than sent and filtered on the client:
+            // the listing is the only thing that would tell a player it exists.
+            if (missing.isNotEmpty() && definition.requirements()?.hidden == true) return@mapNotNull null
+
+            val category = TrainerRegistry.categoryOf(id)
             BattlePhoneEntry(
                 id = id.toString(),
                 name = definition.name,
-                level = definition.level,
+                level = definition.battle.level,
                 teamSize = ShowdownTeamParser.countPokemon(definition.team),
                 defeated = progress.hasDefeated(id, player.uuid),
-                canBattle = definition.canBattle,
-                canRebattle = definition.canRebattle
+                rematch = definition.progress.allowsRematch,
+                requirements = missing,
+                category = category?.toString().orEmpty(),
+                categoryName = category?.let { TrainerRegistry.categoryName(it) }.orEmpty()
             )
         }
 
@@ -78,12 +89,15 @@ object BattlePhoneNetworking {
         if (!ServerPlayNetworking.canSend(player, TrainerSkinPayload.TYPE)) return
 
         val id = ResourceLocation.tryParse(rawId) ?: return
-        // Only trainers the phone itself lists: the request comes from a client, so it is the
-        // client's word that the ID is one we offered.
-        val definition = TrainerRegistry.get(id)?.takeIf { it.tracked } ?: run {
-            ServerPlayNetworking.send(player, TrainerSkinPayload(rawId, "default", ByteArray(0)))
-            return
-        }
+        // Only trainers the phone itself listed for this player: the request comes from a
+        // client, so it is the client's word that the ID is one we offered - and a hidden
+        // trainer was never offered.
+        val definition = TrainerRegistry.get(id)
+            ?.takeIf { it.progress.listed && !TrainerLock.isHiddenFrom(player, id, it) }
+            ?: run {
+                ServerPlayNetworking.send(player, TrainerSkinPayload(rawId, "default", ByteArray(0)))
+                return
+            }
 
         val server = player.server
         TrainerSkins.resolveAsync(server, definition.skin) { texture ->
@@ -110,7 +124,7 @@ object BattlePhoneNetworking {
         if (!ServerPlayNetworking.canSend(player, TrainerTeamPayload.TYPE)) return
 
         val id = ResourceLocation.tryParse(rawId)
-        val definition = id?.let { TrainerRegistry.get(it) }?.takeIf { it.tracked }
+        val definition = id?.let { TrainerRegistry.get(it) }?.takeIf { it.progress.listed }
 
         val members = if (id != null && definition != null &&
             TrainerProgress.of(player.server).hasDefeated(id, player.uuid)
@@ -131,7 +145,7 @@ object BattlePhoneNetworking {
      */
     private fun buildTeam(definition: TrainerDefinition, trainerId: ResourceLocation): List<TrainerTeamMember> =
         ShowdownTeamParser.parse(definition.team).mapNotNull { properties ->
-            if (properties.level == null) properties.level = definition.level
+            if (properties.level == null) properties.level = definition.battle.level
             try {
                 val pokemon = properties.create()
                 TrainerTeamMember(
@@ -157,6 +171,13 @@ object BattlePhoneNetworking {
  * @param name Sent raw, as the datapack wrote it: the client turns it into a translatable
  *   component, so a resource pack may localise it - the mod's single translation path.
  * @param teamSize How many Pokémon the trainer fields. Zero for a trainer with no team.
+ * @param rematch Whether the trainer takes a rematch once beaten.
+ * @param requirements What this player still has to do before the trainer accepts a battle,
+ *   empty for an open one. Already built as components server-side, where the registry and the
+ *   progress file are - they are translatable, so they still read in the player's language.
+ * @param category ID of the category the trainer is filed under, empty for one at the root of
+ *   its pack. Consecutive entries sharing it are one group in the listing.
+ * @param categoryName What to show as the name of that category, raw like [name].
  */
 data class BattlePhoneEntry(
     val id: String,
@@ -164,11 +185,18 @@ data class BattlePhoneEntry(
     val level: Int,
     val teamSize: Int,
     val defeated: Boolean,
-    val canBattle: Boolean,
-    val canRebattle: Boolean
-)
+    val rematch: Boolean,
+    val requirements: List<Component>,
+    val category: String,
+    val categoryName: String
+) {
 
-/** Server -> client: the tracked trainers and what the player has done about them. */
+    /** A trainer this player may not challenge yet. */
+    val locked: Boolean
+        get() = requirements.isNotEmpty()
+}
+
+/** Server -> client: the listed trainers and what the player has done about them. */
 data class OpenBattlePhonePayload(val entries: List<BattlePhoneEntry>) : CustomPacketPayload {
 
     override fun type(): CustomPacketPayload.Type<OpenBattlePhonePayload> = TYPE
@@ -187,8 +215,11 @@ data class OpenBattlePhonePayload(val entries: List<BattlePhoneEntry>) : CustomP
                         buf.writeVarInt(entry.level)
                         buf.writeVarInt(entry.teamSize)
                         buf.writeBoolean(entry.defeated)
-                        buf.writeBoolean(entry.canBattle)
-                        buf.writeBoolean(entry.canRebattle)
+                        buf.writeBoolean(entry.rematch)
+                        buf.writeVarInt(entry.requirements.size)
+                        entry.requirements.forEach { ComponentSerialization.STREAM_CODEC.encode(buf, it) }
+                        buf.writeUtf(entry.category)
+                        buf.writeUtf(entry.categoryName)
                     }
                 },
                 { buf ->
@@ -200,8 +231,12 @@ data class OpenBattlePhonePayload(val entries: List<BattlePhoneEntry>) : CustomP
                                 level = buf.readVarInt(),
                                 teamSize = buf.readVarInt(),
                                 defeated = buf.readBoolean(),
-                                canBattle = buf.readBoolean(),
-                                canRebattle = buf.readBoolean()
+                                rematch = buf.readBoolean(),
+                                requirements = List(buf.readVarInt()) {
+                                    ComponentSerialization.STREAM_CODEC.decode(buf)
+                                },
+                                category = buf.readUtf(),
+                                categoryName = buf.readUtf()
                             )
                         }
                     )

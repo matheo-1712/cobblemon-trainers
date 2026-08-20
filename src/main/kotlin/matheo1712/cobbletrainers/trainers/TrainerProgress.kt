@@ -14,8 +14,8 @@ import java.util.UUID
 
 /**
  * Remembers which players have already defeated which trainers, so a trainer can refuse a
- * rematch ([TrainerDefinition.canRebattle]) and hand out its rewards only once
- * ([TrainerDefinition.rewardOnce]).
+ * rematch ([TrainerProgressRules.rematch]) and hand out its rewards only once
+ * ([TrainerProgressRules.rewards]).
  *
  * Trainers are keyed by their **datapack ID**, not by the UUID of the spawned entity: beating
  * `mon_pack:champion` beats that trainer, wherever and however many times it stands in the
@@ -32,6 +32,13 @@ class TrainerProgress : SavedData() {
 
     fun hasDefeated(trainer: ResourceLocation, player: UUID): Boolean =
         defeatedBy[trainer]?.contains(player) == true
+
+    /**
+     * Every trainer that player has beaten, including the ones no datapack declares any more.
+     * This is what a counting requirement or advancement criterion is scored on.
+     */
+    fun defeatedTrainersOf(player: UUID): Set<ResourceLocation> =
+        defeatedBy.filterValues { player in it }.keys
 
     /**
      * Records a victory.

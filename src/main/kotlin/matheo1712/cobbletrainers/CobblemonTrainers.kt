@@ -1,5 +1,6 @@
 package matheo1712.cobbletrainers
 
+import matheo1712.cobbletrainers.advancement.TrainerDefeatedTrigger
 import matheo1712.cobbletrainers.battle.TrainerBattleEventHandler
 import matheo1712.cobbletrainers.battle.TrainerBattleInteraction
 import matheo1712.cobbletrainers.block.TrainerBlocks
@@ -26,7 +27,8 @@ import org.slf4j.LoggerFactory
  * Main entrypoint of the Cobblemon Trainers mod.
  *
  * The mod adds configurable Pokémon trainers to Cobblemon. Trainers are declared in
- * datapacks, at `data/<namespace>/cobblemontrainers/<name>.json`.
+ * datapacks, at `data/<namespace>/cobblemontrainers/<path>.json`, where the folder a file
+ * sits in is its category.
  *
  * Features:
  * - Showdown-formatted teams
@@ -34,6 +36,7 @@ import org.slf4j.LoggerFactory
  * - Battle start and end messages
  * - Battle music
  * - Item rewards on victory, and one-shot trainers that turn down a rematch
+ * - Requirements to challenge a trainer, and an advancement trigger fired by beating one
  * - `/spawntrainer <id>` to summon a trainer
  * - `/listtrainers [player]` to review who has been beaten
  * - A trainer spawner block, which keeps one trainer standing where it is placed
@@ -65,7 +68,9 @@ object CobblemonTrainers : ModInitializer {
             ListTrainersCommand.register(dispatcher)
         }
 
-        // Register blocks, items and network
+        // Register blocks, items, network and the advancement trigger. The trigger has to be
+        // known before datapacks are read, or an advancement using it fails to parse.
+        TrainerDefeatedTrigger.register()
         TrainerBlocks.register()
         TrainerItems.register()
         TrainerSpawnerNetworking.register()

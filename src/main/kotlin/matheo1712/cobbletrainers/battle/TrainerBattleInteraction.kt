@@ -5,8 +5,9 @@ import com.cobblemon.mod.common.battles.BattleBuilder
 import com.cobblemon.mod.common.battles.BattleFormat
 import com.cobblemon.mod.common.entity.npc.NPCEntity
 import matheo1712.cobbletrainers.CobblemonTrainers
-import matheo1712.cobbletrainers.trainers.TrainerProgress
 import matheo1712.cobbletrainers.registry.TrainerRegistry
+import matheo1712.cobbletrainers.trainers.TrainerLock
+import matheo1712.cobbletrainers.trainers.TrainerProgress
 import net.minecraft.ChatFormatting
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.RegistryFriendlyByteBuf
@@ -33,20 +34,30 @@ class TrainerBattleInteraction : NPCInteractConfiguration {
         val trainerId = TrainerRegistry.idFromAspects(npc.aspects)
         val definition = trainerId?.let { TrainerRegistry.get(it) }
 
-        if (trainerId != null && definition != null && !definition.canRebattle &&
-            TrainerProgress.of(player.server).hasDefeated(trainerId, player.uuid)
-        ) {
-            player.sendSystemMessage(
-                CobblemonTrainers.lang("chat.already_defeated", Component.translatable(definition.name))
-                    .withStyle(ChatFormatting.GRAY)
-            )
-            return true
+        if (trainerId != null && definition != null) {
+            if (!definition.progress.allowsRematch &&
+                TrainerProgress.of(player.server).hasDefeated(trainerId, player.uuid)
+            ) {
+                player.sendSystemMessage(
+                    CobblemonTrainers.lang("chat.already_defeated", Component.translatable(definition.name))
+                        .withStyle(ChatFormatting.GRAY)
+                )
+                return true
+            }
+
+            // Checked here rather than anywhere nearer the battle so that nothing starts: no
+            // healed party, no music, no battle to close again.
+            val missing = TrainerLock.unmet(player, trainerId, definition)
+            if (missing.isNotEmpty()) {
+                player.sendSystemMessage(TrainerLock.refusal(definition, missing))
+                return true
+            }
         }
 
         BattleBuilder.pvn(
             player = player,
             npcEntity = npc,
-            battleFormat = battleFormatOf(definition?.battleFormat)
+            battleFormat = battleFormatOf(definition?.battle?.format)
         ).ifErrored { errors ->
             errors.sendTo(player)
         }
@@ -66,7 +77,7 @@ class TrainerBattleInteraction : NPCInteractConfiguration {
         const val TYPE = "cobblemon-trainers:battle"
 
         /**
-         * Accepted values of a trainer's `battleFormat`. Cobblemon's own spellings are kept,
+         * Accepted values of a trainer's `battle.format`. Cobblemon's own spellings are kept,
          * plus the plain solo/duo/trio wording.
          */
         private val FORMATS: Map<String, BattleFormat> = mapOf(
