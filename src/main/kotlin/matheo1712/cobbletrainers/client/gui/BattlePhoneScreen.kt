@@ -616,7 +616,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
 
         /** Size of the frame image, which the whole screen is laid out inside of. */
         const val FRAME_WIDTH = 378
-        const val FRAME_HEIGHT = 413
+        const val FRAME_HEIGHT = 392
 
         /**
          * The two holes in the frame. The phone is a clamshell with a screen in each half:
@@ -624,12 +624,12 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
          * selected from. Both have to line up with the transparent zones of [FRAME].
          */
         const val UPPER_X = 51
-        const val UPPER_Y = 46
-        const val UPPER_WIDTH = 309
+        const val UPPER_Y = 25
+        const val UPPER_WIDTH = 306
         const val UPPER_HEIGHT = 150
 
         const val LOWER_X = 51
-        const val LOWER_Y = 223
+        const val LOWER_Y = 202
         const val LOWER_WIDTH = 309
         const val LOWER_HEIGHT = 179
 
