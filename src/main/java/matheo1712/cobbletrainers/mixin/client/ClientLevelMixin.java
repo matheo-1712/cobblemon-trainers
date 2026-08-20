@@ -19,12 +19,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * {@code BLOCK_MARKER} particle wherever it finds that block. The particle draws the block
  * model's {@code particle} texture, which is the only texture the spawner's block model has.
  * <p>
- * The list vanilla checks — {@code MARKER_PARTICLE_ITEMS} — is a private immutable set holding
+ * The list vanilla checks - {@code MARKER_PARTICLE_ITEMS} - is a private immutable set holding
  * the barrier and the light block, so the only way in is the method that reads it. Injecting at
  * the head keeps vanilla's own answer untouched whenever the held item is not ours.
  * <p>
  * The markers are gated on {@link net.minecraft.world.entity.player.Player#canUseGameMasterBlocks()}
- * — creative plus operator — rather than on creative alone as vanilla does for the barrier.
+ * - creative plus operator - rather than on creative alone as vanilla does for the barrier.
  * Nothing about a spawner is meant to be visible to a player who cannot configure one, and an
  * item handed to them by mistake must not turn into a map of every spawner around.
  */

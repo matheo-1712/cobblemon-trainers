@@ -7,11 +7,11 @@ import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.item.Item
 
 /**
- * The plain items shipped by the mod — the ones that are not the item form of a block, which
+ * The plain items shipped by the mod - the ones that are not the item form of a block, which
  * [matheo1712.cobbletrainers.block.TrainerBlocks] registers alongside it.
  *
  * Everything is created eagerly as a property of this object, so touching [register] is what
- * pulls it all in — call it from the mod initializer, before the registries freeze. The mod's
+ * pulls it all in - call it from the mod initializer, before the registries freeze. The mod's
  * creative tab lives in [matheo1712.cobbletrainers.block.TrainerBlocks] and picks these up
  * from there.
  */

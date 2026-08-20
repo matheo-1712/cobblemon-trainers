@@ -22,8 +22,8 @@ import net.minecraft.world.phys.Vec3
  * `/spawntrainer`, which summons a trainer in game.
  *
  * Usage:
- * - `/spawntrainer <trainer_id>` — spawns at the caller's position
- * - `/spawntrainer <trainer_id> <x> <y> <z>` — spawns at explicit coordinates
+ * - `/spawntrainer <trainer_id>` - spawns at the caller's position
+ * - `/spawntrainer <trainer_id> <x> <y> <z>` - spawns at explicit coordinates
  *
  * The ID accepts either the full `namespace:name` form or the bare name.
  *
@@ -53,7 +53,7 @@ object SpawnTrainerCommand {
                         .suggests { _, builder ->
                             // Always the full `namespace:name`. The namespace *is* the pack a
                             // trainer comes from, so it is the only thing that tells apart two
-                            // packs shipping the same file name — and it shows at a glance
+                            // packs shipping the same file name - and it shows at a glance
                             // which pack provides what. Typing the bare name still works:
                             // `resolveId` falls back to it.
                             //

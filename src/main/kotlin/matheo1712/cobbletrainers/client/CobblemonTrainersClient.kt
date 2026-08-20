@@ -15,7 +15,7 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
 /**
  * Client entrypoint.
  *
- * The mod is a server-side affair almost everywhere — trainers come from datapacks and fight
+ * The mod is a server-side affair almost everywhere - trainers come from datapacks and fight
  * on the server. What cannot be: the two screens. The trainer spawner has one, and so does the
  * battle phone; a screen only exists on a client. This registers the packets that open them,
  * the two that feed the phone its skins and its teams, and nothing else.

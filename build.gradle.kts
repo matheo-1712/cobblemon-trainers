@@ -30,7 +30,7 @@ dependencies {
 	modImplementation("net.fabricmc.fabric-api:fabric-api:${providers.gradleProperty("fabric_api_version").get()}")
 	modImplementation("net.fabricmc:fabric-language-kotlin:${providers.gradleProperty("fabric_kotlin_version").get()}")
 
-	// Cobblemon 1.7.3 pour Fabric 1.21.1 — API uniquement (les joueurs l'installeront séparément)
+	// Cobblemon 1.7.3 pour Fabric 1.21.1 - API uniquement (les joueurs l'installeront séparément)
 	modImplementation("maven.modrinth:cobblemon:${project.property("cobblemon_version")}")
     
     // Dependencies for Cobblemon
@@ -92,7 +92,7 @@ tasks.jar {
  * `fabric.mod.json` is dropped on the way out. It only exists so the folder can be built into a
  * `.jar` that Fabric loads, and it actively hurts a `.zip`: Fabric ignores archives that are not
  * `.jar`, while [matheo1712.cobbletrainers.ModsFolderPackSource] skips anything carrying mod
- * metadata — the pack would load from nowhere. Without it, the same zip works in `mods/`,
+ * metadata - the pack would load from nowhere. Without it, the same zip works in `mods/`,
  * `datapacks/` and `resourcepacks/`.
  */
 val exampleDatapack = tasks.register<Zip>("exampleDatapack") {
@@ -129,7 +129,7 @@ publishMods {
 	type = releaseType
 	modLoaders.add("fabric")
 
-	// The release workflow passes the GitHub release body here. Without it — a local run — the
+	// The release workflow passes the GitHub release body here. Without it - a local run - the
 	// changelog is a pointer rather than a lie.
 	changelog = providers.environmentVariable("CHANGELOG")
 		.orElse("See https://github.com/matheo-1712/cobblemon-trainers/releases/tag/v$modVersion")
@@ -151,7 +151,7 @@ publishMods {
 		// and the two can never drift apart.
 		//
 		// Modrinth matches either a version ID or a version number, and refuses the publish
-		// unless exactly one version matches — a typo here fails loudly rather than shipping a
+		// unless exactly one version matches - a typo here fails loudly rather than shipping a
 		// requirement nobody can satisfy. `cobblemon_version` is already a version ID.
 		requires {
 			slug = "cobblemon"

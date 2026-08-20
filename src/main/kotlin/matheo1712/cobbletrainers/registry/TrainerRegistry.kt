@@ -25,7 +25,7 @@ import java.io.File
 object TrainerRegistry {
 
     /**
-     * Directory scanned inside datapacks, one level under `data/<namespace>/` — the layout
+     * Directory scanned inside datapacks, one level under `data/<namespace>/` - the layout
      * Cobblemon's own registries use (`data/<namespace>/species/`, `.../npcs/`). It is named
      * after the mod rather than `trainers/`, so a pack that also declares trainers for another
      * mod cannot collide with ours.

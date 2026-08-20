@@ -15,7 +15,7 @@ import net.minecraft.resources.ResourceLocation
  * Skins are asked for one at a time, when a row first needs one: a world may hold a hundred
  * trainers and each image is a few kilobytes, so sending them all with the listing would mean
  * a heavy packet for the handful the player actually looks at. [get] is therefore allowed to
- * answer null — it means "asked for, not here yet", and the screen draws a placeholder until
+ * answer null - it means "asked for, not here yet", and the screen draws a placeholder until
  * the answer lands.
  *
  * A skin that could not be resolved server-side is cached too, as an entry with no texture:

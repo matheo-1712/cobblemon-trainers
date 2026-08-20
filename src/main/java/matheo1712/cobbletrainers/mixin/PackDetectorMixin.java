@@ -10,14 +10,14 @@ import org.spongepowered.asm.mixin.injection.Redirect;
  * accepts.
  *
  * A pack that ships trainers <em>and</em> their translations or music is both a data pack and a
- * resource pack, which is exactly what a mod jar is — so authors naturally build one. Vanilla
+ * resource pack, which is exactly what a mod jar is - so authors naturally build one. Vanilla
  * rejects it on the file name alone: {@link PackDetector#detectPackResources} is the single gate,
  * and it only lets {@code .zip} through. Everything downstream already works, a jar being a zip:
  * {@code FilePackResources} opens it with {@link java.util.zip.ZipFile} without caring about the
  * extension.
  *
  * {@link PackDetector} is shared by every folder-backed source, so this covers the world
- * {@code datapacks/} folder and the {@code resourcepacks/} folder alike — a single jar can be
+ * {@code datapacks/} folder and the {@code resourcepacks/} folder alike - a single jar can be
  * dropped in both.
  */
 @Mixin(PackDetector.class)

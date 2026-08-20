@@ -25,7 +25,7 @@ import net.minecraft.world.entity.Entity
  * rewards and the record of who beat whom, and the fate of a battle whose trainer leaves the
  * world.
  *
- * The battle actor of an NPC is an [com.cobblemon.mod.common.entity.npc.NPCBattleActor], which exposes the entity directly — no
+ * The battle actor of an NPC is an [com.cobblemon.mod.common.entity.npc.NPCBattleActor], which exposes the entity directly - no
  * need to look it up by UUID. Note that [com.cobblemon.mod.common.entity.npc.NPCBattleActor] does not extend `TrainerBattleActor`;
  * both derive separately from `AIBattleActor`.
  */

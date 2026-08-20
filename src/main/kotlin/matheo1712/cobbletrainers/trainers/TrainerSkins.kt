@@ -19,7 +19,7 @@ import java.util.concurrent.Executors
  *
  * Two things need that image and neither can block: [TrainerSpawner], which dresses a freshly
  * spawned NPC, and the battle phone, which draws the trainer in a screen. Both go through
- * [resolveAsync] — a profile lookup, a download from Mojang or a pack read all happen on a
+ * [resolveAsync] - a profile lookup, a download from Mojang or a pack read all happen on a
  * daemon thread, never on the server thread.
  *
  * Results are cached, failures included, because resolving the same trainer over and over
@@ -34,7 +34,7 @@ object TrainerSkins {
 
     /**
      * Two threads, not one: a Mojang lookup can hang for a while, and a single worker would
-     * make every other trainer wait behind it. Not more either — the cache means the queue is
+     * make every other trainer wait behind it. Not more either - the cache means the queue is
      * short-lived, and each task is mostly waiting on the network.
      */
     private val WORKERS: ExecutorService = Executors.newFixedThreadPool(2) { runnable ->
@@ -45,7 +45,7 @@ object TrainerSkins {
 
     /**
      * Resolves a skin off the server thread and hands the result to [consumer], which runs on
-     * the worker thread — anything touching the world has to hop back through
+     * the worker thread - anything touching the world has to hop back through
      * [MinecraftServer.execute] itself.
      *
      * @param consumer called exactly once, with null when the skin could not be resolved.
@@ -91,7 +91,7 @@ object TrainerSkins {
 
     /**
      * Loads a skin image shipped in a pack. The bytes are sent to the clients with the entity,
-     * so nothing has to be installed on their side — see [TrainerTextures].
+     * so nothing has to be installed on their side - see [TrainerTextures].
      */
     private fun readPackTexture(skin: TrainerSkin): NPCPlayerTexture? {
         val location = ResourceLocation.tryParse(skin.value)

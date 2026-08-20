@@ -45,7 +45,7 @@ jobs:
         run: |
           version="${TAG#v}"
 
-          # Everything downstream — the jar name, fabric.mod.json, the Modrinth version number —
+          # Everything downstream - the jar name, fabric.mod.json, the Modrinth version number -
           # is built from this string, so a tag like "latest" has to stop here rather than ship a
           # jar named after it.
           case "$version" in

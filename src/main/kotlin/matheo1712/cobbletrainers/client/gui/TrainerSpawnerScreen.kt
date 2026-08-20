@@ -20,7 +20,7 @@ import org.lwjgl.glfw.GLFW
  *
  * Laid out after the command block screen: a field for the value that matters, a couple of
  * settings, and Done / Cancel. The list under the field is the loaded trainers, sent by the
- * server — clicking one fills the field, which also accepts a hand-typed ID so a trainer from
+ * server - clicking one fills the field, which also accepts a hand-typed ID so a trainer from
  * a datapack that is momentarily disabled can still be set.
  *
  * Nothing is applied here. Done sends the three values back and the server decides.

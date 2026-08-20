@@ -17,9 +17,9 @@ import net.minecraft.world.level.Level
  * The battle phone: right-click it and it lists the tracked trainers, telling which ones the
  * player has already beaten.
  *
- * Nothing is decided here. What the screen shows is the server's own record — the trainers of
+ * Nothing is decided here. What the screen shows is the server's own record - the trainers of
  * [matheo1712.cobbletrainers.registry.TrainerRegistry] and the victories of
- * [matheo1712.cobbletrainers.trainers.TrainerProgress] — so the item is stateless and any
+ * [matheo1712.cobbletrainers.trainers.TrainerProgress] - so the item is stateless and any
  * number of copies of it show the same thing.
  *
  * Unlike the trainer spawner, this one is for every player: it holds no power, it only reads.

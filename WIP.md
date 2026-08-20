@@ -8,7 +8,7 @@ LATER
 - Permettre au dresseur de pouvoir mega évoluer leur Pokémon si le Pokémon possède une mega gemme (Mega Shodown)
 - Support des attaques Z / Dynamax / Terracrystal (Mega Shodown)
 
-BATTLE PHONE — pistes
+BATTLE PHONE - pistes
 - Remplacer les textures placeholder de `textures/gui/battle_phone/` par des vraies
 - Champ de recherche dans la liste, quand un pack aura beaucoup de dresseurs
 - Révéler l'équipe d'un dresseur une fois vaincu, façon entrée de Pokédex

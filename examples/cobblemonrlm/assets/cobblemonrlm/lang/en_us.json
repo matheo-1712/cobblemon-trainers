@@ -22,14 +22,14 @@
   "trainer.cobblemonrlm.skin_par_uuid.lose": "A little more effort.",
 
   "trainer.cobblemonrlm.skin_texture.name": "Wandering Adventurer",
-  "trainer.cobblemonrlm.skin_texture.battle_start": "My skin ships with this pack — no Mojang account behind it.",
+  "trainer.cobblemonrlm.skin_texture.battle_start": "My skin ships with this pack - no Mojang account behind it.",
   "trainer.cobblemonrlm.skin_texture.win": "Well fought, traveller.",
   "trainer.cobblemonrlm.skin_texture.lose": "The road is long. Train, then find me again.",
 
   "trainer.cobblemonrlm.pnj_pacifiste.name": "Peaceful Villager",
 
   "trainer.cobblemonrlm.polyglotte.name": "The Polyglot",
-  "trainer.cobblemonrlm.polyglotte.battle_start": "I speak your language — this text comes from the resource pack.",
+  "trainer.cobblemonrlm.polyglotte.battle_start": "I speak your language - this text comes from the resource pack.",
   "trainer.cobblemonrlm.polyglotte.win": "Well played, in any language.",
   "trainer.cobblemonrlm.polyglotte.lose": "Try again once you have trained a little.",
 
@@ -40,11 +40,11 @@
 
   "trainer.cobblemonrlm.champion_unique.name": "One-Shot Champion",
   "trainer.cobblemonrlm.champion_unique.battle_start": "One chance. Beat me and you never see me again.",
-  "trainer.cobblemonrlm.champion_unique.win": "Take these — you have earned every one of them.",
+  "trainer.cobblemonrlm.champion_unique.win": "Take these - you have earned every one of them.",
   "trainer.cobblemonrlm.champion_unique.lose": "Not this time. But the door is still open.",
 
   "trainer.cobblemonrlm.recompense_unique.name": "Training Partner",
-  "trainer.cobblemonrlm.recompense_unique.battle_start": "Spar with me whenever you like — the prize only comes once.",
+  "trainer.cobblemonrlm.recompense_unique.battle_start": "Spar with me whenever you like - the prize only comes once.",
   "trainer.cobblemonrlm.recompense_unique.win": "Good work. Come back for another round any time.",
   "trainer.cobblemonrlm.recompense_unique.lose": "Shake it off and challenge me again.",
 

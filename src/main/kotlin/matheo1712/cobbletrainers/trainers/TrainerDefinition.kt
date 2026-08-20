@@ -10,7 +10,7 @@ import matheo1712.cobbletrainers.battle.TrainerBattleMusic
  * datapack's language files to localise it, or put plain text and it is displayed as is.
  *
  * Datapacks never declare an NPC class: every trainer uses one of the two shipped by the mod.
- * The settings that used to live there — battle format, AI difficulty, party healing — are
+ * The settings that used to live there - battle format, AI difficulty, party healing - are
  * fields of the trainer instead.
  *
  * @param name Display name shown above the trainer.
@@ -25,8 +25,8 @@ import matheo1712.cobbletrainers.battle.TrainerBattleMusic
  * @param canRebattle Whether a player who has already beaten this trainer may fight it again.
  *   With false, the trainer is a one-shot encounter: it turns down every later challenge from
  *   the same player. Victories are remembered per trainer ID, so every NPC spawned from this
- *   definition shares the same record — see [TrainerProgress].
- * @param tracked Whether the trainer belongs in a progress listing — `/listtrainers` and
+ *   definition shares the same record - see [TrainerProgress].
+ * @param tracked Whether the trainer belongs in a progress listing - `/listtrainers` and
  *   anything built on it. Set it to false for a trainer nobody is meant to hunt down: a demo
  *   shipped with a mod, a non-fighting NPC, a trainer that never spawns. This is about what is
  *   shown, not what is stored: victories are recorded either way, so [canRebattle] and
@@ -39,7 +39,7 @@ import matheo1712.cobbletrainers.battle.TrainerBattleMusic
  * @param battleEndLoseMessage Sent when the player loses (optional).
  * @param battleMusic Sound ID played to the players for the duration of the battle. Defaults
  *   to the track shipped by the mod; set it to `null` or `""` for a silent trainer, or to your
- *   own sound ID — provided by a resource pack — for another track.
+ *   own sound ID - provided by a resource pack - for another track.
  */
 data class TrainerDefinition(
     val name: String = "Trainer",
@@ -78,13 +78,13 @@ data class TrainerReward(
  * - `"player_username"`: uses the skin of the Minecraft player with that username.
  * - `"player_uuid"`: uses the skin of the Minecraft player with that UUID.
  * - `"texture"`: uses a player skin image shipped in a pack, under
- *   `assets/<namespace>/<path>` — see [TrainerTextures].
+ *   `assets/<namespace>/<path>` - see [TrainerTextures].
  *
  * @param type The skin type.
  * @param value The skin value: a username, a UUID, or the resource location of a `.png`
  *   (`cobblemon-trainers:textures/trainers/example.png`).
  * @param model Which player rig wears the texture: `default` (Steve) or `slim` (Alex). Only
- *   read for the `texture` type — Mojang states the model of a player skin itself.
+ *   read for the `texture` type - Mojang states the model of a player skin itself.
  */
 data class TrainerSkin(
     val type: String = "player_username",

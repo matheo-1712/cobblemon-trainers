@@ -7,8 +7,8 @@ import net.minecraft.client.gui.GuiGraphics
 /**
  * Draws a player skin flat, straight out of its image.
  *
- * The battle phone shows trainers that are not in the world — a trainer the player has never
- * met has no entity to render — so nothing here goes through the entity renderer. The front
+ * The battle phone shows trainers that are not in the world - a trainer the player has never
+ * met has no entity to render - so nothing here goes through the entity renderer. The front
  * faces of the skin are blitted side by side instead, which is all a portrait needs and costs
  * a handful of quads.
  *
@@ -16,7 +16,7 @@ import net.minecraft.client.gui.GuiGraphics
  * body at (20, 20), and so on. A legacy 64×32 image has no second layer and no left limbs, so
  * those fall back to the right ones.
  *
- * Both methods turn blending on and leave it on — the second skin layer is transparent almost
+ * Both methods turn blending on and leave it on - the second skin layer is transparent almost
  * everywhere, and `GuiGraphics.blit` leaves that state to its caller.
  */
 object TrainerSkinRenderer {
@@ -40,7 +40,7 @@ object TrainerSkinRenderer {
     /**
      * Draws the whole figure, seen from the front, [scale] screen pixels per skin pixel.
      *
-     * @param centerX Horizontal centre of the figure — a slim rig is two pixels narrower, so
+     * @param centerX Horizontal centre of the figure - a slim rig is two pixels narrower, so
      *   anchoring on the left edge would shift it.
      * @param top Top of the head.
      */

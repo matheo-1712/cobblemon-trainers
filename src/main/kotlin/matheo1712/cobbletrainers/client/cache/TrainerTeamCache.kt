@@ -11,13 +11,13 @@ import net.minecraft.resources.ResourceLocation
  * The teams the battle phone has been sent, ready to draw.
  *
  * Asked for like the skins are, one trainer at a time, and only for a trainer the player has
- * beaten — the server refuses the others, so nothing is gained by asking early. [get] answers
+ * beaten - the server refuses the others, so nothing is gained by asking early. [get] answers
  * null while the reply is on its way, and an empty list once it has landed with nothing in it:
  * the trainer is not beaten, has no team, or none of it could be built.
  *
  * A member is turned into a [RenderablePokemon] here, once, rather than on every frame. That
  * means resolving the species against the client registry, which is synced, so a species the
- * client does not know — a pack loaded on the server alone — simply drops out of the team.
+ * client does not know - a pack loaded on the server alone - simply drops out of the team.
  *
  * Everything here runs on the client thread, like [TrainerSkinCache].
  */

@@ -55,7 +55,7 @@ object TrainerSpawner {
         val npcClassId = if (definition.autoHealParty) NPC_CLASS_HEALING else NPC_CLASS_NO_HEALING
         val npcClass = NPCClasses.getByIdentifier(npcClassId) ?: run {
             LOGGER.error(
-                "NPC class {} is missing — is the mod's data pack loaded? Available classes: {}",
+                "NPC class {} is missing - is the mod's data pack loaded? Available classes: {}",
                 npcClassId,
                 NPCClasses.classes.joinToString(", ") { it.id.toString() }
             )
@@ -124,7 +124,7 @@ object TrainerSpawner {
      *
      * The store is filled here instead of through `SimplePartyProvider`: its `provide()`
      * starts by calling `PokemonProperties.copy()`, which round-trips through
-     * `saveToJSON`/`loadFromJSON` — and that pair, unlike `saveToNBT`, does not carry
+     * `saveToJSON`/`loadFromJSON` - and that pair, unlike `saveToNBT`, does not carry
      * `nickname`, so a Showdown nickname was silently lost on the way to the party. What
      * `provide()` does beyond that copy is the level default and the store itself, both
      * reproduced below.
@@ -144,7 +144,7 @@ object TrainerSpawner {
             if (properties.level == null) {
                 properties.level = definition.level
             }
-            // create() is where a property the parser accepted meets Cobblemon's registries —
+            // create() is where a property the parser accepted meets Cobblemon's registries -
             // an unknown species or held item throws here. One bad entry costs its Pokémon, not
             // the trainer, and not the tick that asked for the spawn.
             try {
@@ -159,7 +159,7 @@ object TrainerSpawner {
     /**
      * Applies a skin to the NPC.
      *
-     * Everything that can block — profile lookup, download, pack read — is [TrainerSkins]'
+     * Everything that can block - profile lookup, download, pack read - is [TrainerSkins]'
      * business; only the application to the entity comes back through the server thread. On
      * failure the NPC keeps the default skin of its class.
      */

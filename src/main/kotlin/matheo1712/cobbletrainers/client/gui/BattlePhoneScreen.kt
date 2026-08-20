@@ -22,14 +22,14 @@ import org.lwjgl.glfw.GLFW
  * and whether the player has beaten them.
  *
  * Laid out after a Pokédex, and dressed with the mod's own textures, under
- * `assets/cobblemon-trainers/textures/gui/battle_phone/`. They are deliberately plain — a
- * bezel, a slot, a couple of arrows, a status marker — and everything behind them is drawn
+ * `assets/cobblemon-trainers/textures/gui/battle_phone/`. They are deliberately plain - a
+ * bezel, a slot, a couple of arrows, a status marker - and everything behind them is drawn
  * with flat rectangles, so replacing the set is a matter of redrawing six images at the same
  * sizes. [FRAME] is the one with a constraint: its transparent hole has to line up with
  * [INNER_X] and friends, since that hole is where the screen draws.
  *
  * The listing is whatever the server sent, and nothing is ever sent back beyond two questions:
- * the skin of a trainer, and the team of one the player has beaten. Both are cached — see
+ * the skin of a trainer, and the team of one the player has beaten. Both are cached - see
  * [TrainerSkinCache] and [TrainerTeamCache].
  */
 class BattlePhoneScreen(data: OpenBattlePhonePayload) :
@@ -315,7 +315,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
     }
 
     /**
-     * The six team slots, filled only once the player has beaten the trainer — the server
+     * The six team slots, filled only once the player has beaten the trainer - the server
      * refuses to send a team before that, so an empty slot is the honest answer either way.
      */
     private fun renderTeam(
@@ -495,7 +495,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         overArrow(x(LIST_X + LIST_WIDTH - ARROW_WIDTH), mouseX, mouseY)
 
     /**
-     * The hit box of an arrow, which is the same one the hovered state is drawn from — a
+     * The hit box of an arrow, which is the same one the hovered state is drawn from - a
      * button that lights up somewhere other than where it answers is worse than no highlight.
      * It is a couple of pixels wider than the image: an arrow is a thin thing to aim at.
      */
@@ -593,7 +593,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
 
         /**
          * How a model is sized, copied from Cobblemon's own party slots: a scale on the pose
-         * and another passed to the renderer, which multiply. Neither is arbitrary — the
+         * and another passed to the renderer, which multiply. Neither is arbitrary - the
          * second one alone leaves a Pokémon a few pixels tall, and the pair keeps the depth
          * squash Cobblemon's portraits have, since only the first applies to z.
          */
@@ -642,7 +642,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
          * A blit with blending on.
          *
          * `GuiGraphics.blit` leaves the blend state to its caller, and every texture here has
-         * transparent pixels — the frame most of all, which is drawn over the content. Enabling
+         * transparent pixels - the frame most of all, which is drawn over the content. Enabling
          * it once per screen would not do: drawing text ends its own batch, and that turns
          * blending back off.
          */

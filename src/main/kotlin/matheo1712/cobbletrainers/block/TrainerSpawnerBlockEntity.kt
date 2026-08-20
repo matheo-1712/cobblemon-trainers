@@ -22,12 +22,12 @@ import java.util.*
  * ever a consequence, respawned whenever it is missing. [spawnedTrainer] holds the UUID of the
  * current one so it can be found again after a restart.
  *
- * The settings ride along into a structure for free — `StructureTemplate` saves and restores
- * block entity NBT — which is what makes a configured spawner reusable as part of a building.
+ * The settings ride along into a structure for free - `StructureTemplate` saves and restores
+ * block entity NBT - which is what makes a configured spawner reusable as part of a building.
  * What must *not* ride along is the running state, and that is why [spawnedTrainer] is only
  * trusted when the entity it names carries this very block's [spawnerAspect]: a spawner placed
  * from a structure inherits the UUID of the trainer of the block it was copied from, and would
- * otherwise adopt it — dragging someone else's trainer across the world instead of spawning
+ * otherwise adopt it - dragging someone else's trainer across the world instead of spawning
  * its own.
  */
 class TrainerSpawnerBlockEntity(pos: BlockPos, state: BlockState) :
@@ -63,7 +63,7 @@ class TrainerSpawnerBlockEntity(pos: BlockPos, state: BlockState) :
 
     /**
      * Whether this block has seen its trainer alive since the level loaded. It tells a trainer
-     * that died — wait the full delay — from one that is merely not there yet, which is what a
+     * that died - wait the full delay - from one that is merely not there yet, which is what a
      * block looks like right after its chunk loads or straight out of a structure.
      */
     private var seenAlive = false
@@ -93,7 +93,7 @@ class TrainerSpawnerBlockEntity(pos: BlockPos, state: BlockState) :
      * Removes the trainer this block is responsible for, if it is loaded.
      *
      * The sweep on top of the UUID lookup catches a trainer whose block entity lost track of
-     * it — a world copied without its entities, a chunk that unloaded at the wrong moment.
+     * it - a world copied without its entities, a chunk that unloaded at the wrong moment.
      */
     fun despawnTrainer() {
         val level = this.level as? ServerLevel ?: return
@@ -111,7 +111,7 @@ class TrainerSpawnerBlockEntity(pos: BlockPos, state: BlockState) :
         val tracked = spawnedTrainer?.let { level.getEntity(it) as? NPCEntity }
 
         if (tracked != null && tracked.isAlive && spawnerAspect() in tracked.aspects) {
-            // Found again — a pending respawn was a false alarm, most likely a chunk that had
+            // Found again - a pending respawn was a false alarm, most likely a chunk that had
             // not finished loading its entities.
             seenAlive = true
             respawnAt = 0L
@@ -143,7 +143,7 @@ class TrainerSpawnerBlockEntity(pos: BlockPos, state: BlockState) :
         if (definition == null) {
             if (!warnedUnknownTrainer) {
                 CobblemonTrainers.LOGGER.warn(
-                    "Trainer spawner at {} points at unknown trainer {} — is its datapack loaded?",
+                    "Trainer spawner at {} points at unknown trainer {} - is its datapack loaded?",
                     worldPosition,
                     id
                 )
@@ -181,7 +181,7 @@ class TrainerSpawnerBlockEntity(pos: BlockPos, state: BlockState) :
      *
      * A teleport rather than a fresh spawn: the trainer keeps its identity and its UUID, so
      * nothing else has to be rebuilt. Its health is restored on the way, since a respawned one
-     * would have arrived at full — but only the entity's own health. The Pokémon team is left
+     * would have arrived at full - but only the entity's own health. The Pokémon team is left
      * exactly as it was: whether damage carries over is the trainer's `autoHealParty` to decide,
      * and healing here would quietly override it.
      *
@@ -207,7 +207,7 @@ class TrainerSpawnerBlockEntity(pos: BlockPos, state: BlockState) :
 
     /**
      * Discards every trainer around that belongs to this block. Called only when none is meant
-     * to be left — right before spawning a fresh one, and when the block goes away.
+     * to be left - right before spawning a fresh one, and when the block goes away.
      *
      * The aspect is written at spawn time and saved to NBT, so this also catches a trainer the
      * block lost track of: one that wandered into a chunk which unloaded while the spawner kept
@@ -255,7 +255,7 @@ class TrainerSpawnerBlockEntity(pos: BlockPos, state: BlockState) :
     /**
      * Everything above the line is the configuration, and it is what a structure carries: save
      * a building with a configured spawner in it and every copy comes out configured the same.
-     * Below it is the running state, saved so a restart does not duplicate the trainer — and
+     * Below it is the running state, saved so a restart does not duplicate the trainer - and
      * deliberately harmless to copy, since a UUID that names another block's trainer is thrown
      * away on the first tick.
      */

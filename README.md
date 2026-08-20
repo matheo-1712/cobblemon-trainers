@@ -1,8 +1,8 @@
 # Cobblemon Trainers
 
 Mod Fabric qui ajoute des dresseurs Pokémon configurables à Cobblemon. Chaque dresseur est
-un fichier JSON : une équipe au format Showdown, un skin — celui d'un compte Minecraft ou une
-image livrée par le pack —, des messages et une musique de combat. Les dresseurs se déclarent dans un datapack, donc sans toucher au
+un fichier JSON : une équipe au format Showdown, un skin - celui d'un compte Minecraft ou une
+image livrée par le pack -, des messages et une musique de combat. Les dresseurs se déclarent dans un datapack, donc sans toucher au
 code.
 
 ## Prérequis
@@ -11,7 +11,7 @@ code.
 | --- | --- |
 | Minecraft | 1.21.1 |
 | Fabric Loader | ≥ 0.17.2 |
-| Java | 21 (exactement — Cobblemon refuse les autres) |
+| Java | 21 (exactement - Cobblemon refuse les autres) |
 | Cobblemon | ≥ 1.7.3 |
 | Fabric API | requis |
 | Fabric Language Kotlin | requis |
@@ -32,12 +32,12 @@ Fabric API et Fabric Language Kotlin. Le mod fonctionne côté serveur comme en 
 Niveau de permission 2 (opérateur) pour les deux.
 
 L'autocomplétion de `/spawntrainer` propose les dresseurs chargés sous leur ID complet,
-`<pack>:<dresseur>` — le namespace étant le pack d'où vient le dresseur, on voit d'un coup
+`<pack>:<dresseur>` - le namespace étant le pack d'où vient le dresseur, on voit d'un coup
 d'œil qui fournit quoi. À la frappe, le nom seul suffit quand il n'est pas ambigu, et la
 recherche porte sur les deux moitiés : `jac` retrouve `mon_pack:jacinthe`.
 
 `/listtrainers` liste les dresseurs à battre et coche ceux qui l'ont été, pour soi ou pour un
-autre joueur. Les joueurs, eux, ont le **Battle Phone** — voir plus bas.
+autre joueur. Les joueurs, eux, ont le **Battle Phone** - voir plus bas.
 
 Un clic droit sur le dresseur lance le combat, sur fond de musique de combat. Si le combat
 ne peut pas démarrer (pas de Pokémon dans ton équipe, combat déjà en cours, dresseur sans
@@ -54,11 +54,11 @@ l'écran liste les dresseurs du monde, le skin de chacun, et dit lesquels sont d
 
 Les dresseurs sont **triés par datapack** : les flèches en haut de la liste (ou les touches
 gauche et droite) passent d'un pack à l'autre, avec un onglet « tous les datapacks » en
-premier dès qu'il y en a plusieurs — celui-là sépare les packs par un intertitre. Le compteur
+premier dès qu'il y en a plusieurs - celui-là sépare les packs par un intertitre. Le compteur
 en face donne l'avancement du pack affiché.
 
 Cliquer une ligne montre le dresseur en entier à droite, avec son niveau, la taille de son
-équipe et son état — vaincu, vaincu sans revanche possible, ou encore debout. À côté, six
+équipe et son état - vaincu, vaincu sans revanche possible, ou encore debout. À côté, six
 cases pour son équipe : elles restent fermées jusqu'à la victoire, puis affichent les modèles
 de ses Pokémon, formes et chromatiques comprises. Passer la souris sur l'une d'elles donne le
 nom et le niveau du Pokémon.
@@ -71,13 +71,13 @@ la même chose et le perdre ne perd rien. On le trouve dans l'onglet créatif
 /give @s cobblemon-trainers:battle_phone
 ```
 
-Seuls les dresseurs en `"tracked": true` y apparaissent, comme dans `/listtrainers` — voir
+Seuls les dresseurs en `"tracked": true` y apparaissent, comme dans `/listtrainers` - voir
 [docs/DATAPACK.md](docs/DATAPACK.md#tracked).
 
 ## Le bloc de dresseur
 
 Un dresseur invoqué par `/spawntrainer` disparaît quand on le tue. Pour un dresseur qui doit
-tenir un poste — un champion d'arène, le PNJ du spawn —, il y a le **bloc de dresseur**
+tenir un poste - un champion d'arène, le PNJ du spawn -, il y a le **bloc de dresseur**
 (`cobblemon-trainers:trainer_spawner`) : il retient quel dresseur invoquer, et le remet
 toujours en place.
 
@@ -95,11 +95,11 @@ marqueurs n'apparaissent pas même l'item en main, le curseur traverse le bloc s
 et le clic droit n'ouvre rien.
 
 > L'onglet créatif, lui, est visible par tous. Le cacher n'était possible qu'en le liant au
-> réglage vanilla *Onglet d'objets d'opérateur*, désactivé par défaut — il aurait disparu pour
+> réglage vanilla *Onglet d'objets d'opérateur*, désactivé par défaut - il aurait disparu pour
 > les opérateurs eux-mêmes. Un item inerte dans un inventaire créatif est le moindre mal.
 
-Pose le bloc là où le dresseur doit se tenir — il n'a pas de collision, le dresseur se tient
-dedans — puis fais un **clic droit** dessus. Il faut le mod installé côté client pour que
+Pose le bloc là où le dresseur doit se tenir - il n'a pas de collision, le dresseur se tient
+dedans - puis fais un **clic droit** dessus. Il faut le mod installé côté client pour que
 l'écran s'ouvre.
 
 L'écran qui s'ouvre reprend celui du bloc de commande :
@@ -119,7 +119,7 @@ Ensuite le bloc se débrouille :
   à l'appel ;
 - un dresseur tué revient après le délai ;
 - un dresseur qui s'éloigne trop est ramené sur son bloc, sa propre vie remise au maximum
-  comme s'il venait d'être invoqué — sauf s'il est en plein combat, où il est laissé
+  comme s'il venait d'être invoqué - sauf s'il est en plein combat, où il est laissé
   tranquille jusqu'à la fin. Son équipe n'est pas touchée : le report des dégâts d'un combat
   au suivant reste réglé par `autoHealParty` ;
 - casser le bloc emporte son dresseur. Comme une barrière, il ne se casse qu'en créatif et ne
@@ -134,12 +134,12 @@ décline poliment : ce qu'un joueur a accompli est retenu par ID de dresseur, pa
 
 Un bloc configuré garde ses réglages quand il part dans une structure : sauvegarde un bâtiment
 avec son bloc de dresseur dedans, et chaque copie posée sort réglée sur le même dresseur, même
-rayon, même délai — et invoque *son* dresseur, pas celui de l'original. Ça vaut pour le bloc
+rayon, même délai - et invoque *son* dresseur, pas celui de l'original. Ça vaut pour le bloc
 de structure comme pour `/structure`, et donc aussi pour une structure générée par datapack.
 
 L'orientation suit la structure : pose-la tournée d'un quart de tour ou en miroir, le dresseur
 regarde dans la direction correspondante. Comme un four ou un lit, le bloc n'a que quatre
-directions — il s'oriente vers celui qui le pose.
+directions - il s'oriente vers celui qui le pose.
 
 ## Déclarer un dresseur
 
@@ -170,15 +170,15 @@ Tous les champs sont facultatifs. Les autres réglages disponibles : format de c
 messages de début et de fin, musique de combat, et des textes traduisibles par clé.
 
 Un dresseur peut aussi remettre des objets à la victoire et refuser la revanche une fois
-battu — `rewards`, `rewardOnce` et `canRebattle`. Ce qu'un joueur a accompli est retenu par ID
+battu - `rewards`, `rewardOnce` et `canRebattle`. Ce qu'un joueur a accompli est retenu par ID
 de dresseur : battre un exemplaire de `mon_pack:champion` les bat tous, et le réinvoquer ne
 remet pas le compteur à zéro.
 
 `/listtrainers` liste les dresseurs restants et ceux déjà vaincus. Un dresseur qui n'a rien à
-y faire — démonstration, PNJ qui ne se bat pas — se retire de la liste avec
+y faire - démonstration, PNJ qui ne se bat pas - se retire de la liste avec
 `"tracked": false` ; les dresseurs livrés par le mod le sont déjà.
 
-Une forme — régionale, méga, fakemon d'un autre pack — s'obtient avec une ligne `Aspects:`,
+Une forme - régionale, méga, fakemon d'un autre pack - s'obtient avec une ligne `Aspects:`,
 qui reprend la syntaxe de `/pokespawn` : `"Aspects: rlm, poison"` pour un Haxorus RLM Poison.
 
 **➜ Le guide complet est dans [docs/DATAPACK.md](docs/DATAPACK.md)** : arborescence,
@@ -199,7 +199,7 @@ Trois façons de livrer un pack, au choix de son auteur :
 
 Deux ajouts du mod par rapport à Minecraft : le `.jar` est accepté partout (le jeu ne connaît
 que le dossier et le `.zip`), et surtout **un pack posé dans `mods/` est lu tel quel, avec son
-seul `pack.mcmeta`** — sans `fabric.mod.json`, sans code. C'est la seule voie qui charge d'un
+seul `pack.mcmeta`** - sans `fabric.mod.json`, sans code. C'est la seule voie qui charge d'un
 coup les dresseurs et leurs traductions et musique, en un fichier que le joueur dépose sans
 rien cocher.
 
@@ -219,7 +219,7 @@ Le jar remappé sort dans `build/libs/`. Pour lancer un environnement de test :
 ```
 
 Le projet cible Java 21 via un toolchain Gradle, ce qui force aussi `runClient` et
-`runServer` — sans ça, Cobblemon refuse de démarrer sous un JDK plus récent. Ne place pas
+`runServer` - sans ça, Cobblemon refuse de démarrer sous un JDK plus récent. Ne place pas
 de jar Cobblemon dans `run/mods/` : il est déjà fourni par les dépendances, et le doublon
 fait planter le client.
 
@@ -238,7 +238,7 @@ pour la configuration de l'IDE.
 
 Publier une release GitHub dont le tag est `v<version>`, par exemple `v1.2.3`. Le workflow
 `release.yml` construit, publie sur Modrinth, et attache à la release le jar et
-`exemple_trainer_datapack.zip` — le pack d'exemple, prêt à poser dans `mods/`, `datapacks/` ou
+`exemple_trainer_datapack.zip` - le pack d'exemple, prêt à poser dans `mods/`, `datapacks/` ou
 `resourcepacks/`.
 
 C'est le tag qui donne la version du mod : rien à mettre à jour avant de tagguer, le `version=`
@@ -263,4 +263,4 @@ sans risque : sans jeton, il écrit ce qu'il aurait envoyé dans `build/mod-publ
 
 ## Licence
 
-CC0-1.0 — voir [LICENSE](LICENSE).
+CC0-1.0 - voir [LICENSE](LICENSE).

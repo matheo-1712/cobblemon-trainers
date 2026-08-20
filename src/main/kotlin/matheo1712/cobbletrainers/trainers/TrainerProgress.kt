@@ -63,7 +63,7 @@ class TrainerProgress : SavedData() {
 
         /**
          * The data fixer type is only consulted when the saved version is older than the
-         * current one, so any non-null value is a no-op here — but null is not allowed, the
+         * current one, so any non-null value is a no-op here - but null is not allowed, the
          * loader dereferences it as soon as the file exists.
          */
         private val FACTORY = SavedData.Factory(

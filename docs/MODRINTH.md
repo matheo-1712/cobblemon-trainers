@@ -1,6 +1,6 @@
 # Cobblemon Trainers
 
-**Add real Pokémon trainers to your Cobblemon world — each one a single JSON file.**
+**Add real Pokémon trainers to your Cobblemon world - each one a single JSON file.**
 
 Drop the mod in, and you can populate your world with custom trainers: a full Showdown
 team, a Minecraft skin, custom dialogue, battle music, rewards, and a difficulty setting.
@@ -14,7 +14,7 @@ Works in singleplayer and on servers. Trainers run server-side, but mod is also 
 ## What you get
 
 - **Real trainer battles.** Right-click a trainer, get a proper Cobblemon battle in
-  singles, doubles or triples — with battle music playing over everything else.
+  singles, doubles or triples - with battle music playing over everything else.
 - **Trainers that stay where you put them.** An invisible spawner block holds one trainer in
   place: kill it and it comes back, walk it away and it returns. Configure it by right-clicking,
   and it keeps its settings inside a structure.
@@ -33,7 +33,7 @@ Works in singleplayer and on servers. Trainers run server-side, but mod is also 
 - **Regional forms, fakemon.** An `Aspects:` line handles any Cobblemon form,
   including ones added by other packs.
 - **Translatable text.** Trainer names and dialogue accept translation keys, so every
-  player reads them in their own language — floating nameplate included.
+  player reads them in their own language - floating nameplate included.
 
 ---
 
@@ -43,7 +43,7 @@ Works in singleplayer and on servers. Trainers run server-side, but mod is also 
 | --- | --- |
 | Minecraft | 1.21.1 |
 | Mod loader | Fabric (Loader ≥ 0.17.2) |
-| Java | 21 — exactly, Cobblemon refuses anything else |
+| Java | 21 - exactly, Cobblemon refuses anything else |
 | Cobblemon | ≥ 1.7.3 |
 | Fabric API | required |
 | Fabric Language Kotlin | required |
@@ -51,7 +51,7 @@ Works in singleplayer and on servers. Trainers run server-side, but mod is also 
 ## Installation
 
 Put `cobblemon-trainers-<version>.jar` in your `mods/` folder, next to Cobblemon, Fabric API
-and Fabric Language Kotlin. That's it — the mod ships two demo trainers you can spawn right
+and Fabric Language Kotlin. That's it - the mod ships two demo trainers you can spawn right
 away.
 
 ### Built-in trainers
@@ -69,7 +69,7 @@ single JSON file:
 /spawntrainer cobblemon-trainers:theazertor
 ```
 
-Both play at maximum AI skill (`skill: 5`) with fully built competitive teams — they are meant
+Both play at maximum AI skill (`skill: 5`) with fully built competitive teams - they are meant
 as a real fight, and as a reference for your own files.
 
 ## Commands
@@ -81,14 +81,14 @@ as a real fight, and as a reference for your own files.
 ```
 
 Both require permission level 2 (operator). Autocomplete lists every loaded trainer under its
-full `<pack>:<trainer>` ID, and searches both halves — typing `jac` finds `my_pack:jacinthe`.
+full `<pack>:<trainer>` ID, and searches both halves - typing `jac` finds `my_pack:jacinthe`.
 
 ---
 
 ## Trainers that stay put
 
 A trainer summoned with `/spawntrainer` is gone the moment something kills it. For a trainer
-that has to hold a post — a gym leader, the NPC at spawn — there is the **trainer spawner
+that has to hold a post - a gym leader, the NPC at spawn - there is the **trainer spawner
 block**, `cobblemon-trainers:trainer_spawner`. It remembers which trainer belongs there and
 puts it back whenever it is missing.
 
@@ -99,7 +99,7 @@ its item. Find it in the **Cobblemon Trainers** creative tab, or:
 /give @s cobblemon-trainers:trainer_spawner
 ```
 
-Place it where the trainer should stand — it has no collision, the trainer stands inside it —
+Place it where the trainer should stand - it has no collision, the trainer stands inside it -
 and **right-click** to open its screen. Pick a trainer from the list of everything loaded, or
 type an ID; set how far it may wander before being pulled back, and how long it waits before
 coming back from the dead.
@@ -109,17 +109,17 @@ Then it takes care of itself:
 - summons its trainer as soon as it is set, and again whenever one goes missing;
 - a killed trainer returns after the delay (30 seconds by default);
 - a trainer that strays too far is put back on its block at full health, the way a freshly
-  spawned one would arrive. Its Pokémon team is left as it is — that stays `autoHealParty`'s
+  spawned one would arrive. Its Pokémon team is left as it is - that stays `autoHealParty`'s
   call. A trainer mid-battle is left alone;
 - breaking the block takes its trainer with it;
 - **a configured block keeps its settings inside a structure.** Save a building with one in it
-  and every copy comes out set to the same trainer — and summons its own, not the original's.
+  and every copy comes out set to the same trainer - and summons its own, not the original's.
   Placed rotated or mirrored, the trainer turns with the structure.
 
 It is an operator block, like a command block: **everything it does needs operator rights and
 creative mode**. Without them the item places nothing, the block cannot be broken, no markers
 appear, the crosshair passes straight through it, and right-click does nothing. Opening the
-screen also needs the mod installed client-side — everything else works with a vanilla client.
+screen also needs the mod installed client-side - everything else works with a vanilla client.
 
 ---
 
@@ -167,7 +167,7 @@ Then, in game:
 /spawntrainer my_pack:red
 ```
 
-**Every field is optional** — a file containing just `{}` produces a valid (if boring)
+**Every field is optional** - a file containing just `{}` produces a valid (if boring)
 trainer. A broken file is logged and skipped; the others still load.
 
 ### Field reference
@@ -179,18 +179,18 @@ trainer. A broken file is logged and skipped; the others still load.
 | `team` | `[]` | The team, in Showdown format |
 | `skin.type` | `player_username` | `player_username`, `player_uuid` or `texture` |
 | `skin.value` | `Steve` | Username, UUID, or path to a PNG in your pack |
-| `skin.model` | `default` | `default` (Steve) or `slim` (Alex) — `texture` only |
+| `skin.model` | `default` | `default` (Steve) or `slim` (Alex) - `texture` only |
 | `battleFormat` | `singles` | `singles`, `doubles`, `triples` |
-| `skill` | `5` | Battle AI difficulty, 0–5 |
+| `skill` | `5` | Battle AI difficulty, 0-5 |
 | `autoHealParty` | `true` | Heal the trainer's team before and after each battle |
 | `canBattle` | `true` | `false` makes the NPC non-hostile |
 | `canRebattle` | `true` | `false` = one battle per player, ever |
 | `tracked` | `true` | `false` hides the trainer from `/listtrainers` |
 | `rewards` | `[]` | Items given on victory |
 | `rewardOnce` | `false` | `true` = rewards only on the first win |
-| `battleStartMessage` | — | Sent when the battle begins |
-| `battleEndWinMessage` | — | Sent when the player wins |
-| `battleEndLoseMessage` | — | Sent when the player loses |
+| `battleStartMessage` | - | Sent when the battle begins |
+| `battleEndWinMessage` | - | Sent when the player wins |
+| `battleEndLoseMessage` | - | Sent when the player loses |
 | `battleMusic` | mod's track | Sound ID played during the battle, `null` for silence |
 
 ---
@@ -207,7 +207,7 @@ Three options, pick whichever suits your pack:
 
 Two things this mod adds on top of vanilla: `.jar` archives are accepted everywhere (the
 game only knows folders and `.zip`), and **a pack dropped in `mods/` loads with nothing but
-its `pack.mcmeta`** — no `fabric.mod.json`, no code. It's the only route that loads trainers,
+its `pack.mcmeta`** - no `fabric.mod.json`, no code. It's the only route that loads trainers,
 translations, music and custom skin textures in a single file the player just drops in.
 
 ---
@@ -215,7 +215,7 @@ translations, music and custom skin textures in a single file the player just dr
 ## Known limitations
 
 - Forms are declared through their aspects (`Aspects: alolan`), not the Showdown name
-  suffix (`Raichu-Alola`) — a suffix can't be told apart from species whose name contains a
+  suffix (`Raichu-Alola`) - a suffix can't be told apart from species whose name contains a
   hyphen (`Ho-Oh`, `Porygon-Z`).
 - `player_username` and `player_uuid` skins are fetched from the Mojang API, so they need
   network access and an existing account. On failure the trainer keeps the default skin and
@@ -234,18 +234,18 @@ Developed by **Mathéo** ([matheo-1712](https://github.com/matheo-1712)).
 - **Modpacks: yes.** You are free to include this mod in any modpack, public or private,
   free or otherwise. No permission needed, no message required.
 - **Servers: yes.** Run it on any server you like.
-- **Datapacks: yes.** Trainer packs you build with this mod are yours — distribute them
+- **Datapacks: yes.** Trainer packs you build with this mod are yours - distribute them
   however you want.
 - **Reuploading: no.** Do not republish the mod on Modrinth, CurseForge, or any other
   distribution site, mirror, or ad-wrapped download page. Link to
-  [this page](https://modrinth.com/mod/cobblemon-trainers) instead — that way everyone gets
+  [this page](https://modrinth.com/mod/cobblemon-trainers) instead - that way everyone gets
   the real file, the right version, and the changelog with it.
 
 ## Links
 
 - **Source & issues:** [github.com/matheo-1712/cobblemon-trainers](https://github.com/matheo-1712/cobblemon-trainers)
-- **Example pack:** [downloadable](https://github.com/matheo-1712/cobblemon-trainers/releases) next to the jar on every release, on assets — one folder that works as
+- **Example pack:** [downloadable](https://github.com/matheo-1712/cobblemon-trainers/releases) next to the jar on every release, on assets - one folder that works as
   a datapack and a resource pack at once, covering every option.
 
 Found a bug, or a trainer that won't load? Open an issue on GitHub with your JSON and the
-server log — the mod names the file it choked on.
+server log - the mod names the file it choked on.

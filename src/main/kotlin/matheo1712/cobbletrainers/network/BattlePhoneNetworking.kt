@@ -22,7 +22,7 @@ import net.minecraft.server.level.ServerPlayer
  * victories from a [matheo1712.cobbletrainers.trainers.TrainerProgress] save file, neither of which the client has. So
  * right-clicking the item sends the whole listing over, and the client opens a screen with it.
  *
- * Skins are not in that listing. They are images — a few kilobytes each — and a world may hold
+ * Skins are not in that listing. They are images - a few kilobytes each - and a world may hold
  * a hundred trainers, so they are asked for one at a time, as the screen needs them, and
  * answered from the [TrainerSkins] cache. Teams work the same way, and are only ever sent for
  * a trainer the asking player has beaten.
@@ -232,7 +232,7 @@ data class RequestTrainerSkinPayload(val trainerId: String) : CustomPacketPayloa
  *
  * The bytes travel rather than a path, for the same reason `NPC_PLAYER_TEXTURE` carries them:
  * a texture shipped in a pack installed on the server alone still shows up on every client.
- * An empty array means the trainer has no resolvable skin — the screen draws a placeholder.
+ * An empty array means the trainer has no resolvable skin - the screen draws a placeholder.
  */
 data class TrainerSkinPayload(
     val trainerId: String,
@@ -280,7 +280,7 @@ data class TrainerSkinPayload(
  *
  * @param species Full species ID, `cobblemon:pikachu`, so the client looks it up in its own
  *   synced registry rather than guessing from a name.
- * @param aspects What the Pokémon ended up with once built — this is what picks the model, a
+ * @param aspects What the Pokémon ended up with once built - this is what picks the model, a
  *   regional form and a shiny included.
  * @param nickname Empty when the Pokémon has none.
  */

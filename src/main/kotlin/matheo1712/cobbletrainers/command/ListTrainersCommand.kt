@@ -19,12 +19,12 @@ import net.minecraft.server.level.ServerPlayer
  * `/listtrainers`, which lists every loaded trainer and whether a player has beaten it.
  *
  * Usage:
- * - `/listtrainers` — the caller's own record
- * - `/listtrainers <player>` — another player's record
+ * - `/listtrainers` - the caller's own record
+ * - `/listtrainers <player>` - another player's record
  *
  * What is shown is the same record [matheo1712.cobbletrainers.battle.TrainerBattleInteraction] reads to turn down a rematch,
  * so a trainer marked as defeated with `canRebattle: false` is one the player can no longer
- * challenge — the line says so.
+ * challenge - the line says so.
  *
  * Only the trainers a pack marks as tracked are listed, see [TrainerRegistry.tracked].
  *

@@ -13,15 +13,15 @@ de dresseur visible quand on tient son item ; l'entrypoint `CobblemonTrainersCli
 seul rôle est d'ouvrir les deux écrans du mod et de recevoir les skins du second ; et ces deux
 écrans eux-mêmes, sous `client.gui` (voir « Le bloc de dresseur » et « Le Battle Phone »).
 Aucun renderer d'entité n'est enregistré : le Battle Phone dessine les skins à plat depuis
-l'image, et pour les Pokémon d'une équipe il appelle le `drawProfilePokemon` de Cobblemon —
+l'image, et pour les Pokémon d'une équipe il appelle le `drawProfilePokemon` de Cobblemon -
 seul endroit du mod qui touche à du rendu 3D.
 
 Le code, les commentaires et les logs sont en **anglais**. Tout texte affiché au joueur
-passe par `assets/cobblemon-trainers/lang/` — jamais de littéral en dur.
+passe par `assets/cobblemon-trainers/lang/` - jamais de littéral en dur.
 
 La doc utilisateur est en français : `README.md` (installation, commandes) et
 `docs/DATAPACK.md` (guide complet de création de datapack). Ce qui touche au format des
-dresseurs — nouveau champ, nouvelle règle de parsing — se répercute dans `docs/DATAPACK.md`,
+dresseurs - nouveau champ, nouvelle règle de parsing - se répercute dans `docs/DATAPACK.md`,
 qui est la référence ; le README n'en garde qu'un résumé.
 
 ## Commandes
@@ -36,7 +36,7 @@ qui est la référence ; le README n'en garde qu'un résumé.
 
 Sur Windows, utiliser `.\gradlew.bat`.
 
-Il n'existe pas de source set `src/test` — `build` ne lance donc aucun test.
+Il n'existe pas de source set `src/test` - `build` ne lance donc aucun test.
 Toute vérification passe par `runClient`/`runServer`, dont les mondes vivent dans `run/`
 (gitignoré). **Ne pas mettre de jar Cobblemon dans `run/mods/`** : il est déjà fourni par
 `modImplementation`, et le doublon fait planter le client au démarrage.
@@ -52,7 +52,7 @@ Cobblemon et Architectury sont tirés du **Maven Modrinth** et référencés par
 version Modrinth** (`cobblemon_version=kF7CvxTo`), pas par numéro sémantique : pour
 changer de version, il faut récupérer le nouvel ID sur Modrinth.
 
-Un ID Modrinth ne dit rien de la version de jeu ni du loader qu'il cible — une erreur ici
+Un ID Modrinth ne dit rien de la version de jeu ni du loader qu'il cible - une erreur ici
 passe la résolution Gradle et casse le build plus loin. Symptôme rencontré : Loom échoue en
 phase de configuration avec `Cannot remap access widener from namespace 'official'` parce
 que l'ID pointait vers un build pour une autre version de Minecraft. Pour vérifier un ID :
@@ -66,11 +66,11 @@ curl -s "https://api.modrinth.com/v2/version/<ID>" | python -c "import sys,json;
 Flux complet : JSON de datapack → `TrainerDefinition` → `NPCEntity` Cobblemon →
 messages, musique et récompenses de combat.
 
-- **`CobblemonTrainers`** — `ModInitializer`. Enregistre `/spawntrainer` et `/listtrainers`,
+- **`CobblemonTrainers`** - `ModInitializer`. Enregistre `/spawntrainer` et `/listtrainers`,
   branche `TrainerReloadListener` sur le gestionnaire de ressources `SERVER_DATA` (ce qui
   couvre à la fois le chargement initial et `/reload`), et enregistre les listeners de combat
   dans un `try/catch` car ils dépendent de la présence de Cobblemon.
-- **`TrainerRegistry`** — map en mémoire `ResourceLocation -> TrainerDefinition`, alimentée
+- **`TrainerRegistry`** - map en mémoire `ResourceLocation -> TrainerDefinition`, alimentée
   uniquement par les datapacks (`data/<namespace>/cobblemontrainers/<nom>.json`, y compris
   ceux du mod). Le dossier est à un seul niveau sous le namespace, comme les `species/` et
   `npcs/` de Cobblemon, mais nommé d'après le mod plutôt que `trainers/` : un `trainers/`
@@ -79,42 +79,42 @@ messages, musique et récompenses de combat.
   registres de Cobblemon, seul le nom de fichier compte : les sous-dossiers ne font pas
   partie de l'ID. Une erreur de parsing est loguée et le dresseur ignoré, sans faire
   échouer les autres.
-- **`TrainerDefinition` / `TrainerSkin`** — data classes Gson. Tous les champs ont une
+- **`TrainerDefinition` / `TrainerSkin`** - data classes Gson. Tous les champs ont une
   valeur par défaut, donc un JSON partiel reste valide. Attention à ne pas confondre
   `level` (niveau des Pokémon) et `skill` (difficulté de l'IA, 0-5, passée à
   `StrongBattleAI`).
-- **`ShowdownTeamParser`** — convertit du format Showdown en `PokemonProperties` en
+- **`ShowdownTeamParser`** - convertit du format Showdown en `PokemonProperties` en
   reconstruisant une chaîne de propriétés Cobblemon (`"pikachu level=88 ability=static …"`)
   passée à `PokemonProperties.parse`.
-- **`TrainerSpawner`** — construit et fait apparaître le `NPCEntity`.
-- **`TrainerBattleEventHandler`** — s'abonne à `CobblemonEvents.BATTLE_STARTED_POST` pour
+- **`TrainerSpawner`** - construit et fait apparaître le `NPCEntity`.
+- **`TrainerBattleEventHandler`** - s'abonne à `CobblemonEvents.BATTLE_STARTED_POST` pour
   le message de début et la musique, et à `BATTLE_VICTORY` pour le message de fin, les
   récompenses et l'enregistrement de la victoire. Il surveille aussi la mort et la
   suppression des entités, pour arrêter le combat d'un dresseur qui quitte le monde (voir
   plus bas).
-- **`TrainerProgress`** — `SavedData` du monde : qui a battu quel dresseur. Voir « Revanches
+- **`TrainerProgress`** - `SavedData` du monde : qui a battu quel dresseur. Voir « Revanches
   et récompenses ».
-- **`TrainerRewards`** — remet les objets au vainqueur.
-- **`ListTrainersCommand`** — `/listtrainers [joueur]`, la lecture de `TrainerProgress`
+- **`TrainerRewards`** - remet les objets au vainqueur.
+- **`ListTrainersCommand`** - `/listtrainers [joueur]`, la lecture de `TrainerProgress`
   côté joueur.
-- **`TrainerBattleMusic`** — envoie `ClientboundSoundPacket` / `ClientboundStopSoundPacket`
+- **`TrainerBattleMusic`** - envoie `ClientboundSoundPacket` / `ClientboundStopSoundPacket`
   aux joueurs du combat.
 - **`block.TrainerBlocks` / `TrainerSpawnerBlock` / `TrainerSpawnerBlockEntity` /
-  `TrainerSpawnerItem`** — le bloc qui maintient un dresseur en place. Voir « Le bloc de
+  `TrainerSpawnerItem`** - le bloc qui maintient un dresseur en place. Voir « Le bloc de
   dresseur ».
-- **`network.TrainerSpawnerNetworking`** — les deux `CustomPacketPayload` de l'écran de ce
+- **`network.TrainerSpawnerNetworking`** - les deux `CustomPacketPayload` de l'écran de ce
   bloc, et la validation côté serveur de ce qui revient.
-- **`item.TrainerItems` / `BattlePhoneItem`** — l'objet qui ouvre le suivi de progression.
+- **`item.TrainerItems` / `BattlePhoneItem`** - l'objet qui ouvre le suivi de progression.
   Voir « Le Battle Phone ».
-- **`network.BattlePhoneNetworking`** — les trois `CustomPacketPayload` de cet écran : le
+- **`network.BattlePhoneNetworking`** - les trois `CustomPacketPayload` de cet écran : le
   listing, la demande de skin et la réponse.
-- **`trainers.TrainerSkins`** — la résolution d'un `TrainerSkin` en image, hors thread serveur
+- **`trainers.TrainerSkins`** - la résolution d'un `TrainerSkin` en image, hors thread serveur
   et avec cache. Voir « Skins ».
-- **`client.CobblemonTrainersClient`** — l'unique entrypoint client.
-- **`client.gui.TrainerSpawnerScreen` / `client.gui.BattlePhoneScreen`** — les deux écrans.
-- **`client.gui.TrainerSkinRenderer` / `client.cache.TrainerSkinCache`** — le dessin d'un skin
+- **`client.CobblemonTrainersClient`** - l'unique entrypoint client.
+- **`client.gui.TrainerSpawnerScreen` / `client.gui.BattlePhoneScreen`** - les deux écrans.
+- **`client.gui.TrainerSkinRenderer` / `client.cache.TrainerSkinCache`** - le dessin d'un skin
   à plat, et les textures que le Battle Phone a reçues.
-- **`client.cache.TrainerTeamCache`** — les équipes que le Battle Phone a reçues, prêtes à
+- **`client.cache.TrainerTeamCache`** - les équipes que le Battle Phone a reçues, prêtes à
   dessiner.
 
 ### Musique de combat
@@ -122,7 +122,7 @@ messages, musique et récompenses de combat.
 Le son voyage dans un `Holder.direct(SoundEvent.createVariableRangeEvent(id))` : rien n'est
 enregistré dans `BuiltInRegistries.SOUND_EVENT`, donc un datapack peut nommer n'importe
 quelle piste sans que le mod la connaisse. C'est le client qui résout le nom, il faut donc
-un **resource pack** pour une piste maison — le jar du mod en est un, ce qui fait marcher
+un **resource pack** pour une piste maison - le jar du mod en est un, ce qui fait marcher
 `TrainerBattleMusic.DEFAULT_TRACK` sans rien configurer.
 
 Rien n'est mémorisé côté serveur : `stop` se contente de couper la piste que nomme la
@@ -134,19 +134,19 @@ Points à ne pas redécouvrir :
 - **`sounds.json` n'a pas de champ `category`.** La catégorie est choisie à l'envoi, ici
   `SoundSource.MUSIC` (curseur *Musique* du joueur).
 - **L'exclusivité passe par un `ClientboundStopSoundPacket(null, MUSIC)`** envoyé juste avant
-  la piste — un nom nul veut dire « toute la catégorie », d'où l'ordre strict des deux
+  la piste - un nom nul veut dire « toute la catégorie », d'où l'ordre strict des deux
   paquets. Ça règle aussi la suite : le `MusicManager` du client voit sa piste disparaître et
   retire un délai avant la prochaine, une bonne dizaine de minutes pour la musique de
-  surface. C'est le plus près de l'exclusif qu'un serveur puisse faire — lancer la musique
+  surface. C'est le plus près de l'exclusif qu'un serveur puisse faire - lancer la musique
   d'ambiance est une décision du client.
 - **`VOLUME` est volontairement bien en dessous de 1.** Une piste de combat tourne plusieurs
   minutes par dessus tout le reste ; à 1.0 elle couvre le combat qu'elle accompagne. Le curseur
   *Musique* du joueur s'applique par dessus. `PITCH`, lui, reste à 1.0 : c'est la vitesse de
   lecture, borné à `[0.5, 2.0]` par `SoundEngine.calculatePitch`, et il transposerait la piste
-  entière — il n'a rien à voir avec le niveau sonore.
+  entière - il n'a rien à voir avec le niveau sonore.
 - **`"stream": true` est obligatoire** sur un morceau long, sinon Minecraft charge tout le
   fichier en mémoire.
-- **Un `.ogg` stéréo est joué sans atténuation**, position ignorée — exactement ce qu'on veut
+- **Un `.ogg` stéréo est joué sans atténuation**, position ignorée - exactement ce qu'on veut
   pour une musique. La position envoyée (celle du joueur) n'est qu'un repli pour une piste
   mono.
 - **Pas de boucle.** `isLooping` est une décision de `SoundInstance`, côté client, et le mod
@@ -154,7 +154,7 @@ Points à ne pas redécouvrir :
 
 ### Revanches et récompenses
 
-`canRebattle` et `rewardOnce` ont besoin de savoir qui a déjà battu quoi — un état de monde,
+`canRebattle` et `rewardOnce` ont besoin de savoir qui a déjà battu quoi - un état de monde,
 pas de datapack. Il vit donc dans un `SavedData` (`TrainerProgress`, fichier
 `cobblemon_trainers_progress.dat` de l'overworld) et non dans `TrainerRegistry`, que `/reload`
 vide entièrement.
@@ -171,10 +171,10 @@ Points à ne pas redécouvrir :
 - **`tracked` masque, il n'empêche pas d'enregistrer.** Un dresseur masqué garde son entrée,
   sans quoi `canRebattle` et `rewardOnce` cesseraient de marcher pour lui. Tout ce qui
   présente la progression à un joueur passe par `TrainerRegistry.tracked()` plutôt que
-  `all()` — c'est le point d'entrée que réutilisera l'item de suivi prévu. Les dresseurs de
+  `all()` - c'est le point d'entrée que réutilisera l'item de suivi prévu. Les dresseurs de
   démonstration du mod portent `"tracked": false` : ils sont chargés dans tous les mondes.
 - **`SavedData.Factory` n'accepte pas un `DataFixTypes` nul** : `DimensionDataStorage`
-  le déréférence dès que le fichier existe. `DataFixTypes.LEVEL` fait l'affaire — le
+  le déréférence dès que le fichier existe. `DataFixTypes.LEVEL` fait l'affaire - le
   DataFixerUpper rend l'entrée telle quelle quand la version lue vaut la version courante,
   donc c'est un passe-plat.
 - **Le refus de revanche est dans `TrainerBattleInteraction`, avant `BattleBuilder`**, pour
@@ -219,7 +219,7 @@ Ces points ne se devinent pas depuis notre code seul et ont chacun causé un bug
   l'équipe pour **tous** les NPC de cette classe. L'équipe doit être posée sur
   `npc.party` (le `NPCPartyStore` de l'entité), et **après** `initialize()`, qui
   réassigne `party` depuis la classe.
-- **`NPCBattleActor` n'hérite pas de `TrainerBattleActor`** — les deux dérivent
+- **`NPCBattleActor` n'hérite pas de `TrainerBattleActor`** - les deux dérivent
   séparément de `AIBattleActor`. Filtrer sur `TrainerBattleActor` ne matche jamais un
   NPC. `NPCBattleActor` expose directement `.npc`.
 - **`canChallenge` et `healAfterwards` ne sont plus lus.** `healAfterwards` est
@@ -231,7 +231,7 @@ Ces points ne se devinent pas depuis notre code seul et ont chacun causé un bug
   `willowisp`, `kingsshield`, `hooh`, `porygonz`, `mrmime`, `farfetchd`, `flabebe`. D'où
   `normalizeName`, qui décompose en NFD, retire les marques et supprime tout ce qui n'est ni
   lettre ni chiffre. Retirer les seuls espaces laissait `u-turn`, que rien ne résout et que
-  Cobblemon écarte sans un mot — le parseur vérifie donc aussi chaque capacité avec
+  Cobblemon écarte sans un mot - le parseur vérifie donc aussi chaque capacité avec
   `Moves.getByName`. Les aspects sont l'exception (`normalizeAspect`, qui se contente de
   passer en minuscules) : ce sont déjà des identifiants, et `appliance=wash` perdrait sa
   paire.
@@ -248,7 +248,7 @@ Ces points ne se devinent pas depuis notre code seul et ont chacun causé un bug
   espaces, il retire les accents, élide `'` et `.`, et rend tout le reste en `_`. La même
   `CommandSyntaxException` remontait jusqu'au tick qui demandait l'apparition, d'où deux
   filets : le parseur vérifie l'ID dans `BuiltInRegistries.ITEM` et retire l'objet inconnu
-  en le loguant, et `TrainerSpawner.applyTeam` entoure `create()` — un Pokémon fautif coûte
+  en le loguant, et `TrainerSpawner.applyTeam` entoure `create()` - un Pokémon fautif coûte
   sa place dans l'équipe, pas le dresseur.
 - **Le parseur de propriétés découpe sur les espaces.** Les valeurs qui peuvent en
   contenir (surnom, objet tenu) sont assignées directement sur l'objet `PokemonProperties`
@@ -258,12 +258,12 @@ Ces points ne se devinent pas depuis notre code seul et ont chacun causé un bug
   (contrairement à `saveToNBT`/`loadFromNBT` et à `asString`) : le champ repart nul, sans un
   mot. `provide()` commence par ce `copy()`, d'où un surnom Showdown correctement parsé mais
   jamais visible en combat. `TrainerSpawner.applyTeam` remplit donc lui-même le
-  `NPCPartyStore` — le reste de `provide()` n'est que le niveau par défaut et la création du
+  `NPCPartyStore` - le reste de `provide()` n'est que le niveau par défaut et la création du
   store.
 - **Il n'existe pas de classe `cobblemon:humanoid`.** Cobblemon 1.7.3 ne livre que
   `ai_test`, `kitchen_sink`, `sacchi` et `standard`.
 - **`resourceIdentifier` pilote le rendu.** Laissé vide, `NPCClasses.reload` le remplace
-  par l'ID de la classe — donc `cobblemon-trainers:trainer`, pour lequel aucun asset
+  par l'ID de la classe - donc `cobblemon-trainers:trainer`, pour lequel aucun asset
   n'existe, et le skin de joueur n'apparaît jamais. Les variations qui associent
   `model-default` / `model-slim` aux modèles Steve/Alex avec `"texture": "variable"` sont
   déclarées sous le nom `cobblemon:standard`
@@ -312,7 +312,7 @@ chaque fois qu'il manque à l'appel. C'est la seule partie du mod qui a du code 
 mentionne `BarrierBlock` : `getRenderShape()` renvoie `INVISIBLE` et le modèle de bloc n'a
 qu'une texture `particle`. Ce qu'on voit est une **particule** `BLOCK_MARKER`, semée par
 `ClientLevel.doAnimateTick` sur les positions au hasard dont le bloc est celui que renvoie
-`ClientLevel.getMarkerParticleTarget()` — laquelle lit `MARKER_PARTICLE_ITEMS`, un
+`ClientLevel.getMarkerParticleTarget()` - laquelle lit `MARKER_PARTICLE_ITEMS`, un
 `Set.of(Items.BARRIER, Items.LIGHT)` privé et immuable. La seule entrée est donc cette
 méthode, d'où `client.ClientLevelMixin` : un `@Inject(HEAD, cancellable)` qui répond notre
 bloc quand la main principale tient son item, et laisse la réponse de vanilla intacte sinon.
@@ -334,7 +334,7 @@ Points à ne pas redécouvrir :
 - **L'écran n'est pas un `MenuType`** : il n'y a pas d'inventaire. Deux `CustomPacketPayload`
   suffisent, l'un qui porte les réglages du bloc et la liste des dresseurs chargés, l'autre qui
   ramène ce que le joueur a tapé. Rien n'est mémorisé entre les deux : le bloc est retrouvé
-  depuis la position du paquet de retour, et tout est revalidé là — permission, distance, ID.
+  depuis la position du paquet de retour, et tout est revalidé là - permission, distance, ID.
   Un client peut renvoyer autre chose que ce qu'on lui a proposé.
 - **La liste des dresseurs vient du serveur.** Les dresseurs sont des données de datapack : le
   client n'a pas de `TrainerRegistry` peuplé, même en solo il ne faut pas s'y fier.
@@ -350,19 +350,19 @@ Points à ne pas redécouvrir :
 - **`respawnAt` ne vide pas `spawnedTrainer`.** Un chunk qui vient de se charger peut ne pas
   encore avoir ses entités : le tick suivant retrouve le dresseur par UUID et annule la
   réapparition programmée. Vider l'UUID tout de suite ferait un doublon à chaque rechargement.
-  `respawnAt` n'est pas sauvegardé — c'est un temps de jeu absolu, sans valeur dans un autre
-  monde — et le transitoire `seenAlive` distingue le dresseur qu'on a vu mourir (délai complet)
+  `respawnAt` n'est pas sauvegardé - c'est un temps de jeu absolu, sans valeur dans un autre
+  monde - et le transitoire `seenAlive` distingue le dresseur qu'on a vu mourir (délai complet)
   de celui qui n'est pas encore là (`RELOAD_GRACE_TICKS`).
 - **Une structure emporte la configuration toute seule.** `StructureTemplate.fillFromWorld`
   appelle `saveWithId` et `placeInWorld` rappelle `loadWithComponents` : le NBT du block entity
-  fait le voyage sans qu'on ait rien à écrire. Le piège est l'inverse — l'état d'exécution part
+  fait le voyage sans qu'on ait rien à écrire. Le piège est l'inverse - l'état d'exécution part
   avec, et une copie hérite de l'UUID du dresseur de l'original. D'où la règle : `spawnedTrainer`
   n'est cru que si l'entité porte le `spawnerAspect()` de *cette* position, sinon la copie
   adopterait le dresseur du bloc source et le téléporterait chez elle.
 - **L'orientation est une propriété de blockstate, pas un champ du block entity.** C'est la
   seule raison d'être de `FACING` : `StructureTemplate` fait passer les états par `rotate` et
   `mirror` du bloc, alors qu'un float rangé dans le NBT du block entity serait recopié tel
-  quel — une structure posée d'un quart de tour aurait ses dresseurs regardant de travers.
+  quel - une structure posée d'un quart de tour aurait ses dresseurs regardant de travers.
   Le prix est de descendre d'un angle libre à quatre directions, ce qui ne se voit pas.
   Le block entity lit `blockState.getValue(FACING).toYRot()` : `LevelChunk.setBlockState`
   appelle `blockEntity.setBlockState` quand seul l'état change, donc la valeur suit.
@@ -383,7 +383,7 @@ Points à ne pas redécouvrir :
   `parameters.hasPermissions()` : un `CATEGORY` vide n'est pas affiché
   (`CreativeModeTab.shouldDisplay()`). Ça a été essayé et retiré. Ce drapeau est le seul signal
   de permission qu'un onglet reçoit, et l'écran créatif le calcule comme
-  `canUseGameMasterBlocks() && option operatorItemsTab` — or cette option vaut **false** par
+  `canUseGameMasterBlocks() && option operatorItemsTab` - or cette option vaut **false** par
   défaut, donc l'onglet restait invisible pour l'opérateur à qui il est destiné. Ne pas le
   remettre sans avoir résolu ça.
 
@@ -391,7 +391,7 @@ Points à ne pas redécouvrir :
 
 `cobblemon-trainers:battle_phone` ouvre le suivi de progression : les dresseurs `tracked`, un
 onglet par datapack, et le skin de chacun. C'est le pendant joueur de `/listtrainers`, qui
-reste opérateur — l'objet ne donne aucun pouvoir, il lit.
+reste opérateur - l'objet ne donne aucun pouvoir, il lit.
 
 Points à ne pas redécouvrir :
 
@@ -416,7 +416,7 @@ Points à ne pas redécouvrir :
   non par le renderer d'entité : un dresseur jamais rencontré n'a pas d'entité à afficher.
   C'est aussi ce qui garde le mod sans renderer.
 - **`GuiGraphics.blit` laisse l'état de blending à son appelant**, et dessiner du texte
-  termine son propre batch — ce qui *désactive* le blending au passage. Un `enableBlend()` en
+  termine son propre batch - ce qui *désactive* le blending au passage. Un `enableBlend()` en
   début de `render()` ne suffit donc pas : c'est chaque blit qui l'active, d'où le helper
   `blit` de l'écran. Sans ça, le cadre effacerait ce qu'il recouvre.
 - **`ShowdownTeamParser.countPokemon` existe pour cet écran.** Compter l'équipe avec `parse`
@@ -424,7 +424,7 @@ Points à ne pas redécouvrir :
   Cobblemon à chaque ouverture.
 - **Les textures sont les nôtres**, sous
   `assets/cobblemon-trainers/textures/gui/battle_phone/`, volontairement neutres : un cadre,
-  une case, deux flèches, un marqueur. Elles ne dépendent pas des assets de Cobblemon — une
+  une case, deux flèches, un marqueur. Elles ne dépendent pas des assets de Cobblemon - une
   version antérieure les empruntait au Pokédex, ne pas y revenir. Le trou transparent de
   `frame.png` doit correspondre aux constantes `INNER_*` de l'écran : c'est lui qui délimite la
   zone dessinée.
@@ -436,7 +436,7 @@ Points à ne pas redécouvrir :
   pour la même raison que les skins.
 - **L'équipe passe par `create()`**, comme à l'apparition d'un dresseur, parce que c'est la
   seule façon de connaître les **aspects** finaux d'un Pokémon : le parseur pose une forme
-  dans la chaîne de propriétés, et seul `create()` la transforme en aspects — ceux qui
+  dans la chaîne de propriétés, et seul `create()` la transforme en aspects - ceux qui
   choisissent le modèle affiché (forme régionale, chromatique). D'où
   `ShowdownTeamParser.countPokemon` pour le listing, qui lui n'a besoin que du nombre.
 - **Les modèles sont rendus par `drawProfilePokemon`** (`com.cobblemon.mod.common.client.gui`),
@@ -445,7 +445,7 @@ Points à ne pas redécouvrir :
   c'est lui qui met un Wailord et un Joltik à la même échelle utile.
 - **La taille tient en deux facteurs, pas un.** Le `scale` de `drawProfilePokemon` est un
   `matrixStack.scale` brut : seul, il rend un Pokémon haut de quelques pixels. Cobblemon met un
-  `scale(2.5f, 2.5f, 1f)` sur la pose *avant* l'appel et passe `4.5f` — c'est ce couple qui est
+  `scale(2.5f, 2.5f, 1f)` sur la pose *avant* l'appel et passe `4.5f` - c'est ce couple qui est
   repris ici, y compris son écrasement en profondeur, le `2.5` étant le seul des deux à porter
   sur z. Ne pas les fusionner en un seul nombre.
 - **Le modèle descend depuis le point de translation**, il ne se tient pas dessus : viser le
@@ -453,8 +453,8 @@ Points à ne pas redécouvrir :
 - **L'ID du dresseur n'est plus affiché** dans la fiche, volontairement : c'est le namespace
   qui compte pour le joueur, et il est déjà dans le sélecteur et dans les en-têtes de la
   liste. Ne pas le remettre.
-- **Les lignes de la liste n'ont pas toutes la même hauteur** — un en-tête de datapack est
-  plus court qu'un dresseur —, donc l'affichage, le clic et le calcul du défilement parcourent
+- **Les lignes de la liste n'ont pas toutes la même hauteur** - un en-tête de datapack est
+  plus court qu'un dresseur -, donc l'affichage, le clic et le calcul du défilement parcourent
   les lignes au lieu de diviser par une hauteur. Les en-têtes n'existent que dans l'onglet
   « tous les datapacks » ; ailleurs le sélecteur nomme déjà le pack.
 
@@ -462,7 +462,7 @@ Points à ne pas redécouvrir :
 
 `TrainerSkins` est le seul endroit qui transforme un `TrainerSkin` en image, pour ses deux
 appelants : `TrainerSpawner`, qui habille un NPC, et le Battle Phone, qui dessine un dresseur
-dans un écran. Tout ce qui bloque — recherche de profil, téléchargement, lecture de pack —
+dans un écran. Tout ce qui bloque - recherche de profil, téléchargement, lecture de pack -
 tourne sur son pool de threads daemon ; le rappel arrive donc *hors* du thread serveur, et
 c'est à l'appelant de repasser par `server.execute` avant de toucher au monde.
 
@@ -515,7 +515,7 @@ dans le registre, donc l'opération est idempotente. Le filtre `TrainerRegistry.
 
 ### Livrer un pack
 
-Trois voies, toutes prises en charge et **laissées au choix de l'auteur du pack** — ne pas en
+Trois voies, toutes prises en charge et **laissées au choix de l'auteur du pack** - ne pas en
 privilégier une dans la doc, sauf à dire que `mods/` est la seule qui charge les deux moitiés.
 
 | Voie | Emplacement | Formats | Charge | Fichier requis |
@@ -528,16 +528,16 @@ privilégier une dans la doc, sauf à dire que `mods/` est la seule qui charge l
 une `RepositorySource` qui balaie le dossier des mods et expose ce qu'elle y trouve sous les
 deux `PackType`. Sans elle, Fabric ne regarde que les jars portant un `fabric.mod.json` et
 saute les autres en silence (`ModDiscoverer$ModScanTask.computeJarFile` renvoie `null`, rien
-n'est logué) — c'était la cause d'un pack « qui ne se charge pas » sans le moindre message.
+n'est logué) - c'était la cause d'un pack « qui ne se charge pas » sans le moindre message.
 
 Elle est branchée par deux mixins, parce qu'il n'existe aucune API pour ajouter une source
 après construction :
 
-- `PackRepositoryMixin` (commun) — `@Inject` en fin de `<init>`, réécrit le champ `sources`.
+- `PackRepositoryMixin` (commun) - `@Inject` en fin de `<init>`, réécrit le champ `sources`.
   Un `ServerPacksSource` dans la liste identifie un dépôt de données ; couvrir le constructeur
   plutôt que ses appelants attrape d'un coup le serveur dédié, le serveur intégré et l'écran
   de création de monde.
-- `client.MinecraftMixin` (client) — `@ModifyArg` sur le tableau varargs du constructeur de
+- `client.MinecraftMixin` (client) - `@ModifyArg` sur le tableau varargs du constructeur de
   `Minecraft`. Déclaré dans le tableau `client` du mixins.json, pas dans `mixins` : il cible
   une classe client et ferait échouer le chargement sur un serveur dédié. Le dépôt client est
   identifié par construction, ce qui évite de nommer `ClientPackSource` dans un mixin commun.
@@ -565,8 +565,8 @@ conteneur, il ne change pas le `PackType` de la source.
 
 Ne pas essayer de brancher le dossier d'un monde sur le gestionnaire de ressources client :
 ça a été écrit une fois puis retiré. C'était faisable (une `RepositorySource` alimentée par
-`ServerLifecycleEvents`), mais ça ne marche qu'en solo — sur un serveur le client n'a pas le
-fichier — donc un pack se comporterait différemment en solo et en multi. `mods/` n'a pas ce
+`ServerLifecycleEvents`), mais ça ne marche qu'en solo - sur un serveur le client n'a pas le
+fichier - donc un pack se comporterait différemment en solo et en multi. `mods/` n'a pas ce
 défaut : chaque côté lit son propre dossier.
 
 `pack_format` diffère par type en 1.21.1 : 48 côté données, 34 côté ressources. Une archive
@@ -583,7 +583,7 @@ tableau `client` du mixins.json : une classe client dans `mixins` ferait échoue
 sur un serveur dédié.
 
 `PackDetectorMixin` fait accepter les archives `.jar` à
-`PackDetector.detectPackResources`, unique endroit où Minecraft filtre sur `.zip` — tout le
+`PackDetector.detectPackResources`, unique endroit où Minecraft filtre sur `.zip` - tout le
 reste de la chaîne marche déjà, `FilePackResources` ouvrant le fichier avec `ZipFile`, qui se
 moque de l'extension. `PackDetector` étant partagé par toutes les sources sur dossier, ça
 vaut pour `datapacks/` comme pour `resourcepacks/`, ce qui est le but : un auteur qui a
@@ -601,7 +601,7 @@ Une forme Cobblemon n'est pas une espèce : c'est la même espèce portant d'aut
 et `Pokemon.updateForm()` choisit la forme via `Species.getForm(aspects)`. La ligne
 `Aspects:` du format d'équipe les déclare, et `ShowdownTeamParser` les réinjecte dans la
 chaîne de propriétés (`rlm=true`, ou `appliance=wash` tel quel pour une caractéristique à
-choix) — la même syntaxe que `/pokespawn`, donc testable en jeu.
+choix) - la même syntaxe que `/pokespawn`, donc testable en jeu.
 
 Points à ne pas redécouvrir :
 
@@ -616,7 +616,7 @@ Points à ne pas redécouvrir :
 - **Un aspect inconnu est validé ici, pas par Cobblemon.** `PokemonProperties.parse` jette
   sans un mot une clé qu'aucune caractéristique ne déclare. La liste vient de
   `CustomPokemonProperty.properties`, que `SpeciesFeatures.reload` alimente avec chaque
-  fournisseur qui est un `CustomPokemonPropertyType` — donc peuplée par les datapacks, et
+  fournisseur qui est un `CustomPokemonPropertyType` - donc peuplée par les datapacks, et
   seulement consultable une fois le serveur chargé (l'équipe est construite à l'apparition
   du dresseur, c'est bon).
 
@@ -629,7 +629,7 @@ il construit, publie sur Modrinth via `./gradlew publishMods`
 **Modrinth est la seule plateforme.** CurseForge a été tenté puis retiré : son API d'upload
 répondait invariablement `Invalid game version ID: 11779 belongs to an invalid dependency`.
 Le plugin envoie quatre catégories d'IDs (version Minecraft, modloader, environnement
-client/server, version Java), toutes résolues depuis la liste de CurseForge elle-même — l'ID
+client/server, version Java), toutes résolues depuis la liste de CurseForge elle-même - l'ID
 existe donc, c'est son type que le projet refuse. Retirer `javaVersions` n'a rien changé, ce
 qui laisse le tag d'environnement, que le plugin impose (`client` ou `server`, au moins un).
 Ne pas réessayer sans avoir d'abord identifié 11779 via `GET /api/game/versions` avec un jeton
@@ -658,17 +658,17 @@ Points à ne pas redécouvrir :
   `gradle.properties` (`cobblemon_version`, `fabric_api_version`, `fabric_kotlin_version`) :
   changer une version de build déplace la contrainte publiée avec elle. Modrinth accepte un ID
   de version ou un numéro, et refuse la publication si le motif ne correspond pas à exactement
-  une version — une faute de frappe échoue bruyamment.
+  une version - une faute de frappe échoue bruyamment.
 - **La release GitHub existe déjà** quand le workflow tourne. Le publisher `github` du plugin
   ne sait que *créer* une release, jamais alimenter une release existante (sauf via l'option
   `parent`, réservée aux sous-projets) : les assets passent donc par `gh release upload`.
 - **`file` pointe sur `remapJar`, pas `jar`.** Le second garde les mappings nommés et planterait
   hors environnement de développement. `RemapJarTask` dérive de `org.gradle.jvm.tasks.Jar`, pas
-  de `org.gradle.api.tasks.bundling.Jar` — `tasks.named<Jar>(…)` échoue avec l'import par défaut
+  de `org.gradle.api.tasks.bundling.Jar` - `tasks.named<Jar>(…)` échoue avec l'import par défaut
   du Kotlin DSL.
 - **Dans le bloc `publishMods`, `version` est la propriété de l'extension**, pas celle du projet :
   l'interpoler donne sa description Gradle. D'où le `modVersion` capturé au-dessus.
-- Sans jeton, `publishMods` bascule en `dryRun` et écrit dans `build/mod-publish/` — c'est ce qui
+- Sans jeton, `publishMods` bascule en `dryRun` et écrit dans `build/mod-publish/` - c'est ce qui
   rend `./gradlew publishMods` sûr en local.
 
 ### Le pack d'exemple dans la release
@@ -681,7 +681,7 @@ dans des mondes qui n'ont rien demandé.
 Le zip **exclut `fabric.mod.json`**. Ce fichier n'existe que pour permettre de construire le
 dossier en `.jar` que Fabric charge, et il nuit à un `.zip` : Fabric ignore les archives qui ne
 sont pas des `.jar`, tandis que `ModsFolderPackSource` saute tout ce qui porte des métadonnées de
-mod — le pack ne se chargerait donc de nulle part. Sans lui, le même zip marche dans `mods/`,
+mod - le pack ne se chargerait donc de nulle part. Sans lui, le même zip marche dans `mods/`,
 `datapacks/` et `resourcepacks/`.
 
 ## Limites connues

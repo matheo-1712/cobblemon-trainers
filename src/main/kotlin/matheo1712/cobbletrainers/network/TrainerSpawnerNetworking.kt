@@ -21,7 +21,7 @@ import net.minecraft.world.phys.Vec3
  * The screen is not a container, so it does not go through a `MenuType`: right-clicking a
  * spawner sends the block's current settings and the list of loaded trainers to the player,
  * their client opens a screen with them, and pressing Done sends the result back. Nothing is
- * kept server-side in between — the block is looked up again from the position in the reply,
+ * kept server-side in between - the block is looked up again from the position in the reply,
  * and every value is re-validated there. A client cannot be trusted to have sent back one of
  * the choices it was offered.
  */
@@ -108,7 +108,7 @@ object TrainerSpawnerNetworking {
 
 /**
  * Server -> client: everything the screen needs to show, including the trainers the server has
- * loaded. The client never reads the registry itself — trainers come from datapacks, which are
+ * loaded. The client never reads the registry itself - trainers come from datapacks, which are
  * a server-side affair.
  */
 data class OpenTrainerSpawnerPayload(

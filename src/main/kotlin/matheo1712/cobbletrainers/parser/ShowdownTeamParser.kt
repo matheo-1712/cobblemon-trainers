@@ -19,7 +19,7 @@ import java.util.Locale
  * object, because Cobblemon's property parser splits on spaces.
  *
  * Known limitation: Showdown writes a form as a suffix of the species name (`Raichu-Alola`),
- * which is not translated here — forms are declared with an `Aspects:` line instead.
+ * which is not translated here - forms are declared with an `Aspects:` line instead.
  */
 object ShowdownTeamParser {
 
