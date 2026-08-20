@@ -39,5 +39,15 @@
   "trainer.cobblemon-trainers.theazertor.name": "TheAzertor",
   "trainer.cobblemon-trainers.theazertor.battle_start": "You need a soul!",
   "trainer.cobblemon-trainers.theazertor.win": "You need a soul! (Too easy)",
-  "trainer.cobblemon-trainers.theazertor.lose": "You need a soul! (Not bad)"
+  "trainer.cobblemon-trainers.theazertor.lose": "You need a soul! (Not bad)",
+
+  "trainer.cobblemon-trainers.octavien29.name": "Octavien29",
+  "trainer.cobblemon-trainers.octavien29.battle_start": "!",
+  "trainer.cobblemon-trainers.octavien29.win": ".....",
+  "trainer.cobblemon-trainers.octavien29.lose": "WIN !!!!",
+
+  "trainer.cobblemon-trainers.kagumi.name": "Kagumi",
+  "trainer.cobblemon-trainers.kagumi.battle_start": "!",
+  "trainer.cobblemon-trainers.kagumi.win": ".....",
+  "trainer.cobblemon-trainers.kagumi.lose": "WIN !!!!"
 }

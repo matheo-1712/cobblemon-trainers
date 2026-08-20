@@ -33,11 +33,11 @@
 
   "trainer.cobblemon-trainers.rerebleue.name": "RereBleue",
   "trainer.cobblemon-trainers.rerebleue.battle_start": "Me demande pas pourquoi j'ai un E dans mon nom. Combattons plutôt !",
-  "trainer.cobblemon-trainers.rerebleue.win": "Trop facile 😎",
-  "trainer.cobblemon-trainers.rerebleue.lose": "Pas mal ! tu t'es bien débrouillé.",
+  "trainer.cobblemon-trainers.rerebleue.win": "Pas mal ! tu t'es bien débrouillé.",
+  "trainer.cobblemon-trainers.rerebleue.lose":  "Trop facile 😎",
 
   "trainer.cobblemon-trainers.theazertor.name": "TheAzertor",
   "trainer.cobblemon-trainers.theazertor.battle_start": "Il vous faut une âme !",
-  "trainer.cobblemon-trainers.theazertor.win": "Il vous faut une âme ! (Trop simple)",
-  "trainer.cobblemon-trainers.theazertor.lose": "Il vous faut une âme ! (Pas mal)"
+  "trainer.cobblemon-trainers.theazertor.win": "Il vous faut une âme ! (Pas mal)",
+  "trainer.cobblemon-trainers.theazertor.lose": "Il vous faut une âme ! (Trop simple)"
 }
