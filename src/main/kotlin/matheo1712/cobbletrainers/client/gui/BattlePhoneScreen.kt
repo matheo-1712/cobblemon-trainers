@@ -21,12 +21,14 @@ import org.lwjgl.glfw.GLFW
  * The battle phone screen: the trainers of the world, sorted by the datapack they come from,
  * and whether the player has beaten them.
  *
- * Laid out after a Pokédex, and dressed with the mod's own textures, under
+ * Laid out after the clamshell the frame draws - the roster fills the lower screen, two
+ * entries to a line, and whoever is selected there gets the upper one to themselves. It is
+ * dressed with the mod's own textures, under
  * `assets/cobblemon-trainers/textures/gui/battle_phone/`. They are deliberately plain - a
  * bezel, a slot, a couple of arrows, a status marker - and everything behind them is drawn
  * with flat rectangles, so replacing the set is a matter of redrawing six images at the same
- * sizes. [FRAME] is the one with a constraint: its transparent hole has to line up with
- * [INNER_X] and friends, since that hole is where the screen draws.
+ * sizes. [FRAME] is the one with a constraint: its two transparent holes have to line up with
+ * [UPPER_X] and [LOWER_X] and their friends, since those holes are where the screens draw.
  *
  * The listing is whatever the server sent, and nothing is ever sent back beyond two questions:
  * the skin of a trainer, and the team of one the player has beaten. Both are cached - see
@@ -36,13 +38,14 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
     Screen(CobblemonTrainers.lang("screen.battle_phone.title")) {
 
     /**
-     * A line of the list. Headers only appear in the tab that holds every datapack at once,
+     * A line of the roster. Headers only appear in the tab that holds every datapack at once,
      * where they are what makes the sort by datapack visible; a tab that is already one
-     * datapack has its name in the selector above.
+     * datapack has its name in the selector above. A [Row] holds a whole line of entries,
+     * so a datapack never spills into the columns of the next one.
      */
     private sealed class Row(val height: Int) {
         class Header(val namespace: String) : Row(HEADER_HEIGHT)
-        class Trainer(val entry: BattlePhoneEntry) : Row(ROW_HEIGHT)
+        class Trainers(val entries: List<BattlePhoneEntry>) : Row(ROW_HEIGHT)
     }
 
     /** A datapack tab. A null [namespace] is the tab holding every trainer at once. */
@@ -61,6 +64,16 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
     private var teamStates: List<FloatingState> = List(TEAM_SLOTS) { FloatingState() }
     private var teamStatesOwner: String? = null
 
+    /**
+     * What the frame is multiplied by to fit the window, and where it lands once it has been.
+     *
+     * The frame is a clamshell, so it is tall - taller than the interface Minecraft promises,
+     * which is only 240 pixels once the GUI scale has been applied, and taller than the 270
+     * that automatic scale leaves on a 1080p screen. Laying it out one for one would cut a
+     * third of the phone off for most players, so everything is drawn through one pose and
+     * the pose carries this factor. It never goes above 1: enlarging pixel art buys nothing.
+     */
+    private var uiScale = 1f
     private var left = 0
     private var top = 0
 
@@ -68,8 +81,13 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         get() = groups[groupIndex]
 
     override fun init() {
-        left = (width - FRAME_WIDTH) / 2
-        top = (height - FRAME_HEIGHT) / 2
+        uiScale = minOf(
+            1f,
+            (width - 2 * WINDOW_MARGIN).toFloat() / FRAME_WIDTH,
+            (height - 2 * WINDOW_MARGIN).toFloat() / FRAME_HEIGHT
+        )
+        left = ((width - FRAME_WIDTH * uiScale) / 2f).toInt()
+        top = ((height - FRAME_HEIGHT * uiScale) / 2f).toInt()
 
         if (selected == null) selected = groups.firstOrNull()?.entries?.firstOrNull()
     }
@@ -83,83 +101,113 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         // The server sends trainers sorted by ID, so grouping by namespace keeps every tab
         // sorted without sorting anything again.
         val byNamespace = entries.groupBy { it.id.substringBefore(TRAINER_ID_SEPARATOR) }.toSortedMap()
-        val groups = byNamespace.map { (namespace, group) ->
-            Group(namespace, group, group.map { Row.Trainer(it) })
-        }
+        val groups = byNamespace.map { (namespace, group) -> Group(namespace, group, rowsOf(group)) }
         if (groups.size <= 1) return groups
 
         val allRows = byNamespace.flatMap { (namespace, group) ->
-            listOf(Row.Header(namespace)) + group.map { Row.Trainer(it) }
+            listOf(Row.Header(namespace)) + rowsOf(group)
         }
         return listOf(Group(null, entries, allRows)) + groups
     }
 
+    /** Cuts a datapack's trainers into lines of [LIST_COLUMNS], keeping the server's order. */
+    private fun rowsOf(entries: List<BattlePhoneEntry>): List<Row> =
+        entries.chunked(LIST_COLUMNS).map { Row.Trainers(it) }
+
     override fun render(guiGraphics: GuiGraphics, mouseX: Int, mouseY: Int, partialTick: Float) {
         super.render(guiGraphics, mouseX, mouseY, partialTick)
 
-        guiGraphics.fill(x(INNER_X), y(INNER_Y), x(INNER_X + INNER_WIDTH), y(INNER_Y + INNER_HEIGHT), COLOR_SCREEN)
+        // Everything below is laid out in the frame's own pixels; the pose puts them on screen.
+        // The cursor has to make the same trip, or a hover would answer somewhere else.
+        val pose = guiGraphics.pose()
+        pose.pushPose()
+        pose.translate(left.toFloat(), top.toFloat(), 0f)
+        pose.scale(uiScale, uiScale, 1f)
+
+        val frameMouseX = frameX(mouseX.toDouble()).toInt()
+        val frameMouseY = frameY(mouseY.toDouble()).toInt()
+
+        guiGraphics.fill(UPPER_X, UPPER_Y, (UPPER_X + UPPER_WIDTH), (UPPER_Y + UPPER_HEIGHT), COLOR_SCREEN)
+        guiGraphics.fill(LOWER_X, LOWER_Y, (LOWER_X + LOWER_WIDTH), (LOWER_Y + LOWER_HEIGHT), COLOR_SCREEN)
+
+        guiGraphics.drawCenteredString(font, title, (UPPER_X + UPPER_WIDTH / 2), TITLE_Y, COLOR_TITLE)
 
         var tooltip: Component? = null
         if (groups.isEmpty()) {
-            guiGraphics.drawCenteredString(font, EMPTY_LABEL, x(FRAME_WIDTH / 2), y(FRAME_HEIGHT / 2), COLOR_TEXT)
+            guiGraphics.drawCenteredString(
+                font,
+                EMPTY_LABEL,
+                (LOWER_X + LOWER_WIDTH / 2),
+                (LOWER_Y + LOWER_HEIGHT / 2),
+                COLOR_TEXT
+            )
         } else {
-            renderHeader(guiGraphics, mouseX, mouseY)
-            renderList(guiGraphics, mouseX, mouseY)
-            tooltip = renderDetails(guiGraphics, mouseX, mouseY, partialTick)
+            renderSelector(guiGraphics, frameMouseX, frameMouseY)
+            renderList(guiGraphics, frameMouseX, frameMouseY)
+            tooltip = renderDetails(guiGraphics, frameMouseX, frameMouseY, partialTick)
         }
 
         // The frame comes last: its rounded corners and brackets cut into the panels below.
-        blit(guiGraphics, FRAME, left, top, FRAME_WIDTH, FRAME_HEIGHT, 0f, 0f, FRAME_WIDTH, FRAME_HEIGHT, FRAME_WIDTH, FRAME_HEIGHT)
+        blit(guiGraphics, FRAME, 0, 0, FRAME_WIDTH, FRAME_HEIGHT, 0f, 0f, FRAME_WIDTH, FRAME_HEIGHT, FRAME_WIDTH, FRAME_HEIGHT)
         RenderSystem.disableBlend()
 
+        pose.popPose()
+
+        // The tooltip is drawn by the screen, not by us: it belongs at the cursor, at the
+        // size everything else in the interface is, so it goes outside the pose.
         tooltip?.let { guiGraphics.renderTooltip(font, it, mouseX, mouseY) }
     }
 
-    private fun renderHeader(guiGraphics: GuiGraphics, mouseX: Int, mouseY: Int) {
-        guiGraphics.drawCenteredString(font, title, x(FRAME_WIDTH / 2), y(TITLE_Y), COLOR_TITLE)
-
-        // Datapack selector, over the list column. Both arrow images hold their hovered state
-        // below the idle one.
+    /**
+     * The strip above the roster: the datapack being shown, flanked by its arrows, and how
+     * much of it the player has beaten. The arrows hug the name rather than the edges of the
+     * screen, which leaves the end of the strip free for the counter.
+     */
+    private fun renderSelector(guiGraphics: GuiGraphics, mouseX: Int, mouseY: Int) {
+        // Both arrow images hold their hovered state below the idle one.
         if (groups.size > 1) {
-            renderArrow(guiGraphics, ARROW_LEFT, x(LIST_X), overLeftArrow(mouseX.toDouble(), mouseY.toDouble()))
-            renderArrow(
-                guiGraphics,
-                ARROW_RIGHT,
-                x(LIST_X + LIST_WIDTH - ARROW_WIDTH),
-                overRightArrow(mouseX.toDouble(), mouseY.toDouble())
-            )
+            renderArrow(guiGraphics, ARROW_LEFT, leftArrowX(), overLeftArrow(mouseX.toDouble(), mouseY.toDouble()))
+            renderArrow(guiGraphics, ARROW_RIGHT, rightArrowX(), overRightArrow(mouseX.toDouble(), mouseY.toDouble()))
         }
         val label = group.namespace?.let { Component.literal(it) } ?: ALL_LABEL
         guiGraphics.drawCenteredString(
             font,
-            trim(label, LIST_WIDTH - 2 * (ARROW_WIDTH + 4)),
-            x(LIST_X + LIST_WIDTH / 2),
-            y(SELECTOR_Y + 1),
+            trim(label, 2 * SELECTOR_ARROW_GAP - 8),
+            (LIST_X + LIST_WIDTH / 2),
+            (SELECTOR_Y + 1),
             COLOR_TEXT
         )
 
-        // Progress of that datapack, over the detail column.
         val defeated = group.entries.count { it.defeated }
         guiGraphics.drawCenteredString(
             font,
             CobblemonTrainers.lang("screen.battle_phone.progress", defeated, group.entries.size),
-            x(DETAIL_X + DETAIL_WIDTH / 2),
-            y(SELECTOR_Y + 1),
+            (LIST_X + LIST_WIDTH - PROGRESS_INSET),
+            (SELECTOR_Y + 1),
             COLOR_TEXT
         )
     }
 
     private fun renderArrow(guiGraphics: GuiGraphics, texture: ResourceLocation, arrowX: Int, hovered: Boolean) {
         val v = if (hovered) ARROW_HEIGHT.toFloat() else 0f
-        blit(guiGraphics, texture, arrowX, y(SELECTOR_Y), ARROW_WIDTH, ARROW_HEIGHT, 0f, v, ARROW_WIDTH, ARROW_HEIGHT, ARROW_WIDTH, ARROW_HEIGHT * 2)
+        blit(guiGraphics, texture, arrowX, SELECTOR_Y, ARROW_WIDTH, ARROW_HEIGHT, 0f, v, ARROW_WIDTH, ARROW_HEIGHT, ARROW_WIDTH, ARROW_HEIGHT * 2)
     }
 
     private fun renderList(guiGraphics: GuiGraphics, mouseX: Int, mouseY: Int) {
-        guiGraphics.enableScissor(x(LIST_X), y(PANEL_Y), x(LIST_X + LIST_WIDTH), y(PANEL_Y + PANEL_HEIGHT))
+        // The scissor stack is not part of the pose: it wants real pixels, so the panel has
+        // to make the trip itself. The extra pixel keeps rounding from shaving the last row.
+        guiGraphics.enableScissor(
+            screenX(LIST_X),
+            screenY(PANEL_Y),
+            screenX(LIST_X + LIST_WIDTH) + 1,
+            screenY(PANEL_Y + PANEL_HEIGHT) + 1
+        )
         forEachVisibleRow { row, rowY ->
             when (row) {
-                is Row.Header -> renderRowHeader(guiGraphics, row, y(rowY))
-                is Row.Trainer -> renderRow(guiGraphics, row.entry, y(rowY), mouseX, mouseY)
+                is Row.Header -> renderRowHeader(guiGraphics, row, rowY)
+                is Row.Trainers -> row.entries.forEachIndexed { column, entry ->
+                    renderEntry(guiGraphics, entry, (LIST_X + column * COLUMN_WIDTH), rowY, mouseX, mouseY)
+                }
             }
         }
         guiGraphics.disableScissor()
@@ -186,20 +234,28 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
     /** The datapack a run of trainers comes from, with a rule running to the edge of the panel. */
     private fun renderRowHeader(guiGraphics: GuiGraphics, header: Row.Header, rowY: Int) {
         val label = trim(Component.literal(header.namespace), LIST_WIDTH - 8)
-        val textX = x(LIST_X)
+        val textX = LIST_X
         val textY = rowY + HEADER_HEIGHT - font.lineHeight
 
         guiGraphics.drawString(font, label, textX, textY, COLOR_HEADER)
 
         val ruleX = textX + font.width(label) + 4
         val ruleY = textY + font.lineHeight / 2
-        if (ruleX < x(LIST_X + LIST_WIDTH)) {
-            guiGraphics.fill(ruleX, ruleY, x(LIST_X + LIST_WIDTH), ruleY + 1, COLOR_HEADER_RULE)
+        if (ruleX < (LIST_X + LIST_WIDTH)) {
+            guiGraphics.fill(ruleX, ruleY, (LIST_X + LIST_WIDTH), ruleY + 1, COLOR_HEADER_RULE)
         }
     }
 
-    private fun renderRow(guiGraphics: GuiGraphics, entry: BattlePhoneEntry, rowY: Int, mouseX: Int, mouseY: Int) {
-        val slotX = x(LIST_X)
+    /** One entry of the roster, drawn from the left edge of the column it landed in. */
+    private fun renderEntry(
+        guiGraphics: GuiGraphics,
+        entry: BattlePhoneEntry,
+        slotX: Int,
+        rowY: Int,
+        mouseX: Int,
+        mouseY: Int
+    ) {
+        val columnEnd = slotX + COLUMN_WIDTH
 
         blit(guiGraphics, SLOT, slotX, rowY, SLOT_SIZE, SLOT_SIZE, 0f, 0f, SLOT_TEXTURE_SIZE, SLOT_TEXTURE_SIZE, SLOT_TEXTURE_SIZE, SLOT_TEXTURE_SIZE)
 
@@ -211,7 +267,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         }
 
         // The outline goes over the head, the way a Pokédex draws it over the sprite.
-        val hovered = mouseX >= slotX && mouseX < x(LIST_X + LIST_WIDTH) && mouseY >= rowY && mouseY < rowY + SLOT_SIZE
+        val hovered = mouseX >= slotX && mouseX < columnEnd && mouseY >= rowY && mouseY < rowY + SLOT_SIZE
         val selectionOffset = when {
             entry.id == selected?.id -> SLOT_TEXTURE_SIZE.toFloat()
             hovered -> 0f
@@ -222,7 +278,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         }
 
         val nameX = slotX + SLOT_SIZE + 5
-        val nameWidth = x(LIST_X + LIST_WIDTH) - nameX - MARKER_WIDTH - 4
+        val nameWidth = columnEnd - nameX - MARKER_WIDTH - 4
         guiGraphics.drawString(
             font,
             trim(Component.translatable(entry.name), nameWidth),
@@ -231,7 +287,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
             if (entry.defeated) COLOR_TEXT else COLOR_TEXT_DIM
         )
 
-        renderMarker(guiGraphics, entry.defeated, x(LIST_X + LIST_WIDTH) - MARKER_WIDTH, rowY + (SLOT_SIZE - MARKER_HEIGHT) / 2)
+        renderMarker(guiGraphics, entry.defeated, columnEnd - MARKER_WIDTH, rowY + (SLOT_SIZE - MARKER_HEIGHT) / 2)
     }
 
     /** The status marker: the full ball for a beaten trainer, its outline otherwise. */
@@ -256,9 +312,9 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         val maxScroll = maxScroll()
         if (maxScroll == 0) return
 
-        val barX = x(LIST_X + LIST_WIDTH + 2)
-        val barTop = y(PANEL_Y)
-        guiGraphics.fill(barX, barTop, barX + SCROLL_BAR_WIDTH, y(PANEL_Y + PANEL_HEIGHT), COLOR_SCROLL_TRACK)
+        val barX = (LIST_X + LIST_WIDTH + 2)
+        val barTop = PANEL_Y
+        guiGraphics.fill(barX, barTop, barX + SCROLL_BAR_WIDTH, (PANEL_Y + PANEL_HEIGHT), COLOR_SCROLL_TRACK)
 
         val thumbHeight = maxOf(PANEL_HEIGHT / (maxScroll + 1), MIN_THUMB_HEIGHT)
         val thumbTop = barTop + (PANEL_HEIGHT - thumbHeight) * scroll / maxScroll
@@ -268,37 +324,41 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
     /** @return the tooltip to draw over everything, if the mouse is on a team member. */
     private fun renderDetails(guiGraphics: GuiGraphics, mouseX: Int, mouseY: Int, partialTick: Float): Component? {
         val entry = selected ?: return null
-        val centerX = x(DETAIL_X + DETAIL_WIDTH / 2)
+
+        // Every line of text spans the screen rather than the figure's column: the status of a
+        // trainer runs to a good seventy pixels, and centring that on a forty-eight pixel
+        // figure pushed the marker out under their legs.
+        val centerX = UPPER_X + UPPER_WIDTH / 2
 
         guiGraphics.drawCenteredString(
             font,
-            trim(Component.translatable(entry.name), DETAIL_WIDTH),
-            centerX,
-            y(NAME_Y),
+            trim(Component.translatable(entry.name), UPPER_WIDTH - 8),
+            (UPPER_X + UPPER_WIDTH / 2),
+            NAME_Y,
             COLOR_TITLE
         )
 
         val skin = TrainerSkinCache.get(entry.id)
         if (skin?.texture != null) {
-            TrainerSkinRenderer.drawFigure(guiGraphics, skin, x(FIGURE_CENTER_X), y(PORTRAIT_TOP), FIGURE_SCALE)
+            TrainerSkinRenderer.drawFigure(guiGraphics, skin, FIGURE_CENTER_X, PORTRAIT_TOP, FIGURE_SCALE)
         } else {
             guiGraphics.drawCenteredString(
                 font,
                 UNKNOWN,
-                x(FIGURE_CENTER_X),
-                y(PORTRAIT_TOP + TrainerSkinRenderer.FIGURE_HEIGHT * FIGURE_SCALE / 2),
+                FIGURE_CENTER_X,
+                (PORTRAIT_TOP + TrainerSkinRenderer.FIGURE_HEIGHT * FIGURE_SCALE / 2),
                 COLOR_TEXT_DIM
             )
         }
 
         val status = CobblemonTrainers.lang(statusKey(entry))
         val statusWidth = MARKER_WIDTH + MARKER_TEXT_GAP + font.width(status)
-        renderMarker(guiGraphics, entry.defeated, centerX - statusWidth / 2, y(STATUS_Y) - MARKER_LINE_OFFSET)
+        renderMarker(guiGraphics, entry.defeated, centerX - statusWidth / 2, STATUS_Y - MARKER_LINE_OFFSET)
         guiGraphics.drawString(
             font,
             status,
             centerX - statusWidth / 2 + MARKER_WIDTH + MARKER_TEXT_GAP,
-            y(STATUS_Y),
+            STATUS_Y,
             COLOR_TEXT
         )
 
@@ -306,7 +366,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
             guiGraphics,
             CobblemonTrainers.lang("screen.battle_phone.team", entry.level, entry.teamSize).string,
             centerX,
-            y(TEAM_LINE_Y),
+            TEAM_LINE_Y,
             COLOR_TEXT_DIM
         )
 
@@ -330,8 +390,8 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         var tooltip: Component? = null
 
         for (slot in 0 until TEAM_SLOTS) {
-            val cellX = x(TEAM_X + (slot % TEAM_COLUMNS) * TEAM_CELL_WIDTH)
-            val cellY = y(PORTRAIT_TOP + (slot / TEAM_COLUMNS) * TEAM_CELL_HEIGHT)
+            val cellX = (TEAM_X + (slot % TEAM_COLUMNS) * TEAM_CELL_WIDTH)
+            val cellY = (TEAM_TOP + (slot / TEAM_COLUMNS) * TEAM_CELL_HEIGHT)
 
             blit(
                 guiGraphics,
@@ -440,16 +500,24 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         if (super.mouseClicked(mouseX, mouseY, button)) return true
         if (groups.isEmpty()) return false
 
-        if (overLeftArrow(mouseX, mouseY)) return selectGroup(-1)
-        if (overRightArrow(mouseX, mouseY)) return selectGroup(1)
+        val frameX = frameX(mouseX)
+        val frameY = frameY(mouseY)
 
-        if (mouseX < x(LIST_X) || mouseX >= x(LIST_X + LIST_WIDTH)) return false
+        if (overLeftArrow(frameX, frameY)) return selectGroup(-1)
+        if (overRightArrow(frameX, frameY)) return selectGroup(1)
+
+        if (frameX < LIST_X || frameX >= (LIST_X + LIST_WIDTH)) return false
+
+        val column = (frameX.toInt() - LIST_X) / COLUMN_WIDTH
 
         var clicked = false
         forEachVisibleRow { row, rowY ->
-            if (row is Row.Trainer && mouseY >= y(rowY) && mouseY < y(rowY + row.height)) {
-                selected = row.entry
-                clicked = true
+            if (row is Row.Trainers && frameY >= rowY && frameY < (rowY + row.height)) {
+                // A short last line leaves its trailing columns empty, and they answer nothing.
+                row.entries.getOrNull(column)?.let {
+                    selected = it
+                    clicked = true
+                }
             }
         }
         return clicked
@@ -488,11 +556,15 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         }
     }
 
+    private fun leftArrowX() = (LIST_X + LIST_WIDTH / 2 - SELECTOR_ARROW_GAP - ARROW_WIDTH)
+
+    private fun rightArrowX() = (LIST_X + LIST_WIDTH / 2 + SELECTOR_ARROW_GAP)
+
     private fun overLeftArrow(mouseX: Double, mouseY: Double): Boolean =
-        overArrow(x(LIST_X), mouseX, mouseY)
+        overArrow(leftArrowX(), mouseX, mouseY)
 
     private fun overRightArrow(mouseX: Double, mouseY: Double): Boolean =
-        overArrow(x(LIST_X + LIST_WIDTH - ARROW_WIDTH), mouseX, mouseY)
+        overArrow(rightArrowX(), mouseX, mouseY)
 
     /**
      * The hit box of an arrow, which is the same one the hovered state is drawn from - a
@@ -502,7 +574,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
     private fun overArrow(arrowX: Int, mouseX: Double, mouseY: Double): Boolean =
         groups.size > 1 &&
             mouseX >= arrowX - CLICK_PADDING && mouseX < arrowX + ARROW_WIDTH + CLICK_PADDING &&
-            mouseY >= y(SELECTOR_Y) - CLICK_PADDING && mouseY < y(SELECTOR_Y + ARROW_HEIGHT) + CLICK_PADDING
+            mouseY >= SELECTOR_Y - CLICK_PADDING && mouseY < (SELECTOR_Y + ARROW_HEIGHT) + CLICK_PADDING
 
     /** Moves to another datapack tab, always landing on a valid one. */
     private fun selectGroup(step: Int): Boolean {
@@ -513,6 +585,19 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
     }
 
     /**
+     * A window coordinate in the frame's own pixels, the space every hit box here is in.
+     * [frameY] can land above the frame or below it, which simply matches nothing.
+     */
+    private fun frameX(windowX: Double) = (windowX - left) / uiScale
+
+    private fun frameY(windowY: Double) = (windowY - top) / uiScale
+
+    /** The other direction, for the scissor stack, which the pose does not reach. */
+    private fun screenX(offset: Int) = left + (offset * uiScale).toInt()
+
+    private fun screenY(offset: Int) = top + (offset * uiScale).toInt()
+
+    /**
      * Consulting the phone does not stop the world.
      *
      * A screen pauses the integrated server by default, which is right for a menu and wrong
@@ -520,10 +605,6 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
      * behave differently in single player and in multiplayer, where nothing ever pauses.
      */
     override fun isPauseScreen(): Boolean = false
-
-    private fun x(offset: Int) = left + offset
-
-    private fun y(offset: Int) = top + offset
 
     private companion object {
         val FRAME: ResourceLocation = phoneTexture("frame")
@@ -534,25 +615,46 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         val ARROW_RIGHT: ResourceLocation = phoneTexture("arrow_right")
 
         /** Size of the frame image, which the whole screen is laid out inside of. */
-        const val FRAME_WIDTH = 345
-        const val FRAME_HEIGHT = 207
+        const val FRAME_WIDTH = 378
+        const val FRAME_HEIGHT = 413
 
-        /** The hole in the middle of the frame, where everything of ours is drawn. */
-        const val INNER_X = 18
-        const val INNER_Y = 17
-        const val INNER_WIDTH = 309
-        const val INNER_HEIGHT = 179
+        /**
+         * The two holes in the frame. The phone is a clamshell with a screen in each half:
+         * the upper one is the fiche of whoever is selected, the lower one the roster it is
+         * selected from. Both have to line up with the transparent zones of [FRAME].
+         */
+        const val UPPER_X = 51
+        const val UPPER_Y = 46
+        const val UPPER_WIDTH = 309
+        const val UPPER_HEIGHT = 150
 
-        const val TITLE_Y = 21
-        const val SELECTOR_Y = 33
+        const val LOWER_X = 51
+        const val LOWER_Y = 223
+        const val LOWER_WIDTH = 309
+        const val LOWER_HEIGHT = 179
 
-        const val LIST_X = 22
-        const val LIST_WIDTH = 148
-        const val DETAIL_X = 182
-        const val DETAIL_WIDTH = 140
+        // The lower screen: a datapack selector over the roster.
+        const val LIST_X = LOWER_X + 4
+        const val LIST_WIDTH = 296
 
-        const val PANEL_Y = 48
-        const val PANEL_HEIGHT = 144
+        /**
+         * The roster is two entries wide. A column is exactly what a row used to be when the
+         * list shared one screen with the fiche, so an entry is laid out the same; the second
+         * screen buys twice as many of them on show rather than wider ones.
+         */
+        const val LIST_COLUMNS = 2
+        const val COLUMN_WIDTH = LIST_WIDTH / LIST_COLUMNS
+
+        const val SELECTOR_Y = LOWER_Y + 5
+
+        /** How far the arrows sit either side of the datapack name they page through. */
+        const val SELECTOR_ARROW_GAP = 70
+
+        /** Where the progress counter is centred, measured back from the end of the list. */
+        const val PROGRESS_INSET = 32
+
+        const val PANEL_Y = LOWER_Y + 20
+        const val PANEL_HEIGHT = LOWER_HEIGHT - 24
         const val ROW_HEIGHT = 24
         const val HEADER_HEIGHT = 13
 
@@ -575,21 +677,28 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         const val SCROLL_BAR_WIDTH = 4
         const val MIN_THUMB_HEIGHT = 12
 
-        // The detail column: the trainer on the left, their team on the right, between the
-        // name above and the status below.
-        const val NAME_Y = 48
-        const val PORTRAIT_TOP = 60
-        const val FIGURE_CENTER_X = DETAIL_X + 34
+        /*
+         * The upper screen, read top to bottom: the phone's title, the trainer's name, what
+         * their team is worth, then the trainer themselves beside that team, and their status
+         * along the bottom. The three lines of text are banded across the full width and the
+         * two pictures share the middle, which is what keeps a long status clear of the
+         * figure - they used to share a column, and the marker ended up behind their legs.
+         */
+        const val TITLE_Y = UPPER_Y + 4
+        const val NAME_Y = UPPER_Y + 15
+        const val TEAM_LINE_Y = UPPER_Y + 27
+        const val PORTRAIT_TOP = UPPER_Y + 38
+        const val FIGURE_CENTER_X = UPPER_X + 38
         const val FIGURE_SCALE = 3
-        const val STATUS_Y = 164
-        const val TEAM_LINE_Y = 177
+        const val STATUS_Y = UPPER_Y + 137
 
         const val TEAM_SLOTS = 6
-        const val TEAM_COLUMNS = 2
-        const val TEAM_X = DETAIL_X + 64
-        const val TEAM_CELL_WIDTH = 38
-        const val TEAM_CELL_HEIGHT = 32
-        const val TEAM_SLOT_SIZE = 28
+        const val TEAM_COLUMNS = 3
+        const val TEAM_X = UPPER_X + 92
+        const val TEAM_TOP = UPPER_Y + 46
+        const val TEAM_CELL_WIDTH = 70
+        const val TEAM_CELL_HEIGHT = 38
+        const val TEAM_SLOT_SIZE = 34
 
         /**
          * How a model is sized, copied from Cobblemon's own party slots: a scale on the pose
@@ -604,7 +713,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
          * Where the model hangs from, measured from the top of its cell. A model is drawn
          * downwards from that point over roughly the height of a slot, so this centres it.
          */
-        const val TEAM_MODEL_TOP = 4
+        const val TEAM_MODEL_TOP = 6
 
         /** The three-quarter view Cobblemon uses for a Pokémon portrait. */
         val MODEL_ROTATION: Vector3f = Vector3f(13f, 35f, 0f)
@@ -613,6 +722,9 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
 
         /** A couple of pixels of slack around the arrows, which are thin things to aim at. */
         const val CLICK_PADDING = 2
+
+        /** Breathing room between the phone and the edge of the window, in window pixels. */
+        const val WINDOW_MARGIN = 4
 
         /** Trainer IDs arrive as strings, and the part before this is the datapack namespace. */
         const val TRAINER_ID_SEPARATOR = ':'
