@@ -1,6 +1,6 @@
 package matheo1712.cobbletrainers.command
 
-import com.mojang.brigadier.CommandDispatcher
+import com.mojang.brigadier.builder.LiteralArgumentBuilder
 import com.mojang.brigadier.context.CommandContext
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType
 import matheo1712.cobbletrainers.CobblemonTrainers
@@ -17,11 +17,12 @@ import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerPlayer
 
 /**
- * `/listtrainers`, which lists every loaded trainer and whether a player has beaten it.
+ * `/cobblemontrainers list`, which lists every loaded trainer and whether a player has beaten
+ * it.
  *
  * Usage:
- * - `/listtrainers` - the caller's own record
- * - `/listtrainers <player>` - another player's record
+ * - `/cobblemontrainers list` - the caller's own record
+ * - `/cobblemontrainers list <player>` - another player's record
  *
  * What is shown is the same record [matheo1712.cobbletrainers.battle.TrainerBattleInteraction] reads to turn down a
  * challenge, so a trainer marked as defeated with `rematch: never` is one the player can no
@@ -32,11 +33,11 @@ import net.minecraft.server.level.ServerPlayer
  * Trainers are grouped by category, in the same order the battle phone shows them, and only
  * the listed ones appear - see [TrainerRegistry.listed].
  *
- * Permission level: 2 (operators)
+ * Permission is checked once on the root, see [TrainerCommands].
  */
 object ListTrainersCommand {
 
-    private const val NAME = "listtrainers"
+    private const val NAME = "list"
     private const val ARG_TARGET = "player"
 
     private val NO_TRAINERS =
@@ -44,17 +45,13 @@ object ListTrainersCommand {
     private val NONE_LISTED =
         SimpleCommandExceptionType(CobblemonTrainers.lang("command.list_trainers.none_listed"))
 
-    fun register(dispatcher: CommandDispatcher<CommandSourceStack>) {
-        dispatcher.register(
-            Commands.literal(NAME)
-                .requires { it.hasPermission(2) }
-                .then(
-                    Commands.argument(ARG_TARGET, EntityArgument.player())
-                        .executes { ctx -> execute(ctx, EntityArgument.getPlayer(ctx, ARG_TARGET)) }
-                )
-                .executes { ctx -> execute(ctx, ctx.source.playerOrException) }
-        )
-    }
+    fun node(): LiteralArgumentBuilder<CommandSourceStack> =
+        Commands.literal(NAME)
+            .then(
+                Commands.argument(ARG_TARGET, EntityArgument.player())
+                    .executes { ctx -> execute(ctx, EntityArgument.getPlayer(ctx, ARG_TARGET)) }
+            )
+            .executes { ctx -> execute(ctx, ctx.source.playerOrException) }
 
     /** @return how many trainers the target has beaten, for `execute store`. */
     private fun execute(context: CommandContext<CommandSourceStack>, target: ServerPlayer): Int {

@@ -50,6 +50,20 @@ class TrainerProgress : SavedData() {
         return firstWin
     }
 
+    /**
+     * Takes a victory back, for `/defeattrainer … reset`. A trainer nobody has beaten any more
+     * drops out of the map rather than keeping an empty set around.
+     *
+     * @return true when there was something to forget.
+     */
+    fun forgetVictory(trainer: ResourceLocation, player: UUID): Boolean {
+        val players = defeatedBy[trainer] ?: return false
+        if (!players.remove(player)) return false
+        if (players.isEmpty()) defeatedBy.remove(trainer)
+        setDirty()
+        return true
+    }
+
     override fun save(tag: CompoundTag, registries: HolderLookup.Provider): CompoundTag {
         val entries = CompoundTag()
         defeatedBy.forEach { (trainer, players) ->

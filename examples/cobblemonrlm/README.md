@@ -16,8 +16,10 @@ cd examples/cobblemonrlm && zip -r ../../cobblemonrlm.jar .
 ```
 
 C'est tout. Pas de `fabric.mod.json`, pas de resource pack à cocher : le mod lit les deux
-moitiés. En jeu, `/reload` puis `/spawntrainer cobblemonrlm:<id>` - le nom de fichier seul
-suffit, le mod retrouve le dossier. `/listtrainers` montre ensuite lesquels tu as vaincus.
+moitiés. En jeu, `/reload` puis `/cobblemontrainers spawn cobblemonrlm:<id>` - le nom de
+fichier seul suffit, le mod retrouve le dossier. `/cobblemontrainers list` montre ensuite
+lesquels tu as vaincus, et `/cobblemontrainers defeat all` les coche tous pour voir la ligue
+débloquée sans la jouer.
 
 Les autres emplacements marchent aussi, si tu préfères :
 

@@ -118,7 +118,7 @@ Enfin, `datapacks/` est déclaré en données et rien d'autre : un `assets/` pos
 }
 ```
 
-Puis, en jeu : `/reload` puis `/spawntrainer mon_pack:red`.
+Puis, en jeu : `/reload` puis `/cobblemontrainers spawn mon_pack:red`.
 
 ## Tous les champs
 
@@ -171,14 +171,14 @@ des équipes est trop courte, Cobblemon refuse le combat et l'explique dans le c
 | --- | --- | --- | --- |
 | `rematch` | `unlimited` | `unlimited`, `never` | Peut-on le redéfier une fois battu |
 | `rewards` | `every_win` | `every_win`, `first_win` | Quand `rewards` est remis |
-| `listed` | `true` | booléen | Apparaît dans le Battle Phone et `/listtrainers` |
+| `listed` | `true` | booléen | Apparaît dans le Battle Phone et `/cobblemontrainers list` |
 
 ## Catégories
 
 **Le dossier d'un dresseur est sa catégorie.** Rien à déclarer : ranger `erika.json` dans
 `champions/` suffit à en faire un champion. Les catégories groupent la liste du Battle Phone
-et de `/listtrainers`, et servent de cible aux [conditions](#conditions-pour-combattre) et aux
-[advancements](#advancements).
+et de `/cobblemontrainers list`, et servent de cible aux
+[conditions](#conditions-pour-combattre) et aux [advancements](#advancements).
 
 Un `category.json` **dans le dossier** lui donne un nom et une place, les deux facultatifs :
 
@@ -276,8 +276,8 @@ chemin nu (`champions/pierre`), qui vaut alors pour tous les namespaces.
 "conditions": { "pack": "mon_pack", "category": "champions", "count": 8 }
 ```
 
-Le compte est lu dans la progression enregistrée, celle-là même qu'affiche `/listtrainers` :
-il survit à un redémarrage et n'est pas remis à zéro par `/reload`.
+Le compte est lu dans la progression enregistrée, celle-là même qu'affiche
+`/cobblemontrainers list` : il survit à un redémarrage et n'est pas remis à zéro par `/reload`.
 
 ## Revanches et récompenses
 
@@ -322,8 +322,8 @@ Les combinaisons utiles :
 
 Deux entrées pour la même donnée.
 
-`/listtrainers [<joueur>]` (opérateur, permission 2) liste les dresseurs par catégorie et dit
-lesquels le joueur a vaincus :
+`/cobblemontrainers list [<joueur>]` liste les dresseurs par catégorie et dit lesquels le
+joueur a vaincus :
 
 ```
 Dresseurs de Steve - 1 / 3 vaincus
@@ -342,7 +342,7 @@ simplement d'envoyer l'équipe.
 
 Trois différences entre les deux :
 
-- Le Battle Phone **cache** les dresseurs verrouillés en `hidden` ; `/listtrainers` les
+- Le Battle Phone **cache** les dresseurs verrouillés en `hidden` ; `/cobblemontrainers list` les
   montre toujours, avec leur nombre de conditions restantes. C'est la vue de l'opérateur.
 - `"listed": false` retire le dresseur des deux. C'est un réglage d'affichage, pas de mémoire :
   les victoires restent enregistrées, donc `rematch` et `progress.rewards` continuent de
@@ -516,15 +516,15 @@ telle quelle - un bon moyen de repérer une clé oubliée.
 
 ```
 /reload
-/spawntrainer mon_pack:champions/erika
-/listtrainers
-/defeattrainer mon_pack:champions/erika
+/cobblemontrainers spawn mon_pack:champions/erika
+/cobblemontrainers list
+/cobblemontrainers defeat mon_pack:champions/erika
 ```
 
-`/reload` recharge les dresseurs sans redémarrer. L'autocomplétion de `/spawntrainer` propose
+`/reload` recharge les dresseurs sans redémarrer. L'autocomplétion de `spawn` propose
 les dresseurs effectivement chargés, sous leur ID complet : si le tien n'y est pas, il n'a pas
 été lu - la raison est dans les logs. Un nom de fichier seul suffit à la commande
-(`/spawntrainer erika`), le mod retrouve le dossier.
+(`/cobblemontrainers spawn erika`), le mod retrouve le dossier.
 
 Au chargement, le mod écrit une ligne récapitulative :
 
@@ -532,10 +532,11 @@ Au chargement, le mod écrit une ligne récapitulative :
 [cobblemon-trainers] Loaded 7 trainer(s) in 2 categor(y/ies): mon_pack:champions/erika, …
 ```
 
-`/defeattrainer <id> [<joueurs>] [reset]` inscrit une victoire sans combat : de quoi vérifier
-un `requires`, un advancement ou une fiche du Battle Phone sans jouer toute la ligue. Il ne
-remet pas les récompenses, et `reset` oublie la victoire pour retester le verrou. Un
-advancement déjà obtenu, lui, ne se retire qu'avec `/advancement revoke`.
+`/cobblemontrainers defeat <id|all> [<joueurs>] [reset]` inscrit une victoire sans combat : de
+quoi vérifier un `requires`, un advancement ou une fiche du Battle Phone sans jouer toute la
+ligue - `all` coche tous les dresseurs chargés d'un coup. Il ne remet pas les récompenses, et
+`reset` oublie la victoire pour retester le verrou. Un advancement déjà obtenu, lui, ne se
+retire qu'avec `/advancement revoke`.
 
 Un resource pack, lui, ne se recharge pas avec `/reload` : c'est <kbd>F3</kbd>+<kbd>T</kbd>.
 
@@ -554,12 +555,12 @@ Voir [le README](../README.md#le-bloc-de-dresseur).
 | Les dresseurs se chargent, pas la musique ni les traductions | L'archive est dans `datapacks/`, lu **uniquement** comme données. Pose-la dans `mods/` |
 | Un fichier `category.json` ne fait rien | Il est à la racine de `cobblemontrainers/` : il décrit le dossier où il se trouve, il lui en faut un |
 | Deux dresseurs de même nom s'écrasent | Ils étaient dans le même dossier : l'ID inclut le chemin, pas seulement le nom |
-| Le clic droit répond « ne veut pas encore te combattre » | Un `requires` non rempli. `/listtrainers <joueur>` dit combien de conditions restent |
+| Le clic droit répond « ne veut pas encore te combattre » | Un `requires` non rempli. `/cobblemontrainers list <joueur>` dit combien de conditions restent |
 | Un dresseur `requires` n'apparaît pas dans le Battle Phone | C'est le comportement par défaut (`hidden: true`). Mets `"hidden": false` |
 | Le clic droit répond « déjà battu » | `"rematch": "never"` et ce joueur l'a vaincu. Réinvoquer le dresseur n'y change rien |
-| L'advancement ne se déclenche pas | Dossier `data/<ns>/advancement/` (au singulier en 1.21), ou `trainer`/`category` qui ne correspond à aucun ID chargé. `/defeattrainer <id>` le vérifie en une commande |
+| L'advancement ne se déclenche pas | Dossier `data/<ns>/advancement/` (au singulier en 1.21), ou `trainer`/`category` qui ne correspond à aucun ID chargé. `/cobblemontrainers defeat <id>` le vérifie en une commande |
 | Aucune récompense à la victoire | `rewards` absent, `"rewards": "first_win"` sur une victoire qui n'est pas la première, ou objet introuvable |
-| Le dresseur manque dans `/listtrainers` | `"listed": false`, ou pas chargé du tout - `/spawntrainer` le dira |
+| Le dresseur manque dans `/cobblemontrainers list` | `"listed": false`, ou pas chargé du tout - `/cobblemontrainers spawn` le dira |
 | Le combat en double est refusé | Moins de 2 Pokémon d'un des deux côtés, le tien compris |
 | Une stat EV/IV semble ignorée | Nom de stat hors de la liste reconnue |
 | Aucune musique | Piste absente du resource pack, ou ID qui ne correspond pas à la clé de `sounds.json` |

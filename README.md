@@ -24,28 +24,30 @@ Fabric API et Fabric Language Kotlin. Le mod fonctionne côté serveur comme en 
 
 ## Utilisation
 
+Tout passe par une commande unique, `/cobblemontrainers`, et un verbe :
+
 ```
-/spawntrainer <id>
-/spawntrainer <id> <x> <y> <z>
-/listtrainers [<joueur>]
-/defeattrainer <id> [<joueurs>] [reset]
+/cobblemontrainers spawn <id> [<x> <y> <z>]
+/cobblemontrainers list [<joueur>]
+/cobblemontrainers defeat <id|all> [<joueurs>] [reset]
 ```
 
-Niveau de permission 2 (opérateur) pour les trois.
+Niveau de permission 2 (opérateur), vérifié une fois sur la racine.
 
-L'autocomplétion de `/spawntrainer` propose les dresseurs chargés sous leur ID complet,
+L'autocomplétion de `spawn` propose les dresseurs chargés sous leur ID complet,
 `<pack>:<dresseur>` - le namespace étant le pack d'où vient le dresseur, on voit d'un coup
 d'œil qui fournit quoi. À la frappe, le nom seul suffit quand il n'est pas ambigu, et la
 recherche porte sur les deux moitiés : `jac` retrouve `mon_pack:jacinthe`.
 
-`/listtrainers` liste les dresseurs à battre et coche ceux qui l'ont été, pour soi ou pour un
-autre joueur. Les joueurs, eux, ont le **Battle Phone** - voir plus bas.
+`list` liste les dresseurs à battre et coche ceux qui l'ont été, pour soi ou pour un autre
+joueur. Les joueurs, eux, ont le **Battle Phone** - voir plus bas.
 
-`/defeattrainer` inscrit une victoire sans combat : le dresseur compte comme vaincu, les
-advancements sont évalués et les dresseurs verrouillés derrière lui s'ouvrent. De quoi tester
-une ligue entière sans la jouer. Il ne remet **pas** les récompenses, pour qu'on puisse le
-relancer autant qu'on veut. `reset` fait l'inverse et oublie la victoire - mais ne retire pas
-un advancement déjà obtenu, ce qui reste l'affaire de `/advancement revoke`.
+`defeat` inscrit une victoire sans combat : le dresseur compte comme vaincu, les advancements
+sont évalués et les dresseurs verrouillés derrière lui s'ouvrent. De quoi tester une ligue
+entière sans la jouer, et `all` la coche d'un coup pour tous les dresseurs chargés. Il ne
+remet **pas** les récompenses, pour qu'on puisse le relancer autant qu'on veut. `reset` fait
+l'inverse et oublie la victoire - mais ne retire pas un advancement déjà obtenu, ce qui reste
+l'affaire de `/advancement revoke`.
 
 Un clic droit sur le dresseur lance le combat, sur fond de musique de combat. Si le combat
 ne peut pas démarrer (pas de Pokémon dans ton équipe, combat déjà en cours, dresseur sans
@@ -57,7 +59,7 @@ joueur enfermé face à un adversaire absent.
 
 ## Le Battle Phone
 
-`/listtrainers` est réservé aux opérateurs. Le **Battle Phone**
+`/cobblemontrainers list` est réservé aux opérateurs. Le **Battle Phone**
 (`cobblemon-trainers:battle_phone`) est la même chose pour tout le monde : un clic droit et
 l'écran liste les dresseurs du monde, le skin de chacun, et dit lesquels sont déjà vaincus.
 
@@ -69,10 +71,10 @@ dresseurs -, chacun avec son propre compteur.
 
 Cliquer une ligne montre le dresseur en entier à droite, avec son niveau, la taille de son
 équipe et son état - vaincu, vaincu sans revanche possible, encore debout, ou fermé tant que
-ses conditions ne sont pas remplies, auquel cas la liste de ce qui manque remplace son équipe. À côté, six
-cases pour son équipe : elles restent fermées jusqu'à la victoire, puis affichent les modèles
-de ses Pokémon, formes et chromatiques comprises. Passer la souris sur l'une d'elles donne le
-nom et le niveau du Pokémon.
+ses conditions ne sont pas remplies, auquel cas la liste de ce qui manque remplace son
+équipe. À côté, six cases pour son équipe : elles restent fermées jusqu'à la victoire, puis
+affichent les modèles de ses Pokémon, formes et chromatiques comprises. Passer la souris sur
+l'une d'elles donne le nom et le niveau du Pokémon.
 
 L'objet ne retient rien : il lit la progression du serveur, donc deux exemplaires affichent
 la même chose et le perdre ne perd rien. On le trouve dans l'onglet créatif
@@ -82,14 +84,14 @@ la même chose et le perdre ne perd rien. On le trouve dans l'onglet créatif
 /give @s cobblemon-trainers:battle_phone
 ```
 
-Seuls les dresseurs en `"listed": true` y apparaissent, comme dans `/listtrainers`, et un
-dresseur verrouillé peut se cacher entièrement jusqu'à ce que ses conditions soient remplies -
-voir [docs/DATAPACK.md](docs/DATAPACK.md#le-suivi-de-progression).
+Seuls les dresseurs en `"listed": true` y apparaissent, comme dans `/cobblemontrainers list`,
+et un dresseur verrouillé peut se cacher entièrement jusqu'à ce que ses conditions soient
+remplies - voir [docs/DATAPACK.md](docs/DATAPACK.md#le-suivi-de-progression).
 
 ## Le bloc de dresseur
 
-Un dresseur invoqué par `/spawntrainer` disparaît quand on le tue. Pour un dresseur qui doit
-tenir un poste - un champion d'arène, le PNJ du spawn -, il y a le **bloc de dresseur**
+Un dresseur invoqué par `/cobblemontrainers spawn` disparaît quand on le tue. Pour un dresseur
+qui doit tenir un poste - un champion d'arène, le PNJ du spawn -, il y a le **bloc de dresseur**
 (`cobblemon-trainers:trainer_spawner`) : il retient quel dresseur invoquer, et le remet
 toujours en place.
 
@@ -123,7 +125,7 @@ L'écran qui s'ouvre reprend celui du bloc de commande :
 | **Délai de réapparition** | Temps d'attente avant qu'un dresseur tué revienne. 30 secondes par défaut, 0 pour un retour immédiat. |
 
 *Entrée* ou *Terminé* valide, *Échap* ou *Annuler* ferme sans rien changer. L'ID accepte la
-forme complète `<pack>:<dresseur>` comme le nom seul, comme `/spawntrainer`.
+forme complète `<pack>:<dresseur>` comme le nom seul, comme `/cobblemontrainers spawn`.
 
 Ensuite le bloc se débrouille :
 
@@ -193,9 +195,9 @@ gagné tant de combats, obtenu tel advancement ou tel objet - de quoi monter une
 badges. Et battre un dresseur déclenche le critère `cobblemon-trainers:trainer_defeated`, sur
 lequel un pack branche ses propres advancements.
 
-`/listtrainers` liste les dresseurs restants et ceux déjà vaincus, groupés par catégorie. Un
-dresseur qui n'a rien à y faire - démonstration, dresseur jamais invoqué - se retire de la
-liste avec `"listed": false`.
+`/cobblemontrainers list` liste les dresseurs restants et ceux déjà vaincus, groupés par
+catégorie. Un dresseur qui n'a rien à y faire - démonstration, dresseur jamais invoqué - se
+retire de la liste avec `"listed": false`.
 
 Une forme - régionale, méga, fakemon d'un autre pack - s'obtient avec une ligne `Aspects:`,
 qui reprend la syntaxe de `/pokespawn` : `"Aspects: rlm, poison"` pour un Haxorus RLM Poison.

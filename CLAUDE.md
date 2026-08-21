@@ -69,7 +69,7 @@ curl -s "https://api.modrinth.com/v2/version/<ID>" | python -c "import sys,json;
 Flux complet : JSON de datapack → `TrainerDefinition` → `NPCEntity` Cobblemon →
 messages, musique et récompenses de combat.
 
-- **`CobblemonTrainers`** - `ModInitializer`. Enregistre `/spawntrainer` et `/listtrainers`,
+- **`CobblemonTrainers`** - `ModInitializer`. Enregistre `/cobblemontrainers` et ses verbes,
   branche `TrainerReloadListener` sur le gestionnaire de ressources `SERVER_DATA` (ce qui
   couvre à la fois le chargement initial et `/reload`), et enregistre les listeners de combat
   dans un `try/catch` car ils dépendent de la présence de Cobblemon.
@@ -108,13 +108,20 @@ messages, musique et récompenses de combat.
 - **`TrainerProgress`** - `SavedData` du monde : qui a battu quel dresseur. Voir « Revanches
   et récompenses ».
 - **`TrainerRewards`** - remet les objets au vainqueur.
-- **`ListTrainersCommand`** - `/listtrainers [joueur]`, la lecture de `TrainerProgress`
+- **`ListTrainersCommand`** - `/cobblemontrainers list [joueur]`, la lecture de `TrainerProgress`
   côté joueur, groupée par catégorie.
-- **`DefeatTrainerCommand`** - `/defeattrainer <id> [joueurs] [reset]`, l'écriture : une
-  victoire inscrite sans combat, pour tester une progression sans la jouer. Elle enregistre et
+- **`TrainerCommands`** - la racine `/cobblemontrainers` et le seul `requires(hasPermission(2))`
+  du mod. Les trois verbes ne s'enregistrent plus eux-mêmes : chacun expose un `node()` que la
+  racine assemble. Un verbe qu'on voudrait ouvrir à tout le monde devrait donc sortir de cette
+  racine plutôt que d'y poser son propre contrôle.
+- **`DefeatTrainerCommand`** - `/cobblemontrainers defeat <id|all> [joueurs] [reset]`,
+  l'écriture : une victoire inscrite sans combat, pour tester une progression sans la jouer. Elle enregistre et
   déclenche `TrainerDefeatedTrigger`, rien de plus - ni récompenses, ni message de fin de
   combat, parce qu'un outil de test doit pouvoir tourner cent fois. Le trigger part même quand
-  la victoire était déjà là : c'est ce qui rattrape un advancement ajouté après coup.
+  la victoire était déjà là : c'est ce qui rattrape un advancement ajouté après coup. `all`
+  prend tous les dresseurs chargés, pas seulement les `listed` : c'est un outil de test, pas
+  une vue de joueur. Le mot-clé est un littéral Brigadier, donc il éclipse un dresseur qui
+  s'appellerait `all` - les littéraux sont essayés avant les arguments.
 - **`TrainerBattleMusic`** - envoie `ClientboundSoundPacket` / `ClientboundStopSoundPacket`
   aux joueurs du combat.
 - **`block.TrainerBlocks` / `TrainerSpawnerBlock` / `TrainerSpawnerBlockEntity` /
@@ -172,8 +179,8 @@ Points à ne pas redécouvrir :
 
 ### Revanches et récompenses
 
-`progress.rematch` et `progress.rewards` ont besoin de savoir qui a déjà battu quoi - un état de monde,
-pas de datapack. Il vit donc dans un `SavedData` (`TrainerProgress`, fichier
+`progress.rematch` et `progress.rewards` ont besoin de savoir qui a déjà battu quoi - un état
+de monde, pas de datapack. Il vit donc dans un `SavedData` (`TrainerProgress`, fichier
 `cobblemon_trainers_progress.dat` de l'overworld) et non dans `TrainerRegistry`, que `/reload`
 vide entièrement.
 
@@ -410,8 +417,8 @@ Points à ne pas redécouvrir :
 ### Le Battle Phone
 
 `cobblemon-trainers:battle_phone` ouvre le suivi de progression : les dresseurs `listed`, un
-onglet par datapack, un intertitre par catégorie, et le skin de chacun. C'est le pendant joueur de `/listtrainers`, qui
-reste opérateur - l'objet ne donne aucun pouvoir, il lit.
+onglet par datapack, un intertitre par catégorie, et le skin de chacun. C'est le pendant
+joueur de `/cobblemontrainers list`, qui reste opérateur - l'objet ne donne aucun pouvoir, il lit.
 
 Points à ne pas redécouvrir :
 
@@ -502,7 +509,7 @@ Points à ne pas redécouvrir :
 - **Les dresseurs de la racine passent en dernier**, sous un titre du mod
   (`category.uncategorized`). C'est le seul groupe dont le nom ne vient pas d'un pack.
 - **Le tri vit dans le registre, pas dans les écrans.** `TrainerRegistry.listed()` rend déjà
-  l'ordre final ; le Battle Phone et `/listtrainers` ne font que le découper.
+  l'ordre final ; le Battle Phone et `/cobblemontrainers list` ne font que le découper.
 
 ### Conditions de combat
 
@@ -524,8 +531,8 @@ Points à ne pas redécouvrir :
 - **Le masquage est décidé côté serveur.** Un dresseur `hidden` et verrouillé n'est pas envoyé
   du tout, et sa demande de skin est refusée : le listing est la seule chose qui trahirait son
   existence.
-- **`/listtrainers` ne masque rien**, volontairement : c'est la vue de l'opérateur, et elle
-  évalue les conditions contre le joueur ciblé, pas contre l'appelant.
+- **`/cobblemontrainers list` ne masque rien**, volontairement : c'est la vue de l'opérateur,
+  et elle évalue les conditions contre le joueur ciblé, pas contre l'appelant.
 
 ### Advancements
 

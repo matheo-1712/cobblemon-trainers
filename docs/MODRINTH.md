@@ -29,7 +29,8 @@ client as well - install it on both.
   champion a single encounter per player with `"rematch": "never"`.
 - **Progress tracking, in game.** The Battle Phone item gives every player their own board:
   one tab per pack, a heading per category, each trainer's skin - and their team, once beaten.
-  Operators get the same from `/listtrainers`. Progress is saved with the world and survives
+  Operators get the same from `/cobblemontrainers list`. Progress is saved with the world and
+  survives
   `/reload` and restarts.
 - **Leagues, not just trainers.** Sort trainers into categories with folders, lock one behind
   another - a badge, an advancement, eight victories - and hang ordinary Minecraft advancements
@@ -73,8 +74,8 @@ can test everything before writing a single JSON file:
 | `cobblemon-trainers:iconic_trainers/kagumi` | **Kagumi** | 80 | Singles | Secret |
 
 ```
-/spawntrainer cobblemon-trainers:iconic_trainers/rerebleue
-/spawntrainer rerebleue
+/cobblemontrainers spawn cobblemon-trainers:iconic_trainers/rerebleue
+/cobblemontrainers spawn rerebleue
 ```
 
 The bare file name is enough - the command finds the folder. All four play at maximum AI skill
@@ -84,9 +85,9 @@ own files.
 ## Commands
 
 ```
-/spawntrainer <id>
-/spawntrainer <id> <x> <y> <z>
-/listtrainers [<player>]
+/cobblemontrainers spawn <id>
+/cobblemontrainers spawn <id> <x> <y> <z>
+/cobblemontrainers list [<player>]
 ```
 
 Both require permission level 2 (operator). Autocomplete lists every loaded trainer under its
@@ -96,7 +97,8 @@ full `<pack>:<trainer>` ID, and searches both halves - typing `jac` finds `my_pa
 
 ## Trainers that stay put
 
-A trainer summoned with `/spawntrainer` is gone the moment something kills it. For a trainer
+A trainer summoned with `/cobblemontrainers spawn` is gone the moment something kills it. For
+a trainer
 that has to hold a post - a gym leader, the NPC at spawn - there is the **trainer spawner
 block**, `cobblemon-trainers:trainer_spawner`. It remembers which trainer belongs there and
 puts it back whenever it is missing.
@@ -134,7 +136,8 @@ screen also needs the mod installed client-side - everything else works with a v
 
 ## The Battle Phone
 
-`/listtrainers` is for operators. The **Battle Phone** (`cobblemon-trainers:battle_phone`) is
+`/cobblemontrainers list` is for operators. The **Battle Phone**
+(`cobblemon-trainers:battle_phone`) is
 the same board for everyone else: right-click it and every listed trainer of the world is
 there, one tab per datapack, a heading per category, each with its skin and its state - beaten,
 beaten for good, still standing, or locked with the list of what's missing.
@@ -195,7 +198,7 @@ Then, in game:
 
 ```
 /reload
-/spawntrainer my_pack:red
+/cobblemontrainers spawn my_pack:red
 ```
 
 **Every field is optional** - a file containing just `{}` produces a valid (if boring) trainer.
@@ -234,7 +237,7 @@ Four blocks, each holding what its name says.
 | --- | --- | --- | --- |
 | `rematch` | `unlimited` | `unlimited`, `never` | Whether it can be challenged again once beaten |
 | `rewards` | `every_win` | `every_win`, `first_win` | When `rewards` is handed over |
-| `listed` | `true` | boolean | Shows up in the Battle Phone and `/listtrainers` |
+| `listed` | `true` | boolean | Shows up in the Battle Phone and `/cobblemontrainers list` |
 
 | `skin` | Default | What it does |
 | --- | --- | --- |
@@ -249,7 +252,8 @@ wipe the record.
 ### Categories
 
 Ranking `erika.json` under `champions/` is all it takes - nothing to declare. Categories group
-the Battle Phone and `/listtrainers`, and give requirements and advancements something to aim
+the Battle Phone and `/cobblemontrainers list`, and give requirements and advancements
+something to aim
 at. A `category.json` **inside the folder** names it and places it, both optional:
 
 ```json
@@ -297,7 +301,7 @@ rewards are ordinary advancements - your title, your icon, your tree.
 ```
 
 Conditions are `trainer`, `category`, `pack` and `count`, all optional and cumulative. The count
-is read from the saved progress, the same one `/listtrainers` shows.
+is read from the saved progress, the same one `/cobblemontrainers list` shows.
 
 ---
 
