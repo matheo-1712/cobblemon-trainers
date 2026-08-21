@@ -14,6 +14,9 @@
   "cobblemon-trainers.command.defeat_trainer.unknown_trainer": "Dresseur introuvable. Vérifie les ID dans data/<namespace>/cobblemontrainers/ de tes datapacks.",
   "cobblemon-trainers.command.defeat_trainer.recorded": "%s compte maintenant comme vaincu par %s.",
   "cobblemon-trainers.command.defeat_trainer.reset": "%s ne compte plus comme vaincu par %s.",
+  "cobblemon-trainers.command.defeat_trainer.empty": "Aucun dresseur chargé, il n'y a rien à enregistrer.",
+  "cobblemon-trainers.command.defeat_trainer.recorded_all": "%s dresseur(s) comptent maintenant comme vaincus par %s.",
+  "cobblemon-trainers.command.defeat_trainer.reset_all": "%s dresseur(s) ne comptent plus comme vaincus par %s.",
 
   "block.cobblemon-trainers.trainer_spawner": "Bloc de dresseur",
   "item.cobblemon-trainers.battle_phone": "Battle Phone",

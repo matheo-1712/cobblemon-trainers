@@ -14,6 +14,9 @@
   "cobblemon-trainers.command.defeat_trainer.unknown_trainer": "Unknown trainer. Check the trainer IDs in data/<namespace>/cobblemontrainers/ of your datapacks.",
   "cobblemon-trainers.command.defeat_trainer.recorded": "%s now counts as defeated by %s.",
   "cobblemon-trainers.command.defeat_trainer.reset": "%s no longer counts as defeated by %s.",
+  "cobblemon-trainers.command.defeat_trainer.empty": "No trainer loaded, so there is nothing to record.",
+  "cobblemon-trainers.command.defeat_trainer.recorded_all": "%s trainer(s) now count as defeated by %s.",
+  "cobblemon-trainers.command.defeat_trainer.reset_all": "%s trainer(s) no longer count as defeated by %s.",
 
   "block.cobblemon-trainers.trainer_spawner": "Trainer Spawner",
   "item.cobblemon-trainers.battle_phone": "Battle Phone",
