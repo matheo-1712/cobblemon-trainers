@@ -17,6 +17,9 @@
   "cobblemon-trainers.command.defeat_trainer.empty": "Aucun dresseur chargé, il n'y a rien à enregistrer.",
   "cobblemon-trainers.command.defeat_trainer.recorded_all": "%s dresseur(s) comptent maintenant comme vaincus par %s.",
   "cobblemon-trainers.command.defeat_trainer.reset_all": "%s dresseur(s) ne comptent plus comme vaincus par %s.",
+  "cobblemon-trainers.command.debug_ai.on": "Le raisonnement de l'IA des dresseurs est maintenant affiché dans le chat.",
+  "cobblemon-trainers.command.debug_ai.off": "Le raisonnement de l'IA des dresseurs n'est plus affiché.",
+  "cobblemon-trainers.chat.ai_debug": "[IA] %s",
 
   "block.cobblemon-trainers.trainer_spawner": "Bloc de dresseur",
   "item.cobblemon-trainers.battle_phone": "Battle Phone",
@@ -72,6 +75,7 @@
   "cobblemon-trainers.subtitles.battle_music": "Musique de combat de dresseur",
 
   "category.cobblemon-trainers.iconic_trainers": "Dresseurs iconiques",
+  "category.cobblemon-trainers.secret": "Dresseurs secrets",
 
   "trainer.cobblemon-trainers.rerebleue.name": "RereBleue",
   "trainer.cobblemon-trainers.rerebleue.battle_start": "Me demande pas pourquoi j'ai un E dans mon nom. Combattons plutôt !",

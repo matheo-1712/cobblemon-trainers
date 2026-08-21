@@ -38,6 +38,7 @@ object TrainerCommands {
                 .then(SpawnTrainerCommand.node())
                 .then(ListTrainersCommand.node())
                 .then(DefeatTrainerCommand.node())
+                .then(DebugAiCommand.node())
         )
     }
 }

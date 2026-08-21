@@ -17,6 +17,9 @@
   "cobblemon-trainers.command.defeat_trainer.empty": "No trainer loaded, so there is nothing to record.",
   "cobblemon-trainers.command.defeat_trainer.recorded_all": "%s trainer(s) now count as defeated by %s.",
   "cobblemon-trainers.command.defeat_trainer.reset_all": "%s trainer(s) no longer count as defeated by %s.",
+  "cobblemon-trainers.command.debug_ai.on": "Trainer AI reasoning is now shown in chat.",
+  "cobblemon-trainers.command.debug_ai.off": "Trainer AI reasoning is no longer shown.",
+  "cobblemon-trainers.chat.ai_debug": "[AI] %s",
 
   "block.cobblemon-trainers.trainer_spawner": "Trainer Spawner",
   "item.cobblemon-trainers.battle_phone": "Battle Phone",
@@ -72,11 +75,17 @@
   "cobblemon-trainers.subtitles.battle_music": "Trainer battle music",
 
   "category.cobblemon-trainers.iconic_trainers": "Iconic Trainers",
+  "category.cobblemon-trainers.secret": "Secret Trainers",
 
   "trainer.cobblemon-trainers.rerebleue.name": "RereBleue",
   "trainer.cobblemon-trainers.rerebleue.battle_start": "Don't ask me why I have an E in my name. Let's battle instead!",
   "trainer.cobblemon-trainers.rerebleue.win": "Too easy 😎",
   "trainer.cobblemon-trainers.rerebleue.lose": "Not bad! You did well.",
+
+  "trainer.cobblemon-trainers.ultra-rerebleue.name": "Ultra-RereBleue",
+  "trainer.cobblemon-trainers.ultra-rerebleue.battle_start": "Don't ask me why I have an E in my name. Let's battle instead!",
+  "trainer.cobblemon-trainers.ultra-rerebleue.win": "Too easy 😎",
+  "trainer.cobblemon-trainers.ultra-rerebleue.lose": "Not bad! You did well.",
 
   "trainer.cobblemon-trainers.theazertor.name": "TheAzertor",
   "trainer.cobblemon-trainers.theazertor.battle_start": "You need a soul!",

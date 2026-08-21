@@ -30,9 +30,14 @@ Tout passe par une commande unique, `/cobblemontrainers`, et un verbe :
 /cobblemontrainers spawn <id> [<x> <y> <z>]
 /cobblemontrainers list [<joueur>]
 /cobblemontrainers defeat <id|all> [<joueurs>] [reset]
+/cobblemontrainers debugai
 ```
 
 Niveau de permission 2 (opérateur), vérifié une fois sur la racine.
+
+`debugai` est un interrupteur : tant qu'il est actif, chaque décision que le mod corrige chez
+l'IA d'un dresseur est expliquée dans votre chat pendant le combat - coup refusé, changement
+refusé, soin écarté, et pourquoi. Il sert à régler la difficulté d'un dresseur en le jouant.
 
 L'autocomplétion de `spawn` propose les dresseurs chargés sous leur ID complet,
 `<pack>:<dresseur>` - le namespace étant le pack d'où vient le dresseur, on voit d'un coup
@@ -205,6 +210,9 @@ qui reprend la syntaxe de `/pokespawn` : `"Aspects: rlm, poison"` pour un Haxoru
 **➜ Le guide complet est dans [docs/DATAPACK.md](docs/DATAPACK.md)** : arborescence,
 référence de tous les champs, catégories, conditions, advancements, format d'équipe Showdown,
 skins, musique, revanches et récompenses, traductions, et les erreurs fréquentes.
+
+**➜ Ce que fait chaque niveau d'IA est dans [docs/DIFFICULTE.md](docs/DIFFICULTE.md)** :
+le comportement exact de `battle.difficulty`, de `0` à `5`.
 
 Un pack d'exemple couvrant chaque option vit dans
 [`examples/cobblemonrlm/`](examples/cobblemonrlm) : un seul dossier qui fait à la fois

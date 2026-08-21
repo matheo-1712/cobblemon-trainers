@@ -19,10 +19,13 @@ seul endroit du mod qui touche à du rendu 3D.
 Le code, les commentaires et les logs sont en **anglais**. Tout texte affiché au joueur
 passe par `assets/cobblemon-trainers/lang/` - jamais de littéral en dur.
 
-La doc utilisateur est en français : `README.md` (installation, commandes) et
-`docs/DATAPACK.md` (guide complet de création de datapack). Ce qui touche au format des
-dresseurs - nouveau champ, nouvelle règle de parsing - se répercute dans `docs/DATAPACK.md`,
-qui est la référence ; le README n'en garde qu'un résumé. `docs/DATAPACK.md` est tenu **aussi
+La doc utilisateur est en français : `README.md` (installation, commandes),
+`docs/DATAPACK.md` (guide complet de création de datapack) et `docs/DIFFICULTE.md` (ce que fait
+chaque niveau de `battle.difficulty`). Ce qui touche au format des dresseurs - nouveau champ,
+nouvelle règle de parsing - se répercute dans `docs/DATAPACK.md`, qui est la référence ; le
+README n'en garde qu'un résumé. **Toute règle de l'IA va dans `docs/DIFFICULTE.md`**, jamais
+dans `docs/DATAPACK.md`, qui n'en garde qu'un renvoi : une règle décrite à deux endroits est une
+règle qui finit fausse à l'un des deux. `docs/DATAPACK.md` est tenu **aussi
 concis que possible** : une idée par phrase, un tableau plutôt qu'un paragraphe, et rien qui
 soit déjà dit ailleurs dans le fichier. Ajouter un champ, c'est ajouter une ligne de tableau,
 pas une section.
@@ -105,6 +108,11 @@ messages, musique et récompenses de combat.
   récompenses et l'enregistrement de la victoire. Il surveille aussi la mort et la
   suppression des entités, pour arrêter le combat d'un dresseur qui quitte le monde (voir
   plus bas).
+- **`battle.ai.TrainerBattleAI`** - la couche qui refuse les décisions intenables du
+  `StrongBattleAI` de Cobblemon, épaulée par `BattleTypeChart` (efficacité des types, talents
+  compris), `BattleDamage` (dégâts en points de vie), `BattleGuards` (ce qui encaisse un coup
+  qu'on croyait décisif), `BattleSpeed` (qui frappe en premier) et `TrainerAiDebug`
+  (l'interrupteur de débogage). Voir « L'IA de combat ».
 - **`TrainerProgress`** - `SavedData` du monde : qui a battu quel dresseur. Voir « Revanches
   et récompenses ».
 - **`TrainerRewards`** - remet les objets au vainqueur.
@@ -118,7 +126,9 @@ messages, musique et récompenses de combat.
   l'écriture : une victoire inscrite sans combat, pour tester une progression sans la jouer. Elle enregistre et
   déclenche `TrainerDefeatedTrigger`, rien de plus - ni récompenses, ni message de fin de
   combat, parce qu'un outil de test doit pouvoir tourner cent fois. Le trigger part même quand
-  la victoire était déjà là : c'est ce qui rattrape un advancement ajouté après coup. `all`
+  la victoire était déjà là : c'est ce qui rattrape un advancement ajouté après coup.
+- **`DebugAiCommand`** - `/cobblemontrainers debugai`, l'interrupteur qui montre en chat ce que
+  la couche d'IA a refusé et pourquoi. Voir « L'IA de combat ». `all`
   prend tous les dresseurs chargés, pas seulement les `listed` : c'est un outil de test, pas
   une vue de joueur. Le mot-clé est un littéral Brigadier, donc il éclipse un dresseur qui
   s'appellerait `all` - les littéraux sont essayés avant les arguments.
@@ -593,6 +603,125 @@ Points à ne pas redécouvrir sur `texture` :
 - Le mod livre `assets/cobblemon-trainers/textures/trainers/example.png` pour que la voie soit
   testable sans fabriquer un skin.
 
+### L'IA de combat
+
+`battle.ai.TrainerBattleAI` enveloppe le `StrongBattleAI` de Cobblemon et refuse celles de ses
+décisions qui ne peuvent pas être bonnes. Le raisonnement reste le sien : la couche dit non, et
+propose autre chose. Trois défauts sont couverts, tous constatés en jeu à skill 5.
+
+- **Un coup sur une cible immunisée.** `findAndUseMostDamagingMove` prend le `maxByOrNull` de ses
+  estimations **sans plancher** : quand tout vaut 0, la première entrée de la map gagne. Et
+  `choose()` se termine sur un `availableMoves.randomOrNull()` dès qu'aucune branche n'a décidé,
+  immunités comprises.
+- **Les immunités de talent et d'objet ne sont jamais lues.** La table existe pourtant dans
+  Cobblemon (`AIUtility.typeImmuneAbilities`) ; `moveDamageMultiplier` ne la consulte pas. Un Sol
+  sur un Lévitation passe donc pour neutre.
+- **Les boucles de changement.** `checkSwitchOutSkill()` obéit à `shouldSwitchOut` avec une
+  probabilité de `0, 0, 0, 0.2, 0.6, 1.0` pour les skills 0 à 5 - donc **toujours** à 5 - et
+  `shouldSwitchOut` n'a aucune mémoire du tour précédent. Un mauvais matchup fuit vers un autre
+  mauvais matchup, chaque tour, pendant que le joueur tape gratuitement. Les skills bas ne sont
+  pas plus malins : c'est le dé qui casse la boucle.
+- **Le soin sur une règle plate.** Cobblemon joue le **premier** coup de soin de la liste dès que
+  les PV passent sous la moitié, sans jamais demander ce que l'adversaire rend au tour suivant,
+  ni si un KO était en main, ni combien le coup restaure vraiment.
+- **Ce qui encaisse un coup décisif n'est jamais vu.** Frimousse et Ice Face annulent le premier
+  coup entier, Baraka et la Ceinture Force laissent 1 PV. L'IA dépense son meilleur coup, la
+  cible survit, et le tour suivant est offert.
+- **La riposte n'entre dans aucun calcul.** Rien ne compare ce qu'on rend à ce qu'on prend, ni ne
+  regarde qui frappe en premier : un dresseur sur le point de tomber pose tranquillement un boost
+  qui ne se résoudra jamais.
+
+Points à ne pas redécouvrir :
+
+- **La difficulté dose la correction, pas l'information.** Un wrapper ne peut pas rendre l'IA de
+  Cobblemon *moins* informée : son `ActiveTracker` garde une référence sur les vrais objets
+  `Pokemon` du joueur, et rien ne permet de s'interposer. `CorrectionLevel` traduit donc
+  `battle.difficulty` en qualité de décision - rien en dessous de 3, immunités de type et
+  discipline de changement à 3-4, tout le reste à 5. Qu'un dresseur de route se trompe encore est
+  voulu, pas un oubli.
+- **Les tables sont celles de Cobblemon.** `AIUtility` expose publiquement son chart de types,
+  `typeImmuneAbilities`, `canAffectWithStatus` et ses listes d'intentions (statuts, boosts,
+  pièges, soins, météo, protections). Les réutiliser plutôt que d'en écrire fait qu'une mise à
+  jour de Cobblemon suit toute seule. `BattleTypeChart` n'y ajoute que trois correctifs :
+  `immunity` est retiré (Vaccin bloque l'empoisonnement, pas les dégâts Poison, et l'honorer
+  ferait refuser une attaque parfaitement valable), `lightningrod` est ajouté (Cobblemon écrit
+  `lightingrod`, qui ne correspond à aucun talent), `dryskin` et `wellbakedbody` manquaient.
+- **Un coup « intentionnel » n'est jamais échangé contre des dégâts.** Sans ça la correction
+  aplatirait le jeu de Cobblemon en « tape toujours le plus fort » et ferait disparaître boosts,
+  statuts, pièges et soins. C'est le seul rôle de `purposefulMoves`.
+- **Le changement exige un gain de matchup réel** (`MATCHUP_GAIN_REQUIRED`, une demi-marche
+  d'efficacité). C'est la seule règle anti-boucle : un cooldown ou un quota de changements par
+  combat traitaient le symptôme, celle-ci traite la cause - fuir vers quelqu'un d'aussi mal loti
+  n'est plus une option. Un demi-point, et pas un point entier, parce qu'un pivot défensif - un
+  remplaçant qui résiste sans taper plus fort - ne gagne que ça et doit passer.
+- **Trois des quatre raisons de changer de Cobblemon n'ont rien à voir avec les types**, et le
+  test de gain les notait donc toutes à zéro : `shouldSwitchOut` part aussi sous 30 % de PV, à
+  une stat tombée à -3 ou pire, et sur `truant` / `slowstart`. Un dresseur qui ne switchait plus
+  du tout est le symptôme de ce test appliqué à tout. `nonTypeReason` rend ces cas à Cobblemon
+  sans les juger, plus celui du dresseur muré (tout résisté), et seul le changement réellement
+  motivé par le type passe par le seuil. Ne pas y remettre `slowstart` et `truant` sans le
+  demander : c'est un choix, pas un oubli.
+- **Le piège d'entrée est la seule règle qui *ajoute* une décision**, tout le reste refuse. Elle
+  s'allume à la difficulté 4 et non sur un `CorrectionLevel` entier, parce que c'est là qu'elle a
+  été demandée - d'où le `difficulty` brut gardé à côté du niveau. Aucun test « le piège est-il
+  déjà posé » n'est nécessaire : c'est le premier tour, rien n'a bougé. Et `openingPlayed` est
+  porté par l'acteur, pas par le Pokémon, sinon les deux leads d'un combat double poseraient deux
+  fois le même piège.
+- **Le soin est jugé, jamais ajouté.** `correctHeal` refuse le soin quand un coup met KO ce
+  tour-ci, quand l'adversaire rend au moins autant que ce qui est restauré (le tour ne rachète
+  rien), et quand la barre n'a pas assez descendu pour l'absorber (`MIN_HEAL_USED`). Un wrapper
+  ne voit que ce que Cobblemon propose : il ne peut pas faire soigner un dresseur qui n'en avait
+  pas l'intention, donc le seuil effectif ne peut que monter à l'intérieur des 50 % de Cobblemon,
+  jamais descendre.
+- **Les règles tactiques s'arrêtent à `FULL`, et c'est délibéré.** `tactics()` - soin jugé, garde
+  cassée au moins cher, KO qui part en premier, boost abandonné quand on tombe ce tour-ci, Abri
+  non répété - ne tourne qu'à la difficulté 5. Un dresseur de route qui ne se trompe jamais sur
+  un KO et ne gaspille jamais un tour n'est plus un dresseur de route.
+- **Une garde se casse avec le coup le moins cher, pas le plus fort.** C'est l'exact inverse de la
+  règle « joue le plus fort » du même niveau, et l'ordre dans `tactics()` est ce qui fait gagner
+  la bonne : la garde est traitée avant. `BattleGuards.guardIntact` croise deux sources - l'aspect
+  de forme (`busted-form`, `noice_face`), exact mais qui suppose que Cobblemon répercute le
+  changement de forme de Showdown, et notre propre mémoire `struck` des Pokémon déjà frappés,
+  toujours disponible et au pire en retard d'un tour. La première des deux qui dit « cassée »
+  l'emporte.
+- **On ne peut compter que nos propres Abri.** Cobblemon tient un `protectCount` de l'adversaire
+  dans son tracker privé ; nous ne voyons que nos propres décisions. La règle porte donc sur le
+  dresseur - pas deux Abri d'affilée - et pas sur ce que fait le joueur.
+- **Une égalité de vitesse est perdue, par convention.** `BattleSpeed.movesFirst` tranche en
+  faveur de l'adversaire : en jeu c'est un pile ou face, et une IA qui suppose gagner tous ses
+  pile ou face joue imprudemment, alors que l'inverse la rend seulement prudente. Distorsion,
+  Vent Arrière et les objets de vitesse ne sont pas lus - se tromper d'ordre coûte un coup mal
+  choisi, pas un combat cassé.
+- **La priorité prêtée à l'adversaire est celle de sa capacité la plus dangereuse**, que
+  `BattleDamage.strongestAgainst` rend avec ses dégâts. Prendre le maximum de son arsenal a été
+  écrit puis retiré : une Vive-Attaque dans l'équipe du joueur suffisait à ce que le dresseur ne
+  se croie jamais premier, et toutes les règles qui dépendent de l'ordre s'éteignaient.
+- **Un dernier tour va à la capacité qui part encore.** La règle ne se limite pas aux boosts :
+  face à un KO et en second, *toute* capacité non prioritaire est remplacée par la meilleure
+  prioritaire. C'est le cas du Mimiqui sous Danse-Lames qui jouait Câlinerie au lieu d'Ombre
+  Portée - la première version ne corrigeait que les coups non offensifs et le laissait passer.
+- **`BattleDamage` existe parce qu'un classement ne suffit plus.** « Ce coup met-il KO » et « ce
+  soin rachète-t-il le tour » se répondent en points de vie. Le `calculateDamage` de Cobblemon
+  ferait l'affaire mais prend les `TrackerPokemon` de son `activeTracker` privé, sans getter :
+  injoignable. La formule est donc réimplémentée, jet moyen et non maximal, pour qu'un KO annoncé
+  soit un KO réel.
+- **L'impasse est le seul cas où l'on change sans exiger de gain**, et le remplaçant doit quand
+  même être *strictement* meilleur. Un remplaçant à égalité serait renvoyé au tour suivant, et la
+  boucle reviendrait de notre fait.
+- **Cobblemon demande sa décision plus d'une fois par tour.** `RequestInstruction` et
+  `TurnInstruction` envoient chacune un `BattleMakeChoicePacket`, et `AIBattleActor.sendUpdate`
+  en fait un `onChoiceRequested` à chaque fois ; Cobblemon écrase sa propre réponse, donc ça ne
+  se voyait pas avant que la couche ne garde une mémoire entre les tours. `DecisionKey` rend la
+  réponse déjà donnée tant qu'elle reste valide. Sans ça, la seconde passe lisait un `struck`
+  que la première venait de remplir : une Frimousse intacte y paraissait cassée.
+- **Rien ne doit remonter de `choose()`.** Un combat attend cette réponse : une exception y
+  laisserait le joueur enfermé dans un combat où personne ne peut jouer. D'où le `try/catch`, qui
+  rend la décision de Cobblemon telle quelle.
+- **Chaque substitution est loguée en `debug` avec sa raison**, et envoyée en chat aux joueurs
+  qui ont activé `/cobblemontrainers debugai`. Sans ça un seuil est intuable : un changement
+  refusé et un changement que personne n'a proposé se ressemblent exactement depuis l'autre côté
+  du combat. `TrainerAiDebug.idle()` évite de formater une ligne que personne ne lira.
+
 ### Fin de combat
 
 Cobblemon n'expose **aucun** événement « combat terminé » : `BATTLE_VICTORY` et
@@ -679,6 +808,17 @@ packs l'affiche comme incompatible. C'est ce que fait `examples/cobblemonrlm/pac
 décrit sous « Le bloc de dresseur ». Comme `client.MinecraftMixin` il est déclaré dans le
 tableau `client` du mixins.json : une classe client dans `mixins` ferait échouer le chargement
 sur un serveur dédié.
+
+`AIBattleActorMixin` remplace l'IA de combat des dresseurs du mod par `TrainerBattleAI` (voir
+« L'IA de combat »). Le constructeur de `NPCBattleActor` prend pourtant l'IA en paramètre -
+`StrongBattleAI(skill)` n'en est que la valeur par défaut - mais `BattleBuilder.pvn` ne l'expose
+pas, et bâtir le combat nous-mêmes voudrait dire réécrire toutes les vérifications et tous les
+messages d'erreur que `pvn` renvoie au joueur. Le remplacement se fait à la première demande de
+décision plutôt que dans un constructeur : le champ vit sur `AIBattleActor` alors que l'identité
+du dresseur vit sur le `NPCBattleActor` en dessous, et à `AIBattleActor.<init>` la sous-classe
+n'a pas encore posé son `npc`. Le filtre est l'aspect `trainer_id:`, donc un pack tiers qui
+utilise le mod comme API en profite sans rien déclarer. Comme il vise une classe Cobblemon et non
+une classe Minecraft, Loom ne remappe rien : la cible reste `onChoiceRequested` dans le jar.
 
 `PackDetectorMixin` fait accepter les archives `.jar` à
 `PackDetector.detectPackResources`, unique endroit où Minecraft filtre sur `.zip` - tout le
