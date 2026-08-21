@@ -19,7 +19,7 @@ import java.util.Locale
  * object, because Cobblemon's property parser splits on spaces.
  *
  * Known limitation: Showdown writes a form as a suffix of the species name (`Raichu-Alola`),
- * which is not translated here — forms are declared with an `Aspects:` line instead.
+ * which is not translated here - forms are declared with an `Aspects:` line instead.
  */
 object ShowdownTeamParser {
 
@@ -53,32 +53,14 @@ object ShowdownTeamParser {
     /**
      * Converts a trainer's `team` array into [com.cobblemon.mod.common.api.pokemon.PokemonProperties].
      *
-     * Two layouts are accepted, and may be mixed:
-     * - one entry per Pokémon, its lines separated by `\n`;
-     * - one entry per line, Pokémon separated by an empty entry (`""`).
+     * One entry is one Pokémon, its lines separated by `\n` - the block Showdown exports,
+     * pasted as a string. An entry holding several of them, blank line and all, is split like
+     * any Showdown text rather than refused.
      */
     fun parse(teamEntries: List<String>): List<PokemonProperties> {
-        val text = buildString {
-            for (entry in teamEntries) {
-                if (entry.contains('\n')) {
-                    // Self-contained entry: isolate it with blank lines.
-                    append('\n').append(entry).append("\n\n")
-                } else {
-                    append(entry).append('\n')
-                }
-            }
-        }
-        return parse(text)
-    }
-
-    /**
-     * Converts a full Showdown team text into a list of [PokemonProperties].
-     * Pokémon are separated by a blank line.
-     */
-    fun parse(showdownText: String): List<PokemonProperties> {
         val result = mutableListOf<PokemonProperties>()
 
-        for (block in splitIntoBlocks(showdownText)) {
+        for (block in blocksOf(teamEntries)) {
             try {
                 result.add(parsePokemon(block))
             } catch (e: Exception) {
@@ -88,6 +70,25 @@ object ShowdownTeamParser {
 
         return result
     }
+
+    /**
+     * How many Pokémon a team declares, without building a single one of them.
+     *
+     * [parse] goes through Cobblemon's registries for every species, move and item, which is
+     * far more than a listing wants when all it needs is the size of the team. The split is
+     * the same one, stopped a step earlier.
+     */
+    fun countPokemon(teamEntries: List<String>): Int = blocksOf(teamEntries).size
+
+    /** The Pokémon of a `team` array, one block of Showdown lines each. */
+    private fun blocksOf(teamEntries: List<String>): List<List<String>> =
+        teamEntries.flatMap { splitIntoBlocks(it) }
+
+    /**
+     * Converts a full Showdown team text into a list of [PokemonProperties]. Pokémon are
+     * separated by a blank line - for a caller holding one pasted export rather than an array.
+     */
+    fun parse(showdownText: String): List<PokemonProperties> = parse(listOf(showdownText))
 
     private fun splitIntoBlocks(showdownText: String): List<List<String>> {
         val blocks = mutableListOf<List<String>>()

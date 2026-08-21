@@ -1,0 +1,25 @@
+{
+  "name": "trainer.cobblemon-trainers.kagumi.name",
+  "skin": {
+    "type": "player_uuid",
+    "value": "a39a97bf-b69d-440c-a689-140e5e5e3922"
+  },
+  "battle": {
+    "level": 80,
+    "difficulty": 5,
+    "music": "cobblemon-trainers:battle_music.corvault_battle"
+  },
+  "messages": {
+    "start": "trainer.cobblemon-trainers.kagumi.battle_start",
+    "win": "trainer.cobblemon-trainers.kagumi.win",
+    "lose": "trainer.cobblemon-trainers.kagumi.lose"
+  },
+  "team": [
+    "Sylveon @ Leftovers\nAbility: Pixilate\nShiny: Yes\nTera Type: Fairy\nEVs: 252 HP / 252 Def / 4 SpA\nBold Nature\nIVs: 0 Atk\n- Calm Mind\n- Draining Kiss\n- Hyper Voice\n- Wish",
+    "Serperior @ Choice Scarf\nAbility: Contrary\nShiny: Yes\nTera Type: Grass\nEVs: 4 Atk / 252 SpA / 252 Spe\nHasty Nature\n- Knock Off\n- Leaf Storm\n- Giga Drain\n- Dragon Pulse",
+    "Absol @ Life Orb\nAbility: Pressure\nEVs: 252 Atk / 4 SpD / 252 Spe\nJolly Nature\n- Swords Dance\n- Knock Off\n- Sucker Punch\n- Close Combat",
+    "Dratini @ Focus Sash\nAbility: Shed Skin\nEVs: 4 Atk / 56 Def / 180 SpA / 52 SpD / 172 Spe\nMild Nature\n- Extreme Speed\n- Protect\n- Thunder Wave\n- Draco Meteor",
+    "Leafeon @ Choice Band\nAbility: Leaf Guard\nEVs: 252 Atk / 4 SpD / 252 Spe\nJolly Nature\n- Knock Off\n- Leaf Blade\n- X-Scissor\n- Body Slam",
+    "Zorua @ Focus Sash\nAbility: Illusion\nAspects: hisuian\nEVs: 252 HP / 4 Atk / 132 Def / 116 SpD\nImpish Nature\n- Will-O-Wisp\n- Pain Split\n- Knock Off\n- Memento"
+  ]
+}

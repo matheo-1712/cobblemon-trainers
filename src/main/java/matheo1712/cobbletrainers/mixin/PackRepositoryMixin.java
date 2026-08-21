@@ -19,7 +19,7 @@ import java.util.Set;
  * Feeds {@link ModsFolderPackSource#SERVER_DATA} to every data pack repository.
  * <p>
  * There is no API to add a source after construction, and the repository is built at several
- * call sites — the dedicated server, the integrated server, the world creation screen. Injecting
+ * call sites - the dedicated server, the integrated server, the world creation screen. Injecting
  * here covers all of them at once, so a pack in {@code mods/} shows up in {@code /datapack list}
  * and in the world creation screen just like one from {@code datapacks/}.
  * <p>

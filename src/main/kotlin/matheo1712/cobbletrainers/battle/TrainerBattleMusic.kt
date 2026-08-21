@@ -15,7 +15,7 @@ import net.minecraft.sounds.SoundSource
  * The sound packets carry a *direct* [net.minecraft.core.Holder]: the sound never goes through
  * `BuiltInRegistries.SOUND_EVENT`, so a datapack may name any track without the mod
  * knowing about it beforehand. Resolving the name is the client's job, exactly as for a
- * registered sound — which means the track has to be provided by a resource pack (the mod
+ * registered sound - which means the track has to be provided by a resource pack (the mod
  * jar is one, hence [DEFAULT_TRACK] working out of the box).
  *
  * The music is sent to the players of the battle only, and never persisted: nothing here
@@ -67,7 +67,7 @@ object TrainerBattleMusic {
     }
 
     /**
-     * Stops everything already playing in the music category, our own track included — hence
+     * Stops everything already playing in the music category, our own track included - hence
      * the strict ordering with the packet that starts it.
      */
     private fun silenceOtherMusic(player: ServerPlayer) {

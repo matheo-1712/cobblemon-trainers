@@ -1,7 +1,7 @@
 package matheo1712.cobbletrainers.command
 
 import com.mojang.brigadier.Command
-import com.mojang.brigadier.CommandDispatcher
+import com.mojang.brigadier.builder.LiteralArgumentBuilder
 import com.mojang.brigadier.context.CommandContext
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType
 import matheo1712.cobbletrainers.CobblemonTrainers
@@ -19,19 +19,19 @@ import net.minecraft.world.level.Level
 import net.minecraft.world.phys.Vec3
 
 /**
- * `/spawntrainer`, which summons a trainer in game.
+ * `/cobblemontrainers spawn`, which summons a trainer in game.
  *
  * Usage:
- * - `/spawntrainer <trainer_id>` — spawns at the caller's position
- * - `/spawntrainer <trainer_id> <x> <y> <z>` — spawns at explicit coordinates
+ * - `/cobblemontrainers spawn <trainer_id>` - spawns at the caller's position
+ * - `/cobblemontrainers spawn <trainer_id> <x> <y> <z>` - spawns at explicit coordinates
  *
  * The ID accepts either the full `namespace:name` form or the bare name.
  *
- * Permission level: 2 (operators)
+ * Permission is checked once on the root, see [TrainerCommands].
  */
 object SpawnTrainerCommand {
 
-    private const val NAME = "spawntrainer"
+    private const val NAME = "spawn"
     private const val ARG_ID = "trainer_id"
     private const val ARG_POS = "pos"
 
@@ -42,34 +42,30 @@ object SpawnTrainerCommand {
     private val SPAWN_FAILED =
         SimpleCommandExceptionType(CobblemonTrainers.lang("command.spawn_trainer.spawn_failed"))
 
-    fun register(dispatcher: CommandDispatcher<CommandSourceStack>) {
-        dispatcher.register(
-            Commands.literal(NAME)
-                .requires { it.hasPermission(2) }
-                .then(
-                    // ResourceLocationArgument rather than a string: Brigadier rejects colons
-                    // in an unquoted word, which breaks `namespace:name`.
-                    Commands.argument(ARG_ID, ResourceLocationArgument.id())
-                        .suggests { _, builder ->
-                            // Always the full `namespace:name`. The namespace *is* the pack a
-                            // trainer comes from, so it is the only thing that tells apart two
-                            // packs shipping the same file name — and it shows at a glance
-                            // which pack provides what. Typing the bare name still works:
-                            // `resolveId` falls back to it.
-                            //
-                            // suggestResource also filters on what has been typed, matching the
-                            // path as well as the namespace, so `jac` still finds
-                            // `mon_pack:jacinthe`.
-                            SharedSuggestionProvider.suggestResource(TrainerRegistry.allIds(), builder)
-                        }
-                        .then(
-                            Commands.argument(ARG_POS, Vec3Argument.vec3())
-                                .executes { ctx -> execute(ctx, Vec3Argument.getVec3(ctx, ARG_POS)) }
-                        )
-                        .executes { ctx -> execute(ctx, ctx.source.position) }
-                )
-        )
-    }
+    fun node(): LiteralArgumentBuilder<CommandSourceStack> =
+        Commands.literal(NAME)
+            .then(
+                // ResourceLocationArgument rather than a string: Brigadier rejects colons
+                // in an unquoted word, which breaks `namespace:name`.
+                Commands.argument(ARG_ID, ResourceLocationArgument.id())
+                    .suggests { _, builder ->
+                        // Always the full `namespace:name`. The namespace *is* the pack a
+                        // trainer comes from, so it is the only thing that tells apart two
+                        // packs shipping the same file name - and it shows at a glance which
+                        // pack provides what. Typing the bare name still works: `resolveId`
+                        // falls back to it.
+                        //
+                        // suggestResource also filters on what has been typed, matching the
+                        // path as well as the namespace, so `jac` still finds
+                        // `mon_pack:jacinthe`.
+                        SharedSuggestionProvider.suggestResource(TrainerRegistry.allIds(), builder)
+                    }
+                    .then(
+                        Commands.argument(ARG_POS, Vec3Argument.vec3())
+                            .executes { ctx -> execute(ctx, Vec3Argument.getVec3(ctx, ARG_POS)) }
+                    )
+                    .executes { ctx -> execute(ctx, ctx.source.position) }
+            )
 
     private fun execute(context: CommandContext<CommandSourceStack>, pos: Vec3): Int {
         val source = context.source

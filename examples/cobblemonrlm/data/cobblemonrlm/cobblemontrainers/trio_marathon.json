@@ -1,16 +1,20 @@
 {
   "name": "trainer.cobblemonrlm.trio_marathon.name",
-  "level": 68,
-  "battleFormat": "trio",
-  "skill": 5,
-  "autoHealParty": false,
   "skin": {
     "type": "player_username",
     "value": "Alex"
   },
-  "battleStartMessage": "trainer.cobblemonrlm.trio_marathon.battle_start",
-  "battleEndWinMessage": "trainer.cobblemonrlm.trio_marathon.win",
-  "battleEndLoseMessage": "trainer.cobblemonrlm.trio_marathon.lose",
+  "battle": {
+    "level": 68,
+    "format": "trio",
+    "difficulty": 5,
+    "healParty": false
+  },
+  "messages": {
+    "start": "trainer.cobblemonrlm.trio_marathon.battle_start",
+    "win": "trainer.cobblemonrlm.trio_marathon.win",
+    "lose": "trainer.cobblemonrlm.trio_marathon.lose"
+  },
   "team": [
     "Garchomp (M) @ Rocky Helmet",
     "Ability: Rough Skin",
@@ -21,7 +25,6 @@
     "- Dragon Claw",
     "- Rock Slide",
     "- Protect",
-    "",
     "Milotic (F) @ cobblemon:leftovers",
     "Ability: Marvel Scale",
     "Level: 68",
@@ -31,7 +34,6 @@
     "- Ice Beam",
     "- Recover",
     "- Icy Wind",
-    "",
     "Heracross (M) @ Choice Band",
     "Ability: Guts",
     "Level: 68",
@@ -41,7 +43,6 @@
     "- Megahorn",
     "- Rock Slide",
     "- Earthquake",
-    "",
     "Roserade (F) @ Focus Sash",
     "Ability: Natural Cure",
     "Level: 67",
@@ -51,7 +52,6 @@
     "- Sludge Bomb",
     "- Sleep Powder",
     "- Protect",
-    "",
     "Magnezone @ Assault Vest",
     "Ability: Sturdy",
     "Level: 68",
@@ -61,7 +61,6 @@
     "- Flash Cannon",
     "- Volt Switch",
     "- Hidden Power",
-    "",
     "Arcanine (M) @ Expert Belt",
     "Ability: Intimidate",
     "Level: 69",

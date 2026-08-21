@@ -17,7 +17,7 @@ import net.minecraft.server.packs.PackType
  * client one would not exist at all on a dedicated server. Two places are searched instead:
  *
  * 1. **The classpath**, which holds the assets of the mod itself and of everything Fabric
- *    loaded as a mod — including a pack built as a `.jar` with a `fabric.mod.json`.
+ *    loaded as a mod - including a pack built as a `.jar` with a `fabric.mod.json`.
  * 2. **The packs of `mods/`** that Fabric skipped, read straight off the disk by
  *    [matheo1712.cobbletrainers.datapack_handler.ModsFolderPackSource.readResource].
  *

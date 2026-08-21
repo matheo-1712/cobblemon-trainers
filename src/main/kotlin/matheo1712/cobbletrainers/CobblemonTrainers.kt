@@ -1,12 +1,15 @@
 package matheo1712.cobbletrainers
 
+import matheo1712.cobbletrainers.advancement.TrainerDefeatedTrigger
 import matheo1712.cobbletrainers.battle.TrainerBattleEventHandler
 import matheo1712.cobbletrainers.battle.TrainerBattleInteraction
 import matheo1712.cobbletrainers.block.TrainerBlocks
-import matheo1712.cobbletrainers.command.ListTrainersCommand
-import matheo1712.cobbletrainers.command.SpawnTrainerCommand
+import matheo1712.cobbletrainers.command.TrainerCommands
+import matheo1712.cobbletrainers.item.TrainerItems
+import matheo1712.cobbletrainers.network.BattlePhoneNetworking
 import matheo1712.cobbletrainers.network.TrainerSpawnerNetworking
 import matheo1712.cobbletrainers.registry.TrainerRegistry
+import matheo1712.cobbletrainers.trainers.TrainerSkins
 import net.fabricmc.api.ModInitializer
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper
@@ -23,7 +26,8 @@ import org.slf4j.LoggerFactory
  * Main entrypoint of the Cobblemon Trainers mod.
  *
  * The mod adds configurable Pokémon trainers to Cobblemon. Trainers are declared in
- * datapacks, at `data/<namespace>/cobblemontrainers/<name>.json`.
+ * datapacks, at `data/<namespace>/cobblemontrainers/<path>.json`, where the folder a file
+ * sits in is its category.
  *
  * Features:
  * - Showdown-formatted teams
@@ -31,9 +35,12 @@ import org.slf4j.LoggerFactory
  * - Battle start and end messages
  * - Battle music
  * - Item rewards on victory, and one-shot trainers that turn down a rematch
- * - `/spawntrainer <id>` to summon a trainer
- * - `/listtrainers [player]` to review who has been beaten
+ * - Requirements to challenge a trainer, and an advancement trigger fired by beating one
+ * - `/cobblemontrainers spawn <id>` to summon a trainer
+ * - `/cobblemontrainers list [player]` to review who has been beaten
+ * - `/cobblemontrainers defeat <id|all> [players] [reset]` to record a victory without a battle
  * - A trainer spawner block, which keeps one trainer standing where it is placed
+ * - A battle phone item, the same listing in a screen, for every player
  */
 object CobblemonTrainers : ModInitializer {
 
@@ -57,13 +64,16 @@ object CobblemonTrainers : ModInitializer {
 
     override fun onInitialize() {
         CommandRegistrationCallback.EVENT.register { dispatcher, _, _ ->
-            SpawnTrainerCommand.register(dispatcher)
-            ListTrainersCommand.register(dispatcher)
+            TrainerCommands.register(dispatcher)
         }
 
-        // Register blocks and network
+        // Register blocks, items, network and the advancement trigger. The trigger has to be
+        // known before datapacks are read, or an advancement using it fails to parse.
+        TrainerDefeatedTrigger.register()
         TrainerBlocks.register()
+        TrainerItems.register()
         TrainerSpawnerNetworking.register()
+        BattlePhoneNetworking.register()
 
         ResourceManagerHelper.get(PackType.SERVER_DATA).registerReloadListener(TrainerReloadListener)
 
@@ -88,6 +98,8 @@ object CobblemonTrainers : ModInitializer {
 
         override fun onResourceManagerReload(manager: ResourceManager) {
             TrainerRegistry.reload(manager)
+            // A pack may have changed the image behind a skin name we already resolved.
+            TrainerSkins.clearCache()
         }
     }
 }

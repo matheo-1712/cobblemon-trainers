@@ -1,138 +1,82 @@
 # Créer un datapack de dresseurs
 
-Tout ce qu'un dresseur a besoin de savoir tient dans un fichier JSON. Aucun code, aucune
-recompilation : un datapack suffit, et `/reload` applique les changements sans redémarrer
-le serveur.
+Un dresseur tient dans un fichier JSON. Aucun code, aucune recompilation : un datapack
+suffit, et `/reload` applique les changements sans redémarrer le serveur.
 
-Ce document couvre la création complète d'un pack. Pour l'installation du mod et les
-commandes, voir le [README](../README.md).
+Pour l'installation du mod et les commandes, voir le [README](../README.md).
 
 ## Sommaire
 
-- [Arborescence](#arborescence)
-- [Le premier dresseur](#le-premier-dresseur)
-- [Tous les champs](#tous-les-champs)
-- [Revanches et récompenses](#revanches-et-récompenses)
-- [Le format d'équipe](#le-format-déquipe)
-- [Format de combat](#format-de-combat)
-- [Skins](#skins)
-- [Musique de combat](#musique-de-combat)
-- [Traduire les textes](#traduire-les-textes)
-- [Tester son pack](#tester-son-pack)
-- [Erreurs fréquentes](#erreurs-fréquentes)
+- [Arborescence](#arborescence) · [Où poser le pack](#où-poser-le-pack)
+- [Le premier dresseur](#le-premier-dresseur) · [Tous les champs](#tous-les-champs)
+- [Catégories](#catégories) · [Conditions pour combattre](#conditions-pour-combattre) ·
+  [Advancements](#advancements)
+- [Revanches et récompenses](#revanches-et-récompenses) ·
+  [Le suivi de progression](#le-suivi-de-progression)
+- [Le format d'équipe](#le-format-déquipe) · [La ligne `Aspects:`](#la-ligne-aspects)
+- [Skins](#skins) · [Musique de combat](#musique-de-combat) ·
+  [Traduire les textes](#traduire-les-textes)
+- [Tester son pack](#tester-son-pack) · [Erreurs fréquentes](#erreurs-fréquentes)
 
 ## Arborescence
 
 ```
 mon_pack/
 ├── pack.mcmeta
-└── data/
-    └── mon_pack/                     ← ton namespace
-        └── cobblemontrainers/
-            ├── red.json              → ID mon_pack:red
-            └── kanto/
-                └── blue.json         → ID mon_pack:blue
+└── data/mon_pack/                      ← ton namespace
+    └── cobblemontrainers/
+        ├── red.json                    → mon_pack:red
+        └── champions/                  ← un dossier = une catégorie
+            ├── category.json           ← présentation de la catégorie (facultatif)
+            └── erika.json              → mon_pack:champions/erika
 ```
 
 ```json
-{
-  "pack": {
-    "pack_format": 48,
-    "description": "Mes dresseurs"
-  }
-}
+{ "pack": { "pack_format": 48, "description": "Mes dresseurs" } }
 ```
 
 `pack_format` vaut **48** pour un datapack Minecraft 1.21.1.
 
-Trois règles à retenir :
-
-- Le dossier lu est `cobblemontrainers/`, directement à l'intérieur de ton namespace —
-  au même niveau que les `species/` et `npcs/` de Cobblemon. Il porte le nom du mod plutôt
-  qu'un `trainers/` générique, ce qui évite les collisions avec d'autres mods.
-- L'ID d'un dresseur est `<namespace>:<nom de fichier>`. **Les sous-dossiers n'en font pas
-  partie** : `kanto/blue.json` donne `mon_pack:blue`, pas `mon_pack:kanto/blue`. Ils servent
-  seulement à ranger, mais attention aux doublons de noms.
+- Le dossier lu est `cobblemontrainers/`, directement sous ton namespace - au même niveau que
+  les `species/` et `npcs/` de Cobblemon. Il porte le nom du mod plutôt qu'un `trainers/`
+  générique, ce qui évite les collisions avec d'autres mods.
+- **L'ID est `<namespace>:<chemin>`, sous-dossiers compris** : `champions/erika.json` donne
+  `mon_pack:champions/erika`. Le dossier est aussi la [catégorie](#catégories) du dresseur.
+- `category.json` est le **seul nom de fichier réservé** : il décrit le dossier où il se
+  trouve, il n'est jamais lu comme un dresseur.
 - Un pack chargé plus tard écrase un dresseur de même ID, comme n'importe quelle ressource
-  de datapack.
+  de datapack. Un fichier invalide est ignoré, l'erreur part dans les logs, et les autres
+  dresseurs se chargent quand même.
 
 ### Où poser le pack
 
-Trois voies. Aucune n'est « la bonne » : choisis selon ce que ton pack contient et comment tu
-veux le distribuer.
-
 | Voie | Emplacement | Formats | Charge | Activation |
 | --- | --- | --- | --- | --- |
-| Dossier des mods | `mods/` | dossier, `.zip`, `.jar` | `data/` **et** `assets/` | automatique, dans tous les mondes |
-| Datapack | `saves/<monde>/datapacks/` ou `world/datapacks/` | dossier, `.zip` | `data/` | par monde, activé à la découverte |
-| Resource pack | `resourcepacks/` | dossier, `.zip` | `assets/` | à cocher dans les options du jeu |
+| Dossier des mods | `mods/` | dossier, `.zip`, `.jar` | `data/` **et** `assets/` | automatique, tous les mondes |
+| Datapack | `<monde>/datapacks/` | dossier, `.zip`, `.jar` | `data/` | par monde, à la découverte |
+| Resource pack | `resourcepacks/` | dossier, `.zip`, `.jar` | `assets/` | à cocher dans les options |
 
-Ce qui décide, c'est le contenu du pack :
+Ce qui décide, c'est le contenu :
 
-- **Que des dresseurs** (`data/` seul) — n'importe laquelle des deux premières voies suffit.
-- **Des dresseurs + des traductions ou de la musique** (`data/` et `assets/`) — `mods/` est la
-  seule voie qui charge les deux moitiés en un fichier. Sinon il faut livrer la même archive
-  deux fois, dans `datapacks/` **et** dans `resourcepacks/`, et le joueur doit aller cocher le
-  resource pack.
-- **Des dresseurs habillés d'une image du pack** (`skin.type: texture`) — `mods/` est
-  obligatoire, et le doublon `datapacks/` + `resourcepacks/` ne remplace pas : l'image est lue
-  par le serveur, qui ne regarde que là. Voir [Skins](#skins).
+- **Que des dresseurs** (`data/` seul) - les deux premières voies conviennent.
+- **Dresseurs + traductions ou musique** (`data/` et `assets/`) - `mods/` est la seule voie
+  qui charge les deux moitiés en un fichier. Sinon il faut livrer la même archive deux fois,
+  dans `datapacks/` **et** dans `resourcepacks/`.
+- **Skin livré en image** (`skin.type: texture`) - `mods/` est obligatoire : l'image est lue
+  par le serveur, qui ne regarde que là.
 
-#### `mods/` : un pack, rien d'autre
+Un pack posé dans `mods/` n'a besoin **que de son `pack.mcmeta`**, à la racine de l'archive.
+Ni `fabric.mod.json`, ni code : le mod ramasse tout dossier ou archive de `mods/` qui porte un
+`pack.mcmeta` et l'expose comme datapack *et* comme resource pack, côté client comme côté
+serveur. Il apparaît dans `/datapack list` sous l'ID `mods/<nom de fichier>`.
 
-Un pack posé dans `mods/` n'a besoin **que de son `pack.mcmeta`**. Pas de `fabric.mod.json`,
-pas de code, pas de manipulation : le mod ramasse tout dossier ou archive du dossier des mods
-qui porte un `pack.mcmeta`, et l'expose à la fois comme datapack et comme resource pack.
+Ajouter un `fabric.mod.json` reste possible : Fabric prend alors le pack pour un mod et le
+charge lui-même, ce qui permet de déclarer `"depends": { "cobblemon-trainers": "*" }` - donc
+une erreur claire au démarrage plutôt qu'un pack chargé pour rien. En échange, un
+`fabric.mod.json` mal formé fait échouer le démarrage du jeu.
 
-```
-mon_pack.jar
-├── pack.mcmeta
-├── data/mon_pack/cobblemontrainers/…
-└── assets/mon_pack/{lang,sounds,sounds.json}
-```
-
-Le pack apparaît dans `/datapack list` et dans l'écran des resource packs sous l'ID
-`mods/<nom de fichier>`. Le `.jar` n'a rien de particulier ici — un dossier ou un `.zip` font
-pareil ; c'est juste le format le plus commode à distribuer.
-
-Ça vaut pour le client comme pour le serveur, chacun lisant son propre dossier `mods/` :
-un serveur y trouve les dresseurs, un joueur qui y met la même archive y trouve en plus les
-traductions et la musique.
-
-#### Le `fabric.mod.json`, si tu en veux un
-
-Ajouter un `fabric.mod.json` à la racine reste possible, et change qui charge le pack : Fabric
-le prend alors pour un mod à part entière et l'expose lui-même sous les deux types, le mod
-laissant la main. Même résultat, avec un avantage — pouvoir déclarer une dépendance, donc une
-erreur claire au démarrage plutôt qu'un pack chargé pour rien :
-
-```json
-{
-	"schemaVersion": 1,
-	"id": "mon_pack",
-	"version": "1.0.0",
-	"name": "Mon pack de dresseurs",
-	"environment": "*",
-	"depends": {
-		"fabricloader": ">=0.17.2",
-		"minecraft": "~1.21.1",
-		"cobblemon-trainers": "*"
-	}
-}
-```
-
-Aucun `entrypoints` : c'est un mod sans classes. `id` doit être en minuscules
-(`[a-z0-9_-]`) et unique.
-
-> Attention si tu prends cette voie : un `fabric.mod.json` **mal formé** fait échouer le
-> démarrage du jeu, alors qu'un pack sans ce fichier se charge tranquillement. Si tu n'as pas
-> besoin de la dépendance, ne mets pas le fichier.
-
-#### `pack_format` d'une archive qui sert des deux côtés
-
-Les valeurs diffèrent selon le type en 1.21.1 : **48** côté données, **34** côté ressources.
-Un pack qui porte `data/` et `assets/` déclare donc un intervalle, sinon l'écran des resource
-packs l'affiche comme incompatible :
+Une archive qui sert **des deux côtés** déclare un intervalle, sinon l'écran des resource
+packs l'affiche comme incompatible (`pack_format` vaut 48 côté données, 34 côté ressources) :
 
 ```json
 {
@@ -144,15 +88,8 @@ packs l'affiche comme incompatible :
 }
 ```
 
-Un pack qui ne sert que de datapack n'en a pas besoin : `pack_format: 48` suffit.
-
-#### Ce que `datapacks/` ne fera jamais
-
-Le dossier `datapacks/` d'un monde est déclaré en `PackType.SERVER_DATA` et rien d'autre : un
-`assets/` posé là n'est jamais lu, qu'il soit dans un dossier, un `.zip` ou un `.jar`. Les
-traductions et la musique sont résolues par le client, qui ne regarde jamais dans le dossier
-d'un monde — et sur un serveur, il n'a même pas le fichier. C'est précisément ce que la voie
-`mods/` contourne.
+Enfin, `datapacks/` est déclaré en données et rien d'autre : un `assets/` posé là n'est
+**jamais** lu, quel que soit le format de l'archive. C'est ce que la voie `mods/` contourne.
 
 ## Le premier dresseur
 
@@ -161,95 +98,195 @@ d'un monde — et sur un serveur, il n'a même pas le fichier. C'est préciséme
 ```json
 {
   "name": "Red",
-  "level": 88,
   "skin": { "type": "player_username", "value": "Red" },
-  "battleStartMessage": "trainer.<your_namespace>.red.battle_start",
-  "battleEndWinMessage": "trainer.<your_namespace>.red.win",
-  "battleEndLoseMessage": "trainer.<your_namespace>.red.lose",
-  "battleMusic": "<your_namespace>:battle_music.b2w2_tournament_battle",
-  "skill": 5,
-  "canRebattle": false,
-  "rewards": [
-    { "item": "cobblemon:master_ball", "count": 1 }
-  ],
+  "battle": {
+    "level": 88,
+    "difficulty": 5,
+    "music": "mon_pack:battle_music.finale"
+  },
+  "messages": {
+    "start": "Prêt ?",
+    "win": "Bien joué.",
+    "lose": "Reviens quand tu seras prêt."
+  },
+  "progress": { "rematch": "never" },
+  "rewards": [{ "item": "cobblemon:master_ball", "count": 1 }],
   "team": [
-    "Pikachu (M) @ Light Ball",
-    "Ability: Static",
-    "Level: 88",
-    "Shiny: Yes",
-    "EVs: 252 SpA / 4 SpD / 252 Spe",
-    "Timid Nature",
-    "- Thunderbolt",
-    "- Iron Tail",
-    "",
-    "Snorlax (M) @ Leftovers",
-    "Ability: Thick Fat",
-    "Level: 88",
-    "- Body Slam",
-    "- Earthquake"
+    "Pikachu (M) @ Light Ball\nAbility: Static\nLevel: 88\nShiny: Yes\nEVs: 252 SpA / 4 SpD / 252 Spe\nTimid Nature\n- Thunderbolt\n- Iron Tail",
+    "Snorlax (M) @ Leftovers\nAbility: Thick Fat\nLevel: 88\n- Body Slam\n- Earthquake"
   ]
 }
 ```
 
-Puis, en jeu :
-
-```
-/reload
-/spawntrainer mon_pack:red
-```
+Puis, en jeu : `/reload` puis `/cobblemontrainers spawn mon_pack:red`.
 
 ## Tous les champs
+
+Tout est facultatif : `{}` donne un dresseur valide, quoique peu intéressant.
+
+### Racine
 
 | Champ | Défaut | Rôle |
 | --- | --- | --- |
 | `name` | `Trainer` | Nom affiché au-dessus du dresseur |
-| `level` | `1` | Niveau appliqué aux Pokémon qui n'ont **pas** de ligne `Level:` |
-| `team` | `[]` | L'équipe, au format Showdown |
-| `skin.type` | `player_username` | `player_username`, `player_uuid` ou `texture` |
-| `skin.value` | `Steve` | Pseudo, UUID, ou chemin d'une image livrée par un pack |
-| `skin.model` | `default` | Gabarit portant l'image : `default` (Steve) ou `slim` (Alex). Lu pour `texture` seulement |
-| `battleFormat` | `singles` | Nombre de Pokémon simultanés : `singles`, `doubles`, `triples` |
-| `skill` | `5` | Difficulté de l'IA de combat, de 0 à 5 |
-| `autoHealParty` | `true` | Soigne l'équipe du dresseur avant et après chaque combat |
-| `canBattle` | `true` | À `false`, le clic droit ne fait rien |
-| `canRebattle` | `true` | À `false`, un joueur qui l'a battu ne peut plus le redéfier |
-| `tracked` | `true` | À `false`, le dresseur n'apparaît pas dans le suivi de progression |
-| `rewards` | `[]` | Objets remis au joueur à chaque victoire |
-| `rewardOnce` | `false` | À `true`, `rewards` n'est remis qu'à la première victoire |
-| `battleStartMessage` | — | Envoyé au joueur au début du combat |
-| `battleEndWinMessage` | — | Envoyé si le joueur gagne |
-| `battleEndLoseMessage` | — | Envoyé si le joueur perd |
-| `battleMusic` | piste du mod | ID du son joué pendant le combat, `null` pour aucun |
+| `skin` | Steve | [Skin](#skins) |
+| `team` | `[]` | L'équipe, **un Pokémon par entrée**, au [format Showdown](#le-format-déquipe) |
+| `battle` | - | Le combat, ci-dessous |
+| `messages` | - | Ce que le dresseur dit |
+| `progress` | - | Ce que le battre change |
+| `rewards` | `[]` | Objets remis au vainqueur |
+| `requires` | - | [Conditions pour le combattre](#conditions-pour-combattre) |
 
-Tous les champs sont facultatifs : un JSON réduit à `{}` donne un dresseur valide, quoique
-peu intéressant. Un fichier invalide est ignoré, l'erreur part dans les logs du serveur, et
-les autres dresseurs se chargent quand même.
+### `battle`
 
-### `skill` n'est pas `level`
+| Champ | Défaut | Rôle |
+| --- | --- | --- |
+| `level` | `1` | Niveau des Pokémon qui n'ont **pas** de ligne `Level:` |
+| `format` | `singles` | `singles`, `doubles`, `triples` - alias `solo`, `duo`, `trio` |
+| `difficulty` | `5` | Intelligence de l'IA, de 0 (au hasard) à 5 (sérieux) |
+| `healParty` | `true` | Soigne l'équipe du dresseur avant et après chaque combat |
+| `music` | piste du mod | ID du son joué pendant le combat, `null` pour le silence |
 
-Deux réglages qu'on confond facilement :
+`level` n'est pas `difficulty` : le premier est le niveau des Pokémon - et seulement un repli,
+pour les entrées Showdown sans `Level:` -, le second est la qualité du jeu de l'IA. Un
+dresseur niveau 100 en `difficulty: 0` reste facile.
 
-- **`level`** est le niveau des Pokémon — et seulement une valeur de repli, pour les entrées
-  Showdown qui ne précisent pas `Level:`. Si toute ton équipe indique son niveau, `level`
-  n'a aucun effet visible.
-- **`skill`** est l'intelligence de l'IA qui joue le combat, de 0 (joue au hasard) à 5 (joue
-  sérieusement). Un dresseur niveau 100 avec `skill` 0 reste facile à battre.
+`healParty: false` fait persister dégâts et PP d'un combat à l'autre - pratique pour un boss
+qu'on use en plusieurs tentatives.
 
-### `autoHealParty`
+Un `doubles` exige au moins 2 Pokémon **de chaque côté**, un `triples` au moins 3. Si l'une
+des équipes est trop courte, Cobblemon refuse le combat et l'explique dans le chat.
 
-À `true`, l'équipe du dresseur démarre au maximum de ses PV et se re-soigne une fois le
-combat terminé. À `false`, les dégâts et les PP consommés persistent d'un combat à l'autre —
-pratique pour un boss qu'on use en plusieurs tentatives.
+### `messages`
+
+| Champ | Rôle |
+| --- | --- |
+| `start` | Au début du combat |
+| `win` | Si le joueur gagne |
+| `lose` | Si le joueur perd |
+
+### `progress`
+
+| Champ | Défaut | Valeurs | Rôle |
+| --- | --- | --- | --- |
+| `rematch` | `unlimited` | `unlimited`, `never` | Peut-on le redéfier une fois battu |
+| `rewards` | `every_win` | `every_win`, `first_win` | Quand `rewards` est remis |
+| `listed` | `true` | booléen | Apparaît dans le Battle Phone et `/cobblemontrainers list` |
+
+## Catégories
+
+**Le dossier d'un dresseur est sa catégorie.** Rien à déclarer : ranger `erika.json` dans
+`champions/` suffit à en faire un champion. Les catégories groupent la liste du Battle Phone
+et de `/cobblemontrainers list`, et servent de cible aux
+[conditions](#conditions-pour-combattre) et aux [advancements](#advancements).
+
+Un `category.json` **dans le dossier** lui donne un nom et une place, les deux facultatifs :
+
+```json
+// cobblemontrainers/champions/category.json
+{ "name": "category.mon_pack.champions", "order": 1 }
+```
+
+| Champ | Défaut | Rôle |
+| --- | --- | --- |
+| `name` | le nom du dossier | Nom affiché, [traduisible](#traduire-les-textes) comme celui d'un dresseur |
+| `order` | après les autres | Place dans la page du pack, le plus petit en haut |
+
+- Une catégorie sans fichier s'affiche sous le nom de son dossier et se range après celles qui
+  ont un `order`, par ordre alphabétique.
+- Les dresseurs posés à la racine forment un dernier groupe, sous un titre fourni par le mod
+  (« Dresseurs »). Un pack qui n'utilise aucune catégorie n'affiche aucun titre : la liste est
+  exactement celle d'avant.
+- Un sous-dossier de sous-dossier est une catégorie à part entière (`champions/kanto`), avec
+  son propre `category.json`.
+
+## Conditions pour combattre
+
+Le bloc `requires` ferme un dresseur tant qu'un joueur n'a pas fait ce qu'il demande. Il le
+refuse alors poliment, en listant ce qui manque - et par défaut, il n'apparaît même pas dans
+le Battle Phone.
+
+```json
+"requires": {
+  "defeated": ["champions/jacinthe", "champions/pierre"],
+  "victories": { "count": 8, "category": "champions" },
+  "items": [{ "item": "mon_pack:badge_roche", "count": 1 }],
+  "advancement": "mon_pack:acces_ligue",
+  "hidden": false,
+  "message": "trainer.mon_pack.maitre.locked"
+}
+```
+
+| Champ | Rôle |
+| --- | --- |
+| `defeated` | Dresseurs à avoir battus. Sans namespace, l'ID est lu dans le pack du dresseur qui l'exige - chemin compris (`champions/jacinthe`) |
+| `victories` | Un nombre de dresseurs battus : `count`, restreint par `pack` et/ou `category`. `count` omis veut dire **tous ceux du groupe** |
+| `items` | Objets à avoir sur soi, ID complet. **Jamais consommés** |
+| `advancement` | Un advancement à avoir obtenu, vanilla ou d'un pack |
+| `hidden` | `true` par défaut : le dresseur est absent du Battle Phone tant qu'il est verrouillé. `false` l'y laisse, verrouillé et avec ses conditions affichées |
+| `message` | Ce que le dresseur répond. Par défaut, une phrase du mod - la liste de ce qui manque est ajoutée dans les deux cas |
+
+- **Toutes les conditions déclarées doivent être remplies.** Elles s'additionnent, ce ne sont
+  jamais des alternatives.
+- `victories` ne compte que les dresseurs `listed`, et **jamais le dresseur qui l'exige** :
+  un champion peut donc demander « battre tous les champions ».
+- Un ID d'objet, de dresseur ou d'advancement introuvable compte comme non rempli, avec un
+  avertissement dans les logs : une faute de frappe ferme le dresseur, elle ne l'ouvre pas.
+- Le refus est renvoyé **avant** que le combat ne se construise : ni équipe soignée, ni
+  musique.
+
+## Advancements
+
+Battre un dresseur déclenche le critère `cobblemon-trainers:trainer_defeated`. Tes
+advancements sont alors des advancements ordinaires - titre, icône, arbre, toast, récompenses
+sont ceux de Minecraft.
+
+```json
+// data/mon_pack/advancement/badge_roche.json
+{
+  "display": {
+    "icon": { "id": "cobblemon:poke_ball" },
+    "title": { "translate": "advancement.mon_pack.badge_roche.title" },
+    "description": { "translate": "advancement.mon_pack.badge_roche.description" },
+    "frame": "task"
+  },
+  "criteria": {
+    "battu": {
+      "trigger": "cobblemon-trainers:trainer_defeated",
+      "conditions": { "trainer": "mon_pack:champions/pierre" }
+    }
+  }
+}
+```
+
+| Condition | Rôle |
+| --- | --- |
+| `trainer` | Le dresseur battu |
+| `category` | Sa catégorie |
+| `pack` | Son namespace |
+| `count` | Combien de dresseurs **différents** répondant aux filtres ci-dessus le joueur a battus |
+
+Toutes facultatives et cumulatives ; sans aucune, le critère se valide au premier dresseur
+battu. `trainer` et `category` acceptent un ID complet (`mon_pack:champions/pierre`) ou un
+chemin nu (`champions/pierre`), qui vaut alors pour tous les namespaces.
+
+« Battre les 8 champions » tient donc en un critère :
+
+```json
+"conditions": { "pack": "mon_pack", "category": "champions", "count": 8 }
+```
+
+Le compte est lu dans la progression enregistrée, celle-là même qu'affiche
+`/cobblemontrainers list` : il survit à un redémarrage et n'est pas remis à zéro par `/reload`.
 
 ## Revanches et récompenses
 
-Deux réglages indépendants : `canRebattle` décide si on peut redéfier le dresseur une fois
-battu, `rewards` ce qu'on gagne en le battant.
+`progress.rematch` décide si on peut redéfier le dresseur, `rewards` ce qu'on gagne,
+`progress.rewards` à quelle fréquence.
 
 ```json
 {
-  "name": "Champion",
-  "canRebattle": false,
+  "progress": { "rematch": "never" },
   "rewards": [
     { "item": "cobblemon:master_ball", "count": 1 },
     { "item": "cobblemon:rare_candy", "count": 10 },
@@ -258,110 +295,65 @@ battu, `rewards` ce qu'on gagne en le battant.
 }
 ```
 
-### `canRebattle`
-
-À `false`, le dresseur devient une rencontre unique : dès qu'un joueur l'a battu, ses clics
-droits suivants n'ouvrent plus de combat et il reçoit un message le lui disant. Le combat
-n'est même pas construit, donc rien ne bouge — ni équipe, ni musique.
-
-**Ce qui est retenu, c'est l'ID du dresseur**, `mon_pack:champion`, et non le PNJ posé dans le
-monde. Battre un exemplaire les bat tous : en poser dix sur une carte ne donne pas dix
-combats, et tuer celui qu'on a battu pour le réinvoquer ne remet pas le compteur à zéro.
-
-Trois précisions :
+**Ce qui est retenu, c'est l'ID du dresseur**, pas le PNJ posé dans le monde. Battre un
+exemplaire les bat tous : en poser dix sur une carte ne donne pas dix combats, et tuer celui
+qu'on a battu pour le réinvoquer ne remet pas le compteur à zéro.
 
 - **Seule une victoire compte.** Une défaite, une fuite, un `/stopbattle` ou un dresseur qui
-  disparaît en plein combat ne marquent rien : le dresseur reste défiable.
+  disparaît en plein combat ne marquent rien.
 - **C'est par joueur.** Un dresseur battu par l'un reste disponible pour les autres.
-- **La mémoire vit dans le monde**, pas dans le datapack : `/reload` ne l'efface pas, et elle
-  survit à un redémarrage. Renommer un fichier de dresseur change son ID, donc repart de zéro.
+- **La mémoire vit dans le monde**, pas dans le datapack : `/reload` ne l'efface pas.
+  Renommer ou déplacer un fichier change son ID, donc repart de zéro.
 
-### `rewards`
-
-Chaque entrée est un objet et sa quantité :
-
-| Champ | Défaut | Rôle |
-| --- | --- | --- |
-| `item` | — | ID complet de l'objet, **namespace compris** |
-| `count` | `1` | Combien en donner |
-
-Les objets partent dans l'inventaire du joueur ; ce qui n'y tient pas tombe à ses pieds,
-donc une récompense n'est jamais perdue. Chaque objet reçu est annoncé dans le chat.
-
-- **Le namespace est obligatoire** : `cobblemon:rare_candy`, `minecraft:diamond`. Un ID sans
-  namespace est lu comme du `minecraft:`, contrairement aux objets tenus de l'équipe qui
-  reçoivent `cobblemon:` par défaut.
-- **Un objet introuvable est ignoré**, avec un avertissement dans les logs, et les autres
-  récompenses sont quand même remises — typiquement quand le mod qui fournit l'objet n'est
-  pas installé.
-- La quantité est ramenée dans l'intervalle 1–6400, pour qu'une faute de frappe ne noie pas
-  le joueur sous les objets.
-
-### `rewardOnce`
-
-Par défaut, un dresseur rejouable donne ses récompenses **à chaque victoire** — un dresseur
-avec `rewards` et `canRebattle: true` est donc une source infinie d'objets, ce qui est parfois
-voulu et souvent pas. `rewardOnce: true` limite le butin à la première victoire, tout en
-laissant le combat rejouable autant qu'on veut.
+Chaque récompense est un `item` (ID complet, **namespace obligatoire**) et un `count` (défaut
+`1`, ramené dans 1-6400). Les objets partent dans l'inventaire, ce qui n'y tient pas tombe aux
+pieds du joueur, et chaque objet reçu est annoncé dans le chat. Un objet introuvable est
+ignoré avec un avertissement, les autres sont remis quand même.
 
 Les combinaisons utiles :
 
-| `canRebattle` | `rewardOnce` | Comportement |
+| `rematch` | `progress.rewards` | Comportement |
 | --- | --- | --- |
-| `false` | peu importe | Un seul combat par joueur, une seule récompense |
-| `true` | `true` | Combat rejouable à volonté, récompense à la première victoire seulement |
-| `true` | `false` | Combat rejouable à volonté, récompense à chaque victoire |
+| `never` | peu importe | Un seul combat par joueur, une seule récompense |
+| `unlimited` | `first_win` | Combat rejouable à volonté, récompense la première fois |
+| `unlimited` | `every_win` | Combat rejouable à volonté, récompense à chaque fois |
 
-### Le suivi de progression
+## Le suivi de progression
 
-`/listtrainers [<joueur>]` liste les dresseurs et dit lesquels le joueur a déjà vaincus.
-Sans argument, c'est le joueur qui tape la commande. Niveau de permission 2 (opérateur).
+Deux entrées pour la même donnée.
+
+`/cobblemontrainers list [<joueur>]` liste les dresseurs par catégorie et dit lesquels le
+joueur a vaincus :
 
 ```
-Dresseurs de Steve — 1 / 3 vaincus
-✔ mon_pack:champion — Champion (plus de revanche)
-✘ mon_pack:rival — Rival
-✘ mon_pack:debutant — Débutant
+Dresseurs de Steve - 1 / 3 vaincus
+Champions - 1 / 2
+✔ mon_pack:champions/jacinthe - Jacinthe (plus de revanche)
+✘ mon_pack:champions/maitre - Le Maître (verrouillé, 1 condition(s) restante(s))
+Dresseurs - 0 / 1
+✘ mon_pack:rival - Rival
 ```
 
-La mention `(plus de revanche)` ne paraît que sur un dresseur déjà battu **et** en
-`canRebattle: false` : c'est le seul cas où la ligne est définitivement close, toutes les
-autres restant défiables.
+L'objet **Battle Phone** (`cobblemon-trainers:battle_phone`) montre la même chose à un joueur
+ordinaire, dans un écran : un onglet par datapack, un titre par catégorie, le skin de chaque
+dresseur et son état. Il affiche aussi **l'équipe d'un dresseur une fois celui-ci vaincu**,
+modèles à l'appui - avant, les six cases restent vides, le serveur refusant purement et
+simplement d'envoyer l'équipe.
 
-### `tracked`
+Trois différences entre les deux :
 
-Tous les dresseurs chargés n'ont pas vocation à figurer dans cette liste. Les dresseurs de
-démonstration livrés par le mod, ceux d'un pack d'exemple, un PNJ qui ne se bat pas, un
-dresseur qui n'est jamais invoqué : autant de lignes qui parasitent la progression réelle
-d'un joueur. `"tracked": false` les en retire.
-
-```json
-{
-  "name": "Villageoise",
-  "canBattle": false,
-  "tracked": false
-}
-```
-
-Trois points :
-
-- **C'est un réglage d'affichage, pas de mémoire.** Les victoires restent enregistrées, donc
-  `canRebattle` et `rewardOnce` fonctionnent normalement sur un dresseur masqué.
-- **`canBattle: false` ne l'implique pas.** Les deux champs restent indépendants, mais un PNJ
-  qu'on ne peut pas combattre gagne presque toujours à porter les deux.
-- **Les dresseurs livrés par le mod portent déjà `"tracked": false`** — ils sont chargés dans
-  tous les mondes, ta liste ne montre donc que les tiens.
-
-C'est aussi ce champ que liront les futurs suivis de progression, pas seulement
-`/listtrainers`.
+- Le Battle Phone **cache** les dresseurs verrouillés en `hidden` ; `/cobblemontrainers list` les
+  montre toujours, avec leur nombre de conditions restantes. C'est la vue de l'opérateur.
+- `"listed": false` retire le dresseur des deux. C'est un réglage d'affichage, pas de mémoire :
+  les victoires restent enregistrées, donc `rematch` et `progress.rewards` continuent de
+  fonctionner.
+- Les dresseurs de démonstration livrés par le mod apparaissent dans les deux, dans leur
+  propre onglet - ton namespace fait le tien.
 
 ## Le format d'équipe
 
-Le tableau `team` accepte deux écritures, y compris mélangées dans le même fichier :
-
-- une entrée par ligne, les Pokémon séparés par une entrée vide (`""`) — comme l'exemple
-  ci-dessus ;
-- une entrée par Pokémon, ses lignes séparées par `\n`.
+**Une entrée du tableau `team` = un Pokémon**, ses lignes séparées par `\n` : le bloc que
+Showdown exporte, collé tel quel.
 
 ```json
 "team": [
@@ -374,7 +366,7 @@ Lignes reconnues, en plus de la première :
 
 | Ligne | Exemple |
 | --- | --- |
-| Première ligne | `Surnom (Espèce) (M) @ Objet` — surnom, genre et objet facultatifs |
+| Première ligne | `Surnom (Espèce) (M) @ Objet` - surnom, genre et objet facultatifs |
 | Forme | `Aspects: rlm, poison` |
 | Talent | `Ability: Static` |
 | Niveau | `Level: 88` |
@@ -384,304 +376,203 @@ Lignes reconnues, en plus de la première :
 | Nature | `Timid Nature` |
 | Capacité | `- Thunderbolt` |
 
-Toute autre ligne est ignorée en silence — tu peux donc coller un export Showdown tel quel,
-les lignes que le mod ne connaît pas ne gênent pas.
+Toute autre ligne est ignorée en silence : un export Showdown se colle sans nettoyage.
 
 Trois détails qui piègent :
 
-- **Les noms sont écrits comme sur Showdown**, la ponctuation comprise : `U-turn`,
-  `Will-O-Wisp`, `Farfetch'd`, `Flabébé`, `Mr. Mime` passent tels quels — le mod les convertit
-  en identifiants Cobblemon (`uturn`, `willowisp`, `farfetchd`, `flabebe`, `mrmime`). Une
-  capacité qui n'existe pas est ignorée avec un avertissement dans le log : le Pokémon apparaît
-  avec les autres. Seule exception, le suffixe de forme (`Raichu-Alola`), qui passe par la ligne
-  `Aspects:`.
-- **Les objets tenus sans namespace reçoivent `cobblemon:`** : `Light Ball` devient
-  `cobblemon:light_ball`. Pour un objet vanilla, écris-le en entier (`minecraft:stick`).
-  Le nom est converti en identifiant : accents retirés, `'` et `.` supprimés, tout le reste
-  rendu en `_` - `Heavy-Duty Boots` devient `cobblemon:heavy_duty_boots` et `Exp. Share`
-  `cobblemon:exp_share`. Un objet qui n'existe pas est ignoré avec un avertissement dans le
-  log, le Pokémon apparaît quand même les mains vides.
-- **Les abréviations Showdown des stats sont traduites par le mod**, pas par Cobblemon :
-  `HP`, `Atk`, `Def`, `SpA`, `SpD`, `Spe` deviennent `hp`, `attack`, `defence`,
-  `special_attack`, `special_defence`, `speed`. Les noms longs (`Attack`, `Defense`,
-  `Speed`) passent aussi. En revanche une abréviation hors de cette liste est ignorée en
-  silence, comme n'importe quelle ligne inconnue.
+- **Les noms s'écrivent comme sur Showdown**, ponctuation comprise : `U-turn`, `Will-O-Wisp`,
+  `Farfetch'd`, `Flabébé`, `Mr. Mime` sont convertis en identifiants Cobblemon. Une capacité
+  inexistante est ignorée avec un avertissement, le Pokémon apparaît avec les autres. Seule
+  exception, le suffixe de forme (`Raichu-Alola`) : voir [`Aspects:`](#la-ligne-aspects).
+- **Un objet tenu sans namespace reçoit `cobblemon:`** : `Light Ball` devient
+  `cobblemon:light_ball`, `Heavy-Duty Boots` `cobblemon:heavy_duty_boots`. Pour un objet
+  vanilla, écris-le en entier (`minecraft:stick`). Un objet introuvable est ignoré avec un
+  avertissement, le Pokémon apparaît les mains vides.
+- **Les abréviations de stats sont traduites par le mod** : `HP`, `Atk`, `Def`, `SpA`, `SpD`,
+  `Spe`, et les noms longs. Une abréviation hors de cette liste est ignorée en silence.
 
-## Formes régionales, méga-évolutions, fakemon : la ligne `Aspects:`
+## La ligne `Aspects:`
 
 Une forme n'est pas une espèce à part chez Cobblemon : c'est la même espèce portant d'autres
-**aspects**. Un Raichu d'Alola est un `raichu` avec l'aspect `alolan`, un Haxorus RLM Poison
-est un `haxorus` avec les aspects `rlm` et `poison`. La ligne `Aspects:` les liste, séparés
-par des virgules ou de simples espaces :
+**aspects**. Un Raichu d'Alola est un `raichu` avec l'aspect `alolan`. La ligne `Aspects:` les
+liste, séparés par des virgules ou des espaces :
 
 ```json
-"team": [
-  "Haxorus @ Life Orb",
-  "Aspects: rlm, poison",
-  "Ability: Venomedge",
-  "Level: 65",
-  "- Poison Jab",
-  "- Dragon Claw"
-]
+"team": ["Haxorus @ Life Orb\nAspects: rlm, poison\nAbility: Venomedge\nLevel: 65\n- Poison Jab"]
 ```
-
-**Où trouver les aspects d'une forme.** Ils sont écrits dans le pack qui l'ajoute, dans le
-champ `aspects` de la forme (`data/<ns>/cobblemon/species/…` ou `species_additions/…`) :
-
-```json
-{ "name": "rlm", "aspects": ["rlm", "poison"], "…": "…" }
-```
-
-**Comment vérifier avant d'écrire le JSON.** La ligne `Aspects:` reprend exactement la syntaxe
-de `/pokespawn`, donc un `/pokespawn haxorus rlm=true poison=true` en jeu te dit tout de suite
-si tes aspects sont les bons.
-
-Deux formes d'aspects existent, et la ligne accepte les deux :
 
 | Type de caractéristique | Aspect | À écrire |
 | --- | --- | --- |
-| Drapeau (`"type": "flag"`) | `alolan`, `rlm`, `poison` | `Aspects: alolan` |
-| Choix (`"type": "choice"`) | `wash-appliance`, `attack-forme` | `Aspects: appliance=wash` |
+| Drapeau (`"type": "flag"`) | `alolan`, `rlm` | `Aspects: alolan` |
+| Choix (`"type": "choice"`) | `wash-appliance` | `Aspects: appliance=wash` |
 
 Une caractéristique à choix ne se déclare pas par son aspect mais par son couple
-`caractéristique=valeur` — l'aspect `wash-appliance` de Rotom-Lavage vient de la
+`caractéristique=valeur` : l'aspect `wash-appliance` de Rotom-Lavage vient de la
 caractéristique `appliance` réglée sur `wash`. Le nom de la caractéristique est celui du
 fichier `data/<ns>/cobblemon/species_features/<nom>.json`.
 
-Trois points à connaître :
-
-- **Un aspect inconnu est ignoré, avec un avertissement dans les logs** (`Ignoring unknown
-  aspect '…'`). C'est le cas si le pack qui définit la forme n'est pas chargé, ou en cas de
-  faute de frappe : le dresseur reçoit alors le Pokémon dans sa forme de base.
-- **Le suffixe Showdown ne suffit pas.** Un export Showdown écrit la forme dans le nom de
-  l'espèce (`Raichu-Alola`, `Rotom-Wash`) ; le mod ne le traduit pas, parce que le suffixe ne
-  se distingue pas des espèces dont le nom contient un tiret (`Ho-Oh`, `Porygon-Z`). Retire
-  le suffixe et mets une ligne `Aspects:`.
-- **La forme n'a besoin de rien d'autre.** Cobblemon choisit la forme à partir des aspects du
-  Pokémon, donc statistiques, types, talents et modèle suivent tout seuls.
-
-## Format de combat
-
-`battleFormat` accepte `singles`, `doubles` et `triples`, ainsi que les alias `solo`, `duo`
-et `trio`. Une valeur non reconnue retombe sur `singles`, avec un avertissement dans les
-logs.
-
-Un double exige au moins 2 Pokémon **de chaque côté**, un triple au moins 3 — pour le
-dresseur comme pour le joueur. Si l'une des deux équipes est trop courte, Cobblemon refuse
-le combat et affiche la raison dans le chat.
+- **Où les trouver** : dans le champ `aspects` de la forme, chez le pack qui l'ajoute
+  (`data/<ns>/cobblemon/species/…` ou `species_additions/…`).
+- **Comment vérifier** : la ligne reprend exactement la syntaxe de `/pokespawn`, donc
+  `/pokespawn haxorus rlm=true poison=true` en jeu te le dit tout de suite.
+- **Un aspect inconnu est ignoré** avec un avertissement : le dresseur reçoit le Pokémon dans
+  sa forme de base. Typiquement, le pack qui définit la forme n'est pas chargé.
+- **La forme n'a besoin de rien d'autre** : statistiques, types, talents et modèle suivent.
 
 ## Skins
-
-Trois façons d'habiller un dresseur : deux qui empruntent le skin d'un compte Minecraft, une
-qui utilise une image que tu livres toi-même.
 
 ```json
 "skin": { "type": "player_username", "value": "Notch" }
 "skin": { "type": "player_uuid",     "value": "069a79f4-44e9-4726-a5be-fca90e38aaf5" }
-"skin": { "type": "texture",         "value": "mon_pack:textures/trainers/red.png" }
+"skin": { "type": "texture",         "value": "mon_pack:textures/trainers/red.png", "model": "slim" }
 ```
 
-Avec `player_username` et `player_uuid`, le skin est téléchargé depuis l'API Mojang au moment
-de l'apparition : il faut donc un accès réseau et un compte existant.
+Les deux premiers téléchargent le skin depuis l'API Mojang à l'apparition : il faut un accès
+réseau et un compte existant. En cas d'échec, quel que soit le type, le dresseur garde le skin
+par défaut et la raison est dans les logs.
 
-En cas d'échec, quel que soit le type, le dresseur garde le skin par défaut et la raison est
-écrite dans les logs — le reste du dresseur fonctionne normalement.
+`texture` prend le chemin complet sous `assets/`, namespace en tête et `.png` compris :
+`mon_pack:textures/trainers/red.png` désigne `assets/mon_pack/textures/trainers/red.png`. Le
+fichier est un **skin de joueur ordinaire**, PNG 64×64 avec transparence, rendu sur le gabarit
+Steve ou sur celui d'Alex avec `"model": "slim"`.
 
-### Une image livrée par le pack
+Cette voie a deux particularités :
 
-`texture` prend le chemin complet du fichier sous `assets/`, namespace en tête :
-`mon_pack:textures/trainers/red.png` désigne
-`assets/mon_pack/textures/trainers/red.png`. Le sous-dossier est libre ; l'extension `.png`,
-elle, fait partie du chemin et doit être écrite.
-
-```
-mon_pack/
-├── pack.mcmeta
-├── assets/
-│   └── mon_pack/
-│       └── textures/
-│           └── trainers/
-│               └── red.png           ← skin de joueur, 64×64
-└── data/
-    └── mon_pack/
-        └── cobblemontrainers/
-            └── red.json
-```
-
-Le fichier est un **skin de joueur ordinaire**, celui que tu téléverserais sur ton compte :
-un PNG 64×64 avec transparence. Le dresseur est rendu sur le gabarit Steve, ou sur celui
-d'Alex — bras de 3 pixels — si tu ajoutes `"model": "slim"`.
-
-Deux choses distinguent cette voie des traductions et de la musique :
-
-- **L'image est lue par le serveur**, qui l'envoie ensuite aux clients avec le dresseur. Un
-  joueur qui n'a pas ton pack voit quand même le bon skin.
-- **Elle doit donc être posée là où le serveur regarde** : dans `mods/`, ou dans un `.jar`
-  chargé comme mod. Un pack rangé dans `resourcepacks/` seul est hors de portée — c'est le
-  client qui lit ce dossier, et il n'est jamais interrogé ici. Le dresseur reste alors en
-  skin par défaut, avec l'explication dans les logs du serveur.
+- **L'image est lue par le serveur**, qui l'envoie aux clients avec le dresseur : un joueur
+  qui n'a pas ton pack voit quand même le bon skin.
+- **Elle doit donc être dans `mods/`.** Un pack rangé dans `resourcepacks/` ou `datapacks/`
+  est hors de portée du serveur ; le dresseur reste en skin par défaut, l'explication est dans
+  les logs.
 
 Sans image à toi, le mod en fournit une pour essayer :
 `cobblemon-trainers:textures/trainers/example.png`.
 
 ## Musique de combat
 
-Au début du combat, une musique est envoyée aux joueurs qui y participent, et coupée à la
-fin — quelle qu'elle soit : victoire, défaite, fuite, `/stopbattle`, ou un dresseur qui
-disparaît en pleine rencontre. **Rien d'autre ne joue en même temps** : ce qui passait
-dans la catégorie *Musique* est arrêté juste avant, et Minecraft attend une bonne dizaine de
-minutes avant de relancer sa musique d'ambiance, donc un combat se déroule sur ton thème
-seul.
+La musique est envoyée aux joueurs du combat et coupée à la fin, quelle qu'elle soit :
+victoire, défaite, fuite, `/stopbattle`, ou un dresseur qui disparaît. **Rien d'autre ne joue
+en même temps** : ce qui passait en catégorie *Musique* est arrêté juste avant.
 
-Sans rien écrire, tes dresseurs utilisent la piste fournie par le mod.
-
-| `battleMusic` | Effet |
+| `battle.music` | Effet |
 | --- | --- |
-| absent | la piste du mod, `cobblemon-trainers:battle_music.corvault` |
-| `null` ou `""` | aucune musique, le dresseur se combat en silence |
+| absent | la piste du mod |
+| `null` ou `""` | aucune musique |
 | un ID de son | cette piste-là |
 
-### Livrer sa propre piste
-
 Le son est joué par le client, donc **`data/` ne suffit pas** : le `.ogg` et son entrée
-`sounds.json` vivent sous `assets/`, la partie resource pack.
+`sounds.json` vivent sous `assets/`.
 
 ```
 mon_pack/
-├── pack.mcmeta                            ← "pack_format": 34 côté resource pack en 1.21.1
+├── pack.mcmeta
 └── assets/mon_pack/
     ├── sounds.json
     └── sounds/battle_music/champion.ogg
 ```
 
-Selon la voie choisie (voir [Où poser le pack](#où-poser-le-pack)), ce `assets/` part dans
-la même archive que `data/` — voie `mods/` — ou dans une copie déposée à part dans
-`resourcepacks/`.
-
-`sounds.json` :
-
 ```json
+// sounds.json
 {
   "battle_music.champion": {
     "subtitle": "mon_pack.subtitles.champion",
-    "sounds": [
-      { "name": "mon_pack:battle_music/champion", "stream": true }
-    ]
+    "sounds": [{ "name": "mon_pack:battle_music/champion", "stream": true }]
   }
 }
 ```
 
-Le dresseur y fait référence par la **clé** de `sounds.json`, préfixée du namespace — le
-chemin du fichier n'apparaît jamais dans le JSON du dresseur :
+Le dresseur référence la **clé** de `sounds.json`, jamais le chemin du fichier :
+`"music": "mon_pack:battle_music.champion"`.
 
-```json
-"battleMusic": "mon_pack:battle_music.champion"
-```
-
-Trois points à ne pas rater :
-
-- **`"stream": true` est indispensable** sur un morceau long : sans lui, Minecraft charge
-  tout le fichier en mémoire d'un coup.
-- **Prends un fichier stéréo.** Minecraft joue les sons stéréo à volume constant, sans
-  atténuation avec la distance — ce qu'on veut d'une musique. Un fichier mono serait
-  spatialisé autour du joueur, comme un bruit de bloc.
-- **La piste ne boucle pas.** Un combat plus long que le morceau finit en silence : prévois
-  large, ou accepte-le.
-
-Le `subtitle` est facultatif mais recommandé : c'est ce que lisent les joueurs qui jouent
-sous-titres activés.
+- **`"stream": true` est indispensable** sur un morceau long, sinon Minecraft charge tout le
+  fichier en mémoire d'un coup.
+- **Prends un fichier stéréo** : Minecraft les joue à volume constant, sans atténuation avec
+  la distance. Un mono serait spatialisé comme un bruit de bloc.
+- **La piste ne boucle pas** : un combat plus long que le morceau finit en silence.
 
 ## Traduire les textes
 
-`name`, `battleStartMessage`, `battleEndWinMessage` et `battleEndLoseMessage` sont envoyés
-au joueur comme textes traduisibles. Deux usages, au choix, dresseur par dresseur :
+`name`, les trois `messages` et le `name` d'une catégorie sont envoyés comme textes
+traduisibles. Deux usages, au choix :
 
-- **Texte brut** — `"name": "Red"` s'affiche tel quel, dans toutes les langues.
-- **Clé de traduction** — `"name": "trainer.mon_pack.red.name"`, définie sous `assets/`, la
-  partie resource pack (même remarque que pour la musique : selon la voie choisie, elle
-  voyage avec `data/` ou dans une copie posée dans `resourcepacks/`).
-
-```
-mon_pack/
-└── assets/mon_pack/lang/
-    ├── en_us.json
-    └── fr_fr.json
-```
+- **Texte brut** - `"name": "Red"` s'affiche tel quel, dans toutes les langues.
+- **Clé de traduction** - `"name": "trainer.mon_pack.red.name"`, définie sous `assets/`.
 
 ```json
+// assets/mon_pack/lang/fr_fr.json
 {
   "trainer.mon_pack.red.name": "Red",
-  "trainer.mon_pack.red.battle_start": "Prêt ?"
+  "category.mon_pack.champions": "Champions"
 }
 ```
 
-Chaque joueur voit alors le texte dans la langue de son jeu, **nom flottant du dresseur
-compris**. Sur un serveur, `resource-pack` dans `server.properties` distribue le pack
-automatiquement.
+Chaque joueur voit alors le texte dans sa langue, **nom flottant du dresseur compris**. Sur un
+serveur, `resource-pack` dans `server.properties` distribue le pack automatiquement.
 
-C'est la seule voie de traduction : les clés sont résolues par le client, un fichier lang
-posé dans le datapack ne servirait à rien. Et si aucune traduction n'existe, Minecraft
-affiche la clé telle quelle — un bon moyen de repérer une clé oubliée.
+C'est la seule voie de traduction : les clés sont résolues par le client, un fichier lang posé
+dans le datapack ne servirait à rien. Si aucune traduction n'existe, Minecraft affiche la clé
+telle quelle - un bon moyen de repérer une clé oubliée.
 
 ## Tester son pack
 
 ```
 /reload
-/spawntrainer mon_pack:red
-/listtrainers
+/cobblemontrainers spawn mon_pack:champions/erika
+/cobblemontrainers list
+/cobblemontrainers defeat mon_pack:champions/erika
 ```
 
-`/reload` recharge les dresseurs sans redémarrer. L'autocomplétion de `/spawntrainer`
-propose les dresseurs effectivement chargés, sous leur ID complet `<pack>:<dresseur>` : si le
-tien n'y apparaît pas, c'est qu'il n'a pas été lu — la raison est dans les logs du serveur.
-Et si le namespace affiché n'est pas celui que tu attendais, c'est qu'un autre pack fournit
-un dresseur de même nom.
+`/reload` recharge les dresseurs sans redémarrer. L'autocomplétion de `spawn` propose
+les dresseurs effectivement chargés, sous leur ID complet : si le tien n'y est pas, il n'a pas
+été lu - la raison est dans les logs. Un nom de fichier seul suffit à la commande
+(`/cobblemontrainers spawn erika`), le mod retrouve le dossier.
 
 Au chargement, le mod écrit une ligne récapitulative :
 
 ```
-[cobblemon-trainers] Loaded 7 trainer(s): mon_pack:red, mon_pack:blue, …
+[cobblemon-trainers] Loaded 7 trainer(s) in 2 categor(y/ies): mon_pack:champions/erika, …
 ```
 
-`/listtrainers` sert de seconde vérification : il ne montre que les dresseurs en
-`tracked: true`, donc un dresseur chargé mais absent de la liste est un dresseur masqué, pas
-un dresseur manquant.
+`/cobblemontrainers defeat <id|all> [<joueurs>] [reset]` inscrit une victoire sans combat : de
+quoi vérifier un `requires`, un advancement ou une fiche du Battle Phone sans jouer toute la
+ligue - `all` coche tous les dresseurs chargés d'un coup. Il ne remet pas les récompenses, et
+`reset` oublie la victoire pour retester le verrou. Un advancement déjà obtenu, lui, ne se
+retire qu'avec `/advancement revoke`.
 
-Un resource pack, lui, ne se recharge pas avec `/reload` : c'est <kbd>F3</kbd>+<kbd>T</kbd>,
-côté client.
+Un resource pack, lui, ne se recharge pas avec `/reload` : c'est <kbd>F3</kbd>+<kbd>T</kbd>.
 
-### Poser un dresseur pour de bon
-
-`/spawntrainer` invoque un dresseur de passage : il disparaît quand on le tue. Pour un
-dresseur qui doit tenir un poste, le mod fournit un **bloc de dresseur**
-(`cobblemon-trainers:trainer_spawner`), invisible comme une barrière, qui retient l'ID d'un
-dresseur et le remet en place chaque fois qu'il manque à l'appel. Rien à déclarer dans le
-pack : le bloc se règle en jeu, d'un clic droit. Voir
-[le README](../README.md#le-bloc-de-dresseur).
+Pour poser un dresseur à demeure plutôt que de le faire apparaître, le mod fournit un **bloc
+de dresseur** (`cobblemon-trainers:trainer_spawner`), qui retient un ID et remet le dresseur en
+place quand il manque. Rien à déclarer dans le pack : il se règle en jeu, d'un clic droit.
+Voir [le README](../README.md#le-bloc-de-dresseur).
 
 ## Erreurs fréquentes
 
 | Symptôme | Cause probable |
 | --- | --- |
-| Le dresseur n'apparaît pas dans l'autocomplétion | Mauvais dossier : il faut `data/<ns>/cobblemontrainers/`, pas `data/<ns>/trainers/` ni `data/cobblemontrainers/` — `<ns>` est ton namespace, celui du pack |
-| `Loaded 0 trainer(s)` depuis `datapacks/` | `pack.mcmeta` absent ou `pack_format` incorrect — le pack entier est ignoré par Minecraft |
-| Un pack posé dans `mods/` n'a aucun effet | `pack.mcmeta` absent de la **racine** de l'archive, ou rangé sous un dossier intermédiaire parce que le dossier a été zippé au lieu de son contenu |
-| Les dresseurs se chargent, mais pas la musique ni les traductions | L'archive est dans `datapacks/`. Ce dossier n'est lu **que** comme données, jamais comme ressources — le format n'y change rien. Pose-la dans `mods/`, ou une copie dans `resourcepacks/` |
-| Le pack est au bon endroit et la musique reste muette | Le `.ogg` manque de l'archive, ou son chemin ne correspond pas au `name` de `sounds.json` (`<ns>:battle_music/x` → `assets/<ns>/sounds/battle_music/x.ogg`) |
-| Le dresseur s'appelle `trainer.mon_pack.red.name` en jeu | Resource pack absent ou désactivé, ou clé absente du fichier lang |
-| Le clic droit répond « déjà battu » | `canRebattle: false` et ce joueur l'a déjà vaincu. Réinvoquer le dresseur n'y change rien : c'est son ID qui est retenu |
-| Aucune récompense à la victoire | `rewards` absent, `rewardOnce: true` sur une victoire qui n'est pas la première, ou objet introuvable — voir les logs |
-| Le dresseur n'apparaît pas dans `/listtrainers` | `"tracked": false`, ou le dresseur n'est pas chargé du tout — `/spawntrainer` le dira |
+| Le dresseur n'apparaît pas dans l'autocomplétion | Mauvais dossier : il faut `data/<ns>/cobblemontrainers/`, `<ns>` étant ton namespace |
+| `Loaded 0 trainer(s)` depuis `datapacks/` | `pack.mcmeta` absent ou `pack_format` incorrect - Minecraft ignore le pack entier |
+| Un pack dans `mods/` n'a aucun effet | `pack.mcmeta` absent de la **racine** de l'archive, ou dossier zippé au lieu de son contenu |
+| Les dresseurs se chargent, pas la musique ni les traductions | L'archive est dans `datapacks/`, lu **uniquement** comme données. Pose-la dans `mods/` |
+| Un fichier `category.json` ne fait rien | Il est à la racine de `cobblemontrainers/` : il décrit le dossier où il se trouve, il lui en faut un |
+| Deux dresseurs de même nom s'écrasent | Ils étaient dans le même dossier : l'ID inclut le chemin, pas seulement le nom |
+| Le clic droit répond « ne veut pas encore te combattre » | Un `requires` non rempli. `/cobblemontrainers list <joueur>` dit combien de conditions restent |
+| Un dresseur `requires` n'apparaît pas dans le Battle Phone | C'est le comportement par défaut (`hidden: true`). Mets `"hidden": false` |
+| Le clic droit répond « déjà battu » | `"rematch": "never"` et ce joueur l'a vaincu. Réinvoquer le dresseur n'y change rien |
+| L'advancement ne se déclenche pas | Dossier `data/<ns>/advancement/` (au singulier en 1.21), ou `trainer`/`category` qui ne correspond à aucun ID chargé. `/cobblemontrainers defeat <id>` le vérifie en une commande |
+| Aucune récompense à la victoire | `rewards` absent, `"rewards": "first_win"` sur une victoire qui n'est pas la première, ou objet introuvable |
+| Le dresseur manque dans `/cobblemontrainers list` | `"listed": false`, ou pas chargé du tout - `/cobblemontrainers spawn` le dira |
 | Le combat en double est refusé | Moins de 2 Pokémon d'un des deux côtés, le tien compris |
-| Une stat EV/IV semble ignorée | Nom de stat hors de la liste reconnue — voir le tableau du format d'équipe |
+| Une stat EV/IV semble ignorée | Nom de stat hors de la liste reconnue |
 | Aucune musique | Piste absente du resource pack, ou ID qui ne correspond pas à la clé de `sounds.json` |
-| Le skin reste Steve | Pseudo inexistant ou API Mojang injoignable — voir les logs |
-| Le skin `texture` reste celui par défaut | Chemin qui ne correspond à aucun fichier (l'extension `.png` en fait partie), ou pack posé dans `resourcepacks/` ou `datapacks/` au lieu de `mods/` : le serveur ne lit l'image que là — voir les logs |
+| Le skin reste Steve | Pseudo inexistant ou API Mojang injoignable - voir les logs |
+| Le skin `texture` reste par défaut | Chemin qui ne correspond à aucun fichier (`.png` compris), ou pack hors de `mods/` |
 
 ## Un exemple complet
 
-Le dépôt contient un pack d'exemple couvrant chaque option, dresseur par dresseur :
+Le dépôt contient un pack couvrant chaque option, dresseur par dresseur :
 [`examples/cobblemonrlm/`](../examples/cobblemonrlm). Zippe son contenu, renomme en `.jar`,
 pose-le dans `mods/` : c'est tout.
-La dresseuse `jacinthe` y montre le cas complet : équipe de six, textes traduits et
-`battleMusic` pointant sur une piste livrée par le pack, `.ogg` compris.
+
+Il montre entre autres une ligue complète : trois champions dans la catégorie `champions`,
+dont un verrouillé derrière le premier et un objet, un dernier caché jusqu'à ce que les deux
+autres soient tombés, et deux advancements branchés sur les victoires.

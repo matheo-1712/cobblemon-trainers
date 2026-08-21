@@ -41,7 +41,7 @@ object TrainerRewards {
     }
 
     /**
-     * Resolves one reward entry into a stack, or null when the item cannot be resolved — a
+     * Resolves one reward entry into a stack, or null when the item cannot be resolved - a
      * broken entry is logged and skipped, the other rewards are still handed out.
      */
     private fun toStack(reward: TrainerReward): ItemStack? {
@@ -60,7 +60,7 @@ object TrainerRewards {
 
         val item = BuiltInRegistries.ITEM.getOptional(id).orElse(null)
         if (item == null) {
-            LOGGER.warn("Unknown reward item '{}' — is the mod that provides it installed?", id)
+            LOGGER.warn("Unknown reward item '{}' - is the mod that provides it installed?", id)
             return null
         }
 

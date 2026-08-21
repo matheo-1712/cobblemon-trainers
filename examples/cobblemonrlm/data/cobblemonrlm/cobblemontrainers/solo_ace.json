@@ -1,17 +1,20 @@
 {
   "name": "trainer.cobblemonrlm.solo_ace.name",
-  "level": 55,
-  "battleFormat": "singles",
-  "skill": 5,
-  "autoHealParty": true,
-  "canBattle": true,
   "skin": {
     "type": "player_username",
     "value": "Dinnerbone"
   },
-  "battleStartMessage": "trainer.cobblemonrlm.solo_ace.battle_start",
-  "battleEndWinMessage": "trainer.cobblemonrlm.solo_ace.win",
-  "battleEndLoseMessage": "trainer.cobblemonrlm.solo_ace.lose",
+  "battle": {
+    "level": 55,
+    "format": "singles",
+    "difficulty": 5,
+    "healParty": true
+  },
+  "messages": {
+    "start": "trainer.cobblemonrlm.solo_ace.battle_start",
+    "win": "trainer.cobblemonrlm.solo_ace.win",
+    "lose": "trainer.cobblemonrlm.solo_ace.lose"
+  },
   "team": [
     "Etincelle (Jolteon) (M) @ Choice Specs",
     "Ability: Volt Absorb",
@@ -24,7 +27,6 @@
     "- Volt Switch",
     "- Shadow Ball",
     "- Hidden Power",
-    "",
     "Snorlax (M) @ cobblemon:leftovers",
     "Ability: Thick Fat",
     "Level: 55",
@@ -34,7 +36,6 @@
     "- Rest",
     "- Sleep Talk",
     "- Earthquake",
-    "",
     "Gengar @ Life Orb",
     "Ability: Cursed Body",
     "Level: 54",

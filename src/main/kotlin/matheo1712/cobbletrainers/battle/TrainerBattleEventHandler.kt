@@ -8,6 +8,7 @@ import com.cobblemon.mod.common.battles.actor.PlayerBattleActor
 import com.cobblemon.mod.common.entity.npc.NPCBattleActor
 import com.cobblemon.mod.common.entity.npc.NPCEntity
 import matheo1712.cobbletrainers.CobblemonTrainers
+import matheo1712.cobbletrainers.advancement.TrainerDefeatedTrigger
 import matheo1712.cobbletrainers.trainers.TrainerDefinition
 import matheo1712.cobbletrainers.trainers.TrainerProgress
 import matheo1712.cobbletrainers.registry.TrainerRegistry
@@ -25,7 +26,7 @@ import net.minecraft.world.entity.Entity
  * rewards and the record of who beat whom, and the fate of a battle whose trainer leaves the
  * world.
  *
- * The battle actor of an NPC is an [com.cobblemon.mod.common.entity.npc.NPCBattleActor], which exposes the entity directly — no
+ * The battle actor of an NPC is an [com.cobblemon.mod.common.entity.npc.NPCBattleActor], which exposes the entity directly - no
  * need to look it up by UUID. Note that [com.cobblemon.mod.common.entity.npc.NPCBattleActor] does not extend `TrainerBattleActor`;
  * both derive separately from `AIBattleActor`.
  */
@@ -52,12 +53,12 @@ object TrainerBattleEventHandler {
         val players = battle.players
         if (players.isEmpty()) return
 
-        TrainerBattleMusic.start(definition.battleMusic, players)
+        TrainerBattleMusic.start(definition.battle.music, players)
         battle.onEndHandlers.add { ended ->
-            TrainerBattleMusic.stop(definition.battleMusic, ended.players)
+            TrainerBattleMusic.stop(definition.battle.music, ended.players)
         }
 
-        broadcast(players, definition.name, definition.battleStartMessage)
+        broadcast(players, definition.name, definition.messages.start)
     }
 
     private fun handleBattleVictory(battle: PokemonBattle, winners: List<BattleActor>) {
@@ -68,7 +69,7 @@ object TrainerBattleEventHandler {
         if (players.isEmpty()) return
 
         val playerWon = winners.any { it is PlayerBattleActor }
-        val message = if (playerWon) definition.battleEndWinMessage else definition.battleEndLoseMessage
+        val message = if (playerWon) definition.messages.win else definition.messages.lose
         broadcast(players, definition.name, message)
 
         if (playerWon) recordVictory(trainerId, definition, winners)
@@ -88,7 +89,10 @@ object TrainerBattleEventHandler {
         val progress = TrainerProgress.of(players.first().server)
         players.forEach { player ->
             val firstWin = progress.recordVictory(trainerId, player.uuid)
-            if (definition.rewardOnce && !firstWin) return@forEach
+            // After the record, never before: a `count` condition scores itself on it.
+            TrainerDefeatedTrigger.trigger(player, trainerId)
+
+            if (!definition.progress.rewardsEveryWin && !firstWin) return@forEach
             TrainerRewards.grant(player, definition.rewards)
         }
     }

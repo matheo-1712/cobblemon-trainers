@@ -59,7 +59,7 @@ class ModsFolderPackSource private constructor(private val packType: PackType) :
 
     /**
      * A candidate is ours when Fabric ignored it (no `fabric.mod.json`) and it actually holds
-     * something for this pack type — so a data-only pack never shows up in the resource pack
+     * something for this pack type - so a data-only pack never shows up in the resource pack
      * screen, and vice versa.
      */
     private fun isOurs(supplier: Pack.ResourcesSupplier, info: PackLocationInfo): Boolean =
@@ -86,7 +86,7 @@ class ModsFolderPackSource private constructor(private val packType: PackType) :
         /**
          * Reads one file out of the packs of `mods/`, outside of any pack repository.
          *
-         * A trainer texture has to be read by the logical server — see [matheo1712.cobbletrainers.trainers.TrainerTextures] — and
+         * A trainer texture has to be read by the logical server - see [matheo1712.cobbletrainers.trainers.TrainerTextures] - and
          * no server-side resource manager ever looks at `assets/`. The scan is the same one
          * [loadPacks] performs, minus the `fabric.mod.json` filter: an archive Fabric did load
          * is already on the classpath, where the caller looks first, so reading it here would

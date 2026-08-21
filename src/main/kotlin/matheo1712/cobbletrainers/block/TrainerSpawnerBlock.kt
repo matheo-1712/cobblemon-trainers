@@ -37,7 +37,7 @@ import net.minecraft.world.phys.shapes.VoxelShape
  * trainer back when it dies or wanders off.
  *
  * Like a barrier, the block itself is never rendered ([RenderShape.INVISIBLE]) and only shows
- * up as a marker particle while its item is held — see
+ * up as a marker particle while its item is held - see
  * `matheo1712.cobbletrainers.mixin.client.ClientLevelMixin`. Unlike a barrier it has no
  * collision: the trainer stands inside the block, and a solid one would push it out.
  */
@@ -59,7 +59,7 @@ class TrainerSpawnerBlock(properties: Properties) : Block(properties), EntityBlo
 
     /**
      * [rotate] and [mirror] are what make a spawner follow a structure that is placed turned
-     * around. They exist for the block state and nothing else — this is why the direction the
+     * around. They exist for the block state and nothing else - this is why the direction the
      * trainer faces is a state property rather than a number in the block entity, which
      * `StructureTemplate` would have carried across unrotated.
      */
@@ -74,11 +74,11 @@ class TrainerSpawnerBlock(properties: Properties) : Block(properties), EntityBlo
      *
      * [GameMasterBlock] already stops a regular player from breaking one
      * (`ServerPlayerGameMode.destroyBlock` refuses), and the item refuses to place one, but the
-     * block would still catch their crosshair and draw a selection box in mid-air — a spawner
+     * block would still catch their crosshair and draw a selection box in mid-air - a spawner
      * is meant to be undetectable. An empty outline shape lets their ray pass straight through.
      *
-     * The entity is null for every query the engine makes on its own — shape caching, block
-     * placement, pathfinding — which keeps those on the normal full cube.
+     * The entity is null for every query the engine makes on its own - shape caching, block
+     * placement, pathfinding - which keeps those on the normal full cube.
      */
     override fun getShape(
         state: BlockState,
@@ -106,8 +106,8 @@ class TrainerSpawnerBlock(properties: Properties) : Block(properties), EntityBlo
     }
 
     /**
-     * Opens the configuration screen. Gated on [Player.canUseGameMasterBlocks] — creative plus
-     * operator — the same gate command and structure blocks use.
+     * Opens the configuration screen. Gated on [Player.canUseGameMasterBlocks] - creative plus
+     * operator - the same gate command and structure blocks use.
      */
     override fun useWithoutItem(
         state: BlockState,
@@ -129,7 +129,7 @@ class TrainerSpawnerBlock(properties: Properties) : Block(properties), EntityBlo
 
     /**
      * Takes the trainer with the block. Without this, breaking a spawner would leave its
-     * trainer behind for good — nothing else ever removes one.
+     * trainer behind for good - nothing else ever removes one.
      */
     override fun onRemove(
         state: BlockState,

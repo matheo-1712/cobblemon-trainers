@@ -14,8 +14,8 @@ import java.util.UUID
 
 /**
  * Remembers which players have already defeated which trainers, so a trainer can refuse a
- * rematch ([TrainerDefinition.canRebattle]) and hand out its rewards only once
- * ([TrainerDefinition.rewardOnce]).
+ * rematch ([TrainerProgressRules.rematch]) and hand out its rewards only once
+ * ([TrainerProgressRules.rewards]).
  *
  * Trainers are keyed by their **datapack ID**, not by the UUID of the spawned entity: beating
  * `mon_pack:champion` beats that trainer, wherever and however many times it stands in the
@@ -34,6 +34,13 @@ class TrainerProgress : SavedData() {
         defeatedBy[trainer]?.contains(player) == true
 
     /**
+     * Every trainer that player has beaten, including the ones no datapack declares any more.
+     * This is what a counting requirement or advancement criterion is scored on.
+     */
+    fun defeatedTrainersOf(player: UUID): Set<ResourceLocation> =
+        defeatedBy.filterValues { player in it }.keys
+
+    /**
      * Records a victory.
      * @return true when this was the player's first win over that trainer.
      */
@@ -41,6 +48,20 @@ class TrainerProgress : SavedData() {
         val firstWin = defeatedBy.getOrPut(trainer) { mutableSetOf() }.add(player)
         if (firstWin) setDirty()
         return firstWin
+    }
+
+    /**
+     * Takes a victory back, for `/defeattrainer … reset`. A trainer nobody has beaten any more
+     * drops out of the map rather than keeping an empty set around.
+     *
+     * @return true when there was something to forget.
+     */
+    fun forgetVictory(trainer: ResourceLocation, player: UUID): Boolean {
+        val players = defeatedBy[trainer] ?: return false
+        if (!players.remove(player)) return false
+        if (players.isEmpty()) defeatedBy.remove(trainer)
+        setDirty()
+        return true
     }
 
     override fun save(tag: CompoundTag, registries: HolderLookup.Provider): CompoundTag {
@@ -63,7 +84,7 @@ class TrainerProgress : SavedData() {
 
         /**
          * The data fixer type is only consulted when the saved version is older than the
-         * current one, so any non-null value is a no-op here — but null is not allowed, the
+         * current one, so any non-null value is a no-op here - but null is not allowed, the
          * loader dereferences it as soon as the file exists.
          */
         private val FACTORY = SavedData.Factory(

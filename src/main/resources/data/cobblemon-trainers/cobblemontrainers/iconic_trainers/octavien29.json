@@ -1,0 +1,25 @@
+{
+  "name": "trainer.cobblemon-trainers.octavien29.name",
+  "skin": {
+    "type": "player_uuid",
+    "value": "2aeb7871-cdae-450d-9a78-a5b47782bb62"
+  },
+  "battle": {
+    "level": 80,
+    "difficulty": 5,
+    "music": "cobblemon-trainers:battle_music.lysandre_battle"
+  },
+  "messages": {
+    "start": "trainer.cobblemon-trainers.octavien29.battle_start",
+    "win": "trainer.cobblemon-trainers.octavien29.win",
+    "lose": "trainer.cobblemon-trainers.octavien29.lose"
+  },
+  "team": [
+    "Arcanine @ Life Orb\nAbility: Rock Head\nAspects: hisuian\nEVs: 252 Atk / 4 SpD / 252 Spe\nJolly Nature\n- Extreme Speed\n- Flare Blitz\n- Head Smash\n- Wild Charge",
+    "Serperior @ Leftovers\nAbility: Contrary\nEVs: 4 HP / 252 SpA / 252 Spe\nTimid Nature\n- Leaf Storm\n- Knock Off\n- Glare\n- Synthesis",
+    "Zoroark @ Expert Belt\nAbility: Illusion\nAspects: hisuian\nEVs: 4 HP / 252 SpA / 252 Spe\nTimid Nature\n- U-turn\n- Shadow Ball\n- Hyper Voice\n- Flamethrower",
+    "Ninetales @ Heat Rock\nAbility: Drought\nShiny: Yes\nTera Type: Fire\nEVs: 252 HP / 4 SpA / 252 SpD\nCalm Nature\nIVs: 0 Atk\n- Reflect\n- Weather Ball\n- Healing Wish\n- Toxic",
+    "Dragonite @ Choice Specs\nAbility: Multiscale\nEVs: 252 SpA / 4 SpD / 252 Spe\nTimid Nature\nIVs: 0 Atk\n- Draco Meteor\n- Fire Blast\n- Thunderbolt\n- Blizzard",
+    "Umbreon @ Rocky Helmet\nAbility: Synchronize\nShiny: Yes\nTera Type: Dark\nEVs: 252 HP / 252 Def / 4 SpD\nImpish Nature\nIVs: 0 Atk\n- Protect\n- Wish\n- Taunt\n- Foul Play"
+  ]
+}

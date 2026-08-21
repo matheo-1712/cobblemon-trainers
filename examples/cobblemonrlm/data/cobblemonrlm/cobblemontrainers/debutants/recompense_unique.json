@@ -1,0 +1,40 @@
+{
+  "name": "trainer.cobblemonrlm.recompense_unique.name",
+  "skin": {
+    "type": "player_username",
+    "value": "Alex"
+  },
+  "battle": {
+    "level": 30,
+    "difficulty": 2
+  },
+  "messages": {
+    "start": "trainer.cobblemonrlm.recompense_unique.battle_start",
+    "win": "trainer.cobblemonrlm.recompense_unique.win",
+    "lose": "trainer.cobblemonrlm.recompense_unique.lose"
+  },
+  "progress": {
+    "rewards": "first_win"
+  },
+  "rewards": [
+    {
+      "item": "cobblemon:link_cable"
+    },
+    {
+      "item": "cobblemon:exp_candy_l",
+      "count": 5
+    }
+  ],
+  "team": [
+    "Machoke (M)",
+    "Ability: Guts",
+    "Level: 30",
+    "- Karate Chop",
+    "- Rock Slide",
+    "Graveler (M)",
+    "Ability: Sturdy",
+    "Level: 30",
+    "- Rock Throw",
+    "- Magnitude"
+  ]
+}

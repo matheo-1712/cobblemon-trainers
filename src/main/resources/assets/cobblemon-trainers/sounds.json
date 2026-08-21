@@ -34,5 +34,14 @@
         "stream": true
       }
     ]
+  },
+  "battle_music.ultra_necrozma_battle": {
+    "subtitle": "cobblemon-trainers.subtitles.battle_music",
+    "sounds": [
+      {
+        "name": "cobblemon-trainers:battle_music/ultra_necrozma_battle",
+        "stream": true
+      }
+    ]
   }
 }

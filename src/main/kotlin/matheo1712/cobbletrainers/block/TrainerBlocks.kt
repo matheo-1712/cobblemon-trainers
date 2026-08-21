@@ -1,6 +1,7 @@
 package matheo1712.cobbletrainers.block
 
 import matheo1712.cobbletrainers.CobblemonTrainers
+import matheo1712.cobbletrainers.item.TrainerItems
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup
 import net.minecraft.core.Registry
 import net.minecraft.core.registries.BuiltInRegistries
@@ -16,7 +17,7 @@ import net.minecraft.world.level.material.PushReaction
  * The blocks shipped by the mod, and their registration.
  *
  * Everything is created eagerly as a property of this object, so touching [register] is what
- * pulls it all in — call it from the mod initializer, before the registries freeze.
+ * pulls it all in - call it from the mod initializer, before the registries freeze.
  */
 object TrainerBlocks {
 
@@ -30,7 +31,7 @@ object TrainerBlocks {
      * indestructible outside creative mode and dropping nothing
      *
      * It parts ways with the barrier on collision: a spawner is a marker for where a trainer
-     * stands, so it has to be walkable — the trainer spawns *inside* it, and a solid block
+     * stands, so it has to be walkable - the trainer spawns *inside* it, and a solid block
      * would push it out.
      */
     @JvmField
@@ -68,13 +69,13 @@ object TrainerBlocks {
     /**
      * The tab is shown to everyone in creative, on purpose.
      *
-     * The tempting alternative is to fill it only when `parameters.hasPermissions()` — an empty
+     * The tempting alternative is to fill it only when `parameters.hasPermissions()` - an empty
      * `CATEGORY` tab is not displayed, so it would vanish for a regular player. But that flag is
      * `canUseGameMasterBlocks() && the operatorItemsTab option`, and that option is off by
      * default: the tab would be hidden from the operators it is for until they find a vanilla
      * toggle in Options → Controls. Not worth it.
      *
-     * What is gated is everything the item can *do* — see [TRAINER_SPAWNER_ITEM] and
+     * What is gated is everything the item can *do* - see [TRAINER_SPAWNER_ITEM] and
      * [TrainerSpawnerBlock]. A player without operator rights can hold one and get nothing out
      * of it, and only ever in creative mode, where they are already trusted with every block in
      * the game.
@@ -82,7 +83,10 @@ object TrainerBlocks {
     val TAB: CreativeModeTab = FabricItemGroup.builder()
         .title(CobblemonTrainers.lang("item_group"))
         .icon { ItemStack(TRAINER_SPAWNER_ITEM) }
-        .displayItems { _, output -> output.accept(TRAINER_SPAWNER_ITEM) }
+        .displayItems { _, output ->
+            output.accept(TrainerItems.BATTLE_PHONE)
+            output.accept(TRAINER_SPAWNER_ITEM)
+        }
         .build()
 
     fun register() {
