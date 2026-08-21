@@ -3,6 +3,7 @@
 	"package": "matheo1712.cobbletrainers.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
+		"AIBattleActorMixin",
 		"ExampleMixin",
 		"PackDetectorMixin",
 		"PackRepositoryMixin"

@@ -17,6 +17,9 @@
   "cobblemon-trainers.command.defeat_trainer.empty": "Aucun dresseur chargé, il n'y a rien à enregistrer.",
   "cobblemon-trainers.command.defeat_trainer.recorded_all": "%s dresseur(s) comptent maintenant comme vaincus par %s.",
   "cobblemon-trainers.command.defeat_trainer.reset_all": "%s dresseur(s) ne comptent plus comme vaincus par %s.",
+  "cobblemon-trainers.command.debug_ai.on": "Le raisonnement de l'IA des dresseurs est maintenant affiché dans le chat.",
+  "cobblemon-trainers.command.debug_ai.off": "Le raisonnement de l'IA des dresseurs n'est plus affiché.",
+  "cobblemon-trainers.chat.ai_debug": "[IA] %s",
 
   "block.cobblemon-trainers.trainer_spawner": "Bloc de dresseur",
   "item.cobblemon-trainers.battle_phone": "Battle Phone",

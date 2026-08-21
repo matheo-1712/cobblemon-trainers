@@ -143,13 +143,20 @@ Tout est facultatif : `{}` donne un dresseur valide, quoique peu intéressant.
 | --- | --- | --- |
 | `level` | `1` | Niveau des Pokémon qui n'ont **pas** de ligne `Level:` |
 | `format` | `singles` | `singles`, `doubles`, `triples` - alias `solo`, `duo`, `trio` |
-| `difficulty` | `5` | Intelligence de l'IA, de 0 (au hasard) à 5 (sérieux) |
+| `difficulty` | `5` | [Intelligence de l'IA](DIFFICULTE.md), de 0 (au hasard) à 5 (sérieux) |
 | `healParty` | `true` | Soigne l'équipe du dresseur avant et après chaque combat |
 | `music` | piste du mod | ID du son joué pendant le combat, `null` pour le silence |
 
 `level` n'est pas `difficulty` : le premier est le niveau des Pokémon - et seulement un repli,
 pour les entrées Showdown sans `Level:` -, le second est la qualité du jeu de l'IA. Un
 dresseur niveau 100 en `difficulty: 0` reste facile.
+
+`difficulty` décide aussi de ce que le mod corrige chez l'IA de Cobblemon : rien en dessous
+de `3`, les erreurs impossibles à `3`, les pièges d'entrée à `4`, la lecture complète du
+combat à `5`.
+
+**➜ Le détail exact de chaque niveau est dans [DIFFICULTE.md](DIFFICULTE.md)**, avec la
+commande `/cobblemontrainers debugai` pour voir en combat ce que le mod a corrigé et pourquoi.
 
 `healParty: false` fait persister dégâts et PP d'un combat à l'autre - pratique pour un boss
 qu'on use en plusieurs tentatives.
