@@ -68,6 +68,22 @@ class TrainerBattleAI(private val delegate: BattleAI, private val difficulty: In
     /** Whether the previous decision was a Protect, which is what makes a second one a bad bet. */
     private var lastWasProtect = false
 
+    /**
+     * The decision already given for the request being answered, and what it was answering.
+     *
+     * Cobblemon asks an AI actor **more than once per turn**: `RequestInstruction` and
+     * `TurnInstruction` each send a `BattleMakeChoicePacket`, and `AIBattleActor.sendUpdate`
+     * turns every one of them into an `onChoiceRequested`. It overwrites its own answer each
+     * time, so nothing showed - until this layer started keeping notes between turns and
+     * printing them.
+     *
+     * Answering the repeat from memory is not only about the chat. The second pass would read a
+     * [struck] set the first pass had already filled, so an unbroken Disguise would look broken
+     * and the trainer would spend its best move on it after all.
+     */
+    private var lastRequest: DecisionKey? = null
+    private var lastResponse: ShowdownActionResponse? = null
+
     override fun onHealthChange(packet: BattleHealthChangePacket) = delegate.onHealthChange(packet)
 
     override fun choose(
@@ -80,11 +96,21 @@ class TrainerBattleAI(private val delegate: BattleAI, private val difficulty: In
         val choice = delegate.choose(activePokemon, battle, aiSide, moveset, forceSwitch)
         if (level == CorrectionLevel.NONE || moveset == null) return choice
 
+        // The same question asked twice gets the same answer, as long as it still stands - a
+        // response the battle would reject has to be worked out again rather than repeated.
+        val request = DecisionKey(battle.turn, activePokemon.battlePokemon?.uuid, forceSwitch)
+        lastResponse?.let {
+            if (request == lastRequest && it.isValid(activePokemon, moveset, forceSwitch)) return it
+        }
+
         // A battle waits on this answer: anything thrown here would leave the player stuck in a
         // fight nobody can act in. Cobblemon's own choice is always a valid fallback.
         return try {
             val situation = read(activePokemon, battle, moveset)
-            if (situation == null) choice else correct(choice, situation, forceSwitch)
+            val corrected = if (situation == null) choice else correct(choice, situation, forceSwitch)
+            lastRequest = request
+            lastResponse = corrected
+            corrected
         } catch (exception: Exception) {
             LOGGER.error("Trainer AI correction failed, keeping Cobblemon's choice", exception)
             choice
@@ -494,6 +520,9 @@ class TrainerBattleAI(private val delegate: BattleAI, private val difficulty: In
     private fun round(value: Double): Int = value.roundToInt()
 
     private fun percent(fraction: Double): String = "${(fraction * 100).roundToInt()}%"
+
+    /** What a request is, for the purpose of recognising the same one twice. */
+    private data class DecisionKey(val turn: Int, val pokemon: UUID?, val forceSwitch: Boolean)
 
     /** The battle as this turn's correction needs it. */
     private class Situation(

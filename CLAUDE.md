@@ -708,6 +708,12 @@ Points à ne pas redécouvrir :
 - **L'impasse est le seul cas où l'on change sans exiger de gain**, et le remplaçant doit quand
   même être *strictement* meilleur. Un remplaçant à égalité serait renvoyé au tour suivant, et la
   boucle reviendrait de notre fait.
+- **Cobblemon demande sa décision plus d'une fois par tour.** `RequestInstruction` et
+  `TurnInstruction` envoient chacune un `BattleMakeChoicePacket`, et `AIBattleActor.sendUpdate`
+  en fait un `onChoiceRequested` à chaque fois ; Cobblemon écrase sa propre réponse, donc ça ne
+  se voyait pas avant que la couche ne garde une mémoire entre les tours. `DecisionKey` rend la
+  réponse déjà donnée tant qu'elle reste valide. Sans ça, la seconde passe lisait un `struck`
+  que la première venait de remplir : une Frimousse intacte y paraissait cassée.
 - **Rien ne doit remonter de `choose()`.** Un combat attend cette réponse : une exception y
   laisserait le joueur enfermé dans un combat où personne ne peut jouer. D'où le `try/catch`, qui
   rend la décision de Cobblemon telle quelle.

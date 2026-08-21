@@ -75,11 +75,17 @@
   "cobblemon-trainers.subtitles.battle_music": "Trainer battle music",
 
   "category.cobblemon-trainers.iconic_trainers": "Iconic Trainers",
+  "category.cobblemon-trainers.secret": "Secret Trainers",
 
   "trainer.cobblemon-trainers.rerebleue.name": "RereBleue",
   "trainer.cobblemon-trainers.rerebleue.battle_start": "Don't ask me why I have an E in my name. Let's battle instead!",
   "trainer.cobblemon-trainers.rerebleue.win": "Too easy 😎",
   "trainer.cobblemon-trainers.rerebleue.lose": "Not bad! You did well.",
+
+  "trainer.cobblemon-trainers.ultra-rerebleue.name": "Ultra-RereBleue",
+  "trainer.cobblemon-trainers.ultra-rerebleue.battle_start": "Don't ask me why I have an E in my name. Let's battle instead!",
+  "trainer.cobblemon-trainers.ultra-rerebleue.win": "Too easy 😎",
+  "trainer.cobblemon-trainers.ultra-rerebleue.lose": "Not bad! You did well.",
 
   "trainer.cobblemon-trainers.theazertor.name": "TheAzertor",
   "trainer.cobblemon-trainers.theazertor.battle_start": "You need a soul!",
