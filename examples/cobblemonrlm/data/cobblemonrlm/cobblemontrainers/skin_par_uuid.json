@@ -1,14 +1,18 @@
 {
   "name": "trainer.cobblemonrlm.skin_par_uuid.name",
-  "level": 30,
-  "skill": 2,
   "skin": {
     "type": "player_uuid",
     "value": "069a79f4-44e9-4726-a5be-fca90e38aaf5"
   },
-  "battleStartMessage": "trainer.cobblemonrlm.skin_par_uuid.battle_start",
-  "battleEndWinMessage": "trainer.cobblemonrlm.skin_par_uuid.win",
-  "battleEndLoseMessage": "trainer.cobblemonrlm.skin_par_uuid.lose",
+  "battle": {
+    "level": 30,
+    "difficulty": 2
+  },
+  "messages": {
+    "start": "trainer.cobblemonrlm.skin_par_uuid.battle_start",
+    "win": "trainer.cobblemonrlm.skin_par_uuid.win",
+    "lose": "trainer.cobblemonrlm.skin_par_uuid.lose"
+  },
   "team": [
     "Machoke (M) @ Eviolite",
     "Ability: Guts",

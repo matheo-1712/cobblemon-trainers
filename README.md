@@ -2,8 +2,9 @@
 
 Mod Fabric qui ajoute des dresseurs Pokémon configurables à Cobblemon. Chaque dresseur est
 un fichier JSON : une équipe au format Showdown, un skin - celui d'un compte Minecraft ou une
-image livrée par le pack -, des messages et une musique de combat. Les dresseurs se déclarent dans un datapack, donc sans toucher au
-code.
+image livrée par le pack -, des messages, une musique de combat, et de quoi monter une
+progression - catégories, conditions à remplir pour être défié, advancements à la victoire.
+Les dresseurs se déclarent dans un datapack, donc sans toucher au code.
 
 ## Prérequis
 
@@ -27,9 +28,10 @@ Fabric API et Fabric Language Kotlin. Le mod fonctionne côté serveur comme en 
 /spawntrainer <id>
 /spawntrainer <id> <x> <y> <z>
 /listtrainers [<joueur>]
+/defeattrainer <id> [<joueurs>] [reset]
 ```
 
-Niveau de permission 2 (opérateur) pour les deux.
+Niveau de permission 2 (opérateur) pour les trois.
 
 L'autocomplétion de `/spawntrainer` propose les dresseurs chargés sous leur ID complet,
 `<pack>:<dresseur>` - le namespace étant le pack d'où vient le dresseur, on voit d'un coup
@@ -39,9 +41,16 @@ recherche porte sur les deux moitiés : `jac` retrouve `mon_pack:jacinthe`.
 `/listtrainers` liste les dresseurs à battre et coche ceux qui l'ont été, pour soi ou pour un
 autre joueur. Les joueurs, eux, ont le **Battle Phone** - voir plus bas.
 
+`/defeattrainer` inscrit une victoire sans combat : le dresseur compte comme vaincu, les
+advancements sont évalués et les dresseurs verrouillés derrière lui s'ouvrent. De quoi tester
+une ligue entière sans la jouer. Il ne remet **pas** les récompenses, pour qu'on puisse le
+relancer autant qu'on veut. `reset` fait l'inverse et oublie la victoire - mais ne retire pas
+un advancement déjà obtenu, ce qui reste l'affaire de `/advancement revoke`.
+
 Un clic droit sur le dresseur lance le combat, sur fond de musique de combat. Si le combat
 ne peut pas démarrer (pas de Pokémon dans ton équipe, combat déjà en cours, dresseur sans
-équipe, ou dresseur qui ne prend pas de revanche), la raison s'affiche dans le chat.
+équipe, dresseur qui ne prend pas de revanche, ou conditions non remplies), la raison
+s'affiche dans le chat.
 
 Tuer ou supprimer un dresseur pendant le combat met fin à la rencontre au lieu de laisser le
 joueur enfermé face à un adversaire absent.
@@ -54,11 +63,13 @@ l'écran liste les dresseurs du monde, le skin de chacun, et dit lesquels sont d
 
 Les dresseurs sont **triés par datapack** : les flèches en haut de la liste (ou les touches
 gauche et droite) passent d'un pack à l'autre, avec un onglet « tous les datapacks » en
-premier dès qu'il y en a plusieurs - celui-là sépare les packs par un intertitre. Le compteur
-en face donne l'avancement du pack affiché.
+premier dès qu'il y en a plusieurs - celui-là sépare les packs par un intertitre. À
+l'intérieur d'un pack, un intertitre par **catégorie** - le dossier où le pack range ses
+dresseurs -, chacun avec son propre compteur.
 
 Cliquer une ligne montre le dresseur en entier à droite, avec son niveau, la taille de son
-équipe et son état - vaincu, vaincu sans revanche possible, ou encore debout. À côté, six
+équipe et son état - vaincu, vaincu sans revanche possible, encore debout, ou fermé tant que
+ses conditions ne sont pas remplies, auquel cas la liste de ce qui manque remplace son équipe. À côté, six
 cases pour son équipe : elles restent fermées jusqu'à la victoire, puis affichent les modèles
 de ses Pokémon, formes et chromatiques comprises. Passer la souris sur l'une d'elles donne le
 nom et le niveau du Pokémon.
@@ -71,8 +82,9 @@ la même chose et le perdre ne perd rien. On le trouve dans l'onglet créatif
 /give @s cobblemon-trainers:battle_phone
 ```
 
-Seuls les dresseurs en `"tracked": true` y apparaissent, comme dans `/listtrainers` - voir
-[docs/DATAPACK.md](docs/DATAPACK.md#tracked).
+Seuls les dresseurs en `"listed": true` y apparaissent, comme dans `/listtrainers`, et un
+dresseur verrouillé peut se cacher entièrement jusqu'à ce que ses conditions soient remplies -
+voir [docs/DATAPACK.md](docs/DATAPACK.md#le-suivi-de-progression).
 
 ## Le bloc de dresseur
 
@@ -121,14 +133,15 @@ Ensuite le bloc se débrouille :
 - un dresseur qui s'éloigne trop est ramené sur son bloc, sa propre vie remise au maximum
   comme s'il venait d'être invoqué - sauf s'il est en plein combat, où il est laissé
   tranquille jusqu'à la fin. Son équipe n'est pas touchée : le report des dégâts d'un combat
-  au suivant reste réglé par `autoHealParty` ;
+  au suivant reste réglé par `battle.healParty` ;
 - casser le bloc emporte son dresseur. Comme une barrière, il ne se casse qu'en créatif et ne
   se ramasse pas ;
 - le dresseur regarde vers le joueur qui a posé le bloc, et suit ensuite l'orientation de
   celui-ci.
 
-Un dresseur qui refuse la revanche (`canRebattle: false`) reste debout sur son bloc et
-décline poliment : ce qu'un joueur a accompli est retenu par ID de dresseur, pas par entité.
+Un dresseur qui refuse la revanche (`"rematch": "never"`) ou dont les conditions ne sont pas
+remplies reste debout sur son bloc et décline poliment : ce qu'un joueur a accompli est retenu
+par ID de dresseur, pas par entité.
 
 ### Dans une structure
 
@@ -144,46 +157,52 @@ directions - il s'oriente vers celui qui le pose.
 ## Déclarer un dresseur
 
 Les dresseurs se déclarent dans un datapack, à
-`data/<namespace>/cobblemontrainers/<nom>.json`. L'ID du dresseur est
-`<namespace>:<nom>`, et `/reload` les recharge sans redémarrer.
+`data/<namespace>/cobblemontrainers/<chemin>.json`. L'ID est `<namespace>:<chemin>`, le
+dossier compris - et ce dossier est aussi la **catégorie** du dresseur. `/reload` recharge le
+tout sans redémarrer.
 
 ```json
 {
   "name": "Red",
-  "level": 88,
   "skin": { "type": "player_username", "value": "Red" },
-  "battleEndWinMessage": "C'est terminé !",
+  "battle": { "level": 88, "difficulty": 5 },
+  "messages": { "win": "C'est terminé !" },
   "team": [
-    "Pikachu (M) @ Light Ball",
-    "Ability: Static",
-    "Level: 88",
-    "Shiny: Yes",
-    "Timid Nature",
-    "- Thunderbolt",
-    "- Iron Tail"
+    "Pikachu (M) @ Light Ball
+Ability: Static
+Level: 88
+Shiny: Yes
+Timid Nature
+- Thunderbolt
+- Iron Tail"
   ]
 }
 ```
 
-Tous les champs sont facultatifs. Les autres réglages disponibles : format de combat
-(`singles`, `doubles`, `triples`), difficulté de l'IA, soin de l'équipe entre les combats,
-messages de début et de fin, musique de combat, et des textes traduisibles par clé.
+Tous les champs sont facultatifs, et chacun vit dans le bloc qui le concerne : `battle` pour
+le combat (format, difficulté, soin de l'équipe, musique), `messages` pour ce que le dresseur
+dit, `progress` pour ce que le battre change, `rewards` pour ce qu'on y gagne.
 
-Un dresseur peut aussi remettre des objets à la victoire et refuser la revanche une fois
-battu - `rewards`, `rewardOnce` et `canRebattle`. Ce qu'un joueur a accompli est retenu par ID
-de dresseur : battre un exemplaire de `mon_pack:champion` les bat tous, et le réinvoquer ne
-remet pas le compteur à zéro.
+Ce qu'un joueur a accompli est retenu par ID de dresseur : battre un exemplaire de
+`mon_pack:champion` les bat tous, et le réinvoquer ne remet pas le compteur à zéro. C'est ce
+que lisent `"rematch": "never"` (une seule rencontre) et `"rewards": "first_win"` (un seul
+butin).
 
-`/listtrainers` liste les dresseurs restants et ceux déjà vaincus. Un dresseur qui n'a rien à
-y faire - démonstration, PNJ qui ne se bat pas - se retire de la liste avec
-`"tracked": false` ; les dresseurs livrés par le mod le sont déjà.
+Un bloc `requires` ferme un dresseur tant qu'un joueur n'a pas battu tel autre dresseur,
+gagné tant de combats, obtenu tel advancement ou tel objet - de quoi monter une ligue à
+badges. Et battre un dresseur déclenche le critère `cobblemon-trainers:trainer_defeated`, sur
+lequel un pack branche ses propres advancements.
+
+`/listtrainers` liste les dresseurs restants et ceux déjà vaincus, groupés par catégorie. Un
+dresseur qui n'a rien à y faire - démonstration, dresseur jamais invoqué - se retire de la
+liste avec `"listed": false`.
 
 Une forme - régionale, méga, fakemon d'un autre pack - s'obtient avec une ligne `Aspects:`,
 qui reprend la syntaxe de `/pokespawn` : `"Aspects: rlm, poison"` pour un Haxorus RLM Poison.
 
 **➜ Le guide complet est dans [docs/DATAPACK.md](docs/DATAPACK.md)** : arborescence,
-référence de tous les champs, format d'équipe Showdown, skins, musique, revanches et
-récompenses, traductions, et les erreurs fréquentes.
+référence de tous les champs, catégories, conditions, advancements, format d'équipe Showdown,
+skins, musique, revanches et récompenses, traductions, et les erreurs fréquentes.
 
 Un pack d'exemple couvrant chaque option vit dans
 [`examples/cobblemonrlm/`](examples/cobblemonrlm) : un seul dossier qui fait à la fois

@@ -1,0 +1,25 @@
+{
+  "display": {
+    "icon": {
+      "id": "cobblemon:poke_ball"
+    },
+    "title": {
+      "translate": "advancement.cobblemonrlm.badge_jacinthe.title"
+    },
+    "description": {
+      "translate": "advancement.cobblemonrlm.badge_jacinthe.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "battue": {
+      "trigger": "cobblemon-trainers:trainer_defeated",
+      "conditions": {
+        "trainer": "cobblemonrlm:champions/jacinthe"
+      }
+    }
+  }
+}

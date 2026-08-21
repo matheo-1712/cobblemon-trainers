@@ -22,7 +22,10 @@ passe par `assets/cobblemon-trainers/lang/` - jamais de littéral en dur.
 La doc utilisateur est en français : `README.md` (installation, commandes) et
 `docs/DATAPACK.md` (guide complet de création de datapack). Ce qui touche au format des
 dresseurs - nouveau champ, nouvelle règle de parsing - se répercute dans `docs/DATAPACK.md`,
-qui est la référence ; le README n'en garde qu'un résumé.
+qui est la référence ; le README n'en garde qu'un résumé. `docs/DATAPACK.md` est tenu **aussi
+concis que possible** : une idée par phrase, un tableau plutôt qu'un paragraphe, et rien qui
+soit déjà dit ailleurs dans le fichier. Ajouter un champ, c'est ajouter une ligne de tableau,
+pas une section.
 
 ## Commandes
 
@@ -70,22 +73,32 @@ messages, musique et récompenses de combat.
   branche `TrainerReloadListener` sur le gestionnaire de ressources `SERVER_DATA` (ce qui
   couvre à la fois le chargement initial et `/reload`), et enregistre les listeners de combat
   dans un `try/catch` car ils dépendent de la présence de Cobblemon.
-- **`TrainerRegistry`** - map en mémoire `ResourceLocation -> TrainerDefinition`, alimentée
-  uniquement par les datapacks (`data/<namespace>/cobblemontrainers/<nom>.json`, y compris
-  ceux du mod). Le dossier est à un seul niveau sous le namespace, comme les `species/` et
-  `npcs/` de Cobblemon, mais nommé d'après le mod plutôt que `trainers/` : un `trainers/`
-  générique entrerait en collision avec un autre mod qui lirait le même dossier. Il n'y a
-  volontairement pas de couche de config sur disque. Comme dans les
-  registres de Cobblemon, seul le nom de fichier compte : les sous-dossiers ne font pas
-  partie de l'ID. Une erreur de parsing est loguée et le dresseur ignoré, sans faire
-  échouer les autres.
-- **`TrainerDefinition` / `TrainerSkin`** - data classes Gson. Tous les champs ont une
-  valeur par défaut, donc un JSON partiel reste valide. Attention à ne pas confondre
-  `level` (niveau des Pokémon) et `skill` (difficulté de l'IA, 0-5, passée à
-  `StrongBattleAI`).
+- **`TrainerRegistry`** - deux maps en mémoire, `ResourceLocation -> TrainerDefinition` et
+  `-> TrainerCategory`, alimentées uniquement par les datapacks
+  (`data/<namespace>/cobblemontrainers/<chemin>.json`, y compris ceux du mod). Le dossier est
+  à un seul niveau sous le namespace, comme les `species/` et `npcs/` de Cobblemon, mais nommé
+  d'après le mod plutôt que `trainers/` : un `trainers/` générique entrerait en collision avec
+  un autre mod qui lirait le même dossier. Il n'y a volontairement pas de couche de config sur
+  disque. **Contrairement aux registres de Cobblemon, le chemin complet fait l'ID** :
+  `champions/erika.json` donne `<ns>:champions/erika`, et ce dossier est la catégorie du
+  dresseur (voir « Catégories »). Une erreur de parsing est loguée et le fichier ignoré, sans
+  faire échouer les autres.
+- **`TrainerDefinition` / `TrainerSkin` / `TrainerRequirements`** - data classes Gson,
+  regroupées en blocs (`battle`, `messages`, `progress`, `requires`). Tous les champs ont une
+  valeur par défaut, donc un JSON partiel reste valide - et c'est ce qui fait que Gson passe
+  par le constructeur sans argument que Kotlin génère, sans quoi les blocs absents arriveraient
+  nuls. Attention à ne pas confondre `battle.level` (niveau des Pokémon) et `battle.difficulty`
+  (difficulté de l'IA, 0-5, passée à `StrongBattleAI`).
+- **`TrainerCategory`** - le `category.json` d'un dossier : nom affiché et ordre, les deux
+  facultatifs.
+- **`TrainerLock`** - évalue le `requires` d'un dresseur pour un joueur et rend la liste de ce
+  qui manque. Voir « Conditions de combat ».
+- **`advancement.TrainerDefeatedTrigger`** - le critère `cobblemon-trainers:trainer_defeated`.
 - **`ShowdownTeamParser`** - convertit du format Showdown en `PokemonProperties` en
   reconstruisant une chaîne de propriétés Cobblemon (`"pikachu level=88 ability=static …"`)
-  passée à `PokemonProperties.parse`.
+  passée à `PokemonProperties.parse`. Une entrée du tableau `team` est un Pokémon ; elle est
+  quand même redécoupée sur les lignes vides, ce qui rend un export Showdown entier collé dans
+  une seule entrée lisible sans code en plus.
 - **`TrainerSpawner`** - construit et fait apparaître le `NPCEntity`.
 - **`TrainerBattleEventHandler`** - s'abonne à `CobblemonEvents.BATTLE_STARTED_POST` pour
   le message de début et la musique, et à `BATTLE_VICTORY` pour le message de fin, les
@@ -96,7 +109,12 @@ messages, musique et récompenses de combat.
   et récompenses ».
 - **`TrainerRewards`** - remet les objets au vainqueur.
 - **`ListTrainersCommand`** - `/listtrainers [joueur]`, la lecture de `TrainerProgress`
-  côté joueur.
+  côté joueur, groupée par catégorie.
+- **`DefeatTrainerCommand`** - `/defeattrainer <id> [joueurs] [reset]`, l'écriture : une
+  victoire inscrite sans combat, pour tester une progression sans la jouer. Elle enregistre et
+  déclenche `TrainerDefeatedTrigger`, rien de plus - ni récompenses, ni message de fin de
+  combat, parce qu'un outil de test doit pouvoir tourner cent fois. Le trigger part même quand
+  la victoire était déjà là : c'est ce qui rattrape un advancement ajouté après coup.
 - **`TrainerBattleMusic`** - envoie `ClientboundSoundPacket` / `ClientboundStopSoundPacket`
   aux joueurs du combat.
 - **`block.TrainerBlocks` / `TrainerSpawnerBlock` / `TrainerSpawnerBlockEntity` /
@@ -154,7 +172,7 @@ Points à ne pas redécouvrir :
 
 ### Revanches et récompenses
 
-`canRebattle` et `rewardOnce` ont besoin de savoir qui a déjà battu quoi - un état de monde,
+`progress.rematch` et `progress.rewards` ont besoin de savoir qui a déjà battu quoi - un état de monde,
 pas de datapack. Il vit donc dans un `SavedData` (`TrainerProgress`, fichier
 `cobblemon_trainers_progress.dat` de l'overworld) et non dans `TrainerRegistry`, que `/reload`
 vide entièrement.
@@ -168,17 +186,19 @@ Points à ne pas redécouvrir :
   pack désactivé le temps d'une session.
 - **Rien n'est oublié quand une entité disparaît**, contrairement à l'arrêt des combats. La
   taille est bornée par le nombre de dresseurs × joueurs.
-- **`tracked` masque, il n'empêche pas d'enregistrer.** Un dresseur masqué garde son entrée,
-  sans quoi `canRebattle` et `rewardOnce` cesseraient de marcher pour lui. Tout ce qui
-  présente la progression à un joueur passe par `TrainerRegistry.tracked()` plutôt que
-  `all()` - c'est le point d'entrée que réutilisera l'item de suivi prévu. Les dresseurs de
-  démonstration du mod portent `"tracked": false` : ils sont chargés dans tous les mondes.
+- **`progress.listed` masque, il n'empêche pas d'enregistrer.** Un dresseur masqué garde son
+  entrée, sans quoi `rematch` et `rewards` cesseraient de marcher pour lui. Tout ce qui
+  présente la progression à un joueur passe par `TrainerRegistry.listed()` plutôt que `all()`.
+  Cette liste est aussi triée dans l'ordre d'affichage - pack, ordre de catégorie, ID - et
+  mise en cache au reload : le Battle Phone la parcourt pour chaque ligne envoyée, et une
+  condition `victories` la reparcourt pour chaque dresseur évalué.
 - **`SavedData.Factory` n'accepte pas un `DataFixTypes` nul** : `DimensionDataStorage`
   le déréférence dès que le fichier existe. `DataFixTypes.LEVEL` fait l'affaire - le
   DataFixerUpper rend l'entrée telle quelle quand la version lue vaut la version courante,
   donc c'est un passe-plat.
 - **Le refus de revanche est dans `TrainerBattleInteraction`, avant `BattleBuilder`**, pour
-  que rien ne démarre : ni équipe soignée, ni musique.
+  que rien ne démarre : ni équipe soignée, ni musique. Le refus pour condition non remplie est
+  au même endroit et pour la même raison.
 - **Les vainqueurs viennent de l'événement, pas de `battle.players`** : dans un combat à
   plusieurs joueurs, seul le camp gagnant est récompensé. `PlayerBattleActor.entity` est nul
   pour un joueur déconnecté ; on ne lui donne rien et on n'enregistre rien, donc le dresseur
@@ -282,13 +302,13 @@ erreurs, d'où un clic droit totalement muet quand le joueur n'avait pas de Pok�
 
 Une seule instance d'interaction est partagée par tous les dresseurs, donc le format de
 combat n'y est pas figé : `interact()` retrouve la définition via
-`TrainerRegistry.findByAspects(npc.aspects)` et lit son `battleFormat`. Le `skill` est lui
+`TrainerRegistry.findByAspects(npc.aspects)` et lit son `battle.format`. Le `skill` est lui
 posé par entité (`NPCEntity.skill`, qui prime sur celui de la classe).
 
 `autoHealParty` est le seul réglage qui ne peut pas être posé par entité : Cobblemon le lit
 sur la classe, à deux endroits (`NPCBattleActor` avant le combat, `PokemonBattle` après).
 Le mod livre donc **deux classes**, `trainer.json` et `trainer_no_heal.json`, identiques à ce
-booléen près, et `TrainerSpawner` choisit selon le champ `autoHealParty` du dresseur. Si tu
+booléen près, et `TrainerSpawner` choisit selon le `battle.healParty` du dresseur. Si tu
 modifies l'une, modifie l'autre.
 
 Reste propre à ces JSON : `resourceIdentifier`.
@@ -344,7 +364,7 @@ Points à ne pas redécouvrir :
   tranquille.
 - **Le retour rend la vie de l'entité, pas celle de l'équipe.** `npc.health = npc.maxHealth`,
   parce qu'un dresseur recréé serait arrivé intact. L'équipe, elle, n'est pas touchée : le
-  report des dégâts d'un combat au suivant est ce que règle `autoHealParty`, et un
+  report des dégâts d'un combat au suivant est ce que règle `battle.healParty`, et un
   `PartyStore.heal()` ici l'écraserait en douce. Ça a été écrit puis retiré, ne pas le
   remettre.
 - **`respawnAt` ne vide pas `spawnedTrainer`.** Un chunk qui vient de se charger peut ne pas
@@ -389,17 +409,21 @@ Points à ne pas redécouvrir :
 
 ### Le Battle Phone
 
-`cobblemon-trainers:battle_phone` ouvre le suivi de progression : les dresseurs `tracked`, un
-onglet par datapack, et le skin de chacun. C'est le pendant joueur de `/listtrainers`, qui
+`cobblemon-trainers:battle_phone` ouvre le suivi de progression : les dresseurs `listed`, un
+onglet par datapack, un intertitre par catégorie, et le skin de chacun. C'est le pendant joueur de `/listtrainers`, qui
 reste opérateur - l'objet ne donne aucun pouvoir, il lit.
 
 Points à ne pas redécouvrir :
 
 - **L'onglet, c'est le namespace.** Un « datapack » n'existe pas à l'exécution : ce que le mod
   connaît d'un dresseur, c'est l'ID que lui a donné le pack qui l'a fourni. Le regroupement se
-  fait donc sur le namespace, côté client, sur une liste que le serveur envoie déjà triée par
-  ID. L'onglet « tous les datapacks » n'apparaît qu'à partir de deux namespaces, sinon il
-  doublerait le seul autre.
+  fait donc sur le namespace, côté client, sur une liste que le serveur envoie déjà dans
+  l'ordre d'affichage. L'onglet « tous les datapacks » n'apparaît qu'à partir de deux
+  namespaces, sinon il doublerait le seul autre.
+- **Le client ne regroupe jamais, il découpe.** Les intertitres de catégorie sont les runs de
+  lignes voisines qui portent le même `category` : c'est le serveur qui a trié, et refaire un
+  `groupBy` ici pourrait contredire son ordre. Un pack dont tous les dresseurs sont à la racine
+  n'a aucun intertitre - un titre unique serait une ligne dépensée pour rien.
 - **Le listing vient du serveur**, pour les mêmes raisons que l'écran du bloc : le client n'a
   ni `TrainerRegistry` ni `TrainerProgress`. Pas de `MenuType` non plus, il n'y a pas
   d'inventaire.
@@ -410,8 +434,9 @@ Points à ne pas redécouvrir :
 - **Le serveur répond toujours, même sans image.** Une absence de réponse laisserait le client
   attendre indéfiniment, et il redemanderait à chaque frame. Un skin irrésolu est donc une
   entrée de cache sans texture.
-- **L'ID demandé est revalidé** contre `TrainerRegistry` et son `tracked` : la demande vient
-  d'un client, donc rien ne garantit qu'il renvoie un des dresseurs qu'on lui a proposés.
+- **L'ID demandé est revalidé** contre `TrainerRegistry`, son `listed` et son verrou : la
+  demande vient d'un client, donc rien ne garantit qu'il renvoie un des dresseurs qu'on lui a
+  proposés - et un dresseur caché n'a jamais été proposé.
 - **Les skins sont dessinés à plat**, face par face depuis l'image (`TrainerSkinRenderer`), et
   non par le renderer d'entité : un dresseur jamais rencontré n'a pas d'entité à afficher.
   C'est aussi ce qui garde le mod sans renderer.
@@ -457,6 +482,72 @@ Points à ne pas redécouvrir :
   plus court qu'un dresseur -, donc l'affichage, le clic et le calcul du défilement parcourent
   les lignes au lieu de diviser par une hauteur. Les en-têtes n'existent que dans l'onglet
   « tous les datapacks » ; ailleurs le sélecteur nomme déjà le pack.
+
+### Catégories
+
+Le dossier d'un dresseur **est** sa catégorie : `champions/erika.json` porte l'ID
+`<ns>:champions/erika` et la catégorie `<ns>:champions`. Rien n'est déclaré, donc rien ne peut
+diverger entre le rangement et l'affichage.
+
+Points à ne pas redécouvrir :
+
+- **Un seul nom de fichier est réservé, `category.json`**, et il décrit le dossier où il se
+  trouve. Un dossier `categories/` à la racine a été essayé puis retiré : il apparaissait dans
+  l'arborescence au milieu des vraies catégories, et décrivait de loin ce qu'il ne contenait
+  pas. Un `category.json` posé à la racine du dossier des dresseurs ne décrit rien et est
+  ignoré avec un avertissement.
+- **`TrainerCategory.order` vaut `Int.MAX_VALUE` par défaut**, ce qui range les catégories
+  sans fichier après les autres sans que le tri ait un cas particulier ; leur égalité est
+  départagée par le nom.
+- **Les dresseurs de la racine passent en dernier**, sous un titre du mod
+  (`category.uncategorized`). C'est le seul groupe dont le nom ne vient pas d'un pack.
+- **Le tri vit dans le registre, pas dans les écrans.** `TrainerRegistry.listed()` rend déjà
+  l'ordre final ; le Battle Phone et `/listtrainers` ne font que le découper.
+
+### Conditions de combat
+
+`TrainerRequirements` (le bloc `requires`) ferme un dresseur, et `TrainerLock` est le seul
+endroit qui l'évalue - pour l'interaction, pour le listing du Battle Phone, pour la commande.
+
+Points à ne pas redécouvrir :
+
+- **`unmet()` rend une liste de `Component`, pas un booléen.** La même liste sert de message de
+  refus dans le chat et d'indice dans l'écran, et comme un `Component` traduisible est résolu
+  côté client, elle traverse le réseau sans que le Battle Phone sache ce qu'est une condition.
+  D'où `ComponentSerialization.STREAM_CODEC` dans le paquet du listing.
+- **Un ID introuvable compte comme non rempli.** Objet, dresseur ou advancement : le compter
+  comme rempli ouvrirait le dresseur à tout le monde sur une faute de frappe.
+- **Rien n'est jamais consommé.** Un `items` est une clé que le joueur garde, sans quoi une
+  revanche demanderait de refarmer l'objet. Ça a été posé comme règle, pas comme défaut.
+- **`victories` exclut le dresseur qui l'exige** de son propre pool, pour qu'un champion puisse
+  demander « battre tous les champions ». Le pool ne contient que des dresseurs `listed`.
+- **Le masquage est décidé côté serveur.** Un dresseur `hidden` et verrouillé n'est pas envoyé
+  du tout, et sa demande de skin est refusée : le listing est la seule chose qui trahirait son
+  existence.
+- **`/listtrainers` ne masque rien**, volontairement : c'est la vue de l'opérateur, et elle
+  évalue les conditions contre le joueur ciblé, pas contre l'appelant.
+
+### Advancements
+
+`TrainerDefeatedTrigger` enregistre `cobblemon-trainers:trainer_defeated` dans
+`BuiltInRegistries.TRIGGER_TYPES`, depuis `onInitialize` - avant la lecture des datapacks, sans
+quoi un advancement qui l'utilise échoue au parsing.
+
+Le mod ne livre aucun advancement : ils vivraient dans tous les mondes et, contrairement à un
+dresseur, un advancement n'a pas d'interrupteur `listed`. Les exemples sont dans
+`examples/cobblemonrlm/data/cobblemonrlm/advancement/` (dossier au **singulier** depuis 1.21).
+
+Points à ne pas redécouvrir :
+
+- **`CriteriaTriggers.register` est privé** en 1.21.1 : passer par
+  `Registry.register(BuiltInRegistries.TRIGGER_TYPES, …)` est la seule voie pour un ID qui ne
+  soit pas dans le namespace `minecraft`.
+- **`SimpleInstance.player()` est une méthode Java**, pas une propriété : une data class Kotlin
+  générerait `getPlayer()` et n'implémenterait rien. D'où le champ privé et l'override.
+- **Le trigger part après `TrainerProgress.recordVictory`**, jamais avant : la condition
+  `count` se compte sur cet enregistrement, victoire courante comprise.
+- **`count` se compte sur la progression, pas sur un compteur à part.** C'est ce qui survit à un
+  redémarrage, et c'est ce que le joueur appellerait son score.
 
 ### Skins
 
@@ -649,6 +740,16 @@ suivre, et rien ne le vérifie. Le seul garde-fou est que le tag doit ressembler
 
 Points à ne pas redécouvrir :
 
+- **La version publiée déclare son environnement**, `environment = CLIENT_AND_SERVER` dans le
+  bloc `modrinth`. Modrinth exige une métadonnée d'environnement exacte (règle 5.1 des Content
+  Rules) et rejette le projet en modération sans elle ; depuis mod-publish-plugin 2.1.0 ça se
+  règle dans le build, plus dans les réglages de version du site. Le mod est requis des deux
+  côtés : les garde-fous `ServerPlayNetworking.canSend` des deux écrans sont un message poli
+  pour un client qui ne l'a pas, pas une configuration supportée.
+- **Le slug Modrinth est `cobblemon-trainers-rerebleue`.** `cobblemon-trainers` appartient déjà
+  à un autre projet, et la modération refuse un slug qui ne correspond pas au nom du projet.
+  Le `modrinth_id` de `gradle.properties` est l'ID du projet, immuable : il ne suit pas le slug.
+  Le seul endroit du dépôt qui nomme le slug est le lien de `docs/MODRINTH.md`.
 - **Le workflow exige `MODRINTH_TOKEN` avant de construire.** Sans jeton, `publishMods`
   bascule en `dryRun` et le workflow finirait vert sans rien publier.
 - **Un numéro de version déjà publié sur Modrinth est refusé (409).** Une release qui échoue

@@ -4,16 +4,24 @@
   "cobblemon-trainers.command.spawn_trainer.invalid_position": "Position invalide pour invoquer un dresseur.",
   "cobblemon-trainers.command.spawn_trainer.spawn_failed": "Impossible d'invoquer le dresseur. Consulte les logs du serveur pour le détail.",
   "cobblemon-trainers.command.list_trainers.empty": "Aucun dresseur chargé. Vérifie les ID dans data/<namespace>/cobblemontrainers/ de tes datapacks.",
-  "cobblemon-trainers.command.list_trainers.none_tracked": "Tous les dresseurs chargés sont masqués du suivi (\"tracked\": false).",
+  "cobblemon-trainers.command.list_trainers.none_listed": "Tous les dresseurs chargés sont masqués des listes (\"progress\": { \"listed\": false }).",
   "cobblemon-trainers.command.list_trainers.header": "Dresseurs de %s - %s / %s vaincus",
+  "cobblemon-trainers.command.list_trainers.category": "%s - %s / %s",
   "cobblemon-trainers.command.list_trainers.entry.defeated": "✔ %s - %s",
   "cobblemon-trainers.command.list_trainers.entry.pending": "✘ %s - %s",
   "cobblemon-trainers.command.list_trainers.no_rematch": " (plus de revanche)",
+  "cobblemon-trainers.command.list_trainers.locked": " (verrouillé, %s condition(s) restante(s))",
+  "cobblemon-trainers.command.defeat_trainer.unknown_trainer": "Dresseur introuvable. Vérifie les ID dans data/<namespace>/cobblemontrainers/ de tes datapacks.",
+  "cobblemon-trainers.command.defeat_trainer.recorded": "%s compte maintenant comme vaincu par %s.",
+  "cobblemon-trainers.command.defeat_trainer.reset": "%s ne compte plus comme vaincu par %s.",
+
   "block.cobblemon-trainers.trainer_spawner": "Bloc de dresseur",
   "item.cobblemon-trainers.battle_phone": "Battle Phone",
   "cobblemon-trainers.item_group": "Cobblemon Trainers",
   "cobblemon-trainers.item.trainer_spawner.operator_only": "Opérateurs uniquement - créatif requis",
   "cobblemon-trainers.item.battle_phone.tooltip": "Clic droit pour consulter les dresseurs",
+
+  "cobblemon-trainers.category.uncategorized": "Dresseurs",
 
   "cobblemon-trainers.screen.battle_phone.title": "Battle Phone",
   "cobblemon-trainers.screen.battle_phone.all": "Tous les datapacks",
@@ -22,7 +30,8 @@
   "cobblemon-trainers.screen.battle_phone.status.defeated": "Vaincu",
   "cobblemon-trainers.screen.battle_phone.status.defeated_final": "Vaincu - plus de revanche",
   "cobblemon-trainers.screen.battle_phone.status.pending": "Reste à battre",
-  "cobblemon-trainers.screen.battle_phone.status.no_battle": "Ne combat pas",
+  "cobblemon-trainers.screen.battle_phone.status.locked": "Refuse le combat",
+  "cobblemon-trainers.screen.battle_phone.locked": "Encore hors de portée :",
   "cobblemon-trainers.screen.battle_phone.team": "Niveau %s - %s Pokémon",
   "cobblemon-trainers.screen.battle_phone.pokemon": "%s - N. %s",
 
@@ -40,19 +49,44 @@
   "cobblemon-trainers.chat.spawner.client_required": "Configurer un bloc de dresseur demande Cobblemon Trainers installé côté client.",
 
   "cobblemon-trainers.chat.trainer_message": "[%s] %s",
+
   "cobblemon-trainers.chat.trainer_gone": "Le dresseur a quitté le combat. La rencontre s'arrête.",
+
   "cobblemon-trainers.chat.already_defeated": "%s a déjà été battu et ne prend pas de revanche.",
+
+  "cobblemon-trainers.chat.locked": "%s ne veut pas encore te combattre.",
+
   "cobblemon-trainers.chat.reward": "Tu reçois %s × %s",
+
+  "cobblemon-trainers.requirement.line": "- %s",
+  "cobblemon-trainers.requirement.defeated": "Battre %s",
+  "cobblemon-trainers.requirement.victories": "Battre des dresseurs : %s / %s",
+  "cobblemon-trainers.requirement.victories_category": "Battre %s : %s / %s",
+  "cobblemon-trainers.requirement.item": "Avoir sur soi %s : %s / %s",
+  "cobblemon-trainers.requirement.advancement": "Obtenir le progrès %s",
+
   "cobblemon-trainers.npc.interaction.battle": "Combat de dresseur",
   "cobblemon-trainers.subtitles.battle_music": "Musique de combat de dresseur",
+
+  "category.cobblemon-trainers.iconic_trainers": "Dresseurs iconiques",
 
   "trainer.cobblemon-trainers.rerebleue.name": "RereBleue",
   "trainer.cobblemon-trainers.rerebleue.battle_start": "Me demande pas pourquoi j'ai un E dans mon nom. Combattons plutôt !",
   "trainer.cobblemon-trainers.rerebleue.win": "Pas mal ! tu t'es bien débrouillé.",
-  "trainer.cobblemon-trainers.rerebleue.lose":  "Trop facile 😎",
+  "trainer.cobblemon-trainers.rerebleue.lose": "Trop facile 😎",
 
   "trainer.cobblemon-trainers.theazertor.name": "TheAzertor",
   "trainer.cobblemon-trainers.theazertor.battle_start": "Il vous faut une âme !",
   "trainer.cobblemon-trainers.theazertor.win": "Il vous faut une âme ! (Pas mal)",
-  "trainer.cobblemon-trainers.theazertor.lose": "Il vous faut une âme ! (Trop simple)"
+  "trainer.cobblemon-trainers.theazertor.lose": "Il vous faut une âme ! (Trop simple)",
+
+  "trainer.cobblemon-trainers.octavien29.name": "Octavien29",
+  "trainer.cobblemon-trainers.octavien29.battle_start": "!",
+  "trainer.cobblemon-trainers.octavien29.win": ".....",
+  "trainer.cobblemon-trainers.octavien29.lose": "WIN !!!!",
+
+  "trainer.cobblemon-trainers.kagumi.name": "Kagumi",
+  "trainer.cobblemon-trainers.kagumi.battle_start": "!",
+  "trainer.cobblemon-trainers.kagumi.win": ".....",
+  "trainer.cobblemon-trainers.kagumi.lose": "WIN !!!!"
 }

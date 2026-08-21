@@ -3,55 +3,54 @@
   "trainer.cobblemonrlm.solo_ace.battle_start": "Un contre un, pas d'excuse.",
   "trainer.cobblemonrlm.solo_ace.win": "Propre. Tu mérites la victoire.",
   "trainer.cobblemonrlm.solo_ace.lose": "Reviens quand tu auras affûté ton équipe.",
-
   "trainer.cobblemonrlm.duo_tacticien.name": "Tacticien du Duo",
   "trainer.cobblemonrlm.duo_tacticien.battle_start": "Deux fronts à la fois. Bonne chance.",
   "trainer.cobblemonrlm.duo_tacticien.win": "Tu as géré les deux flancs. Bravo.",
   "trainer.cobblemonrlm.duo_tacticien.lose": "Tu n'as regardé qu'une moitié du terrain.",
-
   "trainer.cobblemonrlm.trio_marathon.name": "Marathonienne du Trio",
   "trainer.cobblemonrlm.trio_marathon.battle_start": "Trois de front, et mon équipe ne se soigne pas entre deux essais.",
   "trainer.cobblemonrlm.trio_marathon.win": "Tu m'as usée jusqu'au bout. C'est mérité.",
   "trainer.cobblemonrlm.trio_marathon.lose": "Recommence : mes Pokémon garderont leurs blessures.",
-
   "trainer.cobblemonrlm.debutant.name": "Débutant",
-
   "trainer.cobblemonrlm.skin_par_uuid.name": "Dresseur au skin par UUID",
   "trainer.cobblemonrlm.skin_par_uuid.battle_start": "Mon apparence vient d'un UUID, pas d'un pseudo.",
   "trainer.cobblemonrlm.skin_par_uuid.win": "Bien joué.",
   "trainer.cobblemonrlm.skin_par_uuid.lose": "Encore un effort.",
-
   "trainer.cobblemonrlm.skin_texture.name": "Aventurier de passage",
   "trainer.cobblemonrlm.skin_texture.battle_start": "Mon skin est livré avec ce pack - aucun compte Mojang derrière.",
   "trainer.cobblemonrlm.skin_texture.win": "Bien combattu, voyageur.",
   "trainer.cobblemonrlm.skin_texture.lose": "La route est longue. Entraîne-toi, puis retrouve-moi.",
-
-  "trainer.cobblemonrlm.pnj_pacifiste.name": "Villageoise pacifiste",
-
   "trainer.cobblemonrlm.polyglotte.name": "La Polyglotte",
   "trainer.cobblemonrlm.polyglotte.battle_start": "Je parle ta langue - ce texte vient du resource pack.",
   "trainer.cobblemonrlm.polyglotte.win": "Bien joué, dans toutes les langues.",
   "trainer.cobblemonrlm.polyglotte.lose": "Reviens quand tu auras un peu progressé.",
-
   "trainer.cobblemonrlm.formes.name": "Collectionneuse de formes",
   "trainer.cobblemonrlm.formes.battle_start": "Chacun des miens porte une forme différente. Des aspects, pas des espèces.",
   "trainer.cobblemonrlm.formes.win": "Régionales ou non, tu les as toutes lues correctement.",
   "trainer.cobblemonrlm.formes.lose": "Apprends les formes, puis reviens.",
-
   "trainer.cobblemonrlm.champion_unique.name": "Champion d'un seul combat",
   "trainer.cobblemonrlm.champion_unique.battle_start": "Une seule chance. Bats-moi et tu ne me reverras plus.",
   "trainer.cobblemonrlm.champion_unique.win": "Prends ça - tu as mérité chaque objet.",
   "trainer.cobblemonrlm.champion_unique.lose": "Pas cette fois. Mais la porte reste ouverte.",
-
   "trainer.cobblemonrlm.recompense_unique.name": "Partenaire d'entraînement",
   "trainer.cobblemonrlm.recompense_unique.battle_start": "Reviens t'entraîner quand tu veux - la récompense, elle, ne tombe qu'une fois.",
   "trainer.cobblemonrlm.recompense_unique.win": "Beau travail. Repasse quand tu veux pour une autre manche.",
   "trainer.cobblemonrlm.recompense_unique.lose": "Secoue-toi et redéfie-moi.",
-
   "trainer.cobblemonrlm.jacinthe.name": "Jacinthe",
   "trainer.cobblemonrlm.jacinthe.battle_start": "Écoute bien : ce thème n'est joué que pour les combats qui comptent.",
   "trainer.cobblemonrlm.jacinthe.win": "Tu as tenu jusqu'à la dernière mesure. Chapeau.",
   "trainer.cobblemonrlm.jacinthe.lose": "La musique s'arrête ici. Reviens quand tu seras prêt à la finir.",
-
-  "cobblemonrlm.subtitles.jacinthe_battle": "Thème de combat de Jacinthe"
+  "cobblemonrlm.subtitles.jacinthe_battle": "Thème de combat de Jacinthe",
+  "category.cobblemonrlm.debutants": "Débutants",
+  "category.cobblemonrlm.champions": "Champions",
+  "category.cobblemonrlm.kanto": "Kanto",
+  "trainer.cobblemonrlm.champion_unique.locked": "Le champion n'affronte que ceux qui ont battu Jacinthe - et qui ont un diamant sur eux.",
+  "trainer.cobblemonrlm.maitre_cache.name": "Le Maître caché",
+  "trainer.cobblemonrlm.maitre_cache.battle_start": "Personne ne t'a dit que j'étais là. Tu l'as deviné.",
+  "trainer.cobblemonrlm.maitre_cache.win": "La ligue avait donc encore une porte.",
+  "trainer.cobblemonrlm.maitre_cache.lose": "Reviens quand toute la ligue sera tombée.",
+  "advancement.cobblemonrlm.badge_jacinthe.title": "Dans le tempo",
+  "advancement.cobblemonrlm.badge_jacinthe.description": "Battre Jacinthe.",
+  "advancement.cobblemonrlm.ligue.title": "Ligue terminée",
+  "advancement.cobblemonrlm.ligue.description": "Battre les trois champions du pack."
 }

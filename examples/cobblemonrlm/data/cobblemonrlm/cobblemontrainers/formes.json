@@ -1,13 +1,17 @@
 {
   "name": "trainer.cobblemonrlm.formes.name",
-  "level": 60,
   "skin": {
     "type": "player_username",
     "value": "Alex"
   },
-  "battleStartMessage": "trainer.cobblemonrlm.formes.battle_start",
-  "battleEndWinMessage": "trainer.cobblemonrlm.formes.win",
-  "battleEndLoseMessage": "trainer.cobblemonrlm.formes.lose",
+  "battle": {
+    "level": 60
+  },
+  "messages": {
+    "start": "trainer.cobblemonrlm.formes.battle_start",
+    "win": "trainer.cobblemonrlm.formes.win",
+    "lose": "trainer.cobblemonrlm.formes.lose"
+  },
   "team": [
     "Raichu (M) @ Life Orb",
     "Aspects: alolan",
@@ -19,7 +23,6 @@
     "- Psychic",
     "- Surf",
     "- Nasty Plot",
-    "",
     "Weezing (F) @ Black Sludge",
     "Aspects: galarian",
     "Ability: Levitate",
@@ -30,7 +33,6 @@
     "- Strange Steam",
     "- Pain Split",
     "- Protect",
-    "",
     "Rotom @ Choice Scarf",
     "Aspects: appliance=wash",
     "Ability: Levitate",

@@ -1,15 +1,19 @@
 {
   "name": "trainer.cobblemonrlm.polyglotte.name",
-  "level": 45,
-  "battleFormat": "singles",
-  "skill": 3,
   "skin": {
     "type": "player_username",
     "value": "Dinnerbone"
   },
-  "battleStartMessage": "trainer.cobblemonrlm.polyglotte.battle_start",
-  "battleEndWinMessage": "trainer.cobblemonrlm.polyglotte.win",
-  "battleEndLoseMessage": "trainer.cobblemonrlm.polyglotte.lose",
+  "battle": {
+    "level": 45,
+    "format": "singles",
+    "difficulty": 3
+  },
+  "messages": {
+    "start": "trainer.cobblemonrlm.polyglotte.battle_start",
+    "win": "trainer.cobblemonrlm.polyglotte.win",
+    "lose": "trainer.cobblemonrlm.polyglotte.lose"
+  },
   "team": [
     "Kadabra (M) @ Eviolite",
     "Ability: Synchronize",

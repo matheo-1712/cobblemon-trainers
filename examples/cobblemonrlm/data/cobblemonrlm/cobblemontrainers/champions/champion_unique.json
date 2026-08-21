@@ -1,0 +1,63 @@
+{
+  "name": "trainer.cobblemonrlm.champion_unique.name",
+  "skin": {
+    "type": "player_username",
+    "value": "Notch"
+  },
+  "battle": {
+    "level": 60,
+    "difficulty": 5
+  },
+  "messages": {
+    "start": "trainer.cobblemonrlm.champion_unique.battle_start",
+    "win": "trainer.cobblemonrlm.champion_unique.win",
+    "lose": "trainer.cobblemonrlm.champion_unique.lose"
+  },
+  "progress": {
+    "rematch": "never"
+  },
+  "rewards": [
+    {
+      "item": "cobblemon:master_ball",
+      "count": 1
+    },
+    {
+      "item": "cobblemon:rare_candy",
+      "count": 10
+    },
+    {
+      "item": "minecraft:diamond",
+      "count": 3
+    }
+  ],
+  "team": [
+    "Dragonite (M) @ cobblemon:leftovers",
+    "Ability: Multiscale",
+    "Level: 62",
+    "Adamant Nature",
+    "- Dragon Dance",
+    "- Outrage",
+    "- Earthquake",
+    "- Fire Punch",
+    "Tyranitar (F) @ cobblemon:assault_vest",
+    "Ability: Sand Stream",
+    "Level: 60",
+    "- Stone Edge",
+    "- Crunch",
+    "- Ice Punch",
+    "- Earthquake"
+  ],
+  "requires": {
+    "defeated": [
+      "champions/jacinthe"
+    ],
+    "items": [
+      {
+        "item": "minecraft:diamond",
+        "count": 1
+      }
+    ],
+    "hidden": false,
+    "message": "trainer.cobblemonrlm.champion_unique.locked"
+  }
+}

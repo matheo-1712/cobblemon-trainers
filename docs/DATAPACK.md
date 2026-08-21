@@ -518,6 +518,7 @@ telle quelle - un bon moyen de repérer une clé oubliée.
 /reload
 /spawntrainer mon_pack:champions/erika
 /listtrainers
+/defeattrainer mon_pack:champions/erika
 ```
 
 `/reload` recharge les dresseurs sans redémarrer. L'autocomplétion de `/spawntrainer` propose
@@ -530,6 +531,11 @@ Au chargement, le mod écrit une ligne récapitulative :
 ```
 [cobblemon-trainers] Loaded 7 trainer(s) in 2 categor(y/ies): mon_pack:champions/erika, …
 ```
+
+`/defeattrainer <id> [<joueurs>] [reset]` inscrit une victoire sans combat : de quoi vérifier
+un `requires`, un advancement ou une fiche du Battle Phone sans jouer toute la ligue. Il ne
+remet pas les récompenses, et `reset` oublie la victoire pour retester le verrou. Un
+advancement déjà obtenu, lui, ne se retire qu'avec `/advancement revoke`.
 
 Un resource pack, lui, ne se recharge pas avec `/reload` : c'est <kbd>F3</kbd>+<kbd>T</kbd>.
 
@@ -551,7 +557,7 @@ Voir [le README](../README.md#le-bloc-de-dresseur).
 | Le clic droit répond « ne veut pas encore te combattre » | Un `requires` non rempli. `/listtrainers <joueur>` dit combien de conditions restent |
 | Un dresseur `requires` n'apparaît pas dans le Battle Phone | C'est le comportement par défaut (`hidden: true`). Mets `"hidden": false` |
 | Le clic droit répond « déjà battu » | `"rematch": "never"` et ce joueur l'a vaincu. Réinvoquer le dresseur n'y change rien |
-| L'advancement ne se déclenche pas | Dossier `data/<ns>/advancement/` (au singulier en 1.21), ou `trainer`/`category` qui ne correspond à aucun ID chargé |
+| L'advancement ne se déclenche pas | Dossier `data/<ns>/advancement/` (au singulier en 1.21), ou `trainer`/`category` qui ne correspond à aucun ID chargé. `/defeattrainer <id>` le vérifie en une commande |
 | Aucune récompense à la victoire | `rewards` absent, `"rewards": "first_win"` sur une victoire qui n'est pas la première, ou objet introuvable |
 | Le dresseur manque dans `/listtrainers` | `"listed": false`, ou pas chargé du tout - `/spawntrainer` le dira |
 | Le combat en double est refusé | Moins de 2 Pokémon d'un des deux côtés, le tien compris |
