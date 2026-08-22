@@ -1,5 +1,4 @@
-- Un NPC peut porter une armure cosmétique et on peut définir ça en datapack
-- Equipe Léa (Laporeille / Lucario / Gardevoir / Flambino/ Coupenotte / Magireve)
+- Un NPC peut porter une armure cosmétique et on peut définir ça en datapack (#/feat/trainer-held-cosmetic)
 - Les musiques doivent tourner en boucle et ne pas s'arrêter après 1 ou 2 minutes
 
 LATER
