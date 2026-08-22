@@ -8,9 +8,14 @@ import matheo1712.cobbletrainers.CobblemonTrainers
 import matheo1712.cobbletrainers.client.cache.TrainerSkinCache
 import matheo1712.cobbletrainers.client.cache.TrainerTeamCache
 import matheo1712.cobbletrainers.network.BattlePhoneEntry
+import matheo1712.cobbletrainers.network.CallTrainerPayload
 import matheo1712.cobbletrainers.network.OpenBattlePhonePayload
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
+import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.screens.Screen
+import net.minecraft.client.resources.sounds.SimpleSoundInstance
+import net.minecraft.sounds.SoundEvents
 import net.minecraft.network.chat.Component
 import net.minecraft.resources.ResourceLocation
 import org.joml.Quaternionf
@@ -433,16 +438,103 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
             COLOR_TEXT_DIM
         )
 
+        renderLocation(guiGraphics, entry)
+        val callTooltip = renderCallButton(guiGraphics, entry, mouseX, mouseY)
+
         // A locked trainer has no team to show - the server does not send one - so the space
         // the party would take says what it would take to unlock it instead.
         if (entry.locked) {
             renderRequirements(guiGraphics, entry)
-            return null
+            return callTooltip
         }
 
         // Models last: they render through their own buffer, so nothing of ours is in flight.
-        return renderTeam(guiGraphics, entry, mouseX, mouseY, partialTick)
+        // Drawn whatever the button says: an elvis here would stop rendering the team as soon
+        // as the cursor rested on the button, which reads as the party blinking out.
+        val teamTooltip = renderTeam(guiGraphics, entry, mouseX, mouseY, partialTick)
+        return callTooltip ?: teamTooltip
     }
+
+    /**
+     * Where the trainer is to be found, in the strip the team leaves free.
+     *
+     * Centred on the team rather than on the screen: a place reads long - a biome, a time and a
+     * sky add up - and a line centred on the whole width would run under the legs of the figure.
+     * A trainer who names no place says nothing here, and has no button either.
+     */
+    private fun renderLocation(guiGraphics: GuiGraphics, entry: BattlePhoneEntry) {
+        if (entry.location.string.isEmpty()) return
+
+        val areaWidth = TEAM_COLUMNS * TEAM_CELL_WIDTH
+        drawSmall(
+            guiGraphics,
+            trim(
+                CobblemonTrainers.lang("screen.battle_phone.location", entry.location),
+                (areaWidth / SMALL_TEXT_SCALE).toInt()
+            ),
+            TEAM_X + areaWidth / 2,
+            LOCATION_Y,
+            COLOR_TEXT_DIM
+        )
+    }
+
+    /**
+     * The call button, and the tooltip that explains a greyed out one.
+     *
+     * Three states, and the middle one is the point: a trainer who takes no rematch keeps a
+     * visible button, so "why can I not call them" is answered on the screen rather than only
+     * in the chat once the player has tried.
+     *
+     * Whether the player is standing in the right place is never decided here - the client
+     * knows how a place reads, not where it is. Pressing the button somewhere else is answered
+     * by the server, in words.
+     */
+    private fun renderCallButton(
+        guiGraphics: GuiGraphics,
+        entry: BattlePhoneEntry,
+        mouseX: Int,
+        mouseY: Int
+    ): Component? {
+        if (!callable(entry)) return null
+
+        val enabled = callEnabled(entry)
+        val hovered = overCallButton(mouseX.toDouble(), mouseY.toDouble())
+
+        val border = when {
+            !enabled -> COLOR_TEXT_LOCKED
+            hovered -> COLOR_TITLE
+            else -> COLOR_HEADER
+        }
+        guiGraphics.fill(CALL_X, CALL_Y, CALL_X + CALL_WIDTH, CALL_Y + CALL_HEIGHT, border)
+        guiGraphics.fill(
+            CALL_X + CALL_BORDER,
+            CALL_Y + CALL_BORDER,
+            CALL_X + CALL_WIDTH - CALL_BORDER,
+            CALL_Y + CALL_HEIGHT - CALL_BORDER,
+            COLOR_SCROLL_TRACK
+        )
+        guiGraphics.drawCenteredString(
+            font,
+            CobblemonTrainers.lang("screen.battle_phone.call"),
+            CALL_X + CALL_WIDTH / 2,
+            CALL_Y + CALL_LABEL_INSET,
+            if (enabled) COLOR_TEXT else COLOR_TEXT_LOCKED
+        )
+
+        if (!hovered) return null
+        return if (enabled) {
+            CobblemonTrainers.lang("screen.battle_phone.call.where", entry.location)
+        } else {
+            CobblemonTrainers.lang("screen.battle_phone.call.no_rematch")
+        }
+    }
+
+    /** A trainer the phone draws a button for at all: one who says where they can be found. */
+    private fun callable(entry: BattlePhoneEntry): Boolean = entry.callable && !entry.locked
+
+    /** A button that answers when pressed, as opposed to one drawn to say why it will not. */
+    private fun callEnabled(entry: BattlePhoneEntry): Boolean =
+        callable(entry) && !(entry.defeated && !entry.rematch)
 
     /**
      * The six team slots, filled only once the player has beaten the trainer - the server
@@ -601,6 +693,11 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         if (overLeftArrow(frameX, frameY)) return selectGroup(-1)
         if (overRightArrow(frameX, frameY)) return selectGroup(1)
 
+        // Before the roster: the button sits on the upper screen, which the test below leaves.
+        selected?.let { entry ->
+            if (callEnabled(entry) && overCallButton(frameX, frameY)) return callTrainer(entry)
+        }
+
         if (frameX < LIST_X || frameX >= (LIST_X + LIST_WIDTH)) return false
 
         val column = (frameX.toInt() - LIST_X) / COLUMN_WIDTH
@@ -654,6 +751,29 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
     private fun leftArrowX() = (LIST_X + LIST_WIDTH / 2 - SELECTOR_ARROW_GAP - ARROW_WIDTH)
 
     private fun rightArrowX() = (LIST_X + LIST_WIDTH / 2 + SELECTOR_ARROW_GAP)
+
+    /**
+     * Asks the server for that trainer, and gets out of the way.
+     *
+     * The screen closes rather than waits: the trainer arrives a walk away, and the answer -
+     * their coordinates, or the reason there are none - is a chat message the player cannot
+     * read through an open phone.
+     */
+    private fun callTrainer(entry: BattlePhoneEntry): Boolean {
+        if (!ClientPlayNetworking.canSend(CallTrainerPayload.TYPE)) return false
+
+        Minecraft.getInstance().soundManager.play(
+            SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0f)
+        )
+        ClientPlayNetworking.send(CallTrainerPayload(entry.id))
+        onClose()
+        return true
+    }
+
+    /** Hit box of the call button, which is the rectangle it is drawn in. */
+    private fun overCallButton(mouseX: Double, mouseY: Double): Boolean =
+        mouseX >= CALL_X && mouseX < CALL_X + CALL_WIDTH &&
+            mouseY >= CALL_Y && mouseY < CALL_Y + CALL_HEIGHT
 
     private fun overLeftArrow(mouseX: Double, mouseY: Double): Boolean =
         overArrow(leftArrowX(), mouseX, mouseY)
@@ -798,6 +918,30 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         const val FIGURE_CENTER_X = UPPER_X + 38
         const val FIGURE_SCALE = 3
         const val STATUS_Y = UPPER_Y + 137
+
+        /**
+         * Where the trainer is to be found, in the strip the team leaves free above the status
+         * line. Fifteen pixels, which is one line of small text and no more - so this stays one
+         * line, and a place too long for it is trimmed rather than wrapped.
+         */
+        const val LOCATION_Y = UPPER_Y + 124
+
+        /**
+         * The call button, at the end of the status band.
+         *
+         * The status line is centred, so the far right of that band is the only clear stretch
+         * left on the upper screen: four pixels separate it from the bezel below, and the team
+         * takes everything above. It is drawn with rectangles, like everything here that is not
+         * one of the six textures - which is what keeps that set replaceable.
+         */
+        const val CALL_WIDTH = 62
+        const val CALL_HEIGHT = 13
+        const val CALL_BORDER = 1
+        const val CALL_X = UPPER_X + UPPER_WIDTH - CALL_WIDTH - 6
+        const val CALL_Y = STATUS_Y - 3
+
+        /** Lifts the label off the bottom edge of the button, the 8 being a line of text. */
+        const val CALL_LABEL_INSET = (CALL_HEIGHT - 8) / 2
 
         const val TEAM_SLOTS = 6
         const val TEAM_COLUMNS = 3

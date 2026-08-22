@@ -15,6 +15,14 @@
     "win": "trainer.cobblemonrlm.solo_ace.win",
     "lose": "trainer.cobblemonrlm.solo_ace.lose"
   },
+  "location": {
+    "dimension": "minecraft:overworld",
+    "biome": "#minecraft:is_badlands",
+    "time": "night",
+    "label": "trainer.cobblemonrlm.solo_ace.location",
+    "arrival": "trainer.cobblemonrlm.solo_ace.arrival",
+    "busy": "trainer.cobblemonrlm.solo_ace.busy"
+  },
   "team": [
     "Etincelle (Jolteon) (M) @ Choice Specs",
     "Ability: Volt Absorb",

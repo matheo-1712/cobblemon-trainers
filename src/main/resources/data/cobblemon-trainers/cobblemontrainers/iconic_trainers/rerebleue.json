@@ -15,6 +15,9 @@
     "win": "trainer.cobblemon-trainers.rerebleue.win",
     "lose": "trainer.cobblemon-trainers.rerebleue.lose"
   },
+  "location": {
+    "biome": "minecraft:plains"
+  },
   "team": [
     "Ram (Hydreigon) (F) @ Choice Scarf\nAbility: Levitate\nTera Type: Dark\nEVs: 4 HP / 252 SpA / 252 Spe\nTimid Nature\nIVs: 0 Atk\n- Dark Pulse\n- Draco Meteor\n- Earth Power\n- Fire Blast",
     "Al (Mimikyu) (M) @ Life Orb\nAbility: Disguise\nTera Type: Ghost\nEVs: 4 HP / 252 Atk / 252 Spe\nJolly Nature\n- Play Rough\n- Shadow Claw\n- Shadow Sneak\n- Swords Dance",

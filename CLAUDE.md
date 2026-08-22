@@ -20,10 +20,12 @@ Le code, les commentaires et les logs sont en **anglais**. Tout texte affiché a
 passe par `assets/cobblemon-trainers/lang/` - jamais de littéral en dur.
 
 La doc utilisateur est en français : `README.md` (installation, commandes),
-`docs/DATAPACK.md` (guide complet de création de datapack) et `docs/DIFFICULTE.md` (ce que fait
-chaque niveau de `battle.difficulty`). Ce qui touche au format des dresseurs - nouveau champ,
+`docs/DATAPACK.md` (guide complet de création de datapack), `docs/DIFFICULTE.md` (ce que fait
+chaque niveau de `battle.difficulty`) et `docs/SPAWNING.md` (le bloc `location` et l'appel
+depuis le Battle Phone). Ce qui touche au format des dresseurs - nouveau champ,
 nouvelle règle de parsing - se répercute dans `docs/DATAPACK.md`, qui est la référence ; le
-README n'en garde qu'un résumé. **Toute règle de l'IA va dans `docs/DIFFICULTE.md`**, jamais
+README n'en garde qu'un résumé. **Toute règle de l'IA va dans `docs/DIFFICULTE.md`**, et **tout
+ce qui touche à l'appel d'un dresseur dans `docs/SPAWNING.md`**, jamais
 dans `docs/DATAPACK.md`, qui n'en garde qu'un renvoi : une règle décrite à deux endroits est une
 règle qui finit fausse à l'un des deux. `docs/DATAPACK.md` est tenu **aussi
 concis que possible** : une idée par phrase, un tableau plutôt qu'un paragraphe, et rien qui
@@ -96,6 +98,10 @@ messages, musique et récompenses de combat.
   facultatifs.
 - **`TrainerLock`** - évalue le `requires` d'un dresseur pour un joueur et rend la liste de ce
   qui manque. Voir « Conditions de combat ».
+- **`TrainerPlace`** - évalue le `location` d'un dresseur et sait le formuler. Voir « Appeler un
+  dresseur ».
+- **`TrainerCalls`** - l'appel depuis le Battle Phone : les vérifications, la place où poser le
+  dresseur, et sa fin de vie. Même section.
 - **`advancement.TrainerDefeatedTrigger`** - le critère `cobblemon-trainers:trainer_defeated`.
 - **`ShowdownTeamParser`** - convertit du format Showdown en `PokemonProperties` en
   reconstruisant une chaîne de propriétés Cobblemon (`"pikachu level=88 ability=static …"`)
@@ -141,8 +147,8 @@ messages, musique et récompenses de combat.
   bloc, et la validation côté serveur de ce qui revient.
 - **`item.TrainerItems` / `BattlePhoneItem`** - l'objet qui ouvre le suivi de progression.
   Voir « Le Battle Phone ».
-- **`network.BattlePhoneNetworking`** - les trois `CustomPacketPayload` de cet écran : le
-  listing, la demande de skin et la réponse.
+- **`network.BattlePhoneNetworking`** - les `CustomPacketPayload` de cet écran : le
+  listing, la demande de skin et la réponse, celles de l'équipe, et l'appel d'un dresseur.
 - **`trainers.TrainerSkins`** - la résolution d'un `TrainerSkin` en image, hors thread serveur
   et avec cache. Voir « Skins ».
 - **`client.CobblemonTrainersClient`** - l'unique entrypoint client.
@@ -508,6 +514,60 @@ Points à ne pas redécouvrir :
   plus court qu'un dresseur -, donc l'affichage, le clic et le calcul du défilement parcourent
   les lignes au lieu de diviser par une hauteur. Les en-têtes n'existent que dans l'onglet
   « tous les datapacks » ; ailleurs le sélecteur nomme déjà le pack.
+- **Le bouton d'appel est dessiné en rectangles**, pas en texture, comme tout ce qui n'est pas
+  l'une des six images. Il est logé au bout de la bande du statut : c'est la seule zone libre
+  qui reste en haut, l'équipe prenant tout le dessus et le cadre commençant quatre pixels sous
+  la ligne de statut. Voir « Appeler un dresseur ».
+
+### Appeler un dresseur
+
+Un joueur fait venir un dresseur depuis sa fiche du Battle Phone. Le mod ne fait **jamais**
+apparaître un dresseur de lui-même : il y a le bloc, la commande, et cet appel.
+
+Points à ne pas redécouvrir :
+
+- **C'est le lieu nommé qui est l'interrupteur, pas la présence du bloc.** Il n'existe pas de
+  champ `callable` à côté : nommer un lieu, c'est déclarer qu'on vient quand on est appelé, et
+  deux réglages disant la même chose finiraient par se contredire. `TrainerLocation.isEmpty` est
+  ce qui tranche, et il ne regarde que les conditions.
+- **Un `label` seul est valide, et affiché.** Dire où l'on est et venir quand on appelle sont
+  deux choses différentes : un champion pointe son arène sans s'en éloigner. D'où l'ordre dans
+  `TrainerPlace.describe`, qui lit le `label` **avant** de tester `isEmpty` - inverser les deux
+  ferait disparaître le lieu de tous les dresseurs non appelables. `arrival` et `busy`, eux, ne
+  servent qu'à un appel : les écrire sans nommer de lieu est signalé au chargement.
+- **Une condition et son libellé sont déclarés ensemble**, dans le `Check` de
+  `TrainerPlace.checks`. C'est la seule garantie que le Battle Phone n'annonce pas un lieu autre
+  que celui qui est testé. Ne pas séparer la description de l'évaluation.
+- **Le client ne grise jamais sur le lieu.** Il sait comment une condition se lit, pas où le
+  joueur se trouve par rapport à elle : le bouton reste actif et c'est le serveur qui refuse, en
+  listant ce qui manque. Le grisé est réservé à ce que le client sait vraiment - un dresseur
+  battu qui refuse la revanche.
+- **La position est cherchée autour du Y du joueur, pas à la surface.** Un `getHeightmapPos`
+  poserait le dresseur sur le toit d'un joueur en grotte, à trente blocs et un mur de là.
+  Chercher dans la colonne autour de l'appelant répond à la grotte et à la plaine avec une seule
+  règle. Et aucun chunk n'est chargé pour répondre à un clic de bouton.
+- **Rien n'est sauvegardé, et c'est l'aspect qui rattrape.** Un appel vit en mémoire, l'entité
+  vit sur disque : un redémarrage les met en désaccord. L'aspect `trainer_call:<uuid>`
+  (`CALL_ASPECT_PREFIX`) est ce qui permet à `discardOrphan` de reconnaître un dresseur appelé
+  dont plus aucun appel ne se souvient.
+- **Le garde `spawning` n'est pas de la superstition.** `ENTITY_LOAD` part depuis
+  `addFreshEntity`, donc pendant `TrainerCalls.spawnFor`, avant que l'appel soit enregistré :
+  sans lui, `discardOrphan` supprimerait le dresseur qu'on est en train de poser.
+- **`isRemoved` couvre le déchargement de chunk autant que le retrait.** Le tick lâche
+  l'enregistrement dans les deux cas ; ce qui reste dans le chunk est ramassé par
+  `discardOrphan` au rechargement. C'est voulu : le joueur était loin de toute façon.
+- **Un dresseur en combat n'est jamais retiré**, quoi que fasse l'appelant. Retirer un acteur en
+  plein combat est exactement ce que `TrainerBattleEventHandler` doit rattraper ensuite, et il
+  n'y a aucune raison de le provoquer.
+- **Le doublon ne regarde que les entités chargées**, volontairement. La règle porte sur deux
+  exemplaires de la même personne visibles à la fois, pas sur un décompte mondial - qu'un
+  exemplaire dorme dans un chunk déchargé à mille blocs ne regarde personne.
+- **Le nom du dresseur ne voyage pas dans `arrival`.** Le message est enveloppé par
+  `chat.trainer_message` comme les messages de combat, donc un pack écrit du dialogue pur et
+  reçoit exactement trois arguments : `x`, `y`, `z`. Passer aussi le nom obligerait chaque pack
+  à commencer par `%s`.
+- **La mort passe par `AFTER_DEATH`**, le même événement que l'arrêt des combats, pour deux
+  raisons différentes. Les deux abonnements coexistent sans se connaître.
 
 ### Catégories
 

@@ -10,7 +10,7 @@ Pour l'installation du mod et les commandes, voir le [README](../README.md).
 - [Arborescence](#arborescence) · [Où poser le pack](#où-poser-le-pack)
 - [Le premier dresseur](#le-premier-dresseur) · [Tous les champs](#tous-les-champs)
 - [Catégories](#catégories) · [Conditions pour combattre](#conditions-pour-combattre) ·
-  [Advancements](#advancements)
+  [Advancements](#advancements) · [Faire venir un dresseur](SPAWNING.md)
 - [Revanches et récompenses](#revanches-et-récompenses) ·
   [Le suivi de progression](#le-suivi-de-progression)
 - [Le format d'équipe](#le-format-déquipe) · [La ligne `Aspects:`](#la-ligne-aspects)
@@ -136,6 +136,11 @@ Tout est facultatif : `{}` donne un dresseur valide, quoique peu intéressant.
 | `progress` | - | Ce que le battre change |
 | `rewards` | `[]` | Objets remis au vainqueur |
 | `requires` | - | [Conditions pour le combattre](#conditions-pour-combattre) |
+| `location` | - | [Où le trouver, et l'appeler depuis le Battle Phone](SPAWNING.md) |
+
+**➜ Le bloc `location` est décrit dans [SPAWNING.md](SPAWNING.md)**, avec ses conditions, ses
+textes et tout ce que le mod fait autour d'un appel. Le déclarer suffit à rendre le dresseur
+appelable ; ne pas le déclarer fait un dresseur qu'il faut aller trouver.
 
 ### `battle`
 

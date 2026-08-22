@@ -28,6 +28,9 @@ import net.minecraft.resources.ResourceLocation
  * @param rewards Items handed to the player on victory, in order.
  * @param requires What a player must have done before this trainer accepts a battle. Null -
  *   the default - is a trainer anyone may challenge.
+ * @param location Where the trainer is to be found. Its presence is what makes the trainer
+ *   callable from the battle phone; null - the default - is a trainer who only ever stands
+ *   where an operator put them.
  */
 data class TrainerDefinition(
     val name: String = "Trainer",
@@ -37,11 +40,23 @@ data class TrainerDefinition(
     val messages: TrainerMessages = TrainerMessages(),
     val progress: TrainerProgressRules = TrainerProgressRules(),
     val rewards: List<TrainerReward> = emptyList(),
-    val requires: TrainerRequirements? = null
+    val requires: TrainerRequirements? = null,
+    val location: TrainerLocation? = null
 ) {
 
     /** The requirements to challenge this trainer, or null when it declares none that matter. */
     fun requirements(): TrainerRequirements? = requires?.takeIf { !it.isEmpty }
+
+    /**
+     * Whether a player may summon this trainer from the battle phone.
+     *
+     * There is no separate switch for it: declaring a [location] *is* declaring that the
+     * trainer comes when called, and a champion who waits in their own gym simply declares
+     * none. Two fields saying the same thing could contradict each other, one cannot.
+     *
+     * A block holding only a label is not a place, so it does not make anyone callable.
+     */
+    fun callable(): Boolean = location?.let { !it.isEmpty } == true
 
     /**
      * Logs the values that are words rather than numbers and were not recognised. Gson has no
@@ -51,6 +66,7 @@ data class TrainerDefinition(
      */
     fun validate(id: ResourceLocation) {
         progress.validate(id)
+        location?.validate(id)
     }
 }
 
@@ -239,3 +255,151 @@ data class TrainerSkin(
     val value: String = "Steve",
     val model: String = "default"
 )
+
+/**
+ * Where a trainer is to be found, and what the battle phone tells the player about it.
+ *
+ * **Naming a place in this block is what makes a trainer callable.** There is no second switch,
+ * so two fields saying the same thing can never contradict each other here. A champion who
+ * waits in their own gym names no place and gets no call button - though they may still write
+ * a [label], which the battle phone shows without offering to fetch them.
+ *
+ * Every field is a condition of its own and they add up, exactly like [TrainerRequirements].
+ * They are checked once, at the moment the player presses the button - a player who walks out
+ * of the desert while the trainer is arriving is not punished for it.
+ *
+ * @param dimension Dimension the player has to stand in, `minecraft:the_nether`.
+ * @param biome Biome ID, or a biome tag when it starts with `#`: `#minecraft:is_desert`.
+ * @param structure Structure ID, or a structure tag when it starts with `#`. The player has to
+ *   stand on a generated piece of it, not merely inside its bounding box.
+ * @param area A box of block coordinates on the horizontal plane, `{"from": [x, z],
+ *   "to": [x, z]}`, both corners included. Altitude is [minY] and [maxY], so that one idea is
+ *   written in one place.
+ * @param minY Lowest altitude that counts, inclusive.
+ * @param maxY Highest altitude that counts, inclusive.
+ * @param time `day` or `night`.
+ * @param weather `clear`, `rain` or `thunder`.
+ * @param label What the battle phone shows instead of the description the mod builds from the
+ *   fields above. The mod names what it can - a biome has a vanilla translation, a structure
+ *   ID does not - so a pack that wants its own words puts them here. A block holding *only* a
+ *   label is valid and shown: it says where the trainer is without making them callable, which
+ *   is how a champion points at their own gym.
+ * @param arrival What the trainer says on arriving, sent to the calling player alone. Their
+ *   coordinates are passed as three arguments, so `%s %s %s` reaches them.
+ * @param busy What they say when another copy of them is already standing nearby.
+ */
+data class TrainerLocation(
+    val dimension: String? = null,
+    val biome: String? = null,
+    val structure: String? = null,
+    val area: TrainerArea? = null,
+    val minY: Int? = null,
+    val maxY: Int? = null,
+    val time: String? = null,
+    val weather: String? = null,
+    val label: String? = null,
+    val arrival: String? = null,
+    val busy: String? = null
+) {
+
+    /**
+     * True for a block that names no place at all - only text, or nothing.
+     *
+     * This is what decides callability, not the presence of the block: a pack that wrote just
+     * an `arrival` line would otherwise have opened its champion to the whole world.
+     *
+     * A block holding only a [label] is still worth writing, and still shown by the battle
+     * phone: saying where a trainer is and coming when called are two different things.
+     */
+    val isEmpty: Boolean
+        get() = dimension.isNullOrBlank() && biome.isNullOrBlank() && structure.isNullOrBlank() &&
+            area == null && minY == null && maxY == null &&
+            time.isNullOrBlank() && weather.isNullOrBlank()
+
+    fun validate(id: ResourceLocation) {
+        warn(id, "location.time", time, TIME_DAY, TIME_NIGHT)
+        warn(id, "location.weather", weather, WEATHER_CLEAR, WEATHER_RAIN, WEATHER_THUNDER)
+
+        if (area != null && !area.isValid) {
+            CobblemonTrainers.LOGGER.warn(
+                "Trainer {}: location.area needs a `from` and a `to` of two numbers each, " +
+                    "x and z. Ignoring it.",
+                id
+            )
+        }
+        if (minY != null && maxY != null && minY > maxY) {
+            CobblemonTrainers.LOGGER.warn(
+                "Trainer {}: location.minY ({}) is above location.maxY ({}), so no altitude " +
+                    "can ever match.",
+                id, minY, maxY
+            )
+        }
+        if (!isEmpty) return
+
+        // A block naming no place is fine when it is only there to say where the trainer is:
+        // the battle phone shows the label, and no button appears. What is not fine is a block
+        // that writes what the trainer says on arriving without ever letting them be called.
+        if (!arrival.isNullOrBlank() || !busy.isNullOrBlank()) {
+            CobblemonTrainers.LOGGER.warn(
+                "Trainer {}: its location block names no place, so the trainer is never called " +
+                    "and its arrival and busy lines are never used. Add a dimension, a biome, a " +
+                    "structure, an area, an altitude, a time or a weather to it.",
+                id
+            )
+            return
+        }
+
+        if (label.isNullOrBlank()) {
+            CobblemonTrainers.LOGGER.warn(
+                "Trainer {}: its location block is empty, so it does nothing at all. Give it a " +
+                    "label to say where the trainer is, or a place to make them callable.",
+                id
+            )
+        }
+    }
+
+    companion object {
+        const val TIME_DAY = "day"
+        const val TIME_NIGHT = "night"
+        const val WEATHER_CLEAR = "clear"
+        const val WEATHER_RAIN = "rain"
+        const val WEATHER_THUNDER = "thunder"
+
+        /** Marks a biome or structure field as naming a tag rather than a single entry. */
+        const val TAG_PREFIX = '#'
+
+        private fun warn(id: ResourceLocation, field: String, value: String?, vararg accepted: String) {
+            if (value.isNullOrBlank()) return
+            if (accepted.any { it.equals(value, ignoreCase = true) }) return
+            CobblemonTrainers.LOGGER.warn(
+                "Trainer {}: unknown {} '{}'. Ignoring it. Expected one of: {}",
+                id, field, value, accepted.joinToString(", ")
+            )
+        }
+    }
+}
+
+/**
+ * A box of block coordinates a trainer answers within, on the horizontal plane only.
+ *
+ * Both corners count, and neither has to be the smaller one: they are sorted when the box is
+ * tested, so a pack may write them in whichever order it read them off the world.
+ *
+ * @param from One corner, as `[x, z]`.
+ * @param to The other, as `[x, z]`.
+ */
+data class TrainerArea(
+    val from: List<Int> = emptyList(),
+    val to: List<Int> = emptyList()
+) {
+
+    val isValid: Boolean
+        get() = from.size == 2 && to.size == 2
+
+    fun contains(x: Int, z: Int): Boolean {
+        if (!isValid) return false
+        val withinX = x >= minOf(from[0], to[0]) && x <= maxOf(from[0], to[0])
+        val withinZ = z >= minOf(from[1], to[1]) && z <= maxOf(from[1], to[1])
+        return withinX && withinZ
+    }
+}

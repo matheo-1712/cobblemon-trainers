@@ -4,7 +4,9 @@ import matheo1712.cobbletrainers.CobblemonTrainers
 import matheo1712.cobbletrainers.parser.ShowdownTeamParser
 import matheo1712.cobbletrainers.trainers.TrainerRegistry
 import matheo1712.cobbletrainers.trainers.TrainerDefinition
+import matheo1712.cobbletrainers.trainers.TrainerCalls
 import matheo1712.cobbletrainers.trainers.TrainerLock
+import matheo1712.cobbletrainers.trainers.TrainerPlace
 import matheo1712.cobbletrainers.trainers.TrainerProgress
 import matheo1712.cobbletrainers.trainers.TrainerSkins
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry
@@ -38,6 +40,7 @@ object BattlePhoneNetworking {
         PayloadTypeRegistry.playS2C().register(TrainerTeamPayload.TYPE, TrainerTeamPayload.CODEC)
         PayloadTypeRegistry.playC2S().register(RequestTrainerSkinPayload.TYPE, RequestTrainerSkinPayload.CODEC)
         PayloadTypeRegistry.playC2S().register(RequestTrainerTeamPayload.TYPE, RequestTrainerTeamPayload.CODEC)
+        PayloadTypeRegistry.playC2S().register(CallTrainerPayload.TYPE, CallTrainerPayload.CODEC)
 
         ServerPlayNetworking.registerGlobalReceiver(RequestTrainerSkinPayload.TYPE) { payload, context ->
             sendSkin(context.player(), payload.trainerId)
@@ -45,6 +48,12 @@ object BattlePhoneNetworking {
 
         ServerPlayNetworking.registerGlobalReceiver(RequestTrainerTeamPayload.TYPE) { payload, context ->
             sendTeam(context.player(), payload.trainerId)
+        }
+
+        ServerPlayNetworking.registerGlobalReceiver(CallTrainerPayload.TYPE) { payload, context ->
+            // Nothing of what the screen greyed out is trusted: TrainerCalls redoes every
+            // check, and answers the player itself whichever way it goes.
+            ResourceLocation.tryParse(payload.trainerId)?.let { TrainerCalls.call(context.player(), it) }
         }
     }
 
@@ -74,7 +83,9 @@ object BattlePhoneNetworking {
                 rematch = definition.progress.allowsRematch,
                 requirements = missing,
                 category = category?.toString().orEmpty(),
-                categoryName = category?.let { TrainerRegistry.categoryName(it) }.orEmpty()
+                categoryName = category?.let { TrainerRegistry.categoryName(it) }.orEmpty(),
+                location = TrainerPlace.describe(definition.location),
+                callable = definition.callable()
             )
         }
 
@@ -178,6 +189,11 @@ object BattlePhoneNetworking {
  * @param category ID of the category the trainer is filed under, empty for one at the root of
  *   its pack. Consecutive entries sharing it are one group in the listing.
  * @param categoryName What to show as the name of that category, raw like [name].
+ * @param location Where the trainer is to be found, already worded server-side where the
+ *   registry is - empty for a trainer who names no place. Built like [requirements] and for the
+ *   same reason: a translatable component still reads in the player's own language on arrival.
+ * @param callable Whether the screen offers a call button. The server decides it, and decides
+ *   it again when the button is pressed - this is only what the screen draws.
  */
 data class BattlePhoneEntry(
     val id: String,
@@ -188,7 +204,9 @@ data class BattlePhoneEntry(
     val rematch: Boolean,
     val requirements: List<Component>,
     val category: String,
-    val categoryName: String
+    val categoryName: String,
+    val location: Component,
+    val callable: Boolean
 ) {
 
     /** A trainer this player may not challenge yet. */
@@ -220,6 +238,8 @@ data class OpenBattlePhonePayload(val entries: List<BattlePhoneEntry>) : CustomP
                         entry.requirements.forEach { ComponentSerialization.STREAM_CODEC.encode(buf, it) }
                         buf.writeUtf(entry.category)
                         buf.writeUtf(entry.categoryName)
+                        ComponentSerialization.STREAM_CODEC.encode(buf, entry.location)
+                        buf.writeBoolean(entry.callable)
                     }
                 },
                 { buf ->
@@ -236,7 +256,9 @@ data class OpenBattlePhonePayload(val entries: List<BattlePhoneEntry>) : CustomP
                                     ComponentSerialization.STREAM_CODEC.decode(buf)
                                 },
                                 category = buf.readUtf(),
-                                categoryName = buf.readUtf()
+                                categoryName = buf.readUtf(),
+                                location = ComponentSerialization.STREAM_CODEC.decode(buf),
+                                callable = buf.readBoolean()
                             )
                         }
                     )
@@ -387,6 +409,30 @@ data class TrainerTeamPayload(
                         }
                     )
                 }
+            )
+    }
+}
+
+/**
+ * Client -> server: "have that trainer come to me".
+ *
+ * The screen only shows the button for a trainer the server said was callable, but that is a
+ * drawing decision: everything - the trainer existing, being listed, being unlocked, the player
+ * standing in the right place - is decided again in
+ * [matheo1712.cobbletrainers.trainers.TrainerCalls], which also answers the player.
+ */
+data class CallTrainerPayload(val trainerId: String) : CustomPacketPayload {
+
+    override fun type(): CustomPacketPayload.Type<CallTrainerPayload> = TYPE
+
+    companion object {
+        val TYPE: CustomPacketPayload.Type<CallTrainerPayload> =
+            CustomPacketPayload.Type(CobblemonTrainers.id("call_trainer"))
+
+        val CODEC: StreamCodec<RegistryFriendlyByteBuf, CallTrainerPayload> =
+            CustomPacketPayload.codec(
+                { payload, buf -> buf.writeUtf(payload.trainerId) },
+                { buf -> CallTrainerPayload(buf.readUtf()) }
             )
     }
 }

@@ -40,6 +40,10 @@
   "cobblemon-trainers.screen.battle_phone.locked": "Encore hors de portée :",
   "cobblemon-trainers.screen.battle_phone.team": "Niveau %s - %s Pokémon",
   "cobblemon-trainers.screen.battle_phone.pokemon": "%s - N. %s",
+  "cobblemon-trainers.screen.battle_phone.location": "Se trouve : %s",
+  "cobblemon-trainers.screen.battle_phone.call": "Appeler",
+  "cobblemon-trainers.screen.battle_phone.call.where": "L'appeler - il répond : %s",
+  "cobblemon-trainers.screen.battle_phone.call.no_rematch": "Il a été battu et ne reviendra pas.",
 
   "cobblemon-trainers.chat.battle_phone.client_required": "Le Battle Phone demande Cobblemon Trainers installé côté client.",
 
@@ -61,6 +65,35 @@
   "cobblemon-trainers.chat.already_defeated": "%s a déjà été battu et ne prend pas de revanche.",
 
   "cobblemon-trainers.chat.locked": "%s ne veut pas encore te combattre.",
+
+  "cobblemon-trainers.chat.call.arrival": "Je t'attends en %s, %s, %s.",
+  "cobblemon-trainers.chat.call.busy": "Je suis déjà quelque part par ici.",
+  "cobblemon-trainers.chat.call.wrong_place": "%s n'est pas ici. Cherche-le :",
+  "cobblemon-trainers.chat.call.not_callable": "%s ne vient pas quand on l'appelle. Il faudra aller le trouver.",
+  "cobblemon-trainers.chat.call.sulking": "%s n'est pas prêt à te revoir. Laisse-lui encore %s seconde(s).",
+  "cobblemon-trainers.chat.call.no_room": "Il n'y a aucune place par ici où %s puisse se tenir.",
+  "cobblemon-trainers.chat.call.failed": "%s n'a pas pu être invoqué. Consulte les logs du serveur pour le détail.",
+  "cobblemon-trainers.chat.call.unknown": "Dresseur introuvable.",
+  "cobblemon-trainers.chat.call.in_battle": "Le dresseur que tu as appelé est en plein combat. Attends la fin.",
+
+  "cobblemon-trainers.location.separator": ", ",
+  "cobblemon-trainers.location.dimension": "%s",
+  "cobblemon-trainers.location.biome": "%s",
+  "cobblemon-trainers.location.biome_tag": "biomes %s",
+  "cobblemon-trainers.location.structure": "structure %s",
+  "cobblemon-trainers.location.area": "entre x %s z %s et x %s z %s",
+  "cobblemon-trainers.location.altitude": "entre y %s et y %s",
+  "cobblemon-trainers.location.altitude_above": "au-dessus de y %s",
+  "cobblemon-trainers.location.altitude_below": "en dessous de y %s",
+  "cobblemon-trainers.location.time.day": "le jour",
+  "cobblemon-trainers.location.time.night": "la nuit",
+  "cobblemon-trainers.location.weather.clear": "par temps clair",
+  "cobblemon-trainers.location.weather.rain": "sous la pluie",
+  "cobblemon-trainers.location.weather.thunder": "sous l'orage",
+
+  "dimension.minecraft.overworld": "le monde normal",
+  "dimension.minecraft.the_nether": "le Nether",
+  "dimension.minecraft.the_end": "l'End",
 
   "cobblemon-trainers.chat.reward": "Tu reçois %s × %s",
 

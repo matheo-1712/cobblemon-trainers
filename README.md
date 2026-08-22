@@ -93,6 +93,19 @@ Seuls les dresseurs en `"listed": true` y apparaissent, comme dans `/cobblemontr
 et un dresseur verrouillé peut se cacher entièrement jusqu'à ce que ses conditions soient
 remplies - voir [docs/DATAPACK.md](docs/DATAPACK.md#le-suivi-de-progression).
 
+### Appeler un dresseur
+
+Un dresseur qui déclare **où il se trouve** est appelable depuis sa fiche : le Battle Phone
+affiche son lieu, et un bouton **Appeler** le fait venir à quelques dizaines de blocs quand le
+joueur y est. Un dresseur qui ne déclare rien - un champion dans son arène - n'a pas de bouton
+et se trouve à pied.
+
+Un joueur ne peut avoir qu'un seul dresseur appelé à la fois, et un dresseur verrouillé n'est
+jamais appelable. Le combat se lance toujours au clic droit sur le dresseur.
+
+**➜ Tout ça est dans [docs/SPAWNING.md](docs/SPAWNING.md)** : le bloc `location`, ses
+conditions, ses textes, et ce que fait le mod autour.
+
 ## Le bloc de dresseur
 
 Un dresseur invoqué par `/cobblemontrainers spawn` disparaît quand on le tue. Pour un dresseur
@@ -213,6 +226,9 @@ skins, musique, revanches et récompenses, traductions, et les erreurs fréquent
 
 **➜ Ce que fait chaque niveau d'IA est dans [docs/DIFFICULTE.md](docs/DIFFICULTE.md)** :
 le comportement exact de `battle.difficulty`, de `0` à `5`.
+
+**➜ Comment un dresseur se fait appeler est dans [docs/SPAWNING.md](docs/SPAWNING.md)** :
+le bloc `location` et tout ce qui l'entoure.
 
 Un pack d'exemple couvrant chaque option vit dans
 [`examples/cobblemonrlm/`](examples/cobblemonrlm) : un seul dossier qui fait à la fois
