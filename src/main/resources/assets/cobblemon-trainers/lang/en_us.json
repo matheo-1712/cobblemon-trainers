@@ -44,9 +44,14 @@
   "cobblemon-trainers.screen.battle_phone.call": "Call",
   "cobblemon-trainers.screen.battle_phone.call.where": "Call them - they answer in: %s",
   "cobblemon-trainers.screen.battle_phone.call.no_rematch": "They have been beaten and will not come again.",
-  "cobblemon-trainers.screen.battle_phone.reward_count": "%sx",
   "cobblemon-trainers.screen.battle_phone.reward_more": "+%s",
   "cobblemon-trainers.screen.battle_phone.reward": "Reward: %s × %s",
+  "cobblemon-trainers.screen.battle_phone.reward_line": "%s × %s",
+  "cobblemon-trainers.screen.battle_phone.reward_line_note": "%s × %s (%s)",
+  "cobblemon-trainers.screen.battle_phone.reward_once": "One time only",
+  "cobblemon-trainers.screen.battle_phone.reward_claimed": "Already claimed",
+  "cobblemon-trainers.screen.battle_phone.reward_more_title": "%s more rewards",
+  "cobblemon-trainers.screen.battle_phone.reward_more_lines": "…and %s more",
 
   "cobblemon-trainers.chat.battle_phone.client_required": "The battle phone needs Cobblemon Trainers installed on your client.",
 

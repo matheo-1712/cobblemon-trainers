@@ -367,9 +367,10 @@ fois :
 ]
 ```
 
-Le Câble Liaison tombe une fois, les bonbons à chaque victoire. La fiche du Battle Phone suit :
-une fois le dresseur battu, elle cesse d'annoncer le Câble Liaison et ne montre plus que ce que
-le prochain combat rapportera vraiment.
+Le Câble Liaison tombe une fois, les bonbons à chaque victoire. La fiche du Battle Phone le
+signale : une récompense en `firstWinOnly` porte un marqueur, en contour tant qu'elle est à
+gagner et plein une fois obtenue, et son icône est alors grisée. Le survol le dit en toutes
+lettres.
 
 `firstWinOnly` n'a aucun effet sur un dresseur en `"rematch": "never"` : il n'y a jamais de
 deuxième victoire à distinguer.

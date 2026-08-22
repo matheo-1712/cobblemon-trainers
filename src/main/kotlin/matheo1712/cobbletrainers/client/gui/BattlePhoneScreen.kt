@@ -10,10 +10,13 @@ import matheo1712.cobbletrainers.client.cache.TrainerTeamCache
 import matheo1712.cobbletrainers.network.BattlePhoneEntry
 import matheo1712.cobbletrainers.network.CallTrainerPayload
 import matheo1712.cobbletrainers.network.OpenBattlePhonePayload
+import matheo1712.cobbletrainers.trainers.RewardPreview
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
+import net.minecraft.ChatFormatting
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.screens.Screen
+import net.minecraft.client.renderer.RenderType
 import net.minecraft.client.resources.sounds.SimpleSoundInstance
 import net.minecraft.sounds.SoundEvents
 import net.minecraft.network.chat.Component
@@ -183,7 +186,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
 
         guiGraphics.drawCenteredString(font, title, (UPPER_X + UPPER_WIDTH / 2), TITLE_Y, COLOR_TITLE)
 
-        var tooltip: Component? = null
+        var tooltip: List<Component> = emptyList()
         if (groups.isEmpty()) {
             guiGraphics.drawCenteredString(
                 font,
@@ -205,8 +208,9 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         pose.popPose()
 
         // The tooltip is drawn by the screen, not by us: it belongs at the cursor, at the
-        // size everything else in the interface is, so it goes outside the pose.
-        tooltip?.let { guiGraphics.renderTooltip(font, it, mouseX, mouseY) }
+        // size everything else in the interface is, so it goes outside the pose. It is a list
+        // rather than a line because the reward rail answers for several items at once.
+        if (tooltip.isNotEmpty()) guiGraphics.renderComponentTooltip(font, tooltip, mouseX, mouseY)
     }
 
     /**
@@ -389,9 +393,14 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         guiGraphics.fill(barX, thumbTop, barX + SCROLL_BAR_WIDTH, thumbTop + thumbHeight, COLOR_SCROLL_THUMB)
     }
 
-    /** @return the tooltip to draw over everything, if the mouse is on a team member. */
-    private fun renderDetails(guiGraphics: GuiGraphics, mouseX: Int, mouseY: Int, partialTick: Float): Component? {
-        val entry = selected ?: return null
+    /** @return the tooltip to draw over everything, empty unless the mouse is on something. */
+    private fun renderDetails(
+        guiGraphics: GuiGraphics,
+        mouseX: Int,
+        mouseY: Int,
+        partialTick: Float
+    ): List<Component> {
+        val entry = selected ?: return emptyList()
 
         // Every line of text spans the screen rather than the figure's column: the status of a
         // trainer runs to a good seventy pixels, and centring that on a forty-eight pixel
@@ -455,7 +464,12 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         // out.
         val teamTooltip = if (entry.locked) null else renderTeam(guiGraphics, entry, mouseX, mouseY, partialTick)
 
-        return callTooltip ?: rewardTooltip ?: teamTooltip
+        return when {
+            callTooltip != null -> listOf(callTooltip)
+            rewardTooltip.isNotEmpty() -> rewardTooltip
+            teamTooltip != null -> listOf(teamTooltip)
+            else -> emptyList()
+        }
     }
 
     /**
@@ -468,25 +482,29 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
      *
      * It spans the team rather than the screen: a place reads long - a biome, a time and a sky
      * add up - and a plate centred on the whole width would reach under the legs of the figure.
+     * The team it spans is the slots, not the cells they sit in: a cell is half again as wide as
+     * the model it holds, so a plate on the cells reached a good way further left than anything
+     * a player can see of the team - and that stretch is where the reward rail lives.
      * A trainer who names no place draws nothing here.
      */
     private fun renderLocation(guiGraphics: GuiGraphics, entry: BattlePhoneEntry) {
         if (entry.location.string.isEmpty()) return
 
-        val areaWidth = TEAM_COLUMNS * TEAM_CELL_WIDTH
-        plate(guiGraphics, TEAM_X, LOCATION_TOP, areaWidth, LOCATION_HEIGHT, COLOR_PLATE, COLOR_PLATE_EDGE)
+        val plateX = TEAM_X + TEAM_SLOT_INSET
+        val plateWidth = TEAM_COLUMNS * TEAM_CELL_WIDTH - 2 * TEAM_SLOT_INSET
+        plate(guiGraphics, plateX, LOCATION_TOP, plateWidth, LOCATION_HEIGHT, COLOR_PLATE, COLOR_PLATE_EDGE)
         guiGraphics.fill(
-            TEAM_X + LOCATION_ACCENT_INSET,
+            plateX + LOCATION_ACCENT_INSET,
             LOCATION_TOP + LOCATION_ACCENT_INSET,
-            TEAM_X + LOCATION_ACCENT_INSET + LOCATION_ACCENT_WIDTH,
+            plateX + LOCATION_ACCENT_INSET + LOCATION_ACCENT_WIDTH,
             LOCATION_TOP + LOCATION_HEIGHT - LOCATION_ACCENT_INSET,
             COLOR_HEADER
         )
 
         // Centred on what is left of the plate once the accent has taken its edge, so the text
         // does not read as pushed off centre.
-        val textLeft = TEAM_X + LOCATION_TEXT_INSET
-        val textWidth = areaWidth - LOCATION_TEXT_INSET - LOCATION_ACCENT_INSET
+        val textLeft = plateX + LOCATION_TEXT_INSET
+        val textWidth = plateWidth - LOCATION_TEXT_INSET - LOCATION_ACCENT_INSET
         guiGraphics.drawCenteredString(
             font,
             trim(
@@ -500,14 +518,34 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
     }
 
     /**
-     * What beating this trainer hands over: a count, then the item, one reward per line, in the
-     * strip between the figure and the team.
+     * What beating this trainer hands over: one item to a cell, read downwards, on a rail of
+     * its own in the strip between the figure and the team.
      *
      * That strip is the only space on the upper screen that was ever free, which is why the
      * figure was moved a few pixels left to open it up rather than the rewards being squeezed
      * into a band below - there is no band below, the screen ends four pixels under the status
      * line. Reading down the side of the trainer also puts what they give you next to who they
      * are, which is where it belongs.
+     *
+     * A plate rather than loose icons: a single reward floating beside the trainer read as
+     * something that had come adrift from the party, and the recessed box that holds the place
+     * and the call button is what makes this a field of the fiche too. It is only as tall as it
+     * has rewards, and centred against the team, so one trophy is one cell rather than a column
+     * with something at the top of it.
+     *
+     * A reward that drops once carries the marker of the status line beside it: the outline for
+     * one still owed, the full ball once it has been claimed, and a claimed item dimmed under a
+     * wash of the plate. Those are the same two shapes that say whether a trainer has been
+     * beaten, on the same screen, so the rail answers "will I get this again" without a legend -
+     * and the tooltip says it in words for anyone who reads the mark as decoration. A reward
+     * that drops every time carries nothing, which is why the marker column exists only when
+     * something needs it: the strip is narrow, and a column of blanks would cost the icons
+     * their place in it.
+     *
+     * Nothing here grows with the list. Four cells is what the strip holds between the team and
+     * the status band, so a fifth reward does not lengthen the rail - the last cell counts what
+     * was left out and names it on hover instead. A trainer who gives forty items draws exactly
+     * the same rail as one who gives four.
      *
      * Rewards are shown before the trainer has been beaten, unlike their team: a team is a
      * reward for winning, a reward is the reason to try.
@@ -517,51 +555,149 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         entry: BattlePhoneEntry,
         mouseX: Int,
         mouseY: Int
-    ): Component? {
-        if (entry.rewards.isEmpty()) return null
+    ): List<Component> {
+        if (entry.rewards.isEmpty()) return emptyList()
 
-        // One line is given up to say how many were left out, so the fiche never quietly
+        // One cell is given up to say how many were left out, so the fiche never quietly
         // shortens a long reward list.
         val overflowing = entry.rewards.size > REWARD_ROWS
         val shown = if (overflowing) REWARD_ROWS - 1 else entry.rewards.size
-        var tooltip: Component? = null
+        val cells = if (overflowing) REWARD_ROWS else shown
 
-        for (index in 0 until shown) {
-            val stack = entry.rewards[index]
-            val rowY = REWARD_TOP + index * REWARD_ROW_HEIGHT
+        // The marker column is paid for only when a cell the rail actually draws asks for it -
+        // a one-time reward left out of a long list is named in the overflow tooltip instead.
+        // The rail stays centred in the strip either way, so neither width leans on the team.
+        val marked = entry.rewards.take(shown).any { it.once }
+        val width = if (marked) REWARD_WIDTH_MARKED else REWARD_WIDTH
+        val railX = REWARD_CENTER_X - width / 2
+        val itemX = if (marked) railX + REWARD_ITEM_INSET else railX + (width - ITEM_SIZE) / 2
 
-            drawSmallRight(
-                guiGraphics,
-                CobblemonTrainers.lang("screen.battle_phone.reward_count", stack.count).string,
-                REWARD_X + REWARD_COUNT_WIDTH,
-                rowY + REWARD_TEXT_OFFSET,
-                COLOR_TEXT
+        val height = REWARD_HEAD + cells * ITEM_SIZE + (cells - 1) * REWARD_ROW_GAP + REWARD_PADDING
+        val top = REWARD_TOP + (TEAM_ROWS * TEAM_CELL_HEIGHT - height) / 2
+        fun rowY(index: Int) = top + REWARD_HEAD + index * (ITEM_SIZE + REWARD_ROW_GAP)
+        val hoveredCell = (0 until cells).firstOrNull { index ->
+            mouseX >= railX && mouseX < railX + width &&
+                mouseY >= rowY(index) - REWARD_ROW_GAP / 2 &&
+                mouseY < rowY(index) + ITEM_SIZE + REWARD_ROW_GAP / 2
+        }
+
+        plate(guiGraphics, railX, top, width, height, COLOR_PLATE, COLOR_PLATE_EDGE)
+
+        // The accent that heads the location plate, laid across the top of this one: the two are
+        // the same kind of field, and the rail is far too narrow to be titled in words.
+        guiGraphics.fill(
+            railX + REWARD_ACCENT_INSET,
+            top + REWARD_ACCENT_INSET,
+            railX + width - REWARD_ACCENT_INSET,
+            top + REWARD_ACCENT_INSET + REWARD_ACCENT_HEIGHT,
+            COLOR_HEADER
+        )
+
+        // The highlight is a flat fill rather than a plate: a plate paints its corners back in
+        // the colour of the screen, and these corners sit on the rail, not on the screen.
+        hoveredCell?.let { index ->
+            guiGraphics.fill(
+                railX + 1,
+                rowY(index) - REWARD_ROW_GAP / 2,
+                railX + width - 1,
+                rowY(index) + ITEM_SIZE + REWARD_ROW_GAP / 2,
+                COLOR_REWARD_HOVER
             )
-            guiGraphics.renderItem(stack, REWARD_X + REWARD_ICON_OFFSET, rowY)
+        }
 
-            val hovered = mouseX >= REWARD_X && mouseX < REWARD_X + REWARD_WIDTH &&
-                mouseY >= rowY && mouseY < rowY + ITEM_SIZE
-            if (hovered) {
-                tooltip = CobblemonTrainers.lang(
-                    "screen.battle_phone.reward", stack.count, stack.hoverName
+        // The markers are blits, so they belong with the fills, ahead of the first item.
+        for (index in 0 until shown) {
+            val reward = entry.rewards[index]
+            if (!reward.once) continue
+            renderMarker(
+                guiGraphics,
+                defeated = !reward.due,
+                markerX = railX + width - REWARD_MARKER_INSET - MARKER_WIDTH,
+                markerY = rowY(index) + (ITEM_SIZE - MARKER_HEIGHT) / 2
+            )
+        }
+
+        // Then the items, after every fill: the item renderer flushes the batch in flight and
+        // manages the depth state itself, so it must not cut into a run of rectangles.
+        for (index in 0 until shown) {
+            val reward = entry.rewards[index]
+            guiGraphics.renderItem(reward.stack, itemX, rowY(index))
+            // Vanilla's own decoration draws the count in the corner of the icon, and draws
+            // nothing at all for a single item - which is what a player already reads as one.
+            guiGraphics.renderItemDecorations(font, reward.stack, itemX, rowY(index))
+
+            // A claimed reward is dimmed rather than dropped. The wash goes through the overlay
+            // render type, the one vanilla lights its own slots with: an ordinary fill lands
+            // under the model of an item rather than over it, and would do nothing visible.
+            if (!reward.due) {
+                guiGraphics.fill(
+                    RenderType.guiOverlay(),
+                    itemX,
+                    rowY(index),
+                    itemX + ITEM_SIZE,
+                    rowY(index) + ITEM_SIZE,
+                    COLOR_REWARD_SPENT
                 )
             }
         }
 
         if (overflowing) {
-            drawSmall(
-                guiGraphics,
-                CobblemonTrainers.lang(
-                    "screen.battle_phone.reward_more",
-                    entry.rewards.size - shown
-                ).string,
-                REWARD_X + REWARD_WIDTH / 2,
-                REWARD_TOP + shown * REWARD_ROW_HEIGHT + REWARD_TEXT_OFFSET,
+            guiGraphics.drawCenteredString(
+                font,
+                CobblemonTrainers.lang("screen.battle_phone.reward_more", entry.rewards.size - shown),
+                railX + width / 2,
+                rowY(shown) + (ITEM_SIZE - 8) / 2,
                 COLOR_TEXT_DIM
             )
         }
 
-        return tooltip
+        val hovered = hoveredCell ?: return emptyList()
+        if (hovered < shown) {
+            val reward = entry.rewards[hovered]
+            return listOfNotNull(
+                CobblemonTrainers.lang(
+                    "screen.battle_phone.reward", reward.stack.count, reward.stack.hoverName
+                ),
+                note(reward)
+            )
+        }
+
+        // The overflow cell answers for everything the rail could not draw. Its own list is
+        // capped too: a tooltip taller than the window would be as unreadable as no answer.
+        val rest = entry.rewards.drop(shown)
+        val named = rest.take(REWARD_TOOLTIP_LINES).map { reward ->
+            val note = note(reward)
+            when (note) {
+                null -> CobblemonTrainers.lang(
+                    "screen.battle_phone.reward_line", reward.stack.count, reward.stack.hoverName
+                )
+                else -> CobblemonTrainers.lang(
+                    "screen.battle_phone.reward_line_note",
+                    reward.stack.count,
+                    reward.stack.hoverName,
+                    note
+                )
+            }
+        }
+        val unnamed = rest.size - named.size
+        val counted = when {
+            unnamed > 0 -> listOf(CobblemonTrainers.lang("screen.battle_phone.reward_more_lines", unnamed))
+            else -> emptyList()
+        }
+        return listOf(CobblemonTrainers.lang("screen.battle_phone.reward_more_title", rest.size)) +
+            named + counted
+    }
+
+    /**
+     * What a reward is worth saying about itself beyond its name, or null for one that drops
+     * every time - the ordinary case, which a label would only add noise to.
+     */
+    private fun note(reward: RewardPreview): Component? = when {
+        !reward.due -> CobblemonTrainers.lang("screen.battle_phone.reward_claimed")
+            .withStyle(ChatFormatting.GRAY)
+        reward.once -> CobblemonTrainers.lang("screen.battle_phone.reward_once")
+            .withStyle(ChatFormatting.GOLD)
+        else -> null
     }
 
     /**
@@ -662,7 +798,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
             blit(
                 guiGraphics,
                 SLOT,
-                cellX + (TEAM_CELL_WIDTH - TEAM_SLOT_SIZE) / 2,
+                cellX + TEAM_SLOT_INSET,
                 cellY + (TEAM_CELL_HEIGHT - TEAM_SLOT_SIZE) / 2,
                 TEAM_SLOT_SIZE,
                 TEAM_SLOT_SIZE,
@@ -770,29 +906,6 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         entry.defeated -> "screen.battle_phone.status.defeated"
         entry.locked -> "screen.battle_phone.status.locked"
         else -> "screen.battle_phone.status.pending"
-    }
-
-    /** Draws a centred line at three quarters of the font size, for text that has to fit. */
-    private fun drawSmall(guiGraphics: GuiGraphics, text: String, centerX: Int, textY: Int, color: Int) {
-        guiGraphics.pose().pushPose()
-        guiGraphics.pose().translate(centerX.toFloat(), textY.toFloat(), 0f)
-        guiGraphics.pose().scale(SMALL_TEXT_SCALE, SMALL_TEXT_SCALE, 1f)
-        guiGraphics.drawString(font, text, -font.width(text) / 2, 0, color)
-        guiGraphics.pose().popPose()
-    }
-
-    /**
-     * The same, ending at [rightX] instead of centred on it.
-     *
-     * A reward count has to sit against its item however wide it is: centring would leave a
-     * single digit floating and a four digit count leaning on the icon.
-     */
-    private fun drawSmallRight(guiGraphics: GuiGraphics, text: String, rightX: Int, textY: Int, color: Int) {
-        guiGraphics.pose().pushPose()
-        guiGraphics.pose().translate(rightX.toFloat(), textY.toFloat(), 0f)
-        guiGraphics.pose().scale(SMALL_TEXT_SCALE, SMALL_TEXT_SCALE, 1f)
-        guiGraphics.drawString(font, text, -font.width(text), 0, color)
-        guiGraphics.pose().popPose()
     }
 
     private fun trim(text: Component, maxWidth: Int): String {
@@ -1094,28 +1207,57 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         const val TEAM_CELL_HEIGHT = 38
         const val TEAM_SLOT_SIZE = 34
 
+        /** From the edge of a cell to the slot drawn in the middle of it. */
+        const val TEAM_SLOT_INSET = (TEAM_CELL_WIDTH - TEAM_SLOT_SIZE) / 2
+
         /**
-         * The reward column, in the strip between the figure and the team, one reward to a line.
+         * The reward rail, in the strip between the figure and the team, one item to a cell.
          *
-         * A line is a count and an item side by side, the count ending where the icon begins.
-         * It starts level with the team, so the two columns of what a trainer is worth line up.
-         * Five lines reach the status band and stop; a sixth would be spent saying how many
-         * were left out rather than on a sixth item.
+         * Twenty-six pixels wide, centred in the seven that the figure and the team each leave
+         * clear: an icon is sixteen, and the rest is the plate around it. The rail is centred on
+         * the team rather than started level with it, since it is only as tall as it has
+         * rewards - so the two columns of what a trainer is worth balance whatever the count.
          *
-         * Declared after [TEAM_TOP] because it reads it - a const cannot look ahead.
+         * Four cells is what the strip holds; the fourth counts the rest when there are more.
+         *
+         * Declared after [TEAM_TOP] because the rail is centred on the team - a const cannot
+         * look ahead.
          */
         const val ITEM_SIZE = 16
-        const val REWARD_X = UPPER_X + 56
-        const val REWARD_TOP = TEAM_TOP
-        const val REWARD_COUNT_WIDTH = 14
-        const val REWARD_ICON_GAP = 2
-        const val REWARD_ICON_OFFSET = REWARD_COUNT_WIDTH + REWARD_ICON_GAP
-        const val REWARD_WIDTH = REWARD_ICON_OFFSET + ITEM_SIZE
-        const val REWARD_ROW_HEIGHT = 18
-        const val REWARD_ROWS = 5
+        const val REWARD_WIDTH = 26
 
-        /** Drops the count onto the middle of its icon, the 6 being a line of small text. */
-        const val REWARD_TEXT_OFFSET = (ITEM_SIZE - 6) / 2
+        /**
+         * The middle of the strip the rail is centred on, measured between what can be *seen* of
+         * the figure and of the team: the edge of the skin on one side, the first slot on the
+         * other. Centring on [TEAM_X] instead put the rail against the trainer with a wide hole
+         * after it, because a team cell carries eighteen pixels of air before its slot.
+         */
+        const val REWARD_CENTER_X = UPPER_X + 81
+        const val REWARD_TOP = TEAM_TOP
+        const val REWARD_ROWS = 4
+
+        /**
+         * The rail once it has a marker column. Ten pixels wider is all the strip has to give -
+         * it ends where the plate of the location below begins - which is why the marker sits
+         * beside the icon rather than over it, and why the column is not always there.
+         */
+        const val REWARD_WIDTH_MARKED = 36
+        const val REWARD_ITEM_INSET = 3
+        const val REWARD_MARKER_INSET = 1
+
+        /** The air between two cells, halved either side of one to make it the area to hover. */
+        const val REWARD_ROW_GAP = 4
+
+        /** The plate's own margin, under the last cell and around the accent above the first. */
+        const val REWARD_PADDING = 3
+        const val REWARD_ACCENT_INSET = 2
+        const val REWARD_ACCENT_HEIGHT = 2
+
+        /** From the top of the plate to the first icon: the accent, its inset, and a pixel of air. */
+        const val REWARD_HEAD = REWARD_ACCENT_INSET + REWARD_ACCENT_HEIGHT + REWARD_PADDING
+
+        /** How many of the leftovers the overflow cell names, before it counts them instead. */
+        const val REWARD_TOOLTIP_LINES = 8
 
         /**
          * How a model is sized, copied from Cobblemon's own party slots: a scale on the pose
@@ -1134,8 +1276,6 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
 
         /** The three-quarter view Cobblemon uses for a Pokémon portrait. */
         val MODEL_ROTATION: Vector3f = Vector3f(13f, 35f, 0f)
-
-        const val SMALL_TEXT_SCALE = 0.75f
 
         /** A couple of pixels of slack around the arrows, which are thin things to aim at. */
         const val CLICK_PADDING = 2
@@ -1176,6 +1316,15 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         const val COLOR_CALL_TOP_HOVER = 0xFF43A0DC.toInt()
         const val COLOR_CALL_BOTTOM_HOVER = 0xFF2270A4.toInt()
         const val COLOR_CALL_HIGHLIGHT = 0x66FFFFFF
+
+        /** The lit cell of the reward rail, a wash of the accent blue rather than a border. */
+        const val COLOR_REWARD_HOVER = 0x335AAAEB
+
+        /**
+         * What a claimed reward is dimmed under: the colour of the plate it sits on, so the item
+         * reads as sunk into the rail rather than tinted some colour of its own.
+         */
+        const val COLOR_REWARD_SPENT = 0xAA102A3E.toInt()
 
         /** How far a category heading sits in from the datapack heading above it. */
         const val HEADER_INDENT = 6

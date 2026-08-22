@@ -2,6 +2,7 @@ package matheo1712.cobbletrainers.network
 
 import matheo1712.cobbletrainers.CobblemonTrainers
 import matheo1712.cobbletrainers.parser.ShowdownTeamParser
+import matheo1712.cobbletrainers.trainers.RewardPreview
 import matheo1712.cobbletrainers.trainers.TrainerRegistry
 import matheo1712.cobbletrainers.trainers.TrainerDefinition
 import matheo1712.cobbletrainers.trainers.TrainerCalls
@@ -201,10 +202,12 @@ object BattlePhoneNetworking {
  *   same reason: a translatable component still reads in the player's own language on arrival.
  * @param callable Whether the screen offers a call button. The server decides it, and decides
  *   it again when the button is pressed - this is only what the screen draws.
- * @param rewards What beating the trainer hands over, already resolved into stacks by
+ * @param rewards What beating the trainer hands over, already resolved by
  *   [matheo1712.cobbletrainers.trainers.TrainerRewards]. Sent as stacks rather than as IDs so
  *   the screen has the icon and the item name without resolving anything itself, and so a
- *   reward that would not survive being handed over never reaches the fiche.
+ *   reward that would not survive being handed over never reaches the fiche. Each carries
+ *   whether it drops once and whether it is still owed: a claimed trophy is marked on the fiche
+ *   rather than dropped from it, and the server is the only side that decides which it is.
  */
 data class BattlePhoneEntry(
     val id: String,
@@ -218,7 +221,7 @@ data class BattlePhoneEntry(
     val categoryName: String,
     val location: Component,
     val callable: Boolean,
-    val rewards: List<ItemStack>
+    val rewards: List<RewardPreview>
 ) {
 
     /** A trainer this player may not challenge yet. */
@@ -253,7 +256,11 @@ data class OpenBattlePhonePayload(val entries: List<BattlePhoneEntry>) : CustomP
                         ComponentSerialization.STREAM_CODEC.encode(buf, entry.location)
                         buf.writeBoolean(entry.callable)
                         buf.writeVarInt(entry.rewards.size)
-                        entry.rewards.forEach { ItemStack.OPTIONAL_STREAM_CODEC.encode(buf, it) }
+                        entry.rewards.forEach {
+                            ItemStack.OPTIONAL_STREAM_CODEC.encode(buf, it.stack)
+                            buf.writeBoolean(it.once)
+                            buf.writeBoolean(it.due)
+                        }
                     }
                 },
                 { buf ->
@@ -274,7 +281,11 @@ data class OpenBattlePhonePayload(val entries: List<BattlePhoneEntry>) : CustomP
                                 location = ComponentSerialization.STREAM_CODEC.decode(buf),
                                 callable = buf.readBoolean(),
                                 rewards = List(buf.readVarInt()) {
-                                    ItemStack.OPTIONAL_STREAM_CODEC.decode(buf)
+                                    RewardPreview(
+                                        stack = ItemStack.OPTIONAL_STREAM_CODEC.decode(buf),
+                                        once = buf.readBoolean(),
+                                        due = buf.readBoolean()
+                                    )
                                 }
                             )
                         }

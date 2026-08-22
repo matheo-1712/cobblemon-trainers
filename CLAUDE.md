@@ -219,8 +219,13 @@ Points à ne pas redécouvrir :
   encore le verrait ignoré en silence, comme n'importe quelle clé inconnue de Gson. Ne pas le
   rebrancher : un régime décidé à deux endroits finirait par se contredire.
 - **`TrainerRewards.isDue` est la règle partagée** par `grant` et `preview`. C'est ce qui fait
-  qu'une fiche cesse d'annoncer un trophée déjà réclamé au lieu de le promettre indéfiniment -
-  d'où le `firstWin` que le listing calcule depuis `TrainerProgress`.
+  qu'une fiche ne promet pas indéfiniment un trophée déjà réclamé - d'où le `firstWin` que le
+  listing calcule depuis `TrainerProgress`.
+- **Une récompense réclamée est marquée, pas retirée.** `preview` la renvoie avec `due` à faux
+  plutôt que de la laisser tomber : la retirer était honnête sur ce que paie le prochain combat
+  et ne disait rien au joueur, la ligne disparaissant de la fiche à l'instant où elle était
+  gagnée. Le `once` qui l'accompagne vient du pack et ne bouge jamais - c'est ce qu'un joueur
+  veut savoir *avant* le combat, et les deux répondent donc à deux questions différentes.
 - **`progress.listed` masque, il n'empêche pas d'enregistrer.** Un dresseur masqué garde son
   entrée, sans quoi `rematch` et `rewards` cesseraient de marcher pour lui. Tout ce qui
   présente la progression à un joueur passe par `TrainerRegistry.listed()` plutôt que `all()`.
@@ -530,10 +535,23 @@ Points à ne pas redécouvrir :
   l'une des six images. Il est logé au bout de la bande du statut : c'est la seule zone libre
   qui reste en haut, l'équipe prenant tout le dessus et le cadre commençant quatre pixels sous
   la ligne de statut. Voir « Appeler un dresseur ».
-- **Les récompenses tiennent dans une colonne à côté du dresseur**, un compte puis l'objet par
-  ligne. C'est ce qui a fait décaler la figure vers la gauche : l'écran du haut n'a pas de bande
-  libre en dessous - il s'arrête quatre pixels sous le statut -, donc la place a été prise sur
-  la largeur de la colonne de gauche, pas sur la hauteur.
+- **Les récompenses tiennent dans un rail à côté du dresseur**, une case par objet. C'est ce qui
+  a fait décaler la figure vers la gauche : l'écran du haut n'a pas de bande libre en dessous -
+  il s'arrête quatre pixels sous le statut -, donc la place a été prise sur la largeur de la
+  colonne de gauche, pas sur la hauteur. La plaque est celle du lieu et du bouton d'appel, accent
+  compris : un objet posé seul à côté du dresseur se lisait comme quelque chose qui avait glissé
+  de l'équipe.
+- **Le rail ne grandit jamais avec la liste.** Il est haut de ce qu'il a de récompenses - une
+  seule fait une case, pas une colonne vide avec quelque chose en haut - et plafonné à quatre,
+  ce que la bande entre l'équipe et le statut peut tenir. Au-delà, la dernière case compte le
+  reste et le nomme au survol, donc quarante récompenses dessinent exactement le même rail que
+  quatre. La liste de ce survol est bornée à son tour : une infobulle plus haute que la fenêtre
+  ne répond pas mieux que pas d'infobulle.
+- **L'infobulle de l'écran est une liste de lignes**, pas une ligne, depuis ce rail. Les autres
+  survols - équipe, bouton d'appel - n'en donnent qu'une et la rendent telle quelle.
+- **Le compte est celui de vanilla** (`renderItemDecorations`), dans le coin de l'icône, qui
+  n'écrit rien pour un objet seul - c'est déjà ce qu'un joueur lit comme « un ». Un « 1x » posé
+  à côté de l'icône a existé : il coûtait une colonne de large pour ne rien dire.
 - **Elles arrivent en `ItemStack`, pas en ID.** Le serveur les résout avec
   `TrainerRewards.preview`, exactement la résolution qui les remet au vainqueur : une fiche ne
   peut donc pas annoncer une récompense qui ne serait jamais donnée, et le client n'a ni ID à
@@ -546,6 +564,25 @@ Points à ne pas redécouvrir :
 - **Le drapeau est par récompense, pas par dresseur.** Cacher tout un lot se fait en marquant
   chaque ligne. Un interrupteur au niveau du dresseur en plus de celui-ci ferait deux réglages
   pour un même résultat, donc deux façons de se contredire.
+- **Une récompense unique porte le marqueur de la ligne de statut** : le contour tant qu'elle
+  est due, la bille pleine une fois réclamée, et l'objet réclamé passe sous un voile de la
+  couleur de la plaque. Ce sont les deux mêmes formes que « battu / pas encore » sur le même
+  écran, donc le rail répond à « est-ce que je l'aurai encore » sans légende, et l'infobulle le
+  dit en mots pour qui lit la marque comme une décoration.
+- **La colonne du marqueur n'existe que si une case dessinée la demande.** Le rail passe de 26 à
+  36 pixels et reste centré dans les deux cas. Une colonne de cases vides coûterait aux icônes
+  leur place dans la bande.
+- **Le rail est centré sur ce qui se voit, pas sur les repères du code.** `REWARD_CENTER_X` tombe
+  entre le bord du skin et le premier slot de l'équipe. Centrer sur `TEAM_X` collait le rail au
+  dresseur et laissait un trou derrière lui : une case d'équipe porte dix-huit pixels d'air avant
+  son slot, donc son bord gauche n'est nulle part sur l'écran.
+- **La plaque du lieu s'étend sur les slots, pas sur les cases.** Même dix-huit pixels : posée
+  sur les cases, elle partait bien plus à gauche que tout ce qu'un joueur voit de l'équipe, et
+  cette bande-là est celle du rail. Son texte n'a pas bougé d'un pixel, seule la plaque a
+  rétréci.
+- **Le voile passe par `RenderType.guiOverlay()`**, celui dont vanilla éclaire ses propres
+  cases : un `fill` ordinaire se dessine *sous* le modèle d'un objet, donc il ne griserait rien
+  du tout.
 - **Les objets se dessinent après les aplats et avant les modèles.** `GuiGraphics.renderItem`
   vide le lot en cours et gère lui-même la profondeur, donc il ne doit pas couper une série de
   `fill` ou de blits - même raison que pour les modèles, un cran plus tôt.
