@@ -263,6 +263,15 @@ Ces points ne se devinent pas depuis notre code seul et ont chacun causé un bug
   `@Deprecated` ; `canChallenge` n'apparaît que dans du code commenté. Le combat est
   déclenché par l'`interaction` du NPC, et le soin par `autoHealParty` sur la classe.
   `NPCEntity.interaction` est surchargeable par entité, pas `autoHealParty`.
+- **`adjustLevel` doit être accompagné de `cloneParties`.** `BattleBuilder.pvp1v1` et `pvp2v2`
+  forcent le clonage dès que le format ajuste les niveaux ; `pvn`, le nôtre, transmet
+  `cloneParties` tel quel. Sans clonage, le niveau 50 et le soin sont appliqués aux vrais
+  Pokémon du joueur, puis `PokemonStore.set` réattache leurs `storeCoordinates` à un
+  `PlayerPartyStore` jetable que Cobblemon abandonne aussitôt - l'équipe continue de les
+  lister, eux se croient ailleurs, et le premier dépôt au PC en fait deux. C'est le bug de
+  duplication de l'issue #22. `TrainerBattleInteraction` pose donc `cloneParties` lui-même.
+  L'expérience et les EV ne changent pas : Cobblemon les attribue sur
+  `BattlePokemon.originalPokemon`, qui reste le vrai Pokémon.
 - **Un nom Cobblemon ne garde que `[a-z0-9]`.** Espèces, capacités, talents et natures sont
   nommés d'après leur nom affiché débarrassé de tout le reste, accents compris : `uturn`,
   `willowisp`, `kingsshield`, `hooh`, `porygonz`, `mrmime`, `farfetchd`, `flabebe`. D'où

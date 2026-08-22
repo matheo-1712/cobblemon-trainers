@@ -142,10 +142,21 @@ Tout est facultatif : `{}` donne un dresseur valide, quoique peu intéressant.
 | Champ | Défaut | Rôle |
 | --- | --- | --- |
 | `level` | `1` | Niveau des Pokémon qui n'ont **pas** de ligne `Level:` |
-| `format` | `singles` | `singles`, `doubles`, `triples` - alias `solo`, `duo`, `trio` |
+| `format` | `singles` | `singles`, `doubles`, `triples` - alias `solo`, `duo`, `trio`, suffixe `_50` |
 | `difficulty` | `5` | [Intelligence de l'IA](DIFFICULTE.md), de 0 (au hasard) à 5 (sérieux) |
 | `healParty` | `true` | Soigne l'équipe du dresseur avant et après chaque combat |
 | `music` | piste du mod | ID du son joué pendant le combat, `null` pour le silence |
+
+Le suffixe `_50` (`singles_50`, `doubles_50`, `triples_50`) met **les deux équipes** au
+niveau 50 le temps du combat. `level` n'a donc plus d'effet visible sur un dresseur en `_50`.
+
+Le combat se joue sur des copies. Les deux équipes y entrent **automatiquement soignées** -
+PV pleins, statuts effacés, PP refaits -, un Pokémon KO compris. Et rien n'en ressort : quel
+que soit le résultat, victoire, défaite ou combat interrompu, l'équipe du joueur retrouve les
+PV, les statuts et les PP qu'elle avait avant. Elle gagne quand même son expérience et ses EV.
+
+Le soin ne vaut donc que pour la durée du combat : un Pokémon KO avant un `_50` l'est encore
+après. Aucun objet de soin n'est nécessaire pour lancer le combat, et aucun n'est économisé.
 
 `level` n'est pas `difficulty` : le premier est le niveau des Pokémon - et seulement un repli,
 pour les entrées Showdown sans `Level:` -, le second est la qualité du jeu de l'IA. Un
