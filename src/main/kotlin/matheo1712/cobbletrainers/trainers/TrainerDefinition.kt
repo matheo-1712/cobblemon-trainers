@@ -111,17 +111,14 @@ data class TrainerMessages(
  *
  * @param rematch `unlimited` (the default) or `never`. With `never` the trainer is a one-shot
  *   encounter: it turns down every later challenge from the same player.
- * @param rewards `every_win` (the default) or `first_win`. Only meaningful with an `unlimited`
- *   [rematch], which is otherwise what limits the wins.
  * @param listed Whether the trainer belongs in a progress listing - the battle phone and
  *   `/listtrainers`. Set it to false for a trainer nobody is meant to hunt down: a demo
  *   shipped with a mod, a trainer that never spawns. This is about what is shown, not what is
- *   stored: victories are recorded either way, so [rematch] and [rewards] keep working on an
+ *   stored: victories are recorded either way, so [rematch] and the rewards keep working on an
  *   unlisted trainer.
  */
 data class TrainerProgressRules(
     val rematch: String = REMATCH_UNLIMITED,
-    val rewards: String = REWARDS_EVERY_WIN,
     val listed: Boolean = true
 ) {
 
@@ -129,20 +126,13 @@ data class TrainerProgressRules(
     val allowsRematch: Boolean
         get() = !rematch.equals(REMATCH_NEVER, ignoreCase = true)
 
-    /** False only for the exact word `first_win`. */
-    val rewardsEveryWin: Boolean
-        get() = !rewards.equals(REWARDS_FIRST_WIN, ignoreCase = true)
-
     fun validate(id: ResourceLocation) {
         warnUnknown(id, "progress.rematch", rematch, REMATCH_UNLIMITED, REMATCH_NEVER)
-        warnUnknown(id, "progress.rewards", rewards, REWARDS_EVERY_WIN, REWARDS_FIRST_WIN)
     }
 
     companion object {
         const val REMATCH_UNLIMITED = "unlimited"
         const val REMATCH_NEVER = "never"
-        const val REWARDS_EVERY_WIN = "every_win"
-        const val REWARDS_FIRST_WIN = "first_win"
 
         private fun warnUnknown(
             id: ResourceLocation,
@@ -164,10 +154,21 @@ data class TrainerProgressRules(
  *
  * @param item Full item ID, namespace included: `cobblemon:rare_candy`, `minecraft:diamond`.
  * @param count How many of it. Clamped to a sane range by [TrainerRewards].
+ * @param hidden Whether the battle phone keeps quiet about it. False by default - a reward is
+ *   the reason to challenge a trainer, so it is worth advertising. Set it to true for a surprise
+ *   the player only discovers on winning; it changes nothing about what is handed over, only
+ *   about what is said beforehand. Marking every reward of a trainer hidden is how a whole
+ *   trainer keeps its rewards secret.
+ * @param firstWinOnly Whether it drops on the first victory alone. False by default, so a
+ *   reward is farmable for as long as the trainer accepts rematches. It belongs to the entry
+ *   rather than to the trainer so that one fight can hand over a trophy once and a handful of
+ *   berries every time.
  */
 data class TrainerReward(
     val item: String = "",
-    val count: Int = 1
+    val count: Int = 1,
+    val hidden: Boolean = false,
+    val firstWinOnly: Boolean = false
 )
 
 /**

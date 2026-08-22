@@ -102,6 +102,8 @@ messages, musique et récompenses de combat.
   dresseur ».
 - **`TrainerCalls`** - l'appel depuis le Battle Phone : les vérifications, la place où poser le
   dresseur, et sa fin de vie. Même section.
+- **`TrainerGaze`** - donne à chaque dresseur chargé un `LookAtPlayerGoal`, pour qu'il tourne la
+  tête vers un joueur qui s'approche. Voir « Le regard des dresseurs ».
 - **`advancement.TrainerDefeatedTrigger`** - le critère `cobblemon-trainers:trainer_defeated`.
 - **`ShowdownTeamParser`** - convertit du format Showdown en `PokemonProperties` en
   reconstruisant une chaîne de propriétés Cobblemon (`"pikachu level=88 ability=static …"`)
@@ -195,7 +197,8 @@ Points à ne pas redécouvrir :
 
 ### Revanches et récompenses
 
-`progress.rematch` et `progress.rewards` ont besoin de savoir qui a déjà battu quoi - un état
+`progress.rematch` et le `firstWinOnly` des récompenses ont besoin de savoir qui a déjà battu
+quoi - un état
 de monde, pas de datapack. Il vit donc dans un `SavedData` (`TrainerProgress`, fichier
 `cobblemon_trainers_progress.dat` de l'overworld) et non dans `TrainerRegistry`, que `/reload`
 vide entièrement.
@@ -209,6 +212,15 @@ Points à ne pas redécouvrir :
   pack désactivé le temps d'une session.
 - **Rien n'est oublié quand une entité disparaît**, contrairement à l'arrêt des combats. La
   taille est bornée par le nombre de dresseurs × joueurs.
+- **La fréquence d'une récompense est portée par la récompense, pas par le dresseur.**
+  `TrainerReward.firstWinOnly` a remplacé un `progress.rewards` qui valait pour toute la liste
+  d'un coup et ne savait donc pas dire « un trophée une fois, du consommable à chaque fois ».
+  Ce champ a été retiré sans transition, le mod étant encore en bêta ; un pack qui l'écrirait
+  encore le verrait ignoré en silence, comme n'importe quelle clé inconnue de Gson. Ne pas le
+  rebrancher : un régime décidé à deux endroits finirait par se contredire.
+- **`TrainerRewards.isDue` est la règle partagée** par `grant` et `preview`. C'est ce qui fait
+  qu'une fiche cesse d'annoncer un trophée déjà réclamé au lieu de le promettre indéfiniment -
+  d'où le `firstWin` que le listing calcule depuis `TrainerProgress`.
 - **`progress.listed` masque, il n'empêche pas d'enregistrer.** Un dresseur masqué garde son
   entrée, sans quoi `rematch` et `rewards` cesseraient de marcher pour lui. Tout ce qui
   présente la progression à un joueur passe par `TrainerRegistry.listed()` plutôt que `all()`.
@@ -518,6 +530,28 @@ Points à ne pas redécouvrir :
   l'une des six images. Il est logé au bout de la bande du statut : c'est la seule zone libre
   qui reste en haut, l'équipe prenant tout le dessus et le cadre commençant quatre pixels sous
   la ligne de statut. Voir « Appeler un dresseur ».
+- **Les récompenses tiennent dans une colonne à côté du dresseur**, un compte puis l'objet par
+  ligne. C'est ce qui a fait décaler la figure vers la gauche : l'écran du haut n'a pas de bande
+  libre en dessous - il s'arrête quatre pixels sous le statut -, donc la place a été prise sur
+  la largeur de la colonne de gauche, pas sur la hauteur.
+- **Elles arrivent en `ItemStack`, pas en ID.** Le serveur les résout avec
+  `TrainerRewards.preview`, exactement la résolution qui les remet au vainqueur : une fiche ne
+  peut donc pas annoncer une récompense qui ne serait jamais donnée, et le client n'a ni ID à
+  résoudre ni compte à borner. `ItemStack.OPTIONAL_STREAM_CODEC` fait le transport.
+- **Elles sont visibles avant la victoire**, contrairement à l'équipe, et c'est délibéré : une
+  équipe est une récompense pour avoir gagné, une récompense est la raison d'essayer. Un pack qui
+  veut garder la surprise pose `hidden` sur la ligne concernée - c'est le seul endroit où
+  `TrainerRewards.preview` et `grant` divergent volontairement, et le filtre est côté serveur :
+  ce qui n'est pas envoyé ne se lit pas sur le réseau.
+- **Le drapeau est par récompense, pas par dresseur.** Cacher tout un lot se fait en marquant
+  chaque ligne. Un interrupteur au niveau du dresseur en plus de celui-ci ferait deux réglages
+  pour un même résultat, donc deux façons de se contredire.
+- **Les objets se dessinent après les aplats et avant les modèles.** `GuiGraphics.renderItem`
+  vide le lot en cours et gère lui-même la profondeur, donc il ne doit pas couper une série de
+  `fill` ou de blits - même raison que pour les modèles, un cran plus tôt.
+- **`const val REWARD_TOP = TEAM_TOP` doit être déclaré après `TEAM_TOP`.** Une constante Kotlin
+  ne regarde pas en avant dans le même objet, et l'erreur (« Variable must be initialized »)
+  ne dit pas que c'est une question d'ordre.
 
 ### Appeler un dresseur
 
@@ -576,6 +610,31 @@ Points à ne pas redécouvrir :
   à commencer par `%s`.
 - **La mort passe par `AFTER_DEATH`**, le même événement que l'arrêt des combats, pour deux
   raisons différentes. Les deux abonnements coexistent sans se connaître.
+
+### Le regard des dresseurs
+
+Un dresseur ne se déplace jamais. Sans rien de plus il fixerait la direction dans laquelle il a
+été posé, et l'aborder reviendrait à aborder une statue. `TrainerGaze` lui donne un
+`LookAtPlayerGoal` : il tourne la tête vers un joueur à moins de huit blocs.
+
+Points à ne pas redécouvrir :
+
+- **C'est un goal vanilla, pas un tick à nous.** Cobblemon fait tourner ses NPC sur le système
+  de Brain, mais `NPCEntity` ne surcharge que `customServerAiStep` : le `serverAiStep` de
+  vanilla continue de ticker le `goalSelector` et le `LookControl` en dessous. La portée, les
+  coups d'œil ailleurs et l'enchaînement tête puis corps sont donc gratuits, et ça ne coûte rien
+  par tick quand aucun joueur n'est à portée.
+- **Le crochet est le chargement de l'entité, pas l'apparition.** Les goals ne sont pas
+  sauvegardés : accroché à `TrainerSpawner`, le regard aurait disparu au premier redémarrage
+  pour les dresseurs tenus par un bloc. `ServerEntityEvents.ENTITY_LOAD` couvre l'apparition et
+  la relecture d'un chunk avec une seule règle.
+- **`probability` vaut 1, pas les 0.02 de vanilla.** Ce nombre est ce qui fait qu'un villageois
+  vous jette un regard de temps en temps ; un dresseur qui attend un défi regarde qui s'avance,
+  à chaque fois.
+- **`Mob.goalSelector` est `protected`**, d'où `MobAccessor` - le seul rôle de ce mixin. Et côté
+  Kotlin, l'appel doit passer par `as Any as MobAccessor` : le compilateur ne voit pas
+  l'interface sur `NPCEntity`, puisque le mixin ne la pose qu'à l'exécution, et refuse le cast
+  direct. Ce n'est pas une maladresse à nettoyer.
 
 ### Catégories
 
@@ -896,6 +955,11 @@ du dresseur vit sur le `NPCBattleActor` en dessous, et à `AIBattleActor.<init>`
 n'a pas encore posé son `npc`. Le filtre est l'aspect `trainer_id:`, donc un pack tiers qui
 utilise le mod comme API en profite sans rien déclarer. Comme il vise une classe Cobblemon et non
 une classe Minecraft, Loom ne remappe rien : la cible reste `onChoiceRequested` dans le jar.
+
+`MobAccessor` ouvre `Mob.goalSelector`, `protected` et donc hors de portée de qui n'est pas un
+mob. Son unique client est `TrainerGaze` (voir « Le regard des dresseurs »). Vérifié dans le jar
+construit : la cible est bien passée en intermediary (`Mob` → `class_1308`, `goalSelector` →
+`field_6201`).
 
 `PackDetectorMixin` fait accepter les archives `.jar` à
 `PackDetector.detectPackResources`, unique endroit où Minecraft filtre sur `.zip` - tout le

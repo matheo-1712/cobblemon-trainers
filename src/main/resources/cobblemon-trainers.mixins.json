@@ -5,6 +5,7 @@
 	"mixins": [
 		"AIBattleActorMixin",
 		"ExampleMixin",
+		"MobAccessor",
 		"PackDetectorMixin",
 		"PackRepositoryMixin"
 	],

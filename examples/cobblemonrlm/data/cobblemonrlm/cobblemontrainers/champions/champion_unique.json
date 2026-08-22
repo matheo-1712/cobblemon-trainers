@@ -19,7 +19,8 @@
   "rewards": [
     {
       "item": "cobblemon:master_ball",
-      "count": 1
+      "count": 1,
+      "hidden": true
     },
     {
       "item": "cobblemon:rare_candy",

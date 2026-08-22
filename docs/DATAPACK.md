@@ -12,7 +12,7 @@ Pour l'installation du mod et les commandes, voir le [README](../README.md).
 - [Catégories](#catégories) · [Conditions pour combattre](#conditions-pour-combattre) ·
   [Advancements](#advancements) · [Faire venir un dresseur](SPAWNING.md)
 - [Revanches et récompenses](#revanches-et-récompenses) ·
-  [Le suivi de progression](#le-suivi-de-progression)
+  [Farmable ou pas](#farmable-ou-pas) · [Le suivi de progression](#le-suivi-de-progression)
 - [Le format d'équipe](#le-format-déquipe) · [La ligne `Aspects:`](#la-ligne-aspects)
 - [Skins](#skins) · [Musique de combat](#musique-de-combat) ·
   [Traduire les textes](#traduire-les-textes)
@@ -193,7 +193,6 @@ des équipes est trop courte, Cobblemon refuse le combat et l'explique dans le c
 | Champ | Défaut | Valeurs | Rôle |
 | --- | --- | --- | --- |
 | `rematch` | `unlimited` | `unlimited`, `never` | Peut-on le redéfier une fois battu |
-| `rewards` | `every_win` | `every_win`, `first_win` | Quand `rewards` est remis |
 | `listed` | `true` | booléen | Apparaît dans le Battle Phone et `/cobblemontrainers list` |
 
 ## Catégories
@@ -304,8 +303,8 @@ Le compte est lu dans la progression enregistrée, celle-là même qu'affiche
 
 ## Revanches et récompenses
 
-`progress.rematch` décide si on peut redéfier le dresseur, `rewards` ce qu'on gagne,
-`progress.rewards` à quelle fréquence.
+`progress.rematch` décide si on peut redéfier le dresseur, `rewards` ce qu'on gagne, et chaque
+récompense décide elle-même à quelle fréquence elle tombe.
 
 ```json
 {
@@ -328,18 +327,52 @@ qu'on a battu pour le réinvoquer ne remet pas le compteur à zéro.
 - **La mémoire vit dans le monde**, pas dans le datapack : `/reload` ne l'efface pas.
   Renommer ou déplacer un fichier change son ID, donc repart de zéro.
 
-Chaque récompense est un `item` (ID complet, **namespace obligatoire**) et un `count` (défaut
-`1`, ramené dans 1-6400). Les objets partent dans l'inventaire, ce qui n'y tient pas tombe aux
-pieds du joueur, et chaque objet reçu est annoncé dans le chat. Un objet introuvable est
-ignoré avec un avertissement, les autres sont remis quand même.
-
-Les combinaisons utiles :
-
-| `rematch` | `progress.rewards` | Comportement |
+| Champ | Défaut | Rôle |
 | --- | --- | --- |
-| `never` | peu importe | Un seul combat par joueur, une seule récompense |
-| `unlimited` | `first_win` | Combat rejouable à volonté, récompense la première fois |
-| `unlimited` | `every_win` | Combat rejouable à volonté, récompense à chaque fois |
+| `item` | - | ID complet, **namespace obligatoire** |
+| `count` | `1` | Combien, ramené dans 1-6400 |
+| `hidden` | `false` | Ne pas l'annoncer dans le Battle Phone |
+| `firstWinOnly` | `false` | Ne tomber qu'à la première victoire de ce joueur |
+
+Les objets partent dans l'inventaire, ce qui n'y tient pas tombe aux pieds du joueur, et chaque
+objet reçu est annoncé dans le chat. Un objet introuvable est ignoré avec un avertissement, les
+autres sont remis quand même.
+
+**Le Battle Phone affiche les récompenses sur la fiche du dresseur**, avant même de l'avoir
+battu : contrairement à son équipe, une récompense est la raison d'essayer. `hidden` retire une
+ligne de cet affichage sans rien changer à ce qui est remis - le joueur la découvre en gagnant.
+Marquer toutes les lignes en `hidden` est la façon d'avoir un dresseur dont les récompenses sont
+entièrement secrètes.
+
+```json
+"rewards": [
+  { "item": "cobblemon:rare_candy", "count": 10 },
+  { "item": "cobblemon:master_ball", "hidden": true }
+]
+```
+
+### Farmable ou pas
+
+`firstWinOnly` décide, **récompense par récompense**, si elle retombe aux victoires suivantes.
+Par défaut non : une récompense se refarme tant que le dresseur accepte la revanche.
+
+C'est ce qui permet à un même combat de donner un trophée une fois et du consommable à chaque
+fois :
+
+```json
+"progress": { "rematch": "unlimited" },
+"rewards": [
+  { "item": "cobblemon:link_cable", "firstWinOnly": true },
+  { "item": "cobblemon:exp_candy_l", "count": 5 }
+]
+```
+
+Le Câble Liaison tombe une fois, les bonbons à chaque victoire. La fiche du Battle Phone suit :
+une fois le dresseur battu, elle cesse d'annoncer le Câble Liaison et ne montre plus que ce que
+le prochain combat rapportera vraiment.
+
+`firstWinOnly` n'a aucun effet sur un dresseur en `"rematch": "never"` : il n'y a jamais de
+deuxième victoire à distinguer.
 
 ## Le suivi de progression
 
@@ -368,7 +401,7 @@ Trois différences entre les deux :
 - Le Battle Phone **cache** les dresseurs verrouillés en `hidden` ; `/cobblemontrainers list` les
   montre toujours, avec leur nombre de conditions restantes. C'est la vue de l'opérateur.
 - `"listed": false` retire le dresseur des deux. C'est un réglage d'affichage, pas de mémoire :
-  les victoires restent enregistrées, donc `rematch` et `progress.rewards` continuent de
+  les victoires restent enregistrées, donc `rematch` et `firstWinOnly` continuent de
   fonctionner.
 - Les dresseurs de démonstration livrés par le mod apparaissent dans les deux, dans leur
   propre onglet - ton namespace fait le tien.
@@ -582,7 +615,7 @@ Voir [le README](../README.md#le-bloc-de-dresseur).
 | Un dresseur `requires` n'apparaît pas dans le Battle Phone | C'est le comportement par défaut (`hidden: true`). Mets `"hidden": false` |
 | Le clic droit répond « déjà battu » | `"rematch": "never"` et ce joueur l'a vaincu. Réinvoquer le dresseur n'y change rien |
 | L'advancement ne se déclenche pas | Dossier `data/<ns>/advancement/` (au singulier en 1.21), ou `trainer`/`category` qui ne correspond à aucun ID chargé. `/cobblemontrainers defeat <id>` le vérifie en une commande |
-| Aucune récompense à la victoire | `rewards` absent, `"rewards": "first_win"` sur une victoire qui n'est pas la première, ou objet introuvable |
+| Aucune récompense à la victoire | `rewards` absent, `"firstWinOnly": true` sur une victoire qui n'est pas la première, ou objet introuvable |
 | Le dresseur manque dans `/cobblemontrainers list` | `"listed": false`, ou pas chargé du tout - `/cobblemontrainers spawn` le dira |
 | Le combat en double est refusé | Moins de 2 Pokémon d'un des deux côtés, le tien compris |
 | Une stat EV/IV semble ignorée | Nom de stat hors de la liste reconnue |

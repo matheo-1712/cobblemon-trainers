@@ -9,6 +9,7 @@ import matheo1712.cobbletrainers.item.TrainerItems
 import matheo1712.cobbletrainers.network.BattlePhoneNetworking
 import matheo1712.cobbletrainers.network.TrainerSpawnerNetworking
 import matheo1712.cobbletrainers.trainers.TrainerCalls
+import matheo1712.cobbletrainers.trainers.TrainerGaze
 import matheo1712.cobbletrainers.trainers.TrainerRegistry
 import matheo1712.cobbletrainers.trainers.TrainerSkins
 import net.fabricmc.api.ModInitializer
@@ -91,6 +92,8 @@ object CobblemonTrainers : ModInitializer {
         try {
             TrainerBattleInteraction.register()
             TrainerBattleEventHandler.register()
+            // Grouped with the Cobblemon-dependent hooks: it reads NPCEntity like they do.
+            TrainerGaze.register()
         } catch (e: Exception) {
             LOGGER.error("Failed to register battle hooks. Is Cobblemon installed?", e)
         }

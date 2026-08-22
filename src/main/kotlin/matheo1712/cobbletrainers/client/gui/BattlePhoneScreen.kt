@@ -430,8 +430,8 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
             COLOR_TEXT
         )
 
-        drawSmall(
-            guiGraphics,
+        guiGraphics.drawCenteredString(
+            font,
             CobblemonTrainers.lang("screen.battle_phone.team", entry.level, entry.teamSize).string,
             centerX,
             TEAM_LINE_Y,
@@ -443,16 +443,19 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
 
         // A locked trainer has no team to show - the server does not send one - so the space
         // the party would take says what it would take to unlock it instead.
-        if (entry.locked) {
-            renderRequirements(guiGraphics, entry)
-            return callTooltip
-        }
+        if (entry.locked) renderRequirements(guiGraphics, entry)
 
-        // Models last: they render through their own buffer, so nothing of ours is in flight.
-        // Drawn whatever the button says: an elvis here would stop rendering the team as soon
-        // as the cursor rested on the button, which reads as the party blinking out.
-        val teamTooltip = renderTeam(guiGraphics, entry, mouseX, mouseY, partialTick)
-        return callTooltip ?: teamTooltip
+        // Then the item renderer, which flushes the batch and manages the depth state itself,
+        // so it comes after everything drawn with fills and text.
+        val rewardTooltip = renderRewards(guiGraphics, entry, mouseX, mouseY)
+
+        // Models last of all: they render through their own buffer, so nothing of ours is in
+        // flight. Drawn whatever the tooltips say - short-circuiting on one would stop the team
+        // rendering as soon as the cursor rested elsewhere, which reads as the party blinking
+        // out.
+        val teamTooltip = if (entry.locked) null else renderTeam(guiGraphics, entry, mouseX, mouseY, partialTick)
+
+        return callTooltip ?: rewardTooltip ?: teamTooltip
     }
 
     /**
@@ -484,16 +487,81 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         // does not read as pushed off centre.
         val textLeft = TEAM_X + LOCATION_TEXT_INSET
         val textWidth = areaWidth - LOCATION_TEXT_INSET - LOCATION_ACCENT_INSET
-        drawSmall(
-            guiGraphics,
+        guiGraphics.drawCenteredString(
+            font,
             trim(
                 CobblemonTrainers.lang("screen.battle_phone.location", entry.location),
-                (textWidth / SMALL_TEXT_SCALE).toInt()
+                textWidth
             ),
             textLeft + textWidth / 2,
             LOCATION_Y,
             COLOR_TEXT
         )
+    }
+
+    /**
+     * What beating this trainer hands over: a count, then the item, one reward per line, in the
+     * strip between the figure and the team.
+     *
+     * That strip is the only space on the upper screen that was ever free, which is why the
+     * figure was moved a few pixels left to open it up rather than the rewards being squeezed
+     * into a band below - there is no band below, the screen ends four pixels under the status
+     * line. Reading down the side of the trainer also puts what they give you next to who they
+     * are, which is where it belongs.
+     *
+     * Rewards are shown before the trainer has been beaten, unlike their team: a team is a
+     * reward for winning, a reward is the reason to try.
+     */
+    private fun renderRewards(
+        guiGraphics: GuiGraphics,
+        entry: BattlePhoneEntry,
+        mouseX: Int,
+        mouseY: Int
+    ): Component? {
+        if (entry.rewards.isEmpty()) return null
+
+        // One line is given up to say how many were left out, so the fiche never quietly
+        // shortens a long reward list.
+        val overflowing = entry.rewards.size > REWARD_ROWS
+        val shown = if (overflowing) REWARD_ROWS - 1 else entry.rewards.size
+        var tooltip: Component? = null
+
+        for (index in 0 until shown) {
+            val stack = entry.rewards[index]
+            val rowY = REWARD_TOP + index * REWARD_ROW_HEIGHT
+
+            drawSmallRight(
+                guiGraphics,
+                CobblemonTrainers.lang("screen.battle_phone.reward_count", stack.count).string,
+                REWARD_X + REWARD_COUNT_WIDTH,
+                rowY + REWARD_TEXT_OFFSET,
+                COLOR_TEXT
+            )
+            guiGraphics.renderItem(stack, REWARD_X + REWARD_ICON_OFFSET, rowY)
+
+            val hovered = mouseX >= REWARD_X && mouseX < REWARD_X + REWARD_WIDTH &&
+                mouseY >= rowY && mouseY < rowY + ITEM_SIZE
+            if (hovered) {
+                tooltip = CobblemonTrainers.lang(
+                    "screen.battle_phone.reward", stack.count, stack.hoverName
+                )
+            }
+        }
+
+        if (overflowing) {
+            drawSmall(
+                guiGraphics,
+                CobblemonTrainers.lang(
+                    "screen.battle_phone.reward_more",
+                    entry.rewards.size - shown
+                ).string,
+                REWARD_X + REWARD_WIDTH / 2,
+                REWARD_TOP + shown * REWARD_ROW_HEIGHT + REWARD_TEXT_OFFSET,
+                COLOR_TEXT_DIM
+            )
+        }
+
+        return tooltip
     }
 
     /**
@@ -710,6 +778,20 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         guiGraphics.pose().translate(centerX.toFloat(), textY.toFloat(), 0f)
         guiGraphics.pose().scale(SMALL_TEXT_SCALE, SMALL_TEXT_SCALE, 1f)
         guiGraphics.drawString(font, text, -font.width(text) / 2, 0, color)
+        guiGraphics.pose().popPose()
+    }
+
+    /**
+     * The same, ending at [rightX] instead of centred on it.
+     *
+     * A reward count has to sit against its item however wide it is: centring would leave a
+     * single digit floating and a four digit count leaning on the icon.
+     */
+    private fun drawSmallRight(guiGraphics: GuiGraphics, text: String, rightX: Int, textY: Int, color: Int) {
+        guiGraphics.pose().pushPose()
+        guiGraphics.pose().translate(rightX.toFloat(), textY.toFloat(), 0f)
+        guiGraphics.pose().scale(SMALL_TEXT_SCALE, SMALL_TEXT_SCALE, 1f)
+        guiGraphics.drawString(font, text, -font.width(text), 0, color)
         guiGraphics.pose().popPose()
     }
 
@@ -951,18 +1033,28 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         const val NAME_Y = UPPER_Y + 15
         const val TEAM_LINE_Y = UPPER_Y + 27
         const val PORTRAIT_TOP = UPPER_Y + 38
-        const val FIGURE_CENTER_X = UPPER_X + 38
+
+        /**
+         * The figure sits left of centre in its column rather than in the middle of it: what it
+         * gives up is the strip the rewards are drawn in, and there is nowhere else on this
+         * screen to put them. Twenty-eight leaves four pixels between the figure and the edge of
+         * the panel, which is the least that still reads as a margin.
+         */
+        const val FIGURE_CENTER_X = UPPER_X + 28
         const val FIGURE_SCALE = 3
         const val STATUS_Y = UPPER_Y + 137
 
         /**
          * The plate saying where the trainer is, in the strip the team leaves free above the
-         * status line. Eleven pixels tall, which is one line of small text and its air - so this
-         * stays one line, and a place too long for it is trimmed rather than wrapped.
+         * status line. Twelve pixels tall, which is one line of text and its air - so this
+         * stays one line, and a place too long for it is trimmed rather than wrapped. It starts
+         * a pixel above the team rather than under it: the bottom row of cells is taller than
+         * the models it holds, so that pixel is empty, and taking it keeps two clear of the call
+         * button below.
          */
-        const val LOCATION_TOP = UPPER_Y + 122
-        const val LOCATION_HEIGHT = 11
-        const val LOCATION_Y = LOCATION_TOP + 3
+        const val LOCATION_TOP = UPPER_Y + 121
+        const val LOCATION_HEIGHT = 12
+        const val LOCATION_Y = LOCATION_TOP + 2
 
         /** The accent bar down the left edge of that plate, and the air around it. */
         const val LOCATION_ACCENT_INSET = 2
@@ -1001,6 +1093,29 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         const val TEAM_CELL_WIDTH = 70
         const val TEAM_CELL_HEIGHT = 38
         const val TEAM_SLOT_SIZE = 34
+
+        /**
+         * The reward column, in the strip between the figure and the team, one reward to a line.
+         *
+         * A line is a count and an item side by side, the count ending where the icon begins.
+         * It starts level with the team, so the two columns of what a trainer is worth line up.
+         * Five lines reach the status band and stop; a sixth would be spent saying how many
+         * were left out rather than on a sixth item.
+         *
+         * Declared after [TEAM_TOP] because it reads it - a const cannot look ahead.
+         */
+        const val ITEM_SIZE = 16
+        const val REWARD_X = UPPER_X + 56
+        const val REWARD_TOP = TEAM_TOP
+        const val REWARD_COUNT_WIDTH = 14
+        const val REWARD_ICON_GAP = 2
+        const val REWARD_ICON_OFFSET = REWARD_COUNT_WIDTH + REWARD_ICON_GAP
+        const val REWARD_WIDTH = REWARD_ICON_OFFSET + ITEM_SIZE
+        const val REWARD_ROW_HEIGHT = 18
+        const val REWARD_ROWS = 5
+
+        /** Drops the count onto the middle of its icon, the 6 being a line of small text. */
+        const val REWARD_TEXT_OFFSET = (ITEM_SIZE - 6) / 2
 
         /**
          * How a model is sized, copied from Cobblemon's own party slots: a scale on the pose

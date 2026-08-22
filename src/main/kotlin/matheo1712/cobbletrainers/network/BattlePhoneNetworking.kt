@@ -8,6 +8,7 @@ import matheo1712.cobbletrainers.trainers.TrainerCalls
 import matheo1712.cobbletrainers.trainers.TrainerLock
 import matheo1712.cobbletrainers.trainers.TrainerPlace
 import matheo1712.cobbletrainers.trainers.TrainerProgress
+import matheo1712.cobbletrainers.trainers.TrainerRewards
 import matheo1712.cobbletrainers.trainers.TrainerSkins
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
@@ -19,6 +20,7 @@ import net.minecraft.network.codec.StreamCodec
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerPlayer
+import net.minecraft.world.item.ItemStack
 
 /**
  * The packets behind the battle phone screen.
@@ -74,18 +76,23 @@ object BattlePhoneNetworking {
             if (missing.isNotEmpty() && definition.requirements()?.hidden == true) return@mapNotNull null
 
             val category = TrainerRegistry.categoryOf(id)
+            val defeated = progress.hasDefeated(id, player.uuid)
             BattlePhoneEntry(
                 id = id.toString(),
                 name = definition.name,
                 level = definition.battle.level,
                 teamSize = ShowdownTeamParser.countPokemon(definition.team),
-                defeated = progress.hasDefeated(id, player.uuid),
+                defeated = defeated,
                 rematch = definition.progress.allowsRematch,
                 requirements = missing,
                 category = category?.toString().orEmpty(),
                 categoryName = category?.let { TrainerRegistry.categoryName(it) }.orEmpty(),
                 location = TrainerPlace.describe(definition.location),
-                callable = definition.callable()
+                callable = definition.callable(),
+                // Through the same resolution that hands them over, so the fiche can never
+                // advertise a reward the player would not actually receive - which is also why
+                // it is told whether beating this trainer would still be a first win.
+                rewards = TrainerRewards.preview(definition.rewards, firstWin = !defeated)
             )
         }
 
@@ -194,6 +201,10 @@ object BattlePhoneNetworking {
  *   same reason: a translatable component still reads in the player's own language on arrival.
  * @param callable Whether the screen offers a call button. The server decides it, and decides
  *   it again when the button is pressed - this is only what the screen draws.
+ * @param rewards What beating the trainer hands over, already resolved into stacks by
+ *   [matheo1712.cobbletrainers.trainers.TrainerRewards]. Sent as stacks rather than as IDs so
+ *   the screen has the icon and the item name without resolving anything itself, and so a
+ *   reward that would not survive being handed over never reaches the fiche.
  */
 data class BattlePhoneEntry(
     val id: String,
@@ -206,7 +217,8 @@ data class BattlePhoneEntry(
     val category: String,
     val categoryName: String,
     val location: Component,
-    val callable: Boolean
+    val callable: Boolean,
+    val rewards: List<ItemStack>
 ) {
 
     /** A trainer this player may not challenge yet. */
@@ -240,6 +252,8 @@ data class OpenBattlePhonePayload(val entries: List<BattlePhoneEntry>) : CustomP
                         buf.writeUtf(entry.categoryName)
                         ComponentSerialization.STREAM_CODEC.encode(buf, entry.location)
                         buf.writeBoolean(entry.callable)
+                        buf.writeVarInt(entry.rewards.size)
+                        entry.rewards.forEach { ItemStack.OPTIONAL_STREAM_CODEC.encode(buf, it) }
                     }
                 },
                 { buf ->
@@ -258,7 +272,10 @@ data class OpenBattlePhonePayload(val entries: List<BattlePhoneEntry>) : CustomP
                                 category = buf.readUtf(),
                                 categoryName = buf.readUtf(),
                                 location = ComponentSerialization.STREAM_CODEC.decode(buf),
-                                callable = buf.readBoolean()
+                                callable = buf.readBoolean(),
+                                rewards = List(buf.readVarInt()) {
+                                    ItemStack.OPTIONAL_STREAM_CODEC.decode(buf)
+                                }
                             )
                         }
                     )

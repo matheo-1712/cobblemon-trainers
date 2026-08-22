@@ -77,7 +77,10 @@ dresseurs -, chacun avec son propre compteur.
 Cliquer une ligne montre le dresseur en entier à droite, avec son niveau, la taille de son
 équipe et son état - vaincu, vaincu sans revanche possible, encore debout, ou fermé tant que
 ses conditions ne sont pas remplies, auquel cas la liste de ce qui manque remplace son
-équipe. À côté, six cases pour son équipe : elles restent fermées jusqu'à la victoire, puis
+équipe. À côté de lui, ce que le battre rapporte : une ligne par récompense, le nombre puis
+l'objet. Contrairement à son équipe, les récompenses sont visibles avant de l'avoir battu -
+c'est ce qui donne envie d'essayer -, et un pack peut en garder une secrète avec
+`"hidden": true`. À côté, six cases pour son équipe : elles restent fermées jusqu'à la victoire, puis
 affichent les modèles de ses Pokémon, formes et chromatiques comprises. Passer la souris sur
 l'une d'elles donne le nom et le niveau du Pokémon.
 
@@ -205,8 +208,9 @@ dit, `progress` pour ce que le battre change, `rewards` pour ce qu'on y gagne.
 
 Ce qu'un joueur a accompli est retenu par ID de dresseur : battre un exemplaire de
 `mon_pack:champion` les bat tous, et le réinvoquer ne remet pas le compteur à zéro. C'est ce
-que lisent `"rematch": "never"` (une seule rencontre) et `"rewards": "first_win"` (un seul
-butin).
+que lisent `"rematch": "never"` (une seule rencontre) et, sur une récompense,
+`"firstWinOnly": true` (un butin qui ne retombe pas). Les deux se combinent : un même combat
+rejouable peut donner un trophée une fois et du consommable à chaque victoire.
 
 Un bloc `requires` ferme un dresseur tant qu'un joueur n'a pas battu tel autre dresseur,
 gagné tant de combats, obtenu tel advancement ou tel objet - de quoi monter une ligue à
@@ -219,6 +223,10 @@ retire de la liste avec `"listed": false`.
 
 Une forme - régionale, méga, fakemon d'un autre pack - s'obtient avec une ligne `Aspects:`,
 qui reprend la syntaxe de `/pokespawn` : `"Aspects: rlm, poison"` pour un Haxorus RLM Poison.
+
+Un dresseur ne se promène jamais, mais il **tourne la tête vers le joueur qui s'approche** -
+à huit blocs, comme un villageois. Rien à régler : c'est le cas de tous les dresseurs, qu'ils
+soient posés par un bloc, invoqués en commande ou appelés depuis le Battle Phone.
 
 **➜ Le guide complet est dans [docs/DATAPACK.md](docs/DATAPACK.md)** : arborescence,
 référence de tous les champs, catégories, conditions, advancements, format d'équipe Showdown,

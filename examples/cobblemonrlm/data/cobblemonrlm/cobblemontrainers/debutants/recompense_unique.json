@@ -13,12 +13,10 @@
     "win": "trainer.cobblemonrlm.recompense_unique.win",
     "lose": "trainer.cobblemonrlm.recompense_unique.lose"
   },
-  "progress": {
-    "rewards": "first_win"
-  },
   "rewards": [
     {
-      "item": "cobblemon:link_cable"
+      "item": "cobblemon:link_cable",
+      "firstWinOnly": true
     },
     {
       "item": "cobblemon:exp_candy_l",

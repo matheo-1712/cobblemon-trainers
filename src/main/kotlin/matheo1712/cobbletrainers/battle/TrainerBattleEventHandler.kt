@@ -98,8 +98,9 @@ object TrainerBattleEventHandler {
             // After the record, never before: a `count` condition scores itself on it.
             TrainerDefeatedTrigger.trigger(player, trainerId)
 
-            if (!definition.progress.rewardsEveryWin && !firstWin) return@forEach
-            TrainerRewards.grant(player, definition.rewards)
+            // Which rewards that covers is each reward's own business now - see
+            // TrainerReward.firstWinOnly - so the whole list goes through either way.
+            TrainerRewards.grant(player, definition.rewards, firstWin)
         }
     }
 
