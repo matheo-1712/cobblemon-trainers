@@ -1,0 +1,26 @@
+{
+  "name": "trainer.cobblemon-trainers.griff501.name",
+  "skin": {
+    "type": "player_uuid",
+    "value": "2c83a555-0230-4274-aff6-82204f6acd3a"
+  },
+  "battle": {
+    "level": 80,
+    "difficulty": 5,
+    "music": "cobblemon-trainers:battle_music.corvault"
+  },
+  "messages": {
+    "start": "trainer.cobblemon-trainers.griff501.battle_start",
+    "win": "trainer.cobblemon-trainers.griff501.win",
+    "lose": "trainer.cobblemon-trainers.griff501.lose"
+  },
+
+  "team": [
+    "Toxic (Gliscor) @ Toxic Orb  \nAbility: Poison Heal  \nEVs: 252 HP / 4 Atk / 252 Spe  \nJolly Nature  \n- Stealth Rock  \n- Earthquake  \n- Knock Off  \n- U-turn",
+    "Bloon (Greninja) (F) @ Choice Scarf  \nAbility: Protean  \nTera Type: Water  \nEVs: 4 HP / 252 SpA / 252 Spe  \nTimid Nature  \n- Dark Pulse  \n- Hydro Pump  \n- Sludge Wave  \n- U-turn",
+    "Kangaskhan (F) @ Life Orb  \nAbility: Scrappy  \nEVs: 252 Atk / 4 SpD / 252 Spe  \nJolly Nature  \n- Body Slam  \n- Earthquake  \n- Sucker Punch  \n- Thunder Punch",
+    "Cinderace @ Heavy-Duty Boots  \nAbility: Libero  \nEVs: 4 HP / 252 Atk / 252 Spe  \nJolly Nature  \n- High Jump Kick  \n- Pyro Ball  \n- U-turn  \n- Zen Headbutt",
+    "Clefable @ Leftovers  \nAbility: Magic Guard  \nEVs: 252 HP / 4 SpA / 252 SpD  \nCalm Nature  \nIVs: 0 Atk  \n- Teleport  \n- Encore  \n- Heal Bell  \n- Moonblast",
+    "Gengar @ Choice Specs  \nAbility: Cursed Body  \nEVs: 4 HP / 252 SpA / 252 Spe  \nTimid Nature  \nIVs: 0 Atk  \n- Shadow Ball  \n- Sludge Wave  \n- Thunderbolt  \n- Focus Blast"
+  ]
+}

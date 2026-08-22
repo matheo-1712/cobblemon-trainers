@@ -8,7 +8,7 @@
       }
     ]
   },
-  "battle_music.neoflare_battle": {
+  "battle_music.neoflare": {
     "subtitle": "cobblemon-trainers.subtitles.battle_music",
     "sounds": [
       {
@@ -17,7 +17,7 @@
       }
     ]
   },
-  "battle_music.b2w2_tournament_battle": {
+  "battle_music.b2w2_tournament": {
     "subtitle": "cobblemon-trainers.subtitles.battle_music",
     "sounds": [
       {
@@ -26,7 +26,7 @@
       }
     ]
   },
-  "battle_music.lysandre_battle": {
+  "battle_music.lysandre": {
     "subtitle": "cobblemon-trainers.subtitles.battle_music",
     "sounds": [
       {
@@ -35,7 +35,7 @@
       }
     ]
   },
-  "battle_music.ultra_necrozma_battle": {
+  "battle_music.ultra_necrozma": {
     "subtitle": "cobblemon-trainers.subtitles.battle_music",
     "sounds": [
       {

@@ -7,7 +7,7 @@
   "battle": {
     "level": 80,
     "difficulty": 5,
-    "music": "cobblemon-trainers:battle_music.corvault_battle"
+    "music": "cobblemon-trainers:battle_music.corvault"
   },
   "messages": {
     "start": "trainer.cobblemon-trainers.kagumi.battle_start",

@@ -7,7 +7,7 @@
   "battle": {
     "level": 80,
     "difficulty": 5,
-    "music": "cobblemon-trainers:battle_music.b2w2_tournament_battle"
+    "music": "cobblemon-trainers:battle_music.b2w2_tournament"
   },
   "messages": {
     "start": "trainer.cobblemon-trainers.theazertor.battle_start",

@@ -102,5 +102,13 @@
   "trainer.cobblemon-trainers.kagumi.win": ".....",
   "trainer.cobblemon-trainers.kagumi.lose": "WIN !!!!",
 
-  "trainer.cobblemon-trainers.aeliothys.name": "Aeliothys"
+  "trainer.cobblemon-trainers.griff501.name": "Griff501",
+  "trainer.cobblemon-trainers.griff501.battle_start": "!",
+  "trainer.cobblemon-trainers.griff501.win": ".....",
+  "trainer.cobblemon-trainers.griff501.lose": "WIN !!!!",
+
+  "trainer.cobblemon-trainers.aeliothys.name": "Aeliothys",
+  "trainer.cobblemon-trainers.aeliothys.battle_start": "!",
+  "trainer.cobblemon-trainers.aeliothys.win": ".....",
+  "trainer.cobblemon-trainers.aeliothys.lose": "WIN !!!!"
 }
