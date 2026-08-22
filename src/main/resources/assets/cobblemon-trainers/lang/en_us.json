@@ -100,5 +100,7 @@
   "trainer.cobblemon-trainers.kagumi.name": "Kagumi",
   "trainer.cobblemon-trainers.kagumi.battle_start": "!",
   "trainer.cobblemon-trainers.kagumi.win": ".....",
-  "trainer.cobblemon-trainers.kagumi.lose": "WIN !!!!"
+  "trainer.cobblemon-trainers.kagumi.lose": "WIN !!!!",
+
+  "trainer.cobblemon-trainers.aeliothys.name": "Aeliothys"
 }
