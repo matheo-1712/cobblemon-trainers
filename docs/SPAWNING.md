@@ -191,7 +191,9 @@ que le joueur apprenne la règle une fois.
 
 | Réglage | Valeur |
 | --- | --- |
-| Distance d'arrivée | 10 à 20 blocs, élargie jusqu'à 64 si rien ne convient |
+| Distance d'arrivée | 10 à 20 blocs |
+| Si rien ne convient dans cet anneau | On cherche **plus près**, jusqu'à 3 blocs |
+| Si rien ne convient près non plus | On cherche plus loin, jusqu'à 64 blocs |
 | Recherche en hauteur | 8 blocs au-dessus et en dessous du joueur |
 | Refus si un autre exemplaire est à moins de | 100 blocs |
 | Le dresseur repart si le joueur dépasse | 128 blocs |
@@ -203,9 +205,21 @@ que le joueur apprenne la règle une fois.
 une rencontre. La position est cherchée autour de l'altitude du joueur, pas à la surface : un
 joueur dans une grotte aurait sinon son dresseur sur le toit, à trente blocs et un mur de là.
 
-**Pourquoi il n'arrive pas toujours.** Le mod ne charge aucun chunk pour répondre à un bouton,
-et il lui faut un sol solide, la place d'un corps, et pas de liquide. Sur une plage étroite ou
-au milieu d'un océan, l'appel est refusé - le joueur se déplace de quelques blocs et réessaie.
+**Pourquoi il arrive parfois près.** Quand l'anneau des 10 à 20 blocs ne contient nulle part où
+se tenir - une clairière cernée d'eau, une corniche -, le mod cherche **plus près** avant de
+chercher plus loin. Arriver à cinq blocs vaut mieux qu'arriver de l'autre côté de la crête. Il
+ne descend jamais en dessous de 3 blocs : un dresseur qui se matérialise dans le joueur serait
+pire que tout.
+
+**Le dresseur n'apparaît jamais dans l'eau.** Il lui faut un sol solide et sec, la place d'un
+corps, et aucun liquide - ni aux pieds, ni à la tête, ni dans le bloc sur lequel il se tient.
+Ce dernier point compte : une dalle immergée, une marche sous la surface ou un bloc de glace
+dans un lac sont assez solides pour qu'on s'y tienne et mettraient le dresseur les pieds dans
+l'eau.
+
+**Pourquoi il n'arrive quand même pas toujours.** Le mod ne charge aucun chunk pour répondre à
+un bouton. Au milieu d'un océan, il n'y a de toute façon rien de sec entre 3 et 64 blocs, et
+l'appel est refusé - le joueur regagne la terre ferme et réessaie.
 
 ## Tester
 

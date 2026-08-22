@@ -545,7 +545,15 @@ Points à ne pas redécouvrir :
 - **La position est cherchée autour du Y du joueur, pas à la surface.** Un `getHeightmapPos`
   poserait le dresseur sur le toit d'un joueur en grotte, à trente blocs et un mur de là.
   Chercher dans la colonne autour de l'appelant répond à la grotte et à la plaine avec une seule
-  règle. Et aucun chunk n'est chargé pour répondre à un clic de bouton.
+  règle. Et aucun chunk n'est chargé pour répondre à un clic de bouton - d'où `hasChunk`, en
+  coordonnées de chunk, les deux `hasChunkAt` étant dépréciés en 1.21.1.
+- **L'ordre des passes de `findSpot` est un ordre de préférence**, pas une optimisation :
+  l'anneau voulu, puis **plus près**, puis plus loin. Rapprocher avant d'éloigner est ce qui
+  répond à une clairière cernée d'eau ; `CLOSEST_DISTANCE` est ce qui empêche le dresseur
+  d'arriver dans le joueur.
+- **Trois tests de fluide, pas deux.** Les pieds et la tête sont les évidents ; le troisième est
+  le bloc sur lequel on se tient. Une dalle immergée, une marche sous la surface et un bloc de
+  glace dans un lac passent tous `isFaceSturdy` et mettraient le dresseur dans l'eau.
 - **Rien n'est sauvegardé, et c'est l'aspect qui rattrape.** Un appel vit en mémoire, l'entité
   vit sur disque : un redémarrage les met en désaccord. L'aspect `trainer_call:<uuid>`
   (`CALL_ASPECT_PREFIX`) est ce qui permet à `discardOrphan` de reconnaître un dresseur appelé

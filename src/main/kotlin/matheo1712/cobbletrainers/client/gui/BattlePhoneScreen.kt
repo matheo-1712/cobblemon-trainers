@@ -456,25 +456,43 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
     }
 
     /**
-     * Where the trainer is to be found, in the strip the team leaves free.
+     * Where the trainer is to be found, on its own plate in the strip the team leaves free.
      *
-     * Centred on the team rather than on the screen: a place reads long - a biome, a time and a
-     * sky add up - and a line centred on the whole width would run under the legs of the figure.
-     * A trainer who names no place says nothing here, and has no button either.
+     * A plate rather than a floating caption: the line sits between the party above and the
+     * status below, and loose small text there read as something that had slipped out of one of
+     * them. The accent bar down its left edge is what makes it a field with a value rather than
+     * a sentence - the same blue that heads a category in the roster.
+     *
+     * It spans the team rather than the screen: a place reads long - a biome, a time and a sky
+     * add up - and a plate centred on the whole width would reach under the legs of the figure.
+     * A trainer who names no place draws nothing here.
      */
     private fun renderLocation(guiGraphics: GuiGraphics, entry: BattlePhoneEntry) {
         if (entry.location.string.isEmpty()) return
 
         val areaWidth = TEAM_COLUMNS * TEAM_CELL_WIDTH
+        plate(guiGraphics, TEAM_X, LOCATION_TOP, areaWidth, LOCATION_HEIGHT, COLOR_PLATE, COLOR_PLATE_EDGE)
+        guiGraphics.fill(
+            TEAM_X + LOCATION_ACCENT_INSET,
+            LOCATION_TOP + LOCATION_ACCENT_INSET,
+            TEAM_X + LOCATION_ACCENT_INSET + LOCATION_ACCENT_WIDTH,
+            LOCATION_TOP + LOCATION_HEIGHT - LOCATION_ACCENT_INSET,
+            COLOR_HEADER
+        )
+
+        // Centred on what is left of the plate once the accent has taken its edge, so the text
+        // does not read as pushed off centre.
+        val textLeft = TEAM_X + LOCATION_TEXT_INSET
+        val textWidth = areaWidth - LOCATION_TEXT_INSET - LOCATION_ACCENT_INSET
         drawSmall(
             guiGraphics,
             trim(
                 CobblemonTrainers.lang("screen.battle_phone.location", entry.location),
-                (areaWidth / SMALL_TEXT_SCALE).toInt()
+                (textWidth / SMALL_TEXT_SCALE).toInt()
             ),
-            TEAM_X + areaWidth / 2,
+            textLeft + textWidth / 2,
             LOCATION_Y,
-            COLOR_TEXT_DIM
+            COLOR_TEXT
         )
     }
 
@@ -501,24 +519,42 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         val hovered = overCallButton(mouseX.toDouble(), mouseY.toDouble())
 
         val border = when {
-            !enabled -> COLOR_TEXT_LOCKED
+            !enabled -> COLOR_PLATE_EDGE
             hovered -> COLOR_TITLE
             else -> COLOR_HEADER
         }
-        guiGraphics.fill(CALL_X, CALL_Y, CALL_X + CALL_WIDTH, CALL_Y + CALL_HEIGHT, border)
-        guiGraphics.fill(
-            CALL_X + CALL_BORDER,
-            CALL_Y + CALL_BORDER,
-            CALL_X + CALL_WIDTH - CALL_BORDER,
-            CALL_Y + CALL_HEIGHT - CALL_BORDER,
-            COLOR_SCROLL_TRACK
-        )
+        plate(guiGraphics, CALL_X, CALL_Y, CALL_WIDTH, CALL_HEIGHT, COLOR_PLATE, border)
+
+        // A key has a lit face and a shadow under it. Two flat colours would do neither, and a
+        // single fill made the button read as a hole in the screen rather than something to
+        // press - which matters, since it is the only thing on this screen that is pressed.
+        if (enabled) {
+            val top = if (hovered) COLOR_CALL_TOP_HOVER else COLOR_CALL_TOP
+            val bottom = if (hovered) COLOR_CALL_BOTTOM_HOVER else COLOR_CALL_BOTTOM
+            guiGraphics.fillGradient(
+                CALL_X + CALL_BORDER,
+                CALL_Y + CALL_BORDER,
+                CALL_X + CALL_WIDTH - CALL_BORDER,
+                CALL_Y + CALL_HEIGHT - CALL_BORDER,
+                top,
+                bottom
+            )
+            // One lit line along the top edge, the light coming from above like everywhere else.
+            guiGraphics.fill(
+                CALL_X + CALL_BORDER + 1,
+                CALL_Y + CALL_BORDER,
+                CALL_X + CALL_WIDTH - CALL_BORDER - 1,
+                CALL_Y + CALL_BORDER + 1,
+                COLOR_CALL_HIGHLIGHT
+            )
+        }
+
         guiGraphics.drawCenteredString(
             font,
             CobblemonTrainers.lang("screen.battle_phone.call"),
             CALL_X + CALL_WIDTH / 2,
             CALL_Y + CALL_LABEL_INSET,
-            if (enabled) COLOR_TEXT else COLOR_TEXT_LOCKED
+            if (enabled) COLOR_TITLE else COLOR_TEXT_LOCKED
         )
 
         if (!hovered) return null
@@ -920,11 +956,20 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         const val STATUS_Y = UPPER_Y + 137
 
         /**
-         * Where the trainer is to be found, in the strip the team leaves free above the status
-         * line. Fifteen pixels, which is one line of small text and no more - so this stays one
-         * line, and a place too long for it is trimmed rather than wrapped.
+         * The plate saying where the trainer is, in the strip the team leaves free above the
+         * status line. Eleven pixels tall, which is one line of small text and its air - so this
+         * stays one line, and a place too long for it is trimmed rather than wrapped.
          */
-        const val LOCATION_Y = UPPER_Y + 124
+        const val LOCATION_TOP = UPPER_Y + 122
+        const val LOCATION_HEIGHT = 11
+        const val LOCATION_Y = LOCATION_TOP + 3
+
+        /** The accent bar down the left edge of that plate, and the air around it. */
+        const val LOCATION_ACCENT_INSET = 2
+        const val LOCATION_ACCENT_WIDTH = 2
+
+        /** Where the text starts, clear of the accent bar. */
+        const val LOCATION_TEXT_INSET = LOCATION_ACCENT_INSET + LOCATION_ACCENT_WIDTH + 3
 
         /**
          * The call button, at the end of the status band.
@@ -938,7 +983,12 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         const val CALL_HEIGHT = 13
         const val CALL_BORDER = 1
         const val CALL_X = UPPER_X + UPPER_WIDTH - CALL_WIDTH - 6
-        const val CALL_Y = STATUS_Y - 3
+
+        /**
+         * Two pixels above the status line, which puts the label of the button on exactly the
+         * baseline of that line and leaves a pixel of air under the location plate.
+         */
+        const val CALL_Y = STATUS_Y - 2
 
         /** Lifts the label off the bottom edge of the button, the 8 being a line of text. */
         const val CALL_LABEL_INSET = (CALL_HEIGHT - 8) / 2
@@ -993,6 +1043,25 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         const val COLOR_HEADER_RULE = 0x665AAAEB
         const val COLOR_TEXT_LOCKED = 0xFF6A8AA3.toInt()
 
+        /**
+         * The plates: a shade below the screen so a box reads as recessed into it, and an edge a
+         * shade above so it still has an outline. Used by the location plate and by the shell of
+         * the call button, which is what makes the two read as one family.
+         */
+        const val COLOR_PLATE = 0xFF102A3E.toInt()
+        const val COLOR_PLATE_EDGE = 0xFF27567A.toInt()
+
+        /**
+         * The face of the call button, lit from above. The hover pair is the same two colours
+         * brightened rather than a different hue: hovering has to read as the same key with a
+         * light on it, not as another control.
+         */
+        const val COLOR_CALL_TOP = 0xFF2A7BB4.toInt()
+        const val COLOR_CALL_BOTTOM = 0xFF17527C.toInt()
+        const val COLOR_CALL_TOP_HOVER = 0xFF43A0DC.toInt()
+        const val COLOR_CALL_BOTTOM_HOVER = 0xFF2270A4.toInt()
+        const val COLOR_CALL_HIGHLIGHT = 0x66FFFFFF
+
         /** How far a category heading sits in from the datapack heading above it. */
         const val HEADER_INDENT = 6
 
@@ -1013,6 +1082,24 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
 
         fun phoneTexture(name: String): ResourceLocation =
             CobblemonTrainers.id("textures/gui/battle_phone/$name.png")
+
+        /**
+         * A bordered box with its four corner pixels knocked out, which is how everything on
+         * these screens gets rounded corners without a texture.
+         *
+         * The corners are painted back in [COLOR_SCREEN] rather than left alone: the panel
+         * behind is a flat fill of exactly that colour, so putting it back is what makes the
+         * corner disappear. A box drawn anywhere else would show four dots of the wrong blue.
+         */
+        fun plate(guiGraphics: GuiGraphics, x: Int, y: Int, width: Int, height: Int, fill: Int, border: Int) {
+            guiGraphics.fill(x, y, x + width, y + height, border)
+            guiGraphics.fill(x + 1, y + 1, x + width - 1, y + height - 1, fill)
+
+            guiGraphics.fill(x, y, x + 1, y + 1, COLOR_SCREEN)
+            guiGraphics.fill(x + width - 1, y, x + width, y + 1, COLOR_SCREEN)
+            guiGraphics.fill(x, y + height - 1, x + 1, y + height, COLOR_SCREEN)
+            guiGraphics.fill(x + width - 1, y + height - 1, x + width, y + height, COLOR_SCREEN)
+        }
 
         /**
          * A blit with blending on.

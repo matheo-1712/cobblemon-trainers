@@ -9,6 +9,7 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents
 import net.minecraft.ChatFormatting
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
+import net.minecraft.core.SectionPos
 import net.minecraft.network.chat.Component
 import net.minecraft.network.chat.MutableComponent
 import net.minecraft.resources.ResourceLocation
@@ -262,10 +263,16 @@ object TrainerCalls {
     /**
      * Somewhere the trainer can stand, a walk away from the player rather than under their nose.
      *
-     * Two passes. The first scatters attempts through the ring the trainer is meant to arrive
-     * in, at a random angle and distance each time, so two calls in the same clearing do not
-     * put them on the same rock. The second widens ring by ring when that ring holds nothing -
-     * a player on a beach or halfway up a mountain would otherwise never get an answer.
+     * Three passes, in the order the result is preferred.
+     *
+     * 1. Scattered attempts through the ring the trainer is meant to arrive in, at a random
+     *    angle and distance each time, so two calls in the same clearing do not put them on the
+     *    same rock.
+     * 2. **Closer**, ring by ring, when that ring holds nowhere to stand. A player in a
+     *    clearing surrounded by water or cliffs has ground right next to them and none at
+     *    twenty blocks, and arriving near is better than arriving over the ridge.
+     * 3. Further out, as a last resort - down a ravine, on a small island - because refusing
+     *    the call is worse than a longer walk.
      */
     private fun findSpot(level: ServerLevel, origin: BlockPos): Vec3? {
         val random = level.random
@@ -276,14 +283,28 @@ object TrainerCalls {
             spotAt(level, origin, radius.toDouble(), angle)?.let { return it }
         }
 
-        var radius = MAX_DISTANCE + RING_STEP
+        // Inwards first, and nearest last: the closest ring that works wins, but the trainer is
+        // never put right on top of the player - CLOSEST_DISTANCE keeps a couple of blocks.
+        var radius = MIN_DISTANCE - RING_STEP
+        while (radius >= CLOSEST_DISTANCE) {
+            ringSpot(level, origin, radius)?.let { return it }
+            radius -= RING_STEP
+        }
+
+        radius = MAX_DISTANCE + RING_STEP
         while (radius <= MAX_SEARCH_DISTANCE) {
-            val offset = level.random.nextInt(RING_ANGLES)
-            for (step in 0 until RING_ANGLES) {
-                val angle = 2 * Math.PI * ((offset + step) % RING_ANGLES) / RING_ANGLES
-                spotAt(level, origin, radius.toDouble(), angle)?.let { return it }
-            }
+            ringSpot(level, origin, radius)?.let { return it }
             radius += RING_STEP
+        }
+        return null
+    }
+
+    /** Walks one ring of candidate angles, starting somewhere random so a ring is not a rut. */
+    private fun ringSpot(level: ServerLevel, origin: BlockPos, radius: Int): Vec3? {
+        val offset = level.random.nextInt(RING_ANGLES)
+        for (step in 0 until RING_ANGLES) {
+            val angle = 2 * Math.PI * ((offset + step) % RING_ANGLES) / RING_ANGLES
+            spotAt(level, origin, radius.toDouble(), angle)?.let { return it }
         }
         return null
     }
@@ -304,8 +325,9 @@ object TrainerCalls {
      * the cave and the open field with one rule.
      */
     private fun standingSpot(level: ServerLevel, x: Int, z: Int, aroundY: Int): BlockPos? {
-        // Never generate or load a chunk to answer a button press.
-        if (!level.hasChunkAt(BlockPos(x, aroundY, z))) return null
+        // Never generate or load a chunk to answer a button press. Asked in chunk coordinates:
+        // both hasChunkAt overloads are deprecated, hasChunk is the one that is not.
+        if (!level.hasChunk(SectionPos.blockToSectionCoord(x), SectionPos.blockToSectionCoord(z))) return null
 
         for (offset in 0..VERTICAL_SEARCH) {
             val candidates = if (offset == 0) listOf(aroundY) else listOf(aroundY + offset, aroundY - offset)
@@ -319,11 +341,20 @@ object TrainerCalls {
         return null
     }
 
-    /** Solid ground underfoot, room for a body above it, and no fluid in either. */
+    /**
+     * Solid dry ground underfoot, and room for a body above it.
+     *
+     * **Never in a fluid**, and that takes three tests rather than one. The feet and the head
+     * are the obvious two. The third is the ground itself: a waterlogged slab, a stair under the
+     * surface, a block of ice sitting in a lake are all sturdy enough to stand on and all put
+     * the trainer in the water. Testing only the two blocks above would have left the trainer
+     * standing on the sea, which is what this rules out.
+     */
     private fun canStand(level: ServerLevel, pos: BlockPos): Boolean {
         val ground = pos.below()
         val groundState = level.getBlockState(ground)
         if (!groundState.isFaceSturdy(level, ground, Direction.UP)) return false
+        if (!groundState.fluidState.isEmpty) return false
         if (!level.getFluidState(pos).isEmpty || !level.getFluidState(pos.above()).isEmpty) return false
 
         // A collision test rather than an air test: grass, flowers and snow are not obstacles,
@@ -445,7 +476,13 @@ object TrainerCalls {
     private const val MIN_DISTANCE = 10
     private const val MAX_DISTANCE = 20
 
-    /** How far the search widens when that ring holds nowhere to stand. */
+    /**
+     * How close the search falls back to when that ring holds nowhere to stand. Not zero: a
+     * trainer materialising inside the player is worse than one standing three blocks away.
+     */
+    private const val CLOSEST_DISTANCE = 3
+
+    /** How far the search widens once even the close rings hold nothing. */
     private const val MAX_SEARCH_DISTANCE = 64
     private const val RING_STEP = 2
     private const val RING_ANGLES = 12
