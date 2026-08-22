@@ -574,12 +574,20 @@ Points à ne pas redécouvrir :
   leur place dans la bande.
 - **Le rail est centré sur ce qui se voit, pas sur les repères du code.** `REWARD_CENTER_X` tombe
   entre le bord du skin et le premier slot de l'équipe. Centrer sur `TEAM_X` collait le rail au
-  dresseur et laissait un trou derrière lui : une case d'équipe porte dix-huit pixels d'air avant
-  son slot, donc son bord gauche n'est nulle part sur l'écran.
-- **La plaque du lieu s'étend sur les slots, pas sur les cases.** Même dix-huit pixels : posée
-  sur les cases, elle partait bien plus à gauche que tout ce qu'un joueur voit de l'équipe, et
-  cette bande-là est celle du rail. Son texte n'a pas bougé d'un pixel, seule la plaque a
-  rétréci.
+  dresseur : une case d'équipe porte dix-huit pixels d'air avant son slot, donc son bord gauche
+  n'est nulle part sur l'écran. `TEAM_SLOT_INSET` et `TEAM_SLOTS_WIDTH` existent pour ça, et la
+  plaque du lieu s'aligne dessus elle aussi.
+- **`TEAM_X` reste une constante, `TEAM_TOP` est calculé.** Le partage horizontal a été essayé -
+  répartir à parts égales tout ce qui reste à droite de la figure - puis retiré : ça déplaçait
+  l'équipe entre un dresseur qui donne quelque chose et un qui ne donne rien, et la colonne était
+  déjà bien là où elle était. En hauteur en revanche, un `UPPER_Y + 46` en dur laissait un pixel
+  sous la dernière rangée et treize au-dessus de la première : `TEAM_TOP` se lit maintenant sur
+  ses deux voisins, la ligne du niveau et la plaque du lieu, ce qui garde les deux bouts égaux.
+- **Le capot de `frame.png` avait 20 pixels de bordure à gauche et 13 à droite.** L'écran du haut
+  n'était donc pas centré dans son cadre, ce qui se lit tout de suite comme un fond raté du côté
+  étroit. Sept colonnes de corps ont été retirées à gauche - le biseau extérieur passe de 31 à 38
+  et les deux bordures font 13. Le trou, lui, n'a pas bougé : aucune constante de l'écran ne
+  change, et la base en dessous non plus, qui déborde le capot de ce côté de toute façon.
 - **Le voile passe par `RenderType.guiOverlay()`**, celui dont vanilla éclaire ses propres
   cases : un `fill` ordinaire se dessine *sous* le modèle d'un objet, donc il ne griserait rien
   du tout.

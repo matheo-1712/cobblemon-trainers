@@ -491,7 +491,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         if (entry.location.string.isEmpty()) return
 
         val plateX = TEAM_X + TEAM_SLOT_INSET
-        val plateWidth = TEAM_COLUMNS * TEAM_CELL_WIDTH - 2 * TEAM_SLOT_INSET
+        val plateWidth = TEAM_SLOTS_WIDTH
         plate(guiGraphics, plateX, LOCATION_TOP, plateWidth, LOCATION_HEIGHT, COLOR_PLATE, COLOR_PLATE_EDGE)
         guiGraphics.fill(
             plateX + LOCATION_ACCENT_INSET,
@@ -1202,13 +1202,32 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         const val TEAM_COLUMNS = 3
         const val TEAM_ROWS = TEAM_SLOTS / TEAM_COLUMNS
         const val TEAM_X = UPPER_X + 92
-        const val TEAM_TOP = UPPER_Y + 46
         const val TEAM_CELL_WIDTH = 70
         const val TEAM_CELL_HEIGHT = 38
         const val TEAM_SLOT_SIZE = 34
 
+        /**
+         * The team is centred in the band left between the line that says what it is worth and
+         * the plate of the location, the 8 being that line of text.
+         *
+         * Fixed at a round forty-six pixels it sat against the plate with all the air above it -
+         * a single pixel under the bottom row and thirteen over the top one. Reading it off its
+         * two neighbours is what keeps the two ends equal, whatever moves.
+         *
+         * Declared after [TEAM_CELL_HEIGHT] because it reads it - a const cannot look ahead.
+         */
+        const val TEAM_TOP =
+            (TEAM_LINE_Y + 8 + LOCATION_TOP) / 2 - TEAM_ROWS * TEAM_CELL_HEIGHT / 2
+
         /** From the edge of a cell to the slot drawn in the middle of it. */
         const val TEAM_SLOT_INSET = (TEAM_CELL_WIDTH - TEAM_SLOT_SIZE) / 2
+
+        /**
+         * What the eye reads as the width of the team: the slots, not the cells around them. A
+         * cell is half again as wide as the slot it holds, so laying the team out on cells put
+         * a good eighteen pixels of nothing at each end of something meant to look centred.
+         */
+        const val TEAM_SLOTS_WIDTH = TEAM_COLUMNS * TEAM_CELL_WIDTH - 2 * TEAM_SLOT_INSET
 
         /**
          * The reward rail, in the strip between the figure and the team, one item to a cell.
