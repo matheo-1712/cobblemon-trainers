@@ -54,10 +54,14 @@ class TrainerBattleInteraction : NPCInteractConfiguration {
             }
         }
 
+        val format = battleFormatOf(definition?.battle?.format)
+
         BattleBuilder.pvn(
             player = player,
             npcEntity = npc,
-            battleFormat = battleFormatOf(definition?.battle?.format)
+            battleFormat = format,
+            // A level-adjusting format must battle on copies. See `LVL_50_SINGLES` below.
+            cloneParties = format.adjustLevel > 0
         ).ifErrored { errors ->
             errors.sendTo(player)
         }
@@ -76,7 +80,7 @@ class TrainerBattleInteraction : NPCInteractConfiguration {
         /** Value of the `type` field in the NPC class JSON. */
         const val TYPE = "cobblemon-trainers:battle"
 
-        // Special Format for level 50 battles
+        // Special formats LVL: 50
         private val LVL_50_SINGLES = BattleFormat.GEN_9_SINGLES.copy(adjustLevel = 50)
         private val LVL_50_DOUBLES = BattleFormat.GEN_9_DOUBLES.copy(adjustLevel = 50)
         private val LVL_50_TRIPLES = BattleFormat.GEN_9_TRIPLES.copy(adjustLevel = 50)
