@@ -6,12 +6,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Mod Fabric pour Minecraft 1.21.1 qui ajoute des dresseurs Pokémon configurables à
 Cobblemon 1.7.3. Code principal en Kotlin (`matheo1712.cobbletrainers`), les mixins en Java.
-Presque tout tourne côté serveur logique. Le côté client se limite à quatre choses, et il vaut
+Presque tout tourne côté serveur logique. Le côté client se limite à cinq choses, et il vaut
 mieux que ça reste vrai : `client.MinecraftMixin`, qui branche la lecture des `assets/` d'un
 pack posé dans `mods/` (voir « Livrer un pack ») ; `client.ClientLevelMixin`, qui rend le bloc
 de dresseur visible quand on tient son item ; l'entrypoint `CobblemonTrainersClient`, dont le
-seul rôle est d'ouvrir les deux écrans du mod et de recevoir les skins du second ; et ces deux
-écrans eux-mêmes, sous `client.gui` (voir « Le bloc de dresseur » et « Le Battle Phone »).
+seul rôle est d'ouvrir les deux écrans du mod et de recevoir les skins du second ; ces deux
+écrans eux-mêmes, sous `client.gui` (voir « Le bloc de dresseur » et « Le Battle Phone ») ; et
+`client.ClientPokemonSelection`, seule des cinq à ne pas être un écran, qui annonce au serveur
+le Pokémon sélectionné parce que Cobblemon ne le lui dit jamais (voir « Le Pokémon qui ouvre le
+combat »).
 Aucun renderer d'entité n'est enregistré : le Battle Phone dessine les skins à plat depuis
 l'image, et pour les Pokémon d'une équipe il appelle le `drawProfilePokemon` de Cobblemon -
 seul endroit du mod qui touche à du rendu 3D.
@@ -104,6 +107,8 @@ messages, musique et récompenses de combat.
   dresseur, et sa fin de vie. Même section.
 - **`TrainerGaze`** - donne à chaque dresseur chargé un `LookAtPlayerGoal`, pour qu'il tourne la
   tête vers un joueur qui s'approche. Voir « Le regard des dresseurs ».
+- **`battle.TrainerLead`** - qui ouvre le combat pour un joueur, et la mémoire par joueur de ce
+  que son client a annoncé. Voir « Le Pokémon qui ouvre le combat ».
 - **`advancement.TrainerDefeatedTrigger`** - le critère `cobblemon-trainers:trainer_defeated`.
 - **`ShowdownTeamParser`** - convertit du format Showdown en `PokemonProperties` en
   reconstruisant une chaîne de propriétés Cobblemon (`"pikachu level=88 ability=static …"`)
@@ -151,9 +156,12 @@ messages, musique et récompenses de combat.
   Voir « Le Battle Phone ».
 - **`network.BattlePhoneNetworking`** - les `CustomPacketPayload` de cet écran : le
   listing, la demande de skin et la réponse, celles de l'équipe, et l'appel d'un dresseur.
+- **`network.BattleLeadNetworking`** - l'unique paquet qui n'appartient pas à un écran : le
+  Pokémon sélectionné, du client vers le serveur.
 - **`trainers.TrainerSkins`** - la résolution d'un `TrainerSkin` en image, hors thread serveur
   et avec cache. Voir « Skins ».
 - **`client.CobblemonTrainersClient`** - l'unique entrypoint client.
+- **`client.ClientPokemonSelection`** - la sélection de l'overlay, poussée vers le serveur.
 - **`client.gui.TrainerSpawnerScreen` / `client.gui.BattlePhoneScreen`** - les deux écrans.
 - **`client.gui.TrainerSkinRenderer` / `client.cache.TrainerSkinCache`** - le dessin d'un skin
   à plat, et les textures que le Battle Phone a reçues.
@@ -295,6 +303,14 @@ Ces points ne se devinent pas depuis notre code seul et ont chacun causé un bug
   duplication de l'issue #22. `TrainerBattleInteraction` pose donc `cloneParties` lui-même.
   L'expérience et les EV ne changent pas : Cobblemon les attribue sur
   `BattlePokemon.originalPokemon`, qui reste le vrai Pokémon.
+- **`pvn` ne regarde pas la santé de l'équipe du joueur.** Il filtre bien sur les PV du côté du
+  dresseur, mais du côté joueur il ne compte que la taille de l'équipe : un joueur K.O. entrait
+  donc en combat avec une équipe où personne ne peut être envoyé (issue #25).
+  `TrainerBattleInteraction` refuse avant `pvn`, **sans exception** - un format qui ajuste les
+  niveaux soigne pourtant les copies avec lesquelles il combat, mais laisser passer une équipe
+  K.O. là revenait à offrir une équipe pleine à qui n'en a plus. L'exemption a été écrite puis
+  retirée, ne pas la remettre. Seule l'équipe vide est laissée à Cobblemon, qui la refuse aussi
+  et dont l'erreur le dit mieux.
 - **Un nom Cobblemon ne garde que `[a-z0-9]`.** Espèces, capacités, talents et natures sont
   nommés d'après leur nom affiché débarrassé de tout le reste, accents compris : `uturn`,
   `willowisp`, `kingsshield`, `hooh`, `porygonz`, `mrmime`, `farfetchd`, `flabebe`. D'où
@@ -655,6 +671,36 @@ Points à ne pas redécouvrir :
   à commencer par `%s`.
 - **La mort passe par `AFTER_DEATH`**, le même événement que l'arrêt des combats, pour deux
   raisons différentes. Les deux abonnements coexistent sans se connaître.
+
+### Le Pokémon qui ouvre le combat
+
+`BattleBuilder.pvn` prend un `leadingPokemon` que `PartyStore.toBattleTeam` remonte en tête de
+l'équipe. Personne ne le remplissait, donc un combat partait toujours sur le premier slot.
+`TrainerLead` répond à sa place, en trois temps : le slot sélectionné dans l'overlay, sinon le
+Pokémon sorti, sinon rien - et rien rend à Cobblemon son premier slot.
+
+Points à ne pas redécouvrir :
+
+- **La sélection de l'overlay ne quitte jamais le client.** Elle vit dans
+  `ClientStorageManager.selectedSlot`, que seuls les keybinds écrivent ; le serveur ne la reçoit
+  dans aucun paquet de Cobblemon. C'est toute la raison d'être de `ClientPokemonSelection` et de
+  son paquet, et donc de la cinquième responsabilité côté client.
+- **Le Pokémon sorti est la même sélection, vue du serveur.** Sortir un Pokémon, c'est envoyer
+  `SendOutPokemonPacket(selectedSlot)` : ce qui marche à côté du joueur *est* ce qu'il avait
+  choisi. C'est ce repli qui fait que le cas courant marche déjà sans notre client.
+- **Le test est `state is SentOutState`, pas `entity != null`.** `Pokemon.entity` répond aussi
+  pour un `ShoulderedState`, et un Pokémon sur l'épaule n'est pas un Pokémon sorti.
+- **Ce que le client annonce n'est jamais cru.** L'UUID est retrouvé dans la vraie équipe au
+  moment du combat : un Pokémon qui n'est pas au joueur ne trouve rien et le repli joue. Le
+  paquet est un indice, pas une instruction.
+- **Un Pokémon K.O. n'est jamais choisi**, et le repli continue. Ce n'est pas la même règle que
+  le refus de combat : celui-ci porte sur l'équipe entière et ne souffre aucune exception, alors
+  qu'ici un format qui ajuste les niveaux soigne l'équipe, donc une sélection K.O. y est honorée
+  au lieu d'être sautée. Le refus garantit qu'il reste toujours quelqu'un debout à faire entrer.
+- **La sélection est de la session, pas du joueur.** Elle est oubliée à la déconnexion des deux
+  côtés, plutôt que de survivre à une équipe réorganisée entre-temps.
+- **Le client compare avant de parler.** Il n'existe aucun événement sur ce champ, d'où le tick ;
+  ce qui est borné, c'est ce qui part sur le réseau, pas ce qui est lu.
 
 ### Le regard des dresseurs
 

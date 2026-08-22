@@ -74,6 +74,8 @@
 
   "cobblemon-trainers.chat.locked": "%s will not battle you yet.",
 
+  "cobblemon-trainers.chat.no_healthy_pokemon": "None of your Pokémon can fight. Heal your team before challenging a trainer.",
+
   "cobblemon-trainers.chat.call.arrival": "I am waiting for you at %s, %s, %s.",
   "cobblemon-trainers.chat.call.busy": "I am already around here somewhere.",
   "cobblemon-trainers.chat.call.wrong_place": "%s is not here. Look for them in:",

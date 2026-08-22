@@ -4,6 +4,7 @@ import com.cobblemon.mod.common.api.npc.configuration.NPCInteractConfiguration
 import com.cobblemon.mod.common.battles.BattleBuilder
 import com.cobblemon.mod.common.battles.BattleFormat
 import com.cobblemon.mod.common.entity.npc.NPCEntity
+import com.cobblemon.mod.common.util.party
 import matheo1712.cobbletrainers.CobblemonTrainers
 import matheo1712.cobbletrainers.trainers.TrainerRegistry
 import matheo1712.cobbletrainers.trainers.TrainerLock
@@ -56,10 +57,27 @@ class TrainerBattleInteraction : NPCInteractConfiguration {
 
         val format = battleFormatOf(definition?.battle?.format)
 
+        // Cobblemon counts the player's party without ever asking what is still standing in it:
+        // `pvn` filters on health for the trainer's side only. A wiped player would hand Showdown
+        // a team where nobody can be sent out. The rule has no exception - not even a
+        // level-adjusting format, which heals the copies it battles with and would hand a wiped
+        // player a full team for free. The empty party is the one case left to Cobblemon, which
+        // refuses it too and says it better than we would.
+        val party = player.party()
+        if (party.any() && party.none { !it.isFainted() }) {
+            player.sendSystemMessage(
+                CobblemonTrainers.lang("chat.no_healthy_pokemon").withStyle(ChatFormatting.GRAY)
+            )
+            return true
+        }
+
         BattleBuilder.pvn(
             player = player,
             npcEntity = npc,
             battleFormat = format,
+            // Whoever the player has selected opens the battle. Cobblemon leads with slot one
+            // otherwise, and null keeps exactly that.
+            leadingPokemon = TrainerLead.leadFor(player, format),
             // A level-adjusting format must battle on copies. See `LVL_50_SINGLES` below.
             cloneParties = format.adjustLevel > 0
         ).ifErrored { errors ->

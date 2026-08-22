@@ -18,11 +18,14 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
  * The mod is a server-side affair almost everywhere - trainers come from datapacks and fight
  * on the server. What cannot be: the two screens. The trainer spawner has one, and so does the
  * battle phone; a screen only exists on a client. This registers the packets that open them,
- * the two that feed the phone its skins and its teams, and nothing else.
+ * the two that feed the phone its skins and its teams, and the one thing here that is not a
+ * screen: the party slot the player has selected, which Cobblemon keeps client-side.
  */
 object CobblemonTrainersClient : ClientModInitializer {
 
     override fun onInitializeClient() {
+        ClientPokemonSelection.register()
+
         ClientPlayNetworking.registerGlobalReceiver(OpenTrainerSpawnerPayload.TYPE) { payload, context ->
             context.client().setScreen(TrainerSpawnerScreen(payload))
         }

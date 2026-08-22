@@ -6,6 +6,7 @@ import matheo1712.cobbletrainers.battle.TrainerBattleInteraction
 import matheo1712.cobbletrainers.block.TrainerBlocks
 import matheo1712.cobbletrainers.command.TrainerCommands
 import matheo1712.cobbletrainers.item.TrainerItems
+import matheo1712.cobbletrainers.network.BattleLeadNetworking
 import matheo1712.cobbletrainers.network.BattlePhoneNetworking
 import matheo1712.cobbletrainers.network.TrainerSpawnerNetworking
 import matheo1712.cobbletrainers.trainers.TrainerCalls
@@ -85,6 +86,7 @@ object CobblemonTrainers : ModInitializer {
         TrainerItems.register()
         TrainerSpawnerNetworking.register()
         BattlePhoneNetworking.register()
+        BattleLeadNetworking.register()
         TrainerCalls.register()
 
         ResourceManagerHelper.get(PackType.SERVER_DATA).registerReloadListener(TrainerReloadListener)
