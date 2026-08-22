@@ -4,6 +4,9 @@
     "level": 8,
     "difficulty": 0
   },
+  "location": {
+    "biome": "#minecraft:is_forest"
+  },
   "team": [
     "Rattata (M)",
     "Level: 8",

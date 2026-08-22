@@ -9,6 +9,7 @@ import com.cobblemon.mod.common.entity.npc.NPCBattleActor
 import com.cobblemon.mod.common.entity.npc.NPCEntity
 import matheo1712.cobbletrainers.CobblemonTrainers
 import matheo1712.cobbletrainers.advancement.TrainerDefeatedTrigger
+import matheo1712.cobbletrainers.trainers.TrainerCalls
 import matheo1712.cobbletrainers.trainers.TrainerDefinition
 import matheo1712.cobbletrainers.trainers.TrainerProgress
 import matheo1712.cobbletrainers.trainers.TrainerRegistry
@@ -49,13 +50,18 @@ object TrainerBattleEventHandler {
     }
 
     private fun handleBattleStart(battle: PokemonBattle) {
-        val definition = resolveTrainer(battle) ?: return
+        val npc = resolveNpc(battle) ?: return
+        val definition = TrainerRegistry.findByAspects(npc.aspects) ?: return
         val players = battle.players
         if (players.isEmpty()) return
 
         TrainerBattleMusic.start(definition.battle.music, players)
+        // Cobblemon has no "battle over" event - see the class docs - so everything that has to
+        // happen whichever way a battle ends hangs off this one handler.
         battle.onEndHandlers.add { ended ->
             TrainerBattleMusic.stop(definition.battle.music, ended.players)
+            // A trainer who came when called leaves once they are done, win or lose.
+            TrainerCalls.dismissAfterBattle(npc)
         }
 
         broadcast(players, definition.name, definition.messages.start)
@@ -92,8 +98,9 @@ object TrainerBattleEventHandler {
             // After the record, never before: a `count` condition scores itself on it.
             TrainerDefeatedTrigger.trigger(player, trainerId)
 
-            if (!definition.progress.rewardsEveryWin && !firstWin) return@forEach
-            TrainerRewards.grant(player, definition.rewards)
+            // Which rewards that covers is each reward's own business now - see
+            // TrainerReward.firstWinOnly - so the whole list goes through either way.
+            TrainerRewards.grant(player, definition.rewards, firstWin)
         }
     }
 
@@ -114,10 +121,6 @@ object TrainerBattleEventHandler {
             battle.stop()
         }
     }
-
-    /** Finds the trainer definition from the aspect applied at spawn time. */
-    private fun resolveTrainer(battle: PokemonBattle): TrainerDefinition? =
-        resolveNpc(battle)?.let { TrainerRegistry.findByAspects(it.aspects) }
 
     /** The NPC entity fighting in a battle, whether or not it is one of our trainers. */
     private fun resolveNpc(battle: PokemonBattle): NPCEntity? =

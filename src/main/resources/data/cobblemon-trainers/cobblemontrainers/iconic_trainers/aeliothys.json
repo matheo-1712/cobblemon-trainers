@@ -16,6 +16,9 @@
     "lose": "trainer.cobblemon-trainers.aeliothys.lose"
   },
 
+  "location": {
+    "biome": "minecraft:jungle"
+  },
   "team": [
     "Poppy (Buneary) @ Focus Sash  \nAbility: Limber  \nShiny: Yes  \nTera Type: Normal  \nEVs: 4 HP / 252 Atk / 252 Spe  \nJolly Nature  \n- Endeavor  \n- Fake Out  \n- Quick Attack  \n- Baton Pass",
     "Lucario @ Choice Specs  \nAbility: Steadfast  \nEVs: 4 HP / 252 SpA / 252 Spe  \nTimid Nature  \nIVs: 0 Atk  \n- Aura Sphere  \n- Flash Cannon  \n- Shadow Ball  \n- Vacuum Wave",

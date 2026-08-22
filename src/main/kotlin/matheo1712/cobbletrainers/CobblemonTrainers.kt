@@ -8,6 +8,8 @@ import matheo1712.cobbletrainers.command.TrainerCommands
 import matheo1712.cobbletrainers.item.TrainerItems
 import matheo1712.cobbletrainers.network.BattlePhoneNetworking
 import matheo1712.cobbletrainers.network.TrainerSpawnerNetworking
+import matheo1712.cobbletrainers.trainers.TrainerCalls
+import matheo1712.cobbletrainers.trainers.TrainerGaze
 import matheo1712.cobbletrainers.trainers.TrainerRegistry
 import matheo1712.cobbletrainers.trainers.TrainerSkins
 import net.fabricmc.api.ModInitializer
@@ -41,6 +43,7 @@ import org.slf4j.LoggerFactory
  * - `/cobblemontrainers defeat <id|all> [players] [reset]` to record a victory without a battle
  * - A trainer spawner block, which keeps one trainer standing where it is placed
  * - A battle phone item, the same listing in a screen, for every player
+ * - Calling a trainer from that screen, for a trainer that declares where it is to be found
  */
 object CobblemonTrainers : ModInitializer {
 
@@ -59,6 +62,14 @@ object CobblemonTrainers : ModInitializer {
      */
     const val SPAWNER_ASPECT_PREFIX = "trainer_spawner:"
 
+    /**
+     * Prefix of the aspect naming the player who called a trainer from their battle phone,
+     * followed by their UUID. Saved to NBT like the two above, which is what lets
+     * [matheo1712.cobbletrainers.trainers.TrainerCalls] recognise a called trainer whose call
+     * a restart has forgotten.
+     */
+    const val CALL_ASPECT_PREFIX = "trainer_call:"
+
     @JvmField
     val LOGGER: Logger = LoggerFactory.getLogger(MOD_ID)
 
@@ -74,12 +85,15 @@ object CobblemonTrainers : ModInitializer {
         TrainerItems.register()
         TrainerSpawnerNetworking.register()
         BattlePhoneNetworking.register()
+        TrainerCalls.register()
 
         ResourceManagerHelper.get(PackType.SERVER_DATA).registerReloadListener(TrainerReloadListener)
 
         try {
             TrainerBattleInteraction.register()
             TrainerBattleEventHandler.register()
+            // Grouped with the Cobblemon-dependent hooks: it reads NPCEntity like they do.
+            TrainerGaze.register()
         } catch (e: Exception) {
             LOGGER.error("Failed to register battle hooks. Is Cobblemon installed?", e)
         }

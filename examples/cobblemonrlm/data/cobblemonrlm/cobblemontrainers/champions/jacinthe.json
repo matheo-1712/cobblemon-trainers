@@ -12,6 +12,9 @@
     "win": "trainer.cobblemonrlm.jacinthe.win",
     "lose": "trainer.cobblemonrlm.jacinthe.lose"
   },
+  "location": {
+    "label": "trainer.cobblemonrlm.jacinthe.location"
+  },
   "team": [
     "Spiritomb @ Sitrus Berry",
     "Ability: Pressure",

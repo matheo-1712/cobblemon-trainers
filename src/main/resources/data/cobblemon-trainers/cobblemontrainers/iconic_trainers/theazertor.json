@@ -14,6 +14,9 @@
     "win": "trainer.cobblemon-trainers.theazertor.win",
     "lose": "trainer.cobblemon-trainers.theazertor.lose"
   },
+  "location": {
+    "biome": "minecraft:desert"
+  },
   "team": [
     "Lavender (Lycanroc) (F) @ Focus Sash\nAbility: Tough Claws\nAspects: wolf_form=dusk\nTera Type: Rock\nEVs: 4 HP / 252 Atk / 252 Spe\nJolly Nature\n- Stone Edge\n- Accelerock\n- Stealth Rock\n- Close Combat",
     "Willow (Leafeon) @ Choice Band\nAbility: Chlorophyll\nEVs: 252 Atk / 4 SpD / 252 Spe\nAdamant Nature\n- Leaf Blade\n- X-Scissor\n- Knock Off\n- Wish",

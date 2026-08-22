@@ -14,6 +14,9 @@
     "win": "trainer.cobblemon-trainers.octavien29.win",
     "lose": "trainer.cobblemon-trainers.octavien29.lose"
   },
+  "location": {
+    "biome": "minecraft:beach"
+  },
   "team": [
     "Arcanine @ Life Orb\nAbility: Rock Head\nAspects: hisuian\nEVs: 252 Atk / 4 SpD / 252 Spe\nJolly Nature\n- Extreme Speed\n- Flare Blitz\n- Head Smash\n- Wild Charge",
     "Serperior @ Leftovers\nAbility: Contrary\nEVs: 4 HP / 252 SpA / 252 Spe\nTimid Nature\n- Leaf Storm\n- Knock Off\n- Glare\n- Synthesis",

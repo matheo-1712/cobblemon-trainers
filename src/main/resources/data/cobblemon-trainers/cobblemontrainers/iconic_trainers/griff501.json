@@ -15,6 +15,9 @@
     "lose": "trainer.cobblemon-trainers.griff501.lose"
   },
 
+  "location": {
+    "biome": "minecraft:windswept_hills"
+  },
   "team": [
     "Toxic (Gliscor) @ Toxic Orb  \nAbility: Poison Heal  \nEVs: 252 HP / 4 Atk / 252 Spe  \nJolly Nature  \n- Stealth Rock  \n- Earthquake  \n- Knock Off  \n- U-turn",
     "Bloon (Greninja) (F) @ Choice Scarf  \nAbility: Protean  \nTera Type: Water  \nEVs: 4 HP / 252 SpA / 252 Spe  \nTimid Nature  \n- Dark Pulse  \n- Hydro Pump  \n- Sludge Wave  \n- U-turn",

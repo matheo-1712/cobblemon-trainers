@@ -15,8 +15,7 @@
     "lose": "trainer.cobblemonrlm.maitre_cache.lose"
   },
   "progress": {
-    "rematch": "never",
-    "rewards": "first_win"
+    "rematch": "never"
   },
   "rewards": [
     {

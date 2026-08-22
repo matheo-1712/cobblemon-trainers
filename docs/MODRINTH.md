@@ -236,8 +236,14 @@ Four blocks, each holding what its name says.
 | `progress` | Default | Values | What it does |
 | --- | --- | --- | --- |
 | `rematch` | `unlimited` | `unlimited`, `never` | Whether it can be challenged again once beaten |
-| `rewards` | `every_win` | `every_win`, `first_win` | When `rewards` is handed over |
 | `listed` | `true` | boolean | Shows up in the Battle Phone and `/cobblemontrainers list` |
+
+| `rewards[]` | Default | What it does |
+| --- | --- | --- |
+| `item` | - | Full item ID, namespace included |
+| `count` | `1` | How many, clamped to 1-6400 |
+| `hidden` | `false` | Keep it off the Battle Phone - a surprise, still handed over |
+| `firstWinOnly` | `false` | Drop it on the first victory only, so the rest stays farmable |
 
 | `skin` | Default | What it does |
 | --- | --- | --- |

@@ -50,7 +50,7 @@ le groupe « Dresseurs ».
 | `cobblemonrlm:skin_texture` | `skin.type` en `texture` : une image livrée par le pack, `assets/cobblemonrlm/textures/trainers/aventurier.png`. Aucun accès réseau, aucun compte Mojang |
 | `cobblemonrlm:champions/champion_unique` | `"rematch": "never"` et une liste de `rewards` - un combat unique par joueur. Et un `requires` **visible** (`"hidden": false`) : il faut avoir battu Jacinthe et porter un diamant, sans quoi il décline en listant ce qui manque |
 | `cobblemonrlm:champions/maitre_cache` | Un `requires` **caché** : absent du Battle Phone tant que les deux autres champions n'ont pas été battus. `victories` sans `count` veut dire « tous ceux de la catégorie », lui-même excepté |
-| `cobblemonrlm:debutants/recompense_unique` | Rejouable autant qu'on veut, mais `"rewards": "first_win"` - la récompense ne tombe qu'à la première victoire |
+| `cobblemonrlm:debutants/recompense_unique` | Rejouable autant qu'on veut, et **deux récompenses de régimes différents** : le Câble Liaison en `firstWinOnly` ne tombe qu'une fois, les bonbons Exp tombent à chaque victoire |
 | `cobblemonrlm:formes` | Lignes `Aspects:` : un Raichu d'Alola et un Smogogo de Galar (caractéristiques à drapeau, `alolan` / `galarian`), un Motisma-Lavage (caractéristique à choix, `appliance=wash`) |
 | `cobblemonrlm:polyglotte` | Textes en clés de traduction, fournies par `assets/cobblemonrlm/lang/` - passe ton jeu en anglais puis en français pour voir la différence, nom flottant compris |
 | `cobblemonrlm:champions/jacinthe` | Le cas complet : équipe de six, textes traduits, et `battle.music` pointant sur une piste du pack plutôt que sur celle du mod |
