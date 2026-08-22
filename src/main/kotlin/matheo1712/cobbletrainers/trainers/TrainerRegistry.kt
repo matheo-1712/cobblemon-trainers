@@ -1,12 +1,11 @@
-package matheo1712.cobbletrainers.registry
+package matheo1712.cobbletrainers.trainers
 
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import matheo1712.cobbletrainers.CobblemonTrainers
-import matheo1712.cobbletrainers.trainers.TrainerCategory
-import matheo1712.cobbletrainers.trainers.TrainerDefinition
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.packs.resources.ResourceManager
+import java.io.InputStream
 
 /**
  * In-memory registry of the available trainers and their categories.
@@ -105,7 +104,7 @@ object TrainerRegistry {
      */
     private fun <T> read(
         location: ResourceLocation,
-        openStream: () -> java.io.InputStream,
+        openStream: () -> InputStream,
         type: Class<T>,
         accept: (ResourceLocation, T) -> Unit
     ) {
@@ -150,7 +149,7 @@ object TrainerRegistry {
      *
      * The aspect is written at spawn time and saved to NBT, so the link survives a restart.
      * The ID is returned whether or not a definition still carries it: a trainer dropped from
-     * the datapacks keeps its identity, which is what [matheo1712.cobbletrainers.trainers.TrainerProgress] is keyed on.
+     * the datapacks keeps its identity, which is what [TrainerProgress] is keyed on.
      */
     fun idFromAspects(aspects: Collection<String>): ResourceLocation? {
         val aspect = aspects.find { it.startsWith(CobblemonTrainers.TRAINER_ASPECT_PREFIX) } ?: return null
@@ -189,7 +188,7 @@ object TrainerRegistry {
      * Everything that presents progress to a player goes through here rather than [all]: the
      * demo trainers shipped by this mod and by others are loaded in every world, and a player
      * has no reason to see them among the trainers they are meant to hunt down. See
-     * [matheo1712.cobbletrainers.trainers.TrainerProgressRules.listed].
+     * [TrainerProgressRules.listed].
      */
     fun listed(): List<Pair<ResourceLocation, TrainerDefinition>> = listedOrder
 

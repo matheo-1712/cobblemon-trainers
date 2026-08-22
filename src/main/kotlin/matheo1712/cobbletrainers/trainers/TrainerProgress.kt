@@ -23,7 +23,7 @@ import java.util.UUID
  *
  * This is world state rather than datapack state, so it lives in a [net.minecraft.world.level.saveddata.SavedData] file
  * (`data/cobblemon_trainers_progress.dat` of the overworld) instead of the datapack-fed
- * [matheo1712.cobbletrainers.registry.TrainerRegistry]: `/reload` must not wipe what players have already achieved.
+ * [TrainerRegistry]: `/reload` must not wipe what players have already achieved.
  */
 class TrainerProgress : SavedData() {
 

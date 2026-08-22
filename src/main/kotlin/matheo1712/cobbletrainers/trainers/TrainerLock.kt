@@ -1,7 +1,6 @@
 package matheo1712.cobbletrainers.trainers
 
 import matheo1712.cobbletrainers.CobblemonTrainers
-import matheo1712.cobbletrainers.registry.TrainerRegistry
 import net.minecraft.ChatFormatting
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.network.chat.Component

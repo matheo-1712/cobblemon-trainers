@@ -2,7 +2,7 @@ package matheo1712.cobbletrainers.network
 
 import matheo1712.cobbletrainers.CobblemonTrainers
 import matheo1712.cobbletrainers.parser.ShowdownTeamParser
-import matheo1712.cobbletrainers.registry.TrainerRegistry
+import matheo1712.cobbletrainers.trainers.TrainerRegistry
 import matheo1712.cobbletrainers.trainers.TrainerDefinition
 import matheo1712.cobbletrainers.trainers.TrainerLock
 import matheo1712.cobbletrainers.trainers.TrainerProgress

@@ -4,7 +4,7 @@ import com.cobblemon.mod.common.api.battles.model.actor.AIBattleActor;
 import com.cobblemon.mod.common.api.battles.model.ai.BattleAI;
 import com.cobblemon.mod.common.entity.npc.NPCBattleActor;
 import matheo1712.cobbletrainers.battle.ai.TrainerBattleAI;
-import matheo1712.cobbletrainers.registry.TrainerRegistry;
+import matheo1712.cobbletrainers.trainers.TrainerRegistry;
 import matheo1712.cobbletrainers.trainers.TrainerDefinition;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
