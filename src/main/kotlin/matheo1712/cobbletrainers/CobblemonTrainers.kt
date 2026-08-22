@@ -8,7 +8,7 @@ import matheo1712.cobbletrainers.command.TrainerCommands
 import matheo1712.cobbletrainers.item.TrainerItems
 import matheo1712.cobbletrainers.network.BattlePhoneNetworking
 import matheo1712.cobbletrainers.network.TrainerSpawnerNetworking
-import matheo1712.cobbletrainers.registry.TrainerRegistry
+import matheo1712.cobbletrainers.trainers.TrainerRegistry
 import matheo1712.cobbletrainers.trainers.TrainerSkins
 import net.fabricmc.api.ModInitializer
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback

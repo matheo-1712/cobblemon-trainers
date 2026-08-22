@@ -11,7 +11,7 @@ import matheo1712.cobbletrainers.CobblemonTrainers
 import matheo1712.cobbletrainers.advancement.TrainerDefeatedTrigger
 import matheo1712.cobbletrainers.trainers.TrainerDefinition
 import matheo1712.cobbletrainers.trainers.TrainerProgress
-import matheo1712.cobbletrainers.registry.TrainerRegistry
+import matheo1712.cobbletrainers.trainers.TrainerRegistry
 import matheo1712.cobbletrainers.trainers.TrainerRewards
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents

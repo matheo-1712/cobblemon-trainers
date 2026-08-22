@@ -2,7 +2,7 @@ package matheo1712.cobbletrainers.block
 
 import com.cobblemon.mod.common.entity.npc.NPCEntity
 import matheo1712.cobbletrainers.CobblemonTrainers
-import matheo1712.cobbletrainers.registry.TrainerRegistry
+import matheo1712.cobbletrainers.trainers.TrainerRegistry
 import matheo1712.cobbletrainers.trainers.TrainerSpawner
 import net.minecraft.core.BlockPos
 import net.minecraft.core.HolderLookup

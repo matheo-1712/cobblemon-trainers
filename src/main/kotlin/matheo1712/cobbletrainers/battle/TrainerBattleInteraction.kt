@@ -5,7 +5,7 @@ import com.cobblemon.mod.common.battles.BattleBuilder
 import com.cobblemon.mod.common.battles.BattleFormat
 import com.cobblemon.mod.common.entity.npc.NPCEntity
 import matheo1712.cobbletrainers.CobblemonTrainers
-import matheo1712.cobbletrainers.registry.TrainerRegistry
+import matheo1712.cobbletrainers.trainers.TrainerRegistry
 import matheo1712.cobbletrainers.trainers.TrainerLock
 import matheo1712.cobbletrainers.trainers.TrainerProgress
 import net.minecraft.ChatFormatting
@@ -76,6 +76,11 @@ class TrainerBattleInteraction : NPCInteractConfiguration {
         /** Value of the `type` field in the NPC class JSON. */
         const val TYPE = "cobblemon-trainers:battle"
 
+        // Special Format for level 50 battles
+        private val LVL_50_SINGLES = BattleFormat.GEN_9_SINGLES.copy(adjustLevel = 50)
+        private val LVL_50_DOUBLES = BattleFormat.GEN_9_DOUBLES.copy(adjustLevel = 50)
+        private val LVL_50_TRIPLES = BattleFormat.GEN_9_TRIPLES.copy(adjustLevel = 50)
+
         /**
          * Accepted values of a trainer's `battle.format`. Cobblemon's own spellings are kept,
          * plus the plain solo/duo/trio wording.
@@ -92,7 +97,16 @@ class TrainerBattleInteraction : NPCInteractConfiguration {
             "trio" to BattleFormat.GEN_9_TRIPLES,
             "triple" to BattleFormat.GEN_9_TRIPLES,
             "triples" to BattleFormat.GEN_9_TRIPLES,
-            "triple_battle" to BattleFormat.GEN_9_TRIPLES
+            "triple_battle" to BattleFormat.GEN_9_TRIPLES,
+
+            // Level 50 formats
+            "single_50" to LVL_50_SINGLES,
+            "singles_50" to LVL_50_SINGLES,
+            "double_50" to LVL_50_DOUBLES,
+            "doubles_50" to LVL_50_DOUBLES,
+            "triple_50" to LVL_50_TRIPLES,
+            "triples_50" to LVL_50_TRIPLES
+
         )
 
         /**

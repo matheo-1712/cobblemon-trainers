@@ -2,7 +2,7 @@ package matheo1712.cobbletrainers.network
 
 import matheo1712.cobbletrainers.CobblemonTrainers
 import matheo1712.cobbletrainers.block.TrainerSpawnerBlockEntity
-import matheo1712.cobbletrainers.registry.TrainerRegistry
+import matheo1712.cobbletrainers.trainers.TrainerRegistry
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.ChatFormatting

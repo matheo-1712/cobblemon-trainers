@@ -6,7 +6,7 @@ import com.mojang.brigadier.context.CommandContext
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType
 import matheo1712.cobbletrainers.CobblemonTrainers
 import matheo1712.cobbletrainers.advancement.TrainerDefeatedTrigger
-import matheo1712.cobbletrainers.registry.TrainerRegistry
+import matheo1712.cobbletrainers.trainers.TrainerRegistry
 import matheo1712.cobbletrainers.trainers.TrainerProgress
 import net.minecraft.ChatFormatting
 import net.minecraft.commands.CommandSourceStack

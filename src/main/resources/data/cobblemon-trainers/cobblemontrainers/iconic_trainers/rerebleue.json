@@ -5,6 +5,7 @@
     "value": "4199c666-1193-49b6-8986-099d872d5adf"
   },
   "battle": {
+    "format": "single_50",
     "level": 80,
     "difficulty": 5,
     "music": "cobblemon-trainers:battle_music.neoflare"
