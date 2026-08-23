@@ -6,6 +6,7 @@ import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents
 import net.minecraft.ChatFormatting
 import net.minecraft.core.BlockPos
 import net.minecraft.core.Direction
@@ -45,10 +46,14 @@ import kotlin.math.sin
  *   trainer standing there.
  * - **Nothing here is saved.** A call is a few minutes of a session, so the record lives in
  *   memory and a restart forgets it. What that leaves behind - a trainer standing in a chunk
- *   whose call nobody remembers - is swept up by [discardOrphan].
- * - **A trainer in a battle is never taken away**, whatever the caller does. Removing an actor
- *   mid-battle is what [matheo1712.cobbletrainers.battle.TrainerBattleEventHandler] has to
- *   clean up after, and there is no reason to cause it on purpose.
+ *   whose call nobody remembers - is swept up by [discardOrphans].
+ * - **A call ends when its caller leaves**, which is what keeps a called trainer out of the
+ *   world save: `PlayerList.removeAll` runs before the world is written, so quitting a solo
+ *   world takes the trainer along instead of leaving it standing there forever. See [sendHome].
+ * - **A trainer in a battle is never taken away** while the caller is still playing. Removing
+ *   an actor mid-battle is what [matheo1712.cobbletrainers.battle.TrainerBattleEventHandler]
+ *   has to clean up after, and there is no reason to cause it on purpose - but a battle whose
+ *   player has gone is not a battle anyone is playing.
  */
 object TrainerCalls {
 
@@ -74,21 +79,26 @@ object TrainerCalls {
     private val sulking = mutableMapOf<Pair<UUID, ResourceLocation>, Long>()
 
     /**
-     * Entities being added to the world right now. [discardOrphan] fires from inside
-     * `addFreshEntity`, before there is any call to find, and would otherwise sweep away the
-     * trainer we are in the middle of spawning.
+     * Called trainers read back from the save, waiting for the next tick to be looked at.
+     *
+     * The load event fires from inside the entity's own tracking setup - `addFreshEntity` and
+     * a chunk coming back both go through it - so nothing is removed there. Waiting a tick
+     * costs nothing visible and answers both halves at once: the entity is by then a normal
+     * entity of the world, and a trainer being called has had its call written down.
      */
-    private val spawning = mutableSetOf<UUID>()
+    private val pendingOrphans = mutableListOf<NPCEntity>()
 
     private val LOGGER = CobblemonTrainers.LOGGER
 
     fun register() {
         ServerTickEvents.END_SERVER_TICK.register { server -> tick(server) }
         ServerLivingEntityEvents.AFTER_DEATH.register { entity, _ -> onDeath(entity) }
-        ServerEntityEvents.ENTITY_LOAD.register { entity, _ -> discardOrphan(entity) }
+        ServerEntityEvents.ENTITY_LOAD.register { entity, _ -> queueOrphan(entity) }
+        ServerPlayConnectionEvents.DISCONNECT.register { handler, _ -> sendHome(handler.player.uuid) }
         ServerLifecycleEvents.SERVER_STOPPED.register {
             calls.clear()
             sulking.clear()
+            pendingOrphans.clear()
         }
     }
 
@@ -207,9 +217,27 @@ object TrainerCalls {
     }
 
     /**
+     * Ends the call of a player who is no longer there, battle or no battle.
+     *
+     * The rule sparing a trainer mid-battle is about not pulling an actor out from under a
+     * player who is playing; a battle whose player has left is not that. The removal is what
+     * [matheo1712.cobbletrainers.battle.TrainerBattleEventHandler] turns into a clean stop, on
+     * the unload event it already watches.
+     *
+     * Doing it the moment the player disconnects, rather than leaving it to [tick], is what
+     * keeps a called trainer out of the world save: `MinecraftServer.stopServer` removes its
+     * players before it writes the worlds, so a solo player quitting - mid-battle included -
+     * takes their trainer with them instead of leaving one standing there for good.
+     */
+    private fun sendHome(playerId: UUID) {
+        val call = calls.remove(playerId) ?: return
+        if (!call.entity.isRemoved) call.entity.discard()
+    }
+
+    /**
      * Spawns the trainer, marked with the caller so the entity itself says who it belongs to.
      *
-     * The aspect is saved to NBT like every other one, which is what lets [discardOrphan]
+     * The aspect is saved to NBT like every other one, which is what lets [discardOrphans]
      * recognise a called trainer whose call was forgotten by a restart.
      */
     private fun spawnFor(
@@ -223,23 +251,15 @@ object TrainerCalls {
         val yRot = facing(spot, player.position())
         val marker = CobblemonTrainers.CALL_ASPECT_PREFIX + player.uuid
 
-        // The guard has to be in place before the entity joins the world: adding it fires
-        // ENTITY_LOAD synchronously, and there is no call to find yet.
-        val guard = UUID.randomUUID()
-        spawning += guard
-        return try {
-            TrainerSpawner.spawn(
-                server = player.server,
-                level = level,
-                position = spot,
-                definition = definition,
-                trainerId = trainerId,
-                yRot = yRot,
-                extraAspects = listOf(marker)
-            )
-        } finally {
-            spawning -= guard
-        }
+        return TrainerSpawner.spawn(
+            server = player.server,
+            level = level,
+            position = spot,
+            definition = definition,
+            trainerId = trainerId,
+            yRot = yRot,
+            extraAspects = listOf(marker)
+        )
     }
 
     /** Degrees the trainer turns to look from [from] towards [to]. */
@@ -371,6 +391,7 @@ object TrainerCalls {
      * they came for has finished.
      */
     private fun tick(server: MinecraftServer) {
+        discardOrphans()
         if (calls.isEmpty()) return
 
         val time = server.overworld().gameTime
@@ -379,8 +400,17 @@ object TrainerCalls {
         calls.entries.removeIf { (playerId, call) ->
             val entity = call.entity
             // Removed covers a chunk unload as well as a discard. Either way the record is
-            // stale; a leftover entity is caught by discardOrphan when its chunk comes back.
+            // stale; a leftover entity is caught by discardOrphans when its chunk comes back.
             if (entity.isRemoved) return@removeIf true
+
+            // Asked before the battle: a battle only outranks the rest while someone is still
+            // playing it. Disconnecting has already gone through sendHome by now, so this is
+            // the net under it rather than the rule itself.
+            val player = server.playerList.getPlayer(playerId)
+            if (player == null) {
+                entity.discard()
+                return@removeIf true
+            }
 
             val dismissAt = call.dismissAt
             if (dismissAt != null && time >= dismissAt) {
@@ -388,12 +418,10 @@ object TrainerCalls {
                 return@removeIf true
             }
 
-            // A battle is never interrupted, whatever the caller is doing.
+            // A battle its caller is playing is never interrupted, whatever else they do.
             if (entity.battleIds.isNotEmpty()) return@removeIf false
 
-            val player = server.playerList.getPlayer(playerId)
-            val gone = player == null ||
-                player.level() !== entity.level() ||
+            val gone = player.level() !== entity.level() ||
                 player.distanceToSqr(entity) > LEASH_DISTANCE * LEASH_DISTANCE
             if (gone) entity.discard()
             gone
@@ -417,21 +445,38 @@ object TrainerCalls {
         sulking[callerId to trainerId] = entity.level().gameTime + SULK_TICKS
     }
 
-    /**
-     * Removes a called trainer nobody is waiting for any more.
-     *
-     * A call lives in memory, an entity lives on disk: restart a server while a trainer stands
-     * in a loaded chunk and the two disagree. The entity carries the caller in its aspects, so
-     * the rule is simply that a marked trainer with no matching call is a leftover.
-     */
-    private fun discardOrphan(entity: Entity) {
-        if (spawning.isNotEmpty()) return
+    /** Notes a called trainer that has just joined the world, for [discardOrphans] to judge. */
+    private fun queueOrphan(entity: Entity) {
         if (entity !is NPCEntity) return
-        val callerId = callerOf(entity) ?: return
-        if (calls[callerId]?.entity === entity) return
+        if (callerOf(entity) == null) return
+        pendingOrphans += entity
+    }
 
-        LOGGER.debug("Removing a called trainer no call remembers: {}", entity.uuid)
-        entity.discard()
+    /**
+     * Removes the called trainers nobody is waiting for any more.
+     *
+     * A call lives in memory, an entity lives on disk: quit a world while a trainer stands in a
+     * loaded chunk and the two disagree. The entity carries the caller in its aspects, so the
+     * rule is simply that a marked trainer with no matching call is a leftover - which is also
+     * what clears the ones left behind by a version that let them reach the save file.
+     *
+     * Judged a tick after the entity joined rather than from inside the load event: taking an
+     * entity back out of the world while it is half-way through being tracked is delicate, and
+     * a trainer spawned for a fresh call has by then had its call written down - which is what
+     * used to need a flag saying "one is being spawned right now".
+     */
+    private fun discardOrphans() {
+        if (pendingOrphans.isEmpty()) return
+
+        pendingOrphans.forEach { entity ->
+            if (entity.isRemoved) return@forEach
+            val callerId = callerOf(entity) ?: return@forEach
+            if (calls[callerId]?.entity === entity) return@forEach
+
+            LOGGER.debug("Removing a called trainer no call remembers: {}", entity.uuid)
+            entity.discard()
+        }
+        pendingOrphans.clear()
     }
 
     /** The player a trainer was called by, read from the aspect applied at spawn time. */
