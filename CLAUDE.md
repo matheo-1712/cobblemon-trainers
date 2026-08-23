@@ -1119,6 +1119,14 @@ suivre, et rien ne le vérifie. Le seul garde-fou est que le tag doit ressembler
 
 Points à ne pas redécouvrir :
 
+- **La description Modrinth est `MODRINTH.md`**, poussée par le workflow à chaque release :
+  la page ne peut donc pas décrire un build antérieur, et elle se relit en pull request comme
+  le reste. `mod-publish-plugin` ne sait que créer des *versions* - le projet lui-même se
+  modifie par `PATCH /v2/project/<id>`, avec le jeton en `Authorization` **sans** `Bearer`, et
+  une réussite répond `204` sans corps. L'étape est **la dernière** du workflow : une
+  description refusée ne doit pas coûter à la release ses assets, et le run rouge dit quoi
+  rejouer. Un lien relatif dans ce fichier serait mort sur Modrinth - tout y est en URL
+  absolue.
 - **La version publiée déclare son environnement**, `environment = CLIENT_AND_SERVER` dans le
   bloc `modrinth`. Modrinth exige une métadonnée d'environnement exacte (règle 5.1 des Content
   Rules) et rejette le projet en modération sans elle ; depuis mod-publish-plugin 2.1.0 ça se
@@ -1128,7 +1136,7 @@ Points à ne pas redécouvrir :
 - **Le slug Modrinth est `cobblemon-trainers-rerebleue`.** `cobblemon-trainers` appartient déjà
   à un autre projet, et la modération refuse un slug qui ne correspond pas au nom du projet.
   Le `modrinth_id` de `gradle.properties` est l'ID du projet, immuable : il ne suit pas le slug.
-  Le seul endroit du dépôt qui nomme le slug est le lien de `docs/MODRINTH.md`.
+  Le seul endroit du dépôt qui nomme le slug est le lien de `MODRINTH.md`.
 - **Le workflow exige `MODRINTH_TOKEN` avant de construire.** Sans jeton, `publishMods`
   bascule en `dryRun` et le workflow finirait vert sans rien publier.
 - **Un numéro de version déjà publié sur Modrinth est refusé (409).** Une release qui échoue

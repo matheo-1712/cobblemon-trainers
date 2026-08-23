@@ -228,6 +228,9 @@ Un dresseur ne se promène jamais, mais il **tourne la tête vers le joueur qui 
 à huit blocs, comme un villageois. Rien à régler : c'est le cas de tous les dresseurs, qu'ils
 soient posés par un bloc, invoqués en commande ou appelés depuis le Battle Phone.
 
+**➜ Toute la documentation est indexée dans [docs/README.md](docs/README.md)**, qui dit
+quelle page répond à quelle question.
+
 **➜ Le guide complet est dans [docs/DATAPACK.md](docs/DATAPACK.md)** : arborescence,
 référence de tous les champs, catégories, conditions, advancements, format d'équipe Showdown,
 skins, musique, revanches et récompenses, traductions, et les erreurs fréquentes.
