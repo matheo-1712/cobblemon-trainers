@@ -111,7 +111,7 @@ your resource pack, or put plain text in and it shows up as is. See
 "location": {
   "biome": "#minecraft:is_badlands",
   "time": "night",
-  "label": "in the badlands, at night",
+  "label": "the badlands, at night",
   "arrival": "I am at %s %s %s. Do not keep me waiting.",
   "busy": "I am already around here, open your eyes."
 }
@@ -125,7 +125,7 @@ trainer pinned down by a structure or an `area` therefore deserves a `label`.
 
 On the trainer's page, under their team:
 
-- **A location line**, `Found: in the badlands, at night`. It is visible before the trainer has
+- **A location line**, `Found in: the badlands, at night`. It is visible before the trainer has
   been beaten - unlike their team, which is a reward.
 - **A Call button**, on the right. It only exists for a callable trainer.
 
@@ -137,9 +137,9 @@ where the player stands relative to the condition, it only knows how the conditi
 server is what answers, in the chat, listing what is missing:
 
 ```
-Singles Ace is not here. Look for them:
-- biomes #minecraft:is_badlands
-- at night
+Singles Ace is not here. Look for them in:
+- biomes of #minecraft:is_badlands
+- by night
 ```
 
 Pressing the button closes the Battle Phone: the answer is a chat message, and it has to be

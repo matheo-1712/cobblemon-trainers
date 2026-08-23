@@ -59,8 +59,20 @@ ne peut pas démarrer (pas de Pokémon dans ton équipe, combat déjà en cours,
 équipe, dresseur qui ne prend pas de revanche, ou conditions non remplies), la raison
 s'affiche dans le chat.
 
+Le combat s'ouvre sur le **Pokémon sélectionné dans la barre d'équipe**, pas sur le premier
+slot : celui qui est en surbrillance dans l'overlay, ou à défaut celui qui est sorti à côté du
+joueur. Un Pokémon K.O. est ignoré et le premier disponible entre à sa place.
+
 Tuer ou supprimer un dresseur pendant le combat met fin à la rencontre au lieu de laisser le
 joueur enfermé face à un adversaire absent.
+
+### Les dresseurs livrés avec le mod
+
+Le mod apporte ses propres dresseurs, dans le namespace `cobblemon-trainers` : six *dresseurs
+iconiques* niveau 80, chacun appelable depuis un biome donné, et un dernier verrouillé
+derrière l'un d'eux, niveau 100, qui ne répond que dans l'End. Ils apparaissent dans le Battle
+Phone sous leur propre onglet, à côté de ceux de tes packs, et servent d'exemple jouable de ce
+que le format permet.
 
 ## Le Battle Phone
 
@@ -77,10 +89,12 @@ dresseurs -, chacun avec son propre compteur.
 Cliquer une ligne montre le dresseur en entier à droite, avec son niveau, la taille de son
 équipe et son état - vaincu, vaincu sans revanche possible, encore debout, ou fermé tant que
 ses conditions ne sont pas remplies, auquel cas la liste de ce qui manque remplace son
-équipe. À côté de lui, ce que le battre rapporte : une ligne par récompense, le nombre puis
-l'objet. Contrairement à son équipe, les récompenses sont visibles avant de l'avoir battu -
-c'est ce qui donne envie d'essayer -, et un pack peut en garder une secrète avec
-`"hidden": true`. À côté, six cases pour son équipe : elles restent fermées jusqu'à la victoire, puis
+équipe. À côté de lui, ce que le battre rapporte : une case par objet, avec sa quantité, et
+au-delà de quatre la dernière case compte le reste et le nomme au survol. Contrairement à son
+équipe, les récompenses sont visibles avant de l'avoir battu - c'est ce qui donne envie
+d'essayer -, et un pack peut en garder une secrète avec `"hidden": true`. Une récompense qui
+ne tombe qu'à la première victoire porte un marqueur, et son icône est grisée une fois
+réclamée. À côté, six cases pour son équipe : elles restent fermées jusqu'à la victoire, puis
 affichent les modèles de ses Pokémon, formes et chromatiques comprises. Passer la souris sur
 l'une d'elles donne le nom et le niveau du Pokémon.
 
@@ -304,6 +318,9 @@ Publier une release GitHub dont le tag est `v<version>`, par exemple `v1.2.3`. L
 C'est le tag qui donne la version du mod : rien à mettre à jour avant de tagguer, le `version=`
 de `gradle.properties` n'est que le défaut des builds locaux. Le corps de la release sert de
 changelog, et la case *pre-release* publie en beta.
+
+Le workflow pousse aussi `MODRINTH.md` par-dessus la description du projet Modrinth, à chaque
+release : la page de la boutique ne peut donc pas décrire une version antérieure.
 
 Un seul secret attendu par le dépôt : `MODRINTH_TOKEN`. En local, `./gradlew publishMods` est
 sans risque : sans jeton, il écrit ce qu'il aurait envoyé dans `build/mod-publish/`.

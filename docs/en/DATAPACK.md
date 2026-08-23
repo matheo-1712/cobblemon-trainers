@@ -378,10 +378,10 @@ Two ways into the same data.
 has beaten:
 
 ```
-Steve's trainers - 1 / 3 defeated
+Trainers of Steve - 1 / 3 defeated
 Champions - 1 / 2
 ✔ my_pack:champions/jasmine - Jasmine (no rematch)
-✘ my_pack:champions/champion - The Champion (locked, 1 condition(s) left)
+✘ my_pack:champions/champion - The Champion (locked, 1 requirement(s) left)
 Trainers - 0 / 1
 ✘ my_pack:rival - Rival
 ```
