@@ -229,7 +229,8 @@ Un dresseur ne se promène jamais, mais il **tourne la tête vers le joueur qui 
 soient posés par un bloc, invoqués en commande ou appelés depuis le Battle Phone.
 
 **➜ Toute la documentation est indexée dans [docs/README.md](docs/README.md)**, qui dit
-quelle page répond à quelle question.
+quelle page répond à quelle question - et sa traduction anglaise dans
+[docs/en/](docs/en/README.md).
 
 **➜ Le guide complet est dans [docs/DATAPACK.md](docs/DATAPACK.md)** : arborescence,
 référence de tous les champs, catégories, conditions, advancements, format d'équipe Showdown,
@@ -243,7 +244,10 @@ le bloc `location` et tout ce qui l'entoure.
 
 Un pack d'exemple couvrant chaque option vit dans
 [`examples/cobblemonrlm/`](examples/cobblemonrlm) : un seul dossier qui fait à la fois
-datapack (`data/`) et resource pack (`assets/`).
+datapack (`data/`) et resource pack (`assets/`). Il est aussi **téléchargeable prêt à
+l'emploi** : chaque [release](https://github.com/matheo-1712/cobblemon-trainers/releases)
+l'attache à côté du jar sous le nom `exemple_trainer_datapack.zip`. À déposer tel quel dans
+`mods/`, `datapacks/` ou `resourcepacks/` - rien à dézipper.
 
 Trois façons de livrer un pack, au choix de son auteur :
 

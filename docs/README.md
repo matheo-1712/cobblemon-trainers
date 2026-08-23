@@ -3,6 +3,8 @@
 Le wiki du mod. Le [README](../README.md) présente Cobblemon Trainers, son installation et
 ses commandes ; les pages ci-dessous sont la **référence** - c'est là que vit le détail.
 
+*This documentation is also available [in English](en/README.md).*
+
 ## Les pages
 
 | Page | Ce qu'on y trouve |
@@ -10,11 +12,12 @@ ses commandes ; les pages ci-dessous sont la **référence** - c'est là que vit
 | [DATAPACK.md](DATAPACK.md) | Créer un pack de dresseurs : arborescence, tous les champs, catégories, conditions, advancements, équipes Showdown, skins, musique, récompenses, traductions |
 | [SPAWNING.md](SPAWNING.md) | Faire venir un dresseur : le bloc `location` et l'appel depuis le Battle Phone |
 | [DIFFICULTE.md](DIFFICULTE.md) | Ce que fait exactement `battle.difficulty`, de `0` à `5` |
-| [MODRINTH.md](../MODRINTH.md) | La page publiée sur Modrinth, en anglais - une présentation, pas une référence |
 
 Un pack d'exemple couvrant chaque option vit dans
 [`examples/cobblemonrlm/`](../examples/cobblemonrlm) : un seul dossier qui fait à la fois
-datapack (`data/`) et resource pack (`assets/`).
+datapack (`data/`) et resource pack (`assets/`). Chaque
+[release](https://github.com/matheo-1712/cobblemon-trainers/releases) l'attache déjà zippé,
+sous le nom `exemple_trainer_datapack.zip`.
 
 ## Par question
 

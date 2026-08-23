@@ -5,6 +5,8 @@ suffit, et `/reload` applique les changements sans redémarrer le serveur.
 
 Pour l'installation du mod et les commandes, voir le [README](../README.md).
 
+*This page is also available [in English](en/DATAPACK.md).*
+
 ## Sommaire
 
 - [Arborescence](#arborescence) · [Où poser le pack](#où-poser-le-pack)
@@ -629,6 +631,11 @@ Voir [le README](../README.md#le-bloc-de-dresseur).
 Le dépôt contient un pack couvrant chaque option, dresseur par dresseur :
 [`examples/cobblemonrlm/`](../examples/cobblemonrlm). Zippe son contenu, renomme en `.jar`,
 pose-le dans `mods/` : c'est tout.
+
+Plus simple encore : il est **déjà zippé** en pièce jointe de chaque
+[release](https://github.com/matheo-1712/cobblemon-trainers/releases), sous le nom
+`exemple_trainer_datapack.zip`. Il se pose tel quel dans `mods/`, `datapacks/` ou
+`resourcepacks/`.
 
 Il montre entre autres une ligue complète : trois champions dans la catégorie `champions`,
 dont un verrouillé derrière le premier et un objet, un dernier caché jusqu'à ce que les deux

@@ -35,6 +35,14 @@ concis que possible** : une idée par phrase, un tableau plutôt qu'un paragraph
 soit déjà dit ailleurs dans le fichier. Ajouter un champ, c'est ajouter une ligne de tableau,
 pas une section.
 
+`docs/en/` est la **traduction anglaise** de ces trois pages plus leur index
+(`DATAPACK.md`, `SPAWNING.md`, `DIFFICULTY.md` - au nom anglais -, `README.md`), destinée aux
+joueurs qui arrivent par Modrinth. Le français reste la version de référence : **une règle se
+change d'abord dans `docs/`, puis dans `docs/en/` dans le même commit**. Deux pages qui
+divergent sont pires qu'une page absente, la seconde ayant l'air à jour. `MODRINTH.md`, à la
+racine, est la présentation publiée sur la boutique et n'a pas d'équivalent français - c'est
+une page de vente, pas une page du wiki.
+
 ## Commandes
 
 ```bash

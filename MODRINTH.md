@@ -39,9 +39,7 @@
 ## Commands
 
 ```
-/cobblemontrainers spawn <id>
-/cobblemontrainers spawn <id> <x> <y> <z>
-/cobblemontrainers list [<player>]
+/cobblemontrainers <command>
 ```
 
 Both require permission level 2 (operator). Autocomplete lists every loaded trainer under its
@@ -66,7 +64,7 @@ stores nothing - it reads the server - so losing it loses nothing. Find it in th
 
 ## How to make my own trainer pack
 
-You can see all details in (e)[]
+You can see all details in [DATAPACK DOCS](https://github.com/matheo-1712/cobblemon-trainers/blob/master/docs/README.md)
 
 ## Known limitations
 
@@ -100,6 +98,8 @@ Developed by **Mathéo** ([matheo-1712](https://github.com/matheo-1712)).
 ## Links
 
 - **Source & issues:** [github.com/matheo-1712/cobblemon-trainers](https://github.com/matheo-1712/cobblemon-trainers)
+- **Full documentation:** [the wiki](https://github.com/matheo-1712/cobblemon-trainers/blob/master/docs/en/README.md) -
+  every field, the `location` block, and what each AI difficulty does
 - **Example pack:** [downloadable](https://github.com/matheo-1712/cobblemon-trainers/releases) next to the jar on every release, on assets - one folder that works as
   a datapack and a resource pack at once, covering every option.
 

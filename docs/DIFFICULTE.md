@@ -8,6 +8,8 @@ certaines de ses décisions. La difficulté pilote les deux.
 
 Pour poser le champ dans un dresseur, voir [DATAPACK.md](DATAPACK.md#battle).
 
+*This page is also available [in English](en/DIFFICULTY.md).*
+
 ## Récapitulatif
 
 | Niveau | L'IA joue au hasard | Elle change de Pokémon quand elle le veut | Le mod corrige |
