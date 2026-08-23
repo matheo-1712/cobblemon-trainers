@@ -2,6 +2,7 @@ package matheo1712.cobbletrainers.trainers
 
 import com.cobblemon.mod.common.entity.npc.NPCEntity
 import matheo1712.cobbletrainers.CobblemonTrainers
+import matheo1712.cobbletrainers.dialogue.TrainerDialogue
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents
@@ -412,8 +413,11 @@ object TrainerCalls {
                 return@removeIf true
             }
 
+            // The dialogue box draws its portrait from the entity, so a trainer removed while
+            // their caller is still reading leaves an empty frame in front of them. The check
+            // only ever postpones: closing the box, or leaving, drops it on the next pass.
             val dismissAt = call.dismissAt
-            if (dismissAt != null && time >= dismissAt) {
+            if (dismissAt != null && time >= dismissAt && !TrainerDialogue.isTalking(player, entity)) {
                 entity.discard()
                 return@removeIf true
             }

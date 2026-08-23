@@ -35,7 +35,8 @@ import org.slf4j.LoggerFactory
  * Features:
  * - Showdown-formatted teams
  * - Skins: a Minecraft player (by username or UUID), or an image shipped in a pack
- * - Battle start and end messages
+ * - Dialogue on right-click, in Cobblemon's own box: a greeting, the choice to battle, and
+ *   the trainer's word once it is over
  * - Battle music
  * - Item rewards on victory, and one-shot trainers that turn down a rematch
  * - Requirements to challenge a trainer, and an advancement trigger fired by beating one

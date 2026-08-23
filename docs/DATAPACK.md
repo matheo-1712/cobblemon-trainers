@@ -105,6 +105,7 @@ Enfin, `datapacks/` est déclaré en données et rien d'autre : un `assets/` pos
     "music": "mon_pack:battle_music.finale"
   },
   "messages": {
+    "greeting": "Tu es venu jusqu'ici. Voyons ce que tu vaux.",
     "start": "Prêt ?",
     "win": "Bien joué.",
     "lose": "Reviens quand tu seras prêt."
@@ -132,7 +133,7 @@ Tout est facultatif : `{}` donne un dresseur valide, quoique peu intéressant.
 | `skin` | Steve | [Skin](#skins) |
 | `team` | `[]` | L'équipe, **un Pokémon par entrée**, au [format Showdown](#le-format-déquipe) |
 | `battle` | - | Le combat, ci-dessous |
-| `messages` | - | Ce que le dresseur dit |
+| `messages` | - | [Ce que le dresseur dit](#messages) |
 | `progress` | - | Ce que le battre change |
 | `rewards` | `[]` | Objets remis au vainqueur |
 | `requires` | - | [Conditions pour le combattre](#conditions-pour-combattre) |
@@ -182,11 +183,22 @@ des équipes est trop courte, Cobblemon refuse le combat et l'explique dans le c
 
 ### `messages`
 
-| Champ | Rôle |
+Ce que le dresseur dit passe par la boîte de dialogue de Cobblemon, celle de leurs propres
+NPC : un portrait, un nom, la réplique, et une rangée de boutons. Rien n'est envoyé au chat.
+
+| Champ | Quand |
 | --- | --- |
-| `start` | Au début du combat |
-| `win` | Si le joueur gagne |
-| `lose` | Si le joueur perd |
+| `greeting` | Au clic droit, au-dessus des boutons Combattre / Annuler |
+| `start` | Après avoir accepté, juste avant que le combat s'ouvre |
+| `win` | Une fois le joueur vainqueur |
+| `lose` | Une fois le joueur battu |
+
+Chacun est facultatif. Sans `greeting`, le mod met une phrase à lui. Sans `start`, accepter
+lance le combat directement. Sans `win` ni `lose`, rien ne s'ouvre après le combat.
+
+Un dresseur qui refuse le combat le dit dans la même boîte, à la place du `greeting` et sans
+bouton Combattre : déjà battu et sans revanche, [condition](#conditions-pour-combattre) non
+remplie, ou équipe du joueur K.O.
 
 ### `progress`
 
@@ -548,7 +560,7 @@ Le dresseur référence la **clé** de `sounds.json`, jamais le chemin du fichie
 
 ## Traduire les textes
 
-`name`, les trois `messages` et le `name` d'une catégorie sont envoyés comme textes
+`name`, les `messages` et le `name` d'une catégorie sont envoyés comme textes
 traduisibles. Deux usages, au choix :
 
 - **Texte brut** - `"name": "Red"` s'affiche tel quel, dans toutes les langues.

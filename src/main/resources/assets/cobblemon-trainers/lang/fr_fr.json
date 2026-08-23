@@ -68,6 +68,10 @@
 
   "cobblemon-trainers.chat.trainer_message": "[%s] %s",
 
+  "cobblemon-trainers.dialogue.greeting": "Alors, tu veux me combattre ?",
+  "cobblemon-trainers.dialogue.option.battle": "Combattre",
+  "cobblemon-trainers.dialogue.option.cancel": "Annuler",
+
   "cobblemon-trainers.chat.trainer_gone": "Le dresseur a quitté le combat. La rencontre s'arrête.",
 
   "cobblemon-trainers.chat.already_defeated": "%s a déjà été battu et ne prend pas de revanche.",
@@ -121,6 +125,7 @@
   "category.cobblemon-trainers.secret": "Dresseurs secrets",
 
   "trainer.cobblemon-trainers.rerebleue.name": "RereBleue",
+  "trainer.cobblemon-trainers.rerebleue.greeting": "Hé ! Tu as l'air d'avoir du répondant. On essaie ?",
   "trainer.cobblemon-trainers.rerebleue.battle_start": "Me demande pas pourquoi j'ai un E dans mon nom. Combattons plutôt !",
   "trainer.cobblemon-trainers.rerebleue.win": "Pas mal ! tu t'es bien débrouillé.",
   "trainer.cobblemon-trainers.rerebleue.lose": "Trop facile 😎",

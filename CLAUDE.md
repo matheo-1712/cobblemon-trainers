@@ -109,6 +109,8 @@ messages, musique et récompenses de combat.
   tête vers un joueur qui s'approche. Voir « Le regard des dresseurs ».
 - **`battle.TrainerLead`** - qui ouvre le combat pour un joueur, et la mémoire par joueur de ce
   que son client a annoncé. Voir « Le Pokémon qui ouvre le combat ».
+- **`dialogue.TrainerDialogue`** - tout ce qu'un dresseur dit, monté en `Dialogue` Cobblemon.
+  Voir « Les dialogues ».
 - **`advancement.TrainerDefeatedTrigger`** - le critère `cobblemon-trainers:trainer_defeated`.
 - **`ShowdownTeamParser`** - convertit du format Showdown en `PokemonProperties` en
   reconstruisant une chaîne de propriétés Cobblemon (`"pikachu level=88 ability=static …"`)
@@ -116,8 +118,8 @@ messages, musique et récompenses de combat.
   quand même redécoupée sur les lignes vides, ce qui rend un export Showdown entier collé dans
   une seule entrée lisible sans code en plus.
 - **`TrainerSpawner`** - construit et fait apparaître le `NPCEntity`.
-- **`TrainerBattleEventHandler`** - s'abonne à `CobblemonEvents.BATTLE_STARTED_POST` pour
-  le message de début et la musique, et à `BATTLE_VICTORY` pour le message de fin, les
+- **`TrainerBattleEventHandler`** - s'abonne à `CobblemonEvents.BATTLE_STARTED_POST` pour la
+  musique, et à `BATTLE_VICTORY` pour le mot de la fin, les
   récompenses et l'enregistrement de la victoire. Il surveille aussi la mort et la
   suppression des entités, pour arrêter le combat d'un dresseur qui quitte le monde (voir
   plus bas).
@@ -244,9 +246,10 @@ Points à ne pas redécouvrir :
   le déréférence dès que le fichier existe. `DataFixTypes.LEVEL` fait l'affaire - le
   DataFixerUpper rend l'entrée telle quelle quand la version lue vaut la version courante,
   donc c'est un passe-plat.
-- **Le refus de revanche est dans `TrainerBattleInteraction`, avant `BattleBuilder`**, pour
-  que rien ne démarre : ni équipe soignée, ni musique. Le refus pour condition non remplie est
-  au même endroit et pour la même raison.
+- **Le refus de revanche est dans `TrainerBattleInteraction.refusal`, avant `BattleBuilder`**,
+  pour que rien ne démarre : ni équipe soignée, ni musique. Le refus pour condition non remplie
+  est au même endroit et pour la même raison, et la boîte de dialogue le montre à la place du
+  `greeting` - voir « Les dialogues ».
 - **Les vainqueurs viennent de l'événement, pas de `battle.players`** : dans un combat à
   plusieurs joueurs, seul le camp gagnant est récompensé. `PlayerBattleActor.entity` est nul
   pour un joueur déconnecté ; on ne lui donne rien et on n'enregistre rien, donc le dresseur
@@ -266,7 +269,7 @@ Côté joueur, `CobblemonTrainers.lang(key, vararg args)` construit un `Componen
 préfixé par le mod id. Les clés vivent dans `assets/cobblemon-trainers/lang/en_us.json`
 (référence) et `fr_fr.json`.
 
-Les champs `name` et `battleEndWinMessage` & co. d'un dresseur sont eux aussi passés à
+Le `name` d'un dresseur et ses quatre `messages` sont eux aussi passés à
 `Component.translatable`. C'est volontaire et sans risque : Minecraft affiche la clé telle
 quelle quand aucune traduction n'existe, donc du texte brut dans le JSON continue de
 s'afficher normalement, tandis qu'un pack peut fournir une vraie clé. `rerebleue.json` est
@@ -361,9 +364,10 @@ Ces points ne se devinent pas depuis notre code seul et ont chacun causé un bug
 d'implémentation : les datapacks n'en déclarent jamais et `TrainerDefinition` n'a plus de
 champ `npcClass`. Ces fichiers restent hors de `cobblemontrainers/` contrairement aux dresseurs :
 le dossier est imposé par le `resourcePath` de `NPCClasses`, le registre de Cobblemon. Leur interaction est `cobblemon-trainers:battle`, implémentée par
-`TrainerBattleInteraction` : un clic droit lance le combat et renvoie au joueur les erreurs
-de `BattleBuilder`. Le MoLang `q.npc.start_battle` faisait la même chose mais avalait les
-erreurs, d'où un clic droit totalement muet quand le joueur n'avait pas de Pokémon.
+`TrainerBattleInteraction` : un clic droit ouvre la boîte de dialogue du dresseur (voir « Les
+dialogues »), et le combat qui s'ensuit renvoie au joueur les erreurs de `BattleBuilder`. Le
+MoLang `q.npc.start_battle` faisait la même chose mais avalait les erreurs, d'où un clic droit
+totalement muet quand le joueur n'avait pas de Pokémon.
 
 Une seule instance d'interaction est partagée par tous les dresseurs, donc le format de
 combat n'y est pas figé : `interact()` retrouve la définition via
@@ -666,9 +670,11 @@ Points à ne pas redécouvrir :
   exemplaires de la même personne visibles à la fois, pas sur un décompte mondial - qu'un
   exemplaire dorme dans un chunk déchargé à mille blocs ne regarde personne.
 - **Le nom du dresseur ne voyage pas dans `arrival`.** Le message est enveloppé par
-  `chat.trainer_message` comme les messages de combat, donc un pack écrit du dialogue pur et
-  reçoit exactement trois arguments : `x`, `y`, `z`. Passer aussi le nom obligerait chaque pack
-  à commencer par `%s`.
+  `chat.trainer_message`, qui le nomme déjà, donc un pack écrit du dialogue pur et reçoit
+  exactement trois arguments : `x`, `y`, `z`. Passer aussi le nom obligerait chaque pack à
+  commencer par `%s`. C'est le seul texte de dresseur qui reste dans le chat : il répond à un
+  bouton du Battle Phone, à distance, là où aucune boîte de dialogue ne peut s'ouvrir sur un
+  dresseur que le joueur ne voit pas encore.
 - **La mort passe par `AFTER_DEATH`**, le même événement que l'arrêt des combats, pour deux
   raisons différentes. Les deux abonnements coexistent sans se connaître.
 
@@ -948,6 +954,56 @@ Points à ne pas redécouvrir :
   qui ont activé `/cobblemontrainers debugai`. Sans ça un seuil est intuable : un changement
   refusé et un changement que personne n'a proposé se ressemblent exactement depuis l'autre côté
   du combat. `TrainerAiDebug.idle()` évite de formater une ligne que personne ne lira.
+
+### Les dialogues
+
+Un clic droit sur un dresseur n'ouvre plus le combat : il ouvre la boîte de dialogue de
+Cobblemon, celle que leur NPC `standard` utilise via `cobblemon:npc-example`. Le dresseur
+salue, le joueur choisit Combattre ou Annuler, et le dresseur dit son mot une fois le combat
+fini. Les quatre `messages` d'un dresseur (`greeting`, `start`, `win`, `lose`) passent tous
+par là ; plus rien de tout ça n'est envoyé au chat.
+
+Le `Dialogue` est **monté en Kotlin, par joueur et par interaction**, pas lu depuis un
+`data/<ns>/dialogues/`. Deux raisons, et aucune des deux ne se contourne en MoLang : les
+répliques vivent dans le fichier du dresseur, à côté de son équipe, et les boutons dépendent
+d'un état serveur - revanche, `requires`, équipe K.O. - qu'une expression de dialogue ne sait
+pas interroger. Le mod ne livre donc **aucun asset de dialogue**.
+
+Le partage est le même qu'avant : `TrainerBattleInteraction` garde les règles (`refusal`,
+`startBattle`), `TrainerDialogue` ne fait que les mettre en scène. La boîte n'affiche jamais
+autre chose que ce que `refusal` a déjà décidé.
+
+Points à ne pas redécouvrir :
+
+- **Rien n'a besoin d'être enregistré côté client.** `DialogueOpenedPacket` sérialise la *page*
+  regardée - texte, options, portrait -, pas une référence vers un dialogue du registre. Une
+  boîte montée sur le serveur arrive donc sur un client Cobblemon nu exactement comme les leurs.
+- **`DialogueManager.startDialogue(player, npc, dialogue)`** est la bonne des trois surcharges :
+  c'est elle qui pose `q.npc` dans le runtime et le `npc` sur l'`ActiveDialogue` - ce dernier
+  étant ce que lit `isTalking`.
+- **Le portrait est tiré de l'entité** (`ReferenceDialogueFaceProvider(npc.id, …)`), donc un
+  dresseur supprimé pendant que la boîte est ouverte laisse un cadre vide. C'est toute la raison
+  du `!TrainerDialogue.isTalking(...)` dans le tick de `TrainerCalls` : un dresseur appelé ne
+  rentre pas tant que son appelant lit. Le garde ne fait que reporter - fermer la boîte, ou se
+  déconnecter, le lève au passage suivant.
+- **`PokemonBattle.end()` tourne avant que `BATTLE_VICTORY` soit émis.** Les `onEndHandlers`
+  s'exécutent donc avant que la boîte d'adieu existe : inutile d'essayer de les enchaîner, c'est
+  le garde ci-dessus qui répond, pas un `CompletableFuture` accroché à la fin de combat.
+- **Les listes de Cobblemon sont des `MutableList`.** `DialoguePage.lines` et
+  `DialogueOptionSetInput.options` refusent un `listOf` : `mapTo(mutableListOf<DialogueText>())`
+  et `mutableListOf`. L'erreur du compilateur ne dit pas que c'est une question de variance.
+- **Le mot de la fin est dit à chaque joueur, pas diffusé.** Une boîte appartient à qui la
+  regarde, donc `win` va aux gagnants et `lose` aux autres, là où l'ancien message de chat
+  disait la même chose à tout le monde.
+- **La boîte d'adieu attend une seconde.** Sans ça elle s'ouvre par-dessus l'interface de combat
+  qui affiche encore le résultat. Ce délai tient dans les cinq secondes que `TrainerCalls`
+  laisse à un dresseur appelé avant de le renvoyer.
+- **Un joueur déjà en combat ne reçoit pas de boîte** : `interact` va droit à `startBattle`, dont
+  l'erreur Cobblemon dit mieux pourquoi rien ne se passe qu'un dialogue par-dessus le combat.
+- **Échapper depuis la page `accept` lance quand même le combat.** Le défi est accepté à ce
+  moment-là ; l'échappatoire, c'est le bouton Annuler de la page d'avant.
+- **Les libellés des boutons sont au mod, jamais au pack** (`dialogue.option.*`). Un pack qui
+  renommerait « Combattre » ferait un bouton dont personne ne peut deviner l'effet.
 
 ### Fin de combat
 
