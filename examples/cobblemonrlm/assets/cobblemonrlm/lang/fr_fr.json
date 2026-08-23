@@ -41,6 +41,7 @@
   "trainer.cobblemonrlm.recompense_unique.lose": "Secoue-toi et redéfie-moi.",
   "trainer.cobblemonrlm.jacinthe.name": "Jacinthe",
   "trainer.cobblemonrlm.jacinthe.greeting": "La salle est vide et l'orchestre attend. On s'y met ?",
+  "trainer.cobblemonrlm.jacinthe.decline": "L'orchestre patientera. Ne le fais pas trop attendre.",
   "trainer.cobblemonrlm.jacinthe.battle_start": "Écoute bien : ce thème n'est joué que pour les combats qui comptent.",
   "trainer.cobblemonrlm.jacinthe.win": "Tu as tenu jusqu'à la dernière mesure. Chapeau.",
   "trainer.cobblemonrlm.jacinthe.lose": "La musique s'arrête ici. Reviens quand tu seras prêt à la finir.",

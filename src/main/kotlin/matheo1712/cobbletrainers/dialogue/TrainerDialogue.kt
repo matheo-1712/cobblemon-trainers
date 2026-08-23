@@ -40,10 +40,11 @@ import net.minecraft.server.level.ServerPlayer
  * plain Cobblemon client exactly like one of theirs - and the mod still ships no dialogue
  * asset of its own.
  *
- * Four moments, none of them mandatory for a pack:
+ * Five moments, none of them mandatory for a pack:
  * - the greeting, on right-click, above the Battle / Cancel row;
  * - the refusal, which replaces the greeting when the trainer will not fight;
  * - `messages.start`, said after accepting and just before the battle opens;
+ * - `messages.decline`, said to whoever presses Cancel;
  * - `messages.win` / `messages.lose`, said once the battle is over.
  */
 object TrainerDialogue {
@@ -57,6 +58,7 @@ object TrainerDialogue {
     private const val PAGE_GREETING = "greeting"
     private const val PAGE_REFUSAL = "refusal"
     private const val PAGE_ACCEPT = "accept"
+    private const val PAGE_DECLINE = "decline"
     private const val PAGE_FAREWELL = "farewell"
 
     /**
@@ -121,7 +123,11 @@ object TrainerDialogue {
     fun isTalking(player: ServerPlayer, npc: NPCEntity): Boolean =
         player.activeDialogue?.npc === npc
 
-    /** The greeting, and the page the pack's `messages.start` gets when it wrote one. */
+    /**
+     * The greeting, plus the pages the pack's `messages.start` and `messages.decline` get when
+     * it wrote them. Either one missing simply takes its button straight to what it leads to -
+     * the battle, or a closed box.
+     */
     private fun challengePages(
         npc: NPCEntity,
         player: ServerPlayer,
@@ -139,16 +145,23 @@ object TrainerDialogue {
         val start = translate(definition.messages.start)
         val accept = start?.let { page(PAGE_ACCEPT, listOf(it), DialogueNoInput(battle), escape = battle) }
 
+        // The parting line answers the Cancel *button*, not the escape key: pressing escape is
+        // asking to be out of the box, and holding someone there to be talked at is the one
+        // thing it must not do. The default escape action of the greeting page closes, so
+        // nothing has to be written here for that.
+        val decline = translate(definition.messages.decline)
+            ?.let { page(PAGE_DECLINE, listOf(it), DialogueNoInput(close())) }
+
         val greeting = translate(definition.messages.greeting) ?: CobblemonTrainers.lang("dialogue.greeting")
         val choice = DialogueOptionSetInput(
             options = mutableListOf(
                 option("battle", if (accept == null) battle else action { it.setPage(accept) }),
-                option("cancel", close())
+                option("cancel", if (decline == null) close() else action { it.setPage(decline) })
             ),
             vertical = false
         )
 
-        return listOfNotNull(page(PAGE_GREETING, listOf(greeting), choice), accept)
+        return listOfNotNull(page(PAGE_GREETING, listOf(greeting), choice), accept, decline)
     }
 
     private fun open(

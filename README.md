@@ -209,7 +209,7 @@ dit, `progress` pour ce que le battre change, `rewards` pour ce qu'on y gagne.
 
 Un clic droit sur un dresseur ouvre la boîte de dialogue de Cobblemon - la même que celle de
 leurs NPC : le dresseur salue, propose Combattre ou Annuler, et dit son mot une fois le combat
-fini. Ce sont les quatre `messages`, et aucun n'est obligatoire.
+fini. Ce sont les cinq `messages`, et aucun n'est obligatoire.
 
 Ce qu'un joueur a accompli est retenu par ID de dresseur : battre un exemplaire de
 `mon_pack:champion` les bat tous, et le réinvoquer ne remet pas le compteur à zéro. C'est ce

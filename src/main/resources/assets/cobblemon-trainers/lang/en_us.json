@@ -126,9 +126,10 @@
 
   "trainer.cobblemon-trainers.rerebleue.name": "RereBleue",
   "trainer.cobblemon-trainers.rerebleue.greeting": "Hey! You look like you could put up a fight. Care to try?",
+  "trainer.cobblemon-trainers.rerebleue.decline": "Another time, then. I am not going anywhere.",
   "trainer.cobblemon-trainers.rerebleue.battle_start": "Don't ask me why I have an E in my name. Let's battle instead!",
-  "trainer.cobblemon-trainers.rerebleue.win": "Too easy 😎",
-  "trainer.cobblemon-trainers.rerebleue.lose": "Not bad! You did well.",
+  "trainer.cobblemon-trainers.rerebleue.win": "Not bad! You did well. ",
+  "trainer.cobblemon-trainers.rerebleue.lose": "Too easy \uD83D\uDE0E",
 
   "trainer.cobblemon-trainers.ultra-rerebleue.name": "Ultra-RereBleue",
   "trainer.cobblemon-trainers.ultra-rerebleue.battle_start": "Don't ask me why I have an E in my name. Let's battle instead!",

@@ -1,4 +1,4 @@
-# Cobblemon Trainers
+(Cobblemon Trainers)![../assets/logo.png]
 
 **Add real Pokémon trainers to your Cobblemon world - each one a single JSON file.**
 

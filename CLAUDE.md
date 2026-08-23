@@ -960,8 +960,8 @@ Points à ne pas redécouvrir :
 Un clic droit sur un dresseur n'ouvre plus le combat : il ouvre la boîte de dialogue de
 Cobblemon, celle que leur NPC `standard` utilise via `cobblemon:npc-example`. Le dresseur
 salue, le joueur choisit Combattre ou Annuler, et le dresseur dit son mot une fois le combat
-fini. Les quatre `messages` d'un dresseur (`greeting`, `start`, `win`, `lose`) passent tous
-par là ; plus rien de tout ça n'est envoyé au chat.
+fini. Les cinq `messages` d'un dresseur (`greeting`, `start`, `decline`, `win`, `lose`)
+passent tous par là ; plus rien de tout ça n'est envoyé au chat.
 
 Le `Dialogue` est **monté en Kotlin, par joueur et par interaction**, pas lu depuis un
 `data/<ns>/dialogues/`. Deux raisons, et aucune des deux ne se contourne en MoLang : les
@@ -992,6 +992,9 @@ Points à ne pas redécouvrir :
 - **Les listes de Cobblemon sont des `MutableList`.** `DialoguePage.lines` et
   `DialogueOptionSetInput.options` refusent un `listOf` : `mapTo(mutableListOf<DialogueText>())`
   et `mutableListOf`. L'erreur du compilateur ne dit pas que c'est une question de variance.
+- **Un message absent ne fait pas une page vide, il retire une étape.** Sans `start`, le
+  bouton Combattre lance le combat lui-même ; sans `decline`, Annuler ferme la boîte. Une page
+  n'existe que si un pack a quelque chose à y mettre.
 - **Le mot de la fin est dit à chaque joueur, pas diffusé.** Une boîte appartient à qui la
   regarde, donc `win` va aux gagnants et `lose` aux autres, là où l'ancien message de chat
   disait la même chose à tout le monde.
@@ -1002,6 +1005,10 @@ Points à ne pas redécouvrir :
   l'erreur Cobblemon dit mieux pourquoi rien ne se passe qu'un dialogue par-dessus le combat.
 - **Échapper depuis la page `accept` lance quand même le combat.** Le défi est accepté à ce
   moment-là ; l'échappatoire, c'est le bouton Annuler de la page d'avant.
+- **`decline` répond au bouton Annuler, pas à Échap.** Un pack qui écrit un mot pour qui
+  refuse s'adresse à un joueur qui a répondu, pas à un joueur qui veut sortir de la boîte -
+  retenir ce dernier une page de plus est exactement ce qu'Échap ne doit pas faire. La page
+  `greeting` garde donc l'action d'échappement par défaut, qui ferme.
 - **Les libellés des boutons sont au mod, jamais au pack** (`dialogue.option.*`). Un pack qui
   renommerait « Combattre » ferait un bouton dont personne ne peut deviner l'effet.
 

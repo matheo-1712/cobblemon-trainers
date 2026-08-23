@@ -107,6 +107,7 @@ Enfin, `datapacks/` est déclaré en données et rien d'autre : un `assets/` pos
   "messages": {
     "greeting": "Tu es venu jusqu'ici. Voyons ce que tu vaux.",
     "start": "Prêt ?",
+    "decline": "Une autre fois, alors.",
     "win": "Bien joué.",
     "lose": "Reviens quand tu seras prêt."
   },
@@ -190,11 +191,16 @@ NPC : un portrait, un nom, la réplique, et une rangée de boutons. Rien n'est e
 | --- | --- |
 | `greeting` | Au clic droit, au-dessus des boutons Combattre / Annuler |
 | `start` | Après avoir accepté, juste avant que le combat s'ouvre |
+| `decline` | Après avoir cliqué Annuler |
 | `win` | Une fois le joueur vainqueur |
 | `lose` | Une fois le joueur battu |
 
 Chacun est facultatif. Sans `greeting`, le mod met une phrase à lui. Sans `start`, accepter
-lance le combat directement. Sans `win` ni `lose`, rien ne s'ouvre après le combat.
+lance le combat directement. Sans `decline`, Annuler ferme simplement la boîte. Sans `win` ni
+`lose`, rien ne s'ouvre après le combat.
+
+`decline` répond au **bouton** Annuler, pas à la touche Échap : échapper, c'est demander à
+sortir de la conversation, et personne n'y est retenu pour se faire parler.
 
 Un dresseur qui refuse le combat le dit dans la même boîte, à la place du `greeting` et sans
 bouton Combattre : déjà battu et sans revanche, [condition](#conditions-pour-combattre) non

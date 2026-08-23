@@ -13,6 +13,7 @@
   "messages": {
     "greeting": "trainer.cobblemon-trainers.rerebleue.greeting",
     "start": "trainer.cobblemon-trainers.rerebleue.battle_start",
+    "decline": "trainer.cobblemon-trainers.rerebleue.decline",
     "win": "trainer.cobblemon-trainers.rerebleue.win",
     "lose": "trainer.cobblemon-trainers.rerebleue.lose"
   },

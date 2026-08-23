@@ -126,6 +126,7 @@
 
   "trainer.cobblemon-trainers.rerebleue.name": "RereBleue",
   "trainer.cobblemon-trainers.rerebleue.greeting": "Hé ! Tu as l'air d'avoir du répondant. On essaie ?",
+  "trainer.cobblemon-trainers.rerebleue.decline": "Une autre fois, alors. Je ne bouge pas d'ici.",
   "trainer.cobblemon-trainers.rerebleue.battle_start": "Me demande pas pourquoi j'ai un E dans mon nom. Combattons plutôt !",
   "trainer.cobblemon-trainers.rerebleue.win": "Pas mal ! tu t'es bien débrouillé.",
   "trainer.cobblemon-trainers.rerebleue.lose": "Trop facile 😎",
