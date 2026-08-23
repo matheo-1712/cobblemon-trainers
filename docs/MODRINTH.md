@@ -1,6 +1,10 @@
-# Cobblemon Trainers
+<p align="center">
+  <img src="https://raw.githubusercontent.com/matheo-1712/cobblemon-trainers/refs/heads/master/assets/logo.png" alt="Cobblemon Trainers">
+</p>
 
-**Add real Pokémon trainers to your Cobblemon world - each one a single JSON file.**
+<p align="center">
+  <strong>Add real Pokémon trainers to your Cobblemon world - each one a single JSON file.</strong>
+</p>
 
 Drop the mod in, and you can populate your world with custom trainers: a full Showdown
 team, a Minecraft skin, custom dialogue, battle music, rewards, and a difficulty setting.
