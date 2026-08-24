@@ -8,7 +8,9 @@
     "music": "cobblemonrlm:battle_music.jacinthe"
   },
   "messages": {
+    "greeting": "trainer.cobblemonrlm.jacinthe.greeting",
     "start": "trainer.cobblemonrlm.jacinthe.battle_start",
+    "decline": "trainer.cobblemonrlm.jacinthe.decline",
     "win": "trainer.cobblemonrlm.jacinthe.win",
     "lose": "trainer.cobblemonrlm.jacinthe.lose"
   },

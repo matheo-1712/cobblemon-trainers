@@ -2,8 +2,9 @@
 
 Mod Fabric qui ajoute des dresseurs Pokémon configurables à Cobblemon. Chaque dresseur est
 un fichier JSON : une équipe au format Showdown, un skin - celui d'un compte Minecraft ou une
-image livrée par le pack -, des messages, une musique de combat, et de quoi monter une
-progression - catégories, conditions à remplir pour être défié, advancements à la victoire.
+image livrée par le pack -, des dialogues dans la boîte de Cobblemon, une musique de combat,
+et de quoi monter une progression - catégories, conditions à remplir pour être défié,
+advancements à la victoire.
 Les dresseurs se déclarent dans un datapack, donc sans toucher au code.
 
 ## Ce qui distingue ce mod
@@ -248,7 +249,7 @@ tout sans redémarrer.
   "name": "Red",
   "skin": { "type": "player_username", "value": "Red" },
   "battle": { "level": 88, "difficulty": 5 },
-  "messages": { "win": "C'est terminé !" },
+  "messages": { "greeting": "On se défie ?", "win": "C'est terminé !" },
   "team": [
     "Pikachu (M) @ Light Ball
 Ability: Static
@@ -264,6 +265,10 @@ Timid Nature
 Tous les champs sont facultatifs, et chacun vit dans le bloc qui le concerne : `battle` pour
 le combat (format, difficulté, soin de l'équipe, musique), `messages` pour ce que le dresseur
 dit, `progress` pour ce que le battre change, `rewards` pour ce qu'on y gagne.
+
+Un clic droit sur un dresseur ouvre la boîte de dialogue de Cobblemon - la même que celle de
+leurs NPC : le dresseur salue, propose Combattre ou Annuler, et dit son mot une fois le combat
+fini. Ce sont les cinq `messages`, et aucun n'est obligatoire.
 
 Ce qu'un joueur a accompli est retenu par ID de dresseur : battre un exemplaire de
 `mon_pack:champion` les bat tous, et le réinvoquer ne remet pas le compteur à zéro. C'est ce

@@ -40,6 +40,8 @@
   "trainer.cobblemonrlm.recompense_unique.win": "Good work. Come back for another round any time.",
   "trainer.cobblemonrlm.recompense_unique.lose": "Shake it off and challenge me again.",
   "trainer.cobblemonrlm.jacinthe.name": "Jacinthe",
+  "trainer.cobblemonrlm.jacinthe.greeting": "The hall is empty and the orchestra is waiting. Shall we?",
+  "trainer.cobblemonrlm.jacinthe.decline": "The orchestra will wait. Do not make it wait too long.",
   "trainer.cobblemonrlm.jacinthe.battle_start": "Listen closely: this theme only plays for battles that matter.",
   "trainer.cobblemonrlm.jacinthe.win": "You held on to the very last bar. Hats off.",
   "trainer.cobblemonrlm.jacinthe.lose": "The music stops here. Come back ready to finish it.",

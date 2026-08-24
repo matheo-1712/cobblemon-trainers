@@ -4,8 +4,11 @@ import com.cobblemon.mod.common.api.npc.configuration.NPCInteractConfiguration
 import com.cobblemon.mod.common.battles.BattleBuilder
 import com.cobblemon.mod.common.battles.BattleFormat
 import com.cobblemon.mod.common.entity.npc.NPCEntity
+import com.cobblemon.mod.common.util.isInBattle
 import com.cobblemon.mod.common.util.party
 import matheo1712.cobbletrainers.CobblemonTrainers
+import matheo1712.cobbletrainers.dialogue.TrainerDialogue
+import matheo1712.cobbletrainers.trainers.TrainerDefinition
 import matheo1712.cobbletrainers.trainers.TrainerRegistry
 import matheo1712.cobbletrainers.trainers.TrainerLock
 import matheo1712.cobbletrainers.trainers.TrainerProgress
@@ -13,11 +16,13 @@ import net.minecraft.ChatFormatting
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.RegistryFriendlyByteBuf
 import net.minecraft.network.chat.Component
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerPlayer
 import java.util.Locale
 
 /**
- * NPC interaction that starts a trainer battle on right-click.
+ * NPC interaction that opens a trainer's dialogue on right-click, and the rules deciding
+ * whether the battle behind it happens at all.
  *
  * Cobblemon already provides `q.npc.start_battle(...)` in MoLang, but that function swallows
  * errors: if the player has no Pokémon, is already battling, or the trainer has no team,
@@ -26,6 +31,11 @@ import java.util.Locale
  *
  * A single instance is shared by every trainer, so the battle format is read from the trainer
  * definition at interaction time rather than baked into the configuration.
+ *
+ * The right-click no longer opens the battle itself: it opens the box
+ * [matheo1712.cobbletrainers.dialogue.TrainerDialogue] builds, and [startBattle] is what the
+ * player choosing to fight comes back to. Both halves stay here, because both are about the
+ * same question - the box only ever shows what [refusal] already decided.
  */
 class TrainerBattleInteraction : NPCInteractConfiguration {
 
@@ -35,54 +45,19 @@ class TrainerBattleInteraction : NPCInteractConfiguration {
         val trainerId = TrainerRegistry.idFromAspects(npc.aspects)
         val definition = trainerId?.let { TrainerRegistry.get(it) }
 
-        if (trainerId != null && definition != null) {
-            if (!definition.progress.allowsRematch &&
-                TrainerProgress.of(player.server).hasDefeated(trainerId, player.uuid)
-            ) {
-                player.sendSystemMessage(
-                    CobblemonTrainers.lang("chat.already_defeated", Component.translatable(definition.name))
-                        .withStyle(ChatFormatting.GRAY)
-                )
-                return true
-            }
-
-            // Checked here rather than anywhere nearer the battle so that nothing starts: no
-            // healed party, no music, no battle to close again.
-            val missing = TrainerLock.unmet(player, trainerId, definition)
-            if (missing.isNotEmpty()) {
-                player.sendSystemMessage(TrainerLock.refusal(definition, missing))
-                return true
-            }
-        }
-
-        val format = battleFormatOf(definition?.battle?.format)
-
-        // Cobblemon counts the player's party without ever asking what is still standing in it:
-        // `pvn` filters on health for the trainer's side only. A wiped player would hand Showdown
-        // a team where nobody can be sent out. The rule has no exception - not even a
-        // level-adjusting format, which heals the copies it battles with and would hand a wiped
-        // player a full team for free. The empty party is the one case left to Cobblemon, which
-        // refuses it too and says it better than we would.
-        val party = player.party()
-        if (party.any() && party.none { !it.isFainted() }) {
-            player.sendSystemMessage(
-                CobblemonTrainers.lang("chat.no_healthy_pokemon").withStyle(ChatFormatting.GRAY)
-            )
+        // An NPC wearing this interaction without a definition behind it has nothing to say,
+        // and no rules of ours to answer to: a pack that removed it mid-session, or a class
+        // borrowed by another mod. Cobblemon's own errors are all that is left to show.
+        //
+        // A player already in a battle gets the same treatment for the opposite reason: the
+        // battle interface is on their screen, so a dialogue box over it would say nothing that
+        // Cobblemon's refusal does not say better.
+        if (trainerId == null || definition == null || player.isInBattle()) {
+            startBattle(npc, player, definition)
             return true
         }
 
-        BattleBuilder.pvn(
-            player = player,
-            npcEntity = npc,
-            battleFormat = format,
-            // Whoever the player has selected opens the battle. Cobblemon leads with slot one
-            // otherwise, and null keeps exactly that.
-            leadingPokemon = TrainerLead.leadFor(player, format),
-            // A level-adjusting format must battle on copies. See `LVL_50_SINGLES` below.
-            cloneParties = format.adjustLevel > 0
-        ).ifErrored { errors ->
-            errors.sendTo(player)
-        }
+        TrainerDialogue.greet(npc, player, trainerId, definition)
         return true
     }
 
@@ -141,6 +116,83 @@ class TrainerBattleInteraction : NPCInteractConfiguration {
                 displayName = CobblemonTrainers.lang("npc.interaction.battle"),
                 clazz = TrainerBattleInteraction::class.java
             )
+        }
+
+        /**
+         * What this trainer would turn the player down with, line by line, or an empty list
+         * when they will fight.
+         *
+         * Asked before anything starts rather than anywhere nearer the battle, so that a
+         * refusal costs nothing: no healed party, no music, no battle to close again. The
+         * dialogue box shows these lines in place of the greeting - see
+         * [matheo1712.cobbletrainers.dialogue.TrainerDialogue.greet].
+         */
+        fun refusal(
+            player: ServerPlayer,
+            trainerId: ResourceLocation,
+            definition: TrainerDefinition
+        ): List<Component> {
+            if (!definition.progress.allowsRematch &&
+                TrainerProgress.of(player.server).hasDefeated(trainerId, player.uuid)
+            ) {
+                return listOf(
+                    CobblemonTrainers.lang("chat.already_defeated", Component.translatable(definition.name))
+                )
+            }
+
+            val missing = TrainerLock.unmet(player, trainerId, definition)
+            if (missing.isNotEmpty()) return TrainerLock.refusalLines(definition, missing)
+
+            if (isWipedOut(player)) return listOf(CobblemonTrainers.lang("chat.no_healthy_pokemon"))
+
+            return emptyList()
+        }
+
+        /**
+         * Whether nobody in the player's party can be sent out.
+         *
+         * Cobblemon counts the party without ever asking what is still standing in it: `pvn`
+         * filters on health for the trainer's side only, so a wiped player would hand Showdown
+         * a team nobody can enter from. The rule has no exception - not even a level-adjusting
+         * format, which heals the copies it battles with and would hand a wiped player a full
+         * team for free. The empty party is the one case left to Cobblemon, which refuses it
+         * too and says it better than we would.
+         */
+        private fun isWipedOut(player: ServerPlayer): Boolean {
+            val party = player.party()
+            return party.any() && party.none { !it.isFainted() }
+        }
+
+        /**
+         * Opens the battle itself, once the player has said yes in the dialogue box.
+         *
+         * The refusals of [refusal] are not re-run here - the box was built from them a moment
+         * ago - with the one exception of [isWipedOut], which also guards the two paths that
+         * reach this without a box at all. Everything else that can still go wrong, an empty
+         * party or a trainer with no team, is Cobblemon's own answer to give.
+         */
+        fun startBattle(npc: NPCEntity, player: ServerPlayer, definition: TrainerDefinition?) {
+            if (isWipedOut(player)) {
+                player.sendSystemMessage(
+                    CobblemonTrainers.lang("chat.no_healthy_pokemon").withStyle(ChatFormatting.GRAY)
+                )
+                return
+            }
+
+            val format = battleFormatOf(definition?.battle?.format)
+
+            BattleBuilder.pvn(
+                player = player,
+                npcEntity = npc,
+                battleFormat = format,
+                // Whoever the player has selected opens the battle. Cobblemon leads with slot one
+                // otherwise, and null keeps exactly that.
+                leadingPokemon = TrainerLead.leadFor(player, format),
+                // A level-adjusting format must battle on copies. See `LVL_50_SINGLES` above.
+                cloneParties = format.adjustLevel > 0
+            ).ifErrored { errors ->
+                errors.sendTo(player)
+            }
         }
 
         /** Falls back to singles, warning about a value that is not understood. */

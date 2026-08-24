@@ -136,17 +136,28 @@ object TrainerLock {
     /**
      * What the trainer says to a player it turns down: the pack's own words if it wrote any,
      * otherwise a line of the mod's, followed either way by what is missing.
+     *
+     * One line per component, which is what a dialogue box wants - the box lays its own lines
+     * out and a `\n` inside one of them would fight it. [refusal] is the same thing joined up
+     * for chat, so the two can never end up wording a refusal differently.
      */
-    fun refusal(definition: TrainerDefinition, missing: List<Component>): Component {
+    fun refusalLines(definition: TrainerDefinition, missing: List<Component>): List<Component> {
         val requirements = definition.requirements()
         val header = requirements?.message?.takeIf { it.isNotBlank() }
             ?.let { Component.translatable(it) }
             ?: CobblemonTrainers.lang("chat.locked", Component.translatable(definition.name))
 
-        val message: MutableComponent = header.copy().withStyle(ChatFormatting.GRAY)
-        missing.forEach { line ->
+        return listOf(header) + missing.map { CobblemonTrainers.lang("requirement.line", it) }
+    }
+
+    /** [refusalLines] as the single greyed component chat takes. */
+    fun refusal(definition: TrainerDefinition, missing: List<Component>): Component {
+        val lines = refusalLines(definition, missing)
+
+        val message: MutableComponent = lines.first().copy().withStyle(ChatFormatting.GRAY)
+        lines.drop(1).forEach { line ->
             message.append(Component.literal("\n"))
-            message.append(CobblemonTrainers.lang("requirement.line", line).withStyle(ChatFormatting.DARK_GRAY))
+            message.append(line.copy().withStyle(ChatFormatting.DARK_GRAY))
         }
         return message
     }
