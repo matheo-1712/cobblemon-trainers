@@ -14,6 +14,8 @@ Le mod ne fait jamais apparaître un dresseur tout seul. Il n'y a que trois faç
 Cette page ne traite que de la troisième. Pour le reste du format, voir
 [DATAPACK.md](DATAPACK.md).
 
+*This page is also available [in English](en/SPAWNING.md).*
+
 ## Sommaire
 
 - [Le bloc `location`](#le-bloc-location) · [Les conditions](#les-conditions) ·

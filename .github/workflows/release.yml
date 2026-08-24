@@ -4,6 +4,9 @@
 # changelog on every platform, and the pre-release checkbox picks between a stable and a beta
 # release.
 #
+# It also pushes MODRINTH.md over the project description, so the page always matches the
+# release that was just published.
+#
 # The tag is the single source of truth for the version: it is handed to Gradle as `-Pversion`,
 # which is what `processResources` expands into fabric.mod.json. `version` in gradle.properties
 # is only the default a local build falls back on, so nothing has to be bumped before tagging.
@@ -105,3 +108,41 @@ jobs:
           done
 
           gh release upload "$TAG" "$jar" "$pack" --clobber
+
+      # The Modrinth page body is MODRINTH.md, kept in the repo, so the description is reviewed
+      # in a pull request like everything else and can never drift from the build it describes.
+      # The Gradle plugin only ever creates versions - the project itself is patched here.
+      #
+      # Last on purpose: a refused description must not cost the release its assets. The run
+      # still goes red, and re-running the workflow re-applies it.
+      - name: update the modrinth description
+        env:
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+        run: |
+          project=$(sed -n 's/^modrinth_id=//p' gradle.properties)
+          [ -n "$project" ] || { echo "::error::modrinth_id is missing from gradle.properties"; exit 1; }
+
+          # -Rs reads the file whole and hands jq the escaping, which a hand-built JSON string
+          # would get wrong on the first quote or backslash in the page.
+          jq -Rs '{body: .}' MODRINTH.md > modrinth-body.json
+
+          # An args array rather than backslash continuations: one long unreadable line and a
+          # continuation that silently loses a header are both worse than this.
+          args=(
+            -sS -o modrinth-response.txt -w '%{http_code}'
+            -X PATCH "https://api.modrinth.com/v2/project/$project"
+            -H "Authorization: $MODRINTH_TOKEN"
+            -H 'Content-Type: application/json'
+            -H 'User-Agent: matheo-1712/cobblemon-trainers (release workflow)'
+            --data @modrinth-body.json
+          )
+          code=$(curl "${args[@]}")
+
+          # A successful PATCH answers 204 with an empty body.
+          if [ "$code" != "204" ]; then
+            echo "::error::Modrinth refused the description update (HTTP $code)"
+            cat modrinth-response.txt
+            exit 1
+          fi
+
+          echo "description updated from MODRINTH.md"

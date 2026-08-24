@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "ICI",
+    "CAC",
+    "ICI"
+  ],
+  "key": {
+    "I": { "item": "minecraft:iron_ingot" },
+    "C": { "item": "minecraft:copper_ingot" },
+    "A": { "item": "cobblemon:blue_apricorn" }
+  },
+  "result": {
+    "id": "cobblemon-trainers:battle_phone",
+    "count": 1
+  }
+}

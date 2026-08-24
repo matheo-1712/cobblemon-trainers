@@ -35,6 +35,14 @@ concis que possible** : une idée par phrase, un tableau plutôt qu'un paragraph
 soit déjà dit ailleurs dans le fichier. Ajouter un champ, c'est ajouter une ligne de tableau,
 pas une section.
 
+`docs/en/` est la **traduction anglaise** de ces trois pages plus leur index
+(`DATAPACK.md`, `SPAWNING.md`, `DIFFICULTY.md` - au nom anglais -, `README.md`), destinée aux
+joueurs qui arrivent par Modrinth. Le français reste la version de référence : **une règle se
+change d'abord dans `docs/`, puis dans `docs/en/` dans le même commit**. Deux pages qui
+divergent sont pires qu'une page absente, la seconde ayant l'air à jour. `MODRINTH.md`, à la
+racine, est la présentation publiée sur la boutique et n'a pas d'équivalent français - c'est
+une page de vente, pas une page du wiki.
+
 ## Commandes
 
 ```bash
@@ -482,6 +490,17 @@ Points à ne pas redécouvrir :
 onglet par datapack, un intertitre par catégorie, et le skin de chacun. C'est le pendant
 joueur de `/cobblemontrainers list`, qui reste opérateur - l'objet ne donne aucun pouvoir, il lit.
 
+**Le craft du Battle Phone** est `data/cobblemon-trainers/recipe/battle_phone.json` : quatre
+lingots de fer aux coins, quatre de cuivre sur les côtés, une noigrume bleue au centre. Trois
+choses à savoir avant d'y toucher :
+
+- **Le dossier est `recipe/`, au singulier**, comme `advancement/` depuis 1.21.
+- **Les ingrédients sont des items, pas des tags.** `c:ingots/iron` marcherait - Cobblemon
+  l'emploie - mais un tag vide échoue *en silence* : la recette disparaît sans un mot dans le
+  log. Deux lingots vanilla ne valent pas ce risque.
+- **La noigrume vient de Cobblemon** (`cobblemon:blue_apricorn`), qui est une dépendance dure :
+  la recette ne peut donc pas se retrouver sans son ingrédient.
+
 Points à ne pas redécouvrir :
 
 - **L'onglet, c'est le namespace.** Un « datapack » n'existe pas à l'exécution : ce que le mod
@@ -783,9 +802,15 @@ Points à ne pas redécouvrir :
 `BuiltInRegistries.TRIGGER_TYPES`, depuis `onInitialize` - avant la lecture des datapacks, sans
 quoi un advancement qui l'utilise échoue au parsing.
 
-Le mod ne livre aucun advancement : ils vivraient dans tous les mondes et, contrairement à un
-dresseur, un advancement n'a pas d'interrupteur `listed`. Les exemples sont dans
-`examples/cobblemonrlm/data/cobblemonrlm/advancement/` (dossier au **singulier** depuis 1.21).
+Le mod ne livre aucun advancement **de jeu** : ils vivraient dans tous les mondes et,
+contrairement à un dresseur, un advancement n'a pas d'interrupteur `listed`. Les exemples sont
+dans `examples/cobblemonrlm/data/cobblemonrlm/advancement/` (dossier au **singulier** depuis
+1.21).
+
+La seule exception est `advancement/recipes/battle_phone.json`, qui n'est pas un objectif mais
+le déblocage de recette du Battle Phone : sans lui la recette existe mais n'apparaît jamais
+dans le livre de recettes. Il est invisible dans l'arbre et ne fait ni toast ni annonce, comme
+tous ceux de vanilla. Voir « Le craft du Battle Phone ».
 
 Points à ne pas redécouvrir :
 
@@ -1182,6 +1207,14 @@ suivre, et rien ne le vérifie. Le seul garde-fou est que le tag doit ressembler
 
 Points à ne pas redécouvrir :
 
+- **La description Modrinth est `MODRINTH.md`**, poussée par le workflow à chaque release :
+  la page ne peut donc pas décrire un build antérieur, et elle se relit en pull request comme
+  le reste. `mod-publish-plugin` ne sait que créer des *versions* - le projet lui-même se
+  modifie par `PATCH /v2/project/<id>`, avec le jeton en `Authorization` **sans** `Bearer`, et
+  une réussite répond `204` sans corps. L'étape est **la dernière** du workflow : une
+  description refusée ne doit pas coûter à la release ses assets, et le run rouge dit quoi
+  rejouer. Un lien relatif dans ce fichier serait mort sur Modrinth - tout y est en URL
+  absolue.
 - **La version publiée déclare son environnement**, `environment = CLIENT_AND_SERVER` dans le
   bloc `modrinth`. Modrinth exige une métadonnée d'environnement exacte (règle 5.1 des Content
   Rules) et rejette le projet en modération sans elle ; depuis mod-publish-plugin 2.1.0 ça se
@@ -1191,7 +1224,7 @@ Points à ne pas redécouvrir :
 - **Le slug Modrinth est `cobblemon-trainers-rerebleue`.** `cobblemon-trainers` appartient déjà
   à un autre projet, et la modération refuse un slug qui ne correspond pas au nom du projet.
   Le `modrinth_id` de `gradle.properties` est l'ID du projet, immuable : il ne suit pas le slug.
-  Le seul endroit du dépôt qui nomme le slug est le lien de `docs/MODRINTH.md`.
+  Le seul endroit du dépôt qui nomme le slug est le lien de `MODRINTH.md`.
 - **Le workflow exige `MODRINTH_TOKEN` avant de construire.** Sans jeton, `publishMods`
   bascule en `dryRun` et le workflow finirait vert sans rien publier.
 - **Un numéro de version déjà publié sur Modrinth est refusé (409).** Une release qui échoue
