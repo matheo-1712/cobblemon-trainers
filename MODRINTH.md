@@ -34,15 +34,7 @@ in place. A village of trainers is built once.
 It is **crafted**: four iron ingots in the corners, four copper ingots on the sides, and a
 **blue apricorn** in the middle.
 
-| | | |
-| --- | --- | --- |
-| Iron | Copper | Iron |
-| Copper | **Blue apricorn** | Copper |
-| Iron | Copper | Iron |
-
-<!-- Craft image: replace the line below with
-     <p align="center"><img src="https://raw.githubusercontent.com/matheo-1712/cobblemon-trainers/refs/heads/master/assets/battle_phone_craft.png" alt="Battle Phone recipe"></p> -->
-*(recipe image coming)*
+<p align="center"><img src="https://raw.githubusercontent.com/matheo-1712/cobblemon-trainers/refs/heads/master/assets/battle_phone_craft.png" alt="Battle Phone recipe"></p>
 
 Open the Battle Phone, pick a trainer from the list, call them. But a trainer only comes
 **where they said they would be**: in the badlands at night, in a thunderstorm, on a structure,
