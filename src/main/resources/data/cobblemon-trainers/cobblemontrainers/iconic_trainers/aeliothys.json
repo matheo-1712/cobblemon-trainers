@@ -8,7 +8,10 @@
   "battle": {
     "level": 80,
     "difficulty": 5,
-    "music": "cobblemon-trainers:battle_music.ultra_necrozma"
+    "music": "cobblemon-trainers:battle_music.ultra_necrozma",
+    "gimmicks": [
+      "mega"
+    ]
   },
   "messages": {
     "start": "trainer.cobblemon-trainers.aeliothys.battle_start",
@@ -22,7 +25,7 @@
   "team": [
     "Poppy (Buneary) @ Focus Sash  \nAbility: Limber  \nShiny: Yes  \nTera Type: Normal  \nEVs: 4 HP / 252 Atk / 252 Spe  \nJolly Nature  \n- Endeavor  \n- Fake Out  \n- Quick Attack  \n- Baton Pass",
     "Lucario @ Choice Specs  \nAbility: Steadfast  \nEVs: 4 HP / 252 SpA / 252 Spe  \nTimid Nature  \nIVs: 0 Atk  \n- Aura Sphere  \n- Flash Cannon  \n- Shadow Ball  \n- Vacuum Wave",
-    "Gardevoir @ Assault Vest  \nAbility: Telepathy  \nEVs: 4 HP / 252 SpA / 252 Spe  \nTimid Nature  \nIVs: 0 Atk  \n- Aura Sphere  \n- Energy Ball  \n- Moonblast  \n- Psychic",
+    "Gardevoir @ Gardevoirite \nFallback Item: Life Orb\nAbility: Telepathy  \nEVs: 4 HP / 252 SpA / 252 Spe  \nTimid Nature  \nIVs: 0 Atk  \n- Aura Sphere  \n- Energy Ball  \n- Moonblast  \n- Psychic",
     "Raboot @ Eviolite  \nAbility: Libero  \nEVs: 252 Atk / 4 SpD / 252 Spe  \nAdamant Nature  \n- Baton Pass  \n- Agility  \n- U-turn  \n- Flare Blitz",
     "Axew @ Focus Sash  \nAbility: Mold Breaker  \nEVs: 248 HP / 252 Atk / 8 SpD  \nAdamant Nature  \n- First Impression  \n- Protect  \n- Dragon Claw  \n- Toxic",
     "Mismagius @ Leftovers  \nAbility: Levitate  \nTera Type: Ghost  \nEVs: 252 HP / 4 Atk / 252 Spe  \nHasty Nature  \n- Dark Pulse  \n- Destiny Bond  \n- Perish Song  \n- Poltergeist"

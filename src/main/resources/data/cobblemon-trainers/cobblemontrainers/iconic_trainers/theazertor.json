@@ -7,7 +7,10 @@
   "battle": {
     "level": 80,
     "difficulty": 5,
-    "music": "cobblemon-trainers:battle_music.b2w2_tournament"
+    "music": "cobblemon-trainers:battle_music.b2w2_tournament",
+    "gimmicks": [
+      "mega"
+    ]
   },
   "messages": {
     "start": "trainer.cobblemon-trainers.theazertor.battle_start",
@@ -23,6 +26,8 @@
     "Amphinobi (Greninja) (M) @ Life Orb\nAbility: Battle Bond\nEVs: 4 HP / 252 SpA / 252 Spe\nTimid Nature\nIVs: 0 Atk\n- Surf\n- Ice Beam\n- Dark Pulse\n- Sludge Wave",
     "Flambusard (Talonflame) (M) @ Heavy-Duty Boots\nAbility: Gale Wings\nShiny: Yes\nTera Type: Fire\nEVs: 252 Atk / 4 Def / 252 Spe\nJolly Nature\n- Swords Dance\n- Brave Bird\n- Flare Blitz\n- Taunt",
     "Chompette (Garchomp) (F) @ Loaded Dice\nAbility: Rough Skin\nTera Type: Dragon\nEVs: 252 Atk / 4 SpD / 252 Spe\nJolly Nature\n- Scale Shot\n- Earthquake\n- Fire Fang\n- Swords Dance",
-    "Métalosse (Metagross) @ Muscle Band\nAbility: Clear Body\nShiny: Yes\nTera Type: Steel\nEVs: 232 HP / 100 Atk / 176 Spe\nJolly Nature\n- Meteor Mash\n- Bullet Punch\n- Psychic Fangs\n- Rock Slide"
+    "Métalosse (Metagross) @ Metagrossite\nFallback Item: Muscle Band\nAbility: Clear Body\nShiny: Yes\nTera Type: Steel\nEVs: 232 HP / 100 Atk / 176 Spe\nJolly Nature\n- Meteor Mash\n- Bullet Punch\n- Psychic Fangs\n- Rock Slide"
   ]
+
+
 }
