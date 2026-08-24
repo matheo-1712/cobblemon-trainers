@@ -73,6 +73,7 @@
   "cobblemon-trainers.dialogue.option.cancel": "Cancel",
 
   "cobblemon-trainers.chat.trainer_gone": "The trainer left the battle. The fight is over.",
+  "cobblemon-trainers.chat.too_far": "You went too far from the trainer. The fight is over.",
 
   "cobblemon-trainers.chat.already_defeated": "%s has already been defeated and does not take rematches.",
 
