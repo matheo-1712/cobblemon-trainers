@@ -4,6 +4,7 @@ import matheo1712.cobbletrainers.client.gui.BattlePhoneScreen
 import matheo1712.cobbletrainers.client.cache.TrainerSkinCache
 import matheo1712.cobbletrainers.client.cache.TrainerTeamCache
 import matheo1712.cobbletrainers.client.gui.TrainerSpawnerScreen
+import matheo1712.cobbletrainers.network.BattleMusicPayload
 import matheo1712.cobbletrainers.network.OpenBattlePhonePayload
 import matheo1712.cobbletrainers.network.OpenTrainerSpawnerPayload
 import matheo1712.cobbletrainers.network.TrainerSkinPayload
@@ -42,11 +43,20 @@ object CobblemonTrainersClient : ClientModInitializer {
             TrainerTeamCache.accept(payload)
         }
 
+        // Not a screen either: the battle theme, which the client plays itself so that it can
+        // loop and so that the world's own music stays out of the way.
+        ClientPlayNetworking.registerGlobalReceiver(BattleMusicPayload.TYPE) { payload, _ ->
+            val track = payload.track
+            if (track == null) ClientBattleMusic.silence()
+            else ClientBattleMusic.play(track, payload.volume, payload.pitch)
+        }
+
         // Skins are cached for the world they were sent from: another server may hold other
         // trainers under the same IDs, and the textures are ours to free.
         ClientPlayConnectionEvents.DISCONNECT.register { _, _ ->
             TrainerSkinCache.clear()
             TrainerTeamCache.clear()
+            ClientBattleMusic.clear()
         }
     }
 }

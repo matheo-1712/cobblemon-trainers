@@ -1,30 +1,26 @@
 package matheo1712.cobbletrainers.battle
 
 import matheo1712.cobbletrainers.CobblemonTrainers
-import net.minecraft.core.Holder
-import net.minecraft.network.protocol.game.ClientboundSoundPacket
-import net.minecraft.network.protocol.game.ClientboundStopSoundPacket
+import matheo1712.cobbletrainers.network.BattleMusicNetworking
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerPlayer
-import net.minecraft.sounds.SoundEvent
-import net.minecraft.sounds.SoundSource
 
 /**
  * Plays and stops the battle music of a trainer.
  *
- * The sound packets carry a *direct* [net.minecraft.core.Holder]: the sound never goes through
- * `BuiltInRegistries.SOUND_EVENT`, so a datapack may name any track without the mod
- * knowing about it beforehand. Resolving the name is the client's job, exactly as for a
- * registered sound - which means the track has to be provided by a resource pack (the mod
- * jar is one, hence [DEFAULT_TRACK] working out of the box).
+ * The server only ever names the track: nothing goes through `BuiltInRegistries.SOUND_EVENT`,
+ * so a datapack may name any track without the mod knowing about it beforehand. Resolving the
+ * name is the client's job, exactly as for a sound packet - which means the track has to be
+ * provided by a resource pack (the mod jar is one, hence [DEFAULT_TRACK] working out of the
+ * box).
  *
  * The music is sent to the players of the battle only, and never persisted: nothing here
- * tracks what is playing, [stop] simply silences the track the definition names. Which is
- * also why a track edited through `/reload` mid-battle keeps playing until the battle ends.
+ * tracks what is playing, [stop] simply tells the client to drop whatever theme it has. Which
+ * is also why a track edited through `/reload` mid-battle keeps playing until the battle ends.
  *
- * Known limit: the track plays once and does not loop. Looping a sound is a client-side
- * decision ([net.minecraft.client.resources.sounds.SoundInstance.isLooping]), taken by a sound
- * engine this mod never touches.
+ * The client owns the playback - see [BattleMusicNetworking] for the two reasons why, both of
+ * them things a `ClientboundSoundPacket` cannot decide: the track loops until the battle is
+ * over, and the world's own music stays quiet for its whole length.
  */
 object TrainerBattleMusic {
 
@@ -33,53 +29,30 @@ object TrainerBattleMusic {
     /////////////////////////////////////
     // TODO : Mettre une musique de combat par défaut (5g probablement)
     const val DEFAULT_TRACK: String = "cobblemon-trainers:battle_music.corvault"
-    private val SOURCE = SoundSource.MUSIC
     /** Volume 1f is TOO HIIIGGGHH i lost my ear :( **/
     private const val VOLUME = 0.2f
     /** is speed of battle track **/
     private const val PITCH = 1.0f
 
     /**
-     * Starts the music for every player of the battle, alone: whatever else was playing in
-     * the [SoundSource.MUSIC] category is cut first, so the battle theme never overlaps the
-     * vanilla background music (see [silenceOtherMusic]).
+     * Starts the music for every player of the battle, alone: whatever else was playing in the
+     * music category is stopped client-side just before the theme starts.
      */
     fun start(track: String?, players: List<ServerPlayer>) {
         val sound = parse(track) ?: return
         if (players.isEmpty()) return
 
-        val holder = Holder.direct(SoundEvent.createVariableRangeEvent(sound))
-        players.forEach { player ->
-            silenceOtherMusic(player)
-            player.connection.send(
-                ClientboundSoundPacket(
-                    holder,
-                    SOURCE,
-                    player.x,
-                    player.y,
-                    player.z,
-                    VOLUME,
-                    PITCH,
-                    player.random.nextLong()
-                )
-            )
-        }
+        players.forEach { BattleMusicNetworking.play(it, sound, VOLUME, PITCH) }
     }
 
     /**
-     * Stops everything already playing in the music category, our own track included - hence
-     * the strict ordering with the packet that starts it.
+     * Stops the music. Harmless when the track never started - but only sent for a trainer that
+     * named one, so that a silent trainer never takes the world's music away on its way out.
      */
-    private fun silenceOtherMusic(player: ServerPlayer) {
-        player.connection.send(ClientboundStopSoundPacket(null, SOURCE))
-    }
-
-    /** Stops the music. Harmless when the track already finished or never started. */
     fun stop(track: String?, players: List<ServerPlayer>) {
-        val sound = parse(track) ?: return
+        parse(track) ?: return
 
-        val packet = ClientboundStopSoundPacket(sound, SOURCE)
-        players.forEach { it.connection.send(packet) }
+        players.forEach { BattleMusicNetworking.silence(it) }
     }
 
     /** Null for a trainer without music, or for a name that is not a valid sound ID. */
