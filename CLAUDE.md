@@ -6,15 +6,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Mod Fabric pour Minecraft 1.21.1 qui ajoute des dresseurs Pokémon configurables à
 Cobblemon 1.7.3. Code principal en Kotlin (`matheo1712.cobbletrainers`), les mixins en Java.
-Presque tout tourne côté serveur logique. Le côté client se limite à cinq choses, et il vaut
+Presque tout tourne côté serveur logique. Le côté client se limite à six choses, et il vaut
 mieux que ça reste vrai : `client.MinecraftMixin`, qui branche la lecture des `assets/` d'un
 pack posé dans `mods/` (voir « Livrer un pack ») ; `client.ClientLevelMixin`, qui rend le bloc
 de dresseur visible quand on tient son item ; l'entrypoint `CobblemonTrainersClient`, dont le
 seul rôle est d'ouvrir les deux écrans du mod et de recevoir les skins du second ; ces deux
-écrans eux-mêmes, sous `client.gui` (voir « Le bloc de dresseur » et « Le Battle Phone ») ; et
-`client.ClientPokemonSelection`, seule des cinq à ne pas être un écran, qui annonce au serveur
-le Pokémon sélectionné parce que Cobblemon ne le lui dit jamais (voir « Le Pokémon qui ouvre le
-combat »).
+écrans eux-mêmes, sous `client.gui` (voir « Le bloc de dresseur » et « Le Battle Phone ») ;
+`client.ClientPokemonSelection`, qui annonce au serveur le Pokémon sélectionné parce que
+Cobblemon ne le lui dit jamais (voir « Le Pokémon qui ouvre le combat ») ; et le couple
+`client.ClientBattleMusic` / `client.MusicManagerMixin`, qui garde la musique du monde
+silencieuse pendant un combat (voir « Musique de combat »). Les deux dernières sont les seules
+à ne pas être un écran, et toutes deux sont là pour la même raison : la décision vit sur le
+client, et aucun paquet existant ne la porte.
 Aucun renderer d'entité n'est enregistré : le Battle Phone dessine les skins à plat depuis
 l'image, et pour les Pokémon d'une équipe il appelle le `drawProfilePokemon` de Cobblemon -
 seul endroit du mod qui touche à du rendu 3D.
@@ -156,7 +159,7 @@ messages, musique et récompenses de combat.
   une vue de joueur. Le mot-clé est un littéral Brigadier, donc il éclipse un dresseur qui
   s'appellerait `all` - les littéraux sont essayés avant les arguments.
 - **`TrainerBattleMusic`** - envoie `ClientboundSoundPacket` / `ClientboundStopSoundPacket`
-  aux joueurs du combat.
+  aux joueurs du combat, et le paquet qui fait taire la musique du monde.
 - **`block.TrainerBlocks` / `TrainerSpawnerBlock` / `TrainerSpawnerBlockEntity` /
   `TrainerSpawnerItem`** - le bloc qui maintient un dresseur en place. Voir « Le bloc de
   dresseur ».
@@ -166,12 +169,14 @@ messages, musique et récompenses de combat.
   Voir « Le Battle Phone ».
 - **`network.BattlePhoneNetworking`** - les `CustomPacketPayload` de cet écran : le
   listing, la demande de skin et la réponse, celles de l'équipe, et l'appel d'un dresseur.
-- **`network.BattleLeadNetworking`** - l'unique paquet qui n'appartient pas à un écran : le
-  Pokémon sélectionné, du client vers le serveur.
+- **`network.BattleLeadNetworking`** - le Pokémon sélectionné, du client vers le serveur.
+- **`network.BattleMusicNetworking`** - l'autre paquet qui n'appartient pas à un écran : le
+  serveur dit au client de garder sa musique de fond pour lui. Voir « Musique de combat ».
 - **`trainers.TrainerSkins`** - la résolution d'un `TrainerSkin` en image, hors thread serveur
   et avec cache. Voir « Skins ».
 - **`client.CobblemonTrainersClient`** - l'unique entrypoint client.
 - **`client.ClientPokemonSelection`** - la sélection de l'overlay, poussée vers le serveur.
+- **`client.ClientBattleMusic`** - le drapeau que lit `client.MusicManagerMixin`.
 - **`client.gui.TrainerSpawnerScreen` / `client.gui.BattlePhoneScreen`** - les deux écrans.
 - **`client.gui.TrainerSkinRenderer` / `client.cache.TrainerSkinCache`** - le dessin d'un skin
   à plat, et les textures que le Battle Phone a reçues.
@@ -194,12 +199,35 @@ Points à ne pas redécouvrir :
 
 - **`sounds.json` n'a pas de champ `category`.** La catégorie est choisie à l'envoi, ici
   `SoundSource.MUSIC` (curseur *Musique* du joueur).
-- **L'exclusivité passe par un `ClientboundStopSoundPacket(null, MUSIC)`** envoyé juste avant
-  la piste - un nom nul veut dire « toute la catégorie », d'où l'ordre strict des deux
-  paquets. Ça règle aussi la suite : le `MusicManager` du client voit sa piste disparaître et
-  retire un délai avant la prochaine, une bonne dizaine de minutes pour la musique de
-  surface. C'est le plus près de l'exclusif qu'un serveur puisse faire - lancer la musique
-  d'ambiance est une décision du client.
+- **Le `ClientboundStopSoundPacket(null, MUSIC)` ne suffit pas à faire taire le jeu**, et c'est
+  le bug #33. Il coupe bien ce qui joue - un nom nul veut dire « toute la catégorie », d'où
+  l'ordre strict des paquets - mais le `MusicManager` du client ignore une piste envoyée par
+  paquet de son et continue son compte à rebours vers la prochaine musique d'ambiance. Ce
+  compteur n'est **jamais** repoussé par notre coupure : `MusicManager.tick` ne fait que le
+  rabaisser (`Math.min`), et la branche qui le remet à dix ou vingt minutes ne tourne que si une
+  piste à lui jouait. Un combat qui démarrait quelques secondes avant l'échéance recevait donc
+  la musique de surface par-dessus.
+- **Le silence est donc décidé côté client**, par `client.MusicManagerMixin`, qui annule
+  `tick` tant que `ClientBattleMusic` dit qu'un thème de combat joue. Annuler le tick **gèle**
+  le compteur au lieu de le laisser s'écouler dans le vide : le monde reprend où il en était.
+  C'est exactement ce que fait Cobblemon pour sa propre musique de combat, et les deux mixins
+  cohabitent - il suffit que l'un des deux tienne le tick.
+- **Le client doit être prévenu, d'où `BattleMusicNetworking`** et la sixième chose que fait
+  le mod côté client. Rien d'autre ne pouvait répondre : le serveur ne peut pas couper la
+  catégorie périodiquement sans emporter sa propre piste, et il ne sait pas quel morceau le
+  client aurait choisi.
+- **Les deux bords appellent `MusicManager.stopPlaying()`**, méthode publique qui lâche la
+  référence sur une piste que le serveur vient de faire taire *et* ajoute 100 ticks au compte à
+  rebours - de quoi ne pas voir le monde attaquer un morceau à la seconde où le combat finit.
+  C'est aussi ce qui évite tout `@Shadow` dans le mixin.
+- **Un client sans le mod n'est pas prévenu** (`ServerPlayNetworking.canSend`) et garde le
+  comportement d'avant. Le mod est requis des deux côtés, c'est un garde-fou, pas une
+  configuration supportée.
+- **Ne pas passer par le `BattleMusicPacket` de Cobblemon.** Il existe, avec tout ce qu'il faut
+  autour - `BattleMusicController`, une instance qui boucle et se fond, la mise en pause des
+  catégories *Ambient*, *Music* et *Records* - mais **Cobblemon ne l'envoie nulle part** : il
+  n'est référencé que par sa propre table d'enregistrement réseau. Branché dessus, le mod n'a
+  plus eu de musique du tout. Du code mort qui compile n'est pas du code qui marche.
 - **`VOLUME` est volontairement bien en dessous de 1.** Une piste de combat tourne plusieurs
   minutes par dessus tout le reste ; à 1.0 elle couvre le combat qu'elle accompagne. Le curseur
   *Musique* du joueur s'applique par dessus. `PITCH`, lui, reste à 1.0 : c'est la vitesse de
@@ -211,7 +239,8 @@ Points à ne pas redécouvrir :
   pour une musique. La position envoyée (celle du joueur) n'est qu'un repli pour une piste
   mono.
 - **Pas de boucle.** `isLooping` est une décision de `SoundInstance`, côté client, et le mod
-  ne touche pas au moteur audio : un combat plus long que la piste finit en silence.
+  ne touche pas au moteur audio : un combat plus long que la piste finit en silence - le monde
+  restant muet jusqu'au bout du combat, puisque le garde ci-dessus tient jusque-là.
 
 ### Revanches et récompenses
 
@@ -1120,9 +1149,11 @@ packs l'affiche comme incompatible. C'est ce que fait `examples/cobblemonrlm/pac
 `ExampleMixin` est le stub du template Fabric, sans effet.
 
 `client.ClientLevelMixin` rend le bloc de dresseur visible quand on tient son item ; il est
-décrit sous « Le bloc de dresseur ». Comme `client.MinecraftMixin` il est déclaré dans le
-tableau `client` du mixins.json : une classe client dans `mixins` ferait échouer le chargement
-sur un serveur dédié.
+décrit sous « Le bloc de dresseur ». `client.MusicManagerMixin` retient la musique de fond du
+jeu pendant un combat ; il est décrit sous « Musique de combat », n'a aucun `@Shadow` et tient
+en un `@Inject(HEAD, cancellable)`. Comme `client.MinecraftMixin` les deux sont déclarés dans
+le tableau `client` du mixins.json : une classe client dans `mixins` ferait échouer le
+chargement sur un serveur dédié.
 
 `AIBattleActorMixin` remplace l'IA de combat des dresseurs du mod par `TrainerBattleAI` (voir
 « L'IA de combat »). Le constructeur de `NPCBattleActor` prend pourtant l'IA en paramètre -
@@ -1151,7 +1182,8 @@ réempaqueter en `.zip`.
 Loom remappe les mixins statiquement (pas de refmap dans le jar) : après un changement,
 vérifier dans `build/libs/*.jar` que la cible est bien passée en intermediary
 (`detectPackResources` → `method_52441`, `PackDetector` → `class_8621` ;
-`getMarkerParticleTarget` → `method_35752`).
+`getMarkerParticleTarget` → `method_35752` ; `MusicManager` → `class_1142`, `tick` →
+`method_18669`).
 
 ### Formes et aspects
 

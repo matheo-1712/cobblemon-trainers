@@ -4,6 +4,7 @@ import matheo1712.cobbletrainers.client.gui.BattlePhoneScreen
 import matheo1712.cobbletrainers.client.cache.TrainerSkinCache
 import matheo1712.cobbletrainers.client.cache.TrainerTeamCache
 import matheo1712.cobbletrainers.client.gui.TrainerSpawnerScreen
+import matheo1712.cobbletrainers.network.BattleMusicPayload
 import matheo1712.cobbletrainers.network.OpenBattlePhonePayload
 import matheo1712.cobbletrainers.network.OpenTrainerSpawnerPayload
 import matheo1712.cobbletrainers.network.TrainerSkinPayload
@@ -42,11 +43,18 @@ object CobblemonTrainersClient : ClientModInitializer {
             TrainerTeamCache.accept(payload)
         }
 
+        // Not a screen either: whether the world's own music has to stay quiet, which only a
+        // client can decide and only the server knows about.
+        ClientPlayNetworking.registerGlobalReceiver(BattleMusicPayload.TYPE) { payload, _ ->
+            ClientBattleMusic.accept(payload.playing)
+        }
+
         // Skins are cached for the world they were sent from: another server may hold other
         // trainers under the same IDs, and the textures are ours to free.
         ClientPlayConnectionEvents.DISCONNECT.register { _, _ ->
             TrainerSkinCache.clear()
             TrainerTeamCache.clear()
+            ClientBattleMusic.clear()
         }
     }
 }
