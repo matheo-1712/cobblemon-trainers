@@ -163,8 +163,8 @@ You can see all details in [DATAPACK DOCS](https://github.com/matheo-1712/cobble
 - `player_username` and `player_uuid` skins are fetched from the Mojang API, so they need
   network access and an existing account. On failure the trainer keeps the default skin and
   the reason goes to the logs. The `texture` type needs nothing but an image in your pack.
-- Battle music doesn't loop: a battle longer than the track ends in silence. Looping is a
-  decision of the client's sound engine, which this mod doesn't touch.
+- Battle music only plays for a player who has the mod: their client is what runs it, which is
+  also what makes it loop and what keeps the game's own music waiting until the battle is over.
 
 ---
 

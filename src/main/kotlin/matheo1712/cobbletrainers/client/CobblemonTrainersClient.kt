@@ -43,10 +43,12 @@ object CobblemonTrainersClient : ClientModInitializer {
             TrainerTeamCache.accept(payload)
         }
 
-        // Not a screen either: whether the world's own music has to stay quiet, which only a
-        // client can decide and only the server knows about.
+        // Not a screen either: the battle theme, which the client plays itself so that it can
+        // loop and so that the world's own music stays out of the way.
         ClientPlayNetworking.registerGlobalReceiver(BattleMusicPayload.TYPE) { payload, _ ->
-            ClientBattleMusic.accept(payload.playing)
+            val track = payload.track
+            if (track == null) ClientBattleMusic.silence()
+            else ClientBattleMusic.play(track, payload.volume, payload.pitch)
         }
 
         // Skins are cached for the world they were sent from: another server may hold other

@@ -6,26 +6,31 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.network.RegistryFriendlyByteBuf
 import net.minecraft.network.codec.StreamCodec
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerPlayer
 
 /**
- * The one packet that tells a client a battle theme is playing, so that it holds its own
- * background music back until the battle is over.
+ * The one packet that carries a trainer battle theme to a client, and takes it back.
  *
- * ### Why the sound packets could not do this alone
+ * ### Why not the vanilla sound packets
  *
- * A track sent by [net.minecraft.network.protocol.game.ClientboundSoundPacket] is a sound like
- * any other: the client's `MusicManager` never learns of it and keeps counting down to the next
- * background song. Cutting the *Music* category first does not reset that countdown either -
- * `MusicManager.tick` only ever clamps it **down** (`Math.min`), and the one branch that pushes
- * it back by ten to twenty minutes runs solely when a track of its own was playing. A battle
- * starting a few seconds before the countdown ran out therefore got the overworld music on top
- * of the battle theme: issue #33.
+ * Two things a [net.minecraft.network.protocol.game.ClientboundSoundPacket] cannot do, both of
+ * them client-side decisions:
  *
- * Whether the world's music may play is a decision only the client can take, hence a packet
- * and the sixth piece of client code in the mod. Nothing else could answer it: the server
- * cannot silence the category periodically without silencing our own track along with it, and
- * it has no way of knowing which sound the client would have picked.
+ * - **Loop.** `SoundInstance.isLooping` belongs to the instance the client builds, and the one
+ *   built from a sound packet plays once. A battle outlasting its track finished in silence.
+ * - **Hold the world's music back.** A track sent that way is a sound like any other: the
+ *   client's `MusicManager` never learns of it and keeps counting down to its next background
+ *   song. Cutting the *Music* category first does not reset that countdown either -
+ *   `MusicManager.tick` only ever clamps it **down** (`Math.min`), and the one branch that
+ *   pushes it back by ten to twenty minutes runs solely when a track of its own was playing. A
+ *   battle starting a few seconds before the countdown ran out therefore got the overworld
+ *   music on top of the battle theme: issue #33.
+ *
+ * So the server names the track and the client plays it, in
+ * [matheo1712.cobbletrainers.client.ClientBattleMusic]. The name is still resolved
+ * client-side, exactly as a sound packet's would be, so a datapack may name any track a
+ * resource pack provides without the mod knowing it beforehand.
  */
 object BattleMusicNetworking {
 
@@ -33,25 +38,35 @@ object BattleMusicNetworking {
         PayloadTypeRegistry.playS2C().register(BattleMusicPayload.TYPE, BattleMusicPayload.CODEC)
     }
 
-    /** Asks the player's client to keep its background music quiet. */
-    fun hold(player: ServerPlayer) = send(player, playing = true)
+    /** Starts the theme on the player's client, looping until [silence]. */
+    fun play(player: ServerPlayer, track: ResourceLocation, volume: Float, pitch: Float) =
+        send(player, BattleMusicPayload(track, volume, pitch))
 
-    /** Hands the world's music back to the client. */
-    fun release(player: ServerPlayer) = send(player, playing = false)
+    /** Stops it, and hands the world's music back. */
+    fun silence(player: ServerPlayer) = send(player, BattleMusicPayload(null, 0f, 0f))
 
     /**
-     * A client without the mod is simply left alone: it keeps the behaviour of every version
-     * before this one, which is the battle theme plus whatever the world decides to play.
+     * A client without the mod hears nothing, and that is the supported answer: the mod is
+     * required on both sides, like the two screens whose packets are guarded the same way.
      */
-    private fun send(player: ServerPlayer, playing: Boolean) {
+    private fun send(player: ServerPlayer, payload: BattleMusicPayload) {
         if (!ServerPlayNetworking.canSend(player, BattleMusicPayload.TYPE)) return
 
-        ServerPlayNetworking.send(player, BattleMusicPayload(playing))
+        ServerPlayNetworking.send(player, payload)
     }
 }
 
-/** Server -> client: whether a trainer battle theme is currently playing for this player. */
-data class BattleMusicPayload(val playing: Boolean) : CustomPacketPayload {
+/**
+ * Server -> client: the battle theme to play, or null to stop the one playing.
+ *
+ * Volume and pitch travel with it so that the tuning stays in one place, next to the default
+ * track in [matheo1712.cobbletrainers.battle.TrainerBattleMusic].
+ */
+data class BattleMusicPayload(
+    val track: ResourceLocation?,
+    val volume: Float,
+    val pitch: Float
+) : CustomPacketPayload {
 
     override fun type(): CustomPacketPayload.Type<BattleMusicPayload> = TYPE
 
@@ -61,8 +76,19 @@ data class BattleMusicPayload(val playing: Boolean) : CustomPacketPayload {
 
         val CODEC: StreamCodec<RegistryFriendlyByteBuf, BattleMusicPayload> =
             CustomPacketPayload.codec(
-                { payload, buf -> buf.writeBoolean(payload.playing) },
-                { buf -> BattleMusicPayload(buf.readBoolean()) }
+                { payload, buf ->
+                    buf.writeBoolean(payload.track != null)
+                    payload.track?.let { buf.writeResourceLocation(it) }
+                    buf.writeFloat(payload.volume)
+                    buf.writeFloat(payload.pitch)
+                },
+                { buf ->
+                    BattleMusicPayload(
+                        if (buf.readBoolean()) buf.readResourceLocation() else null,
+                        buf.readFloat(),
+                        buf.readFloat()
+                    )
+                }
             )
     }
 }

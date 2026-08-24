@@ -501,9 +501,10 @@ If you have no image of your own, the mod ships one to try it with:
 
 ## Battle music
 
-The music is sent to the players in the battle and cut when it ends, however it ends: win, loss,
-flee, `/stopbattle`, or a trainer vanishing. **Nothing else plays alongside it**: whatever was
-playing in the *Music* category is stopped just before.
+The music is sent to the players in the battle, loops, and stops when the battle ends, however
+it ends: win, loss, flee, `/stopbattle`, or a trainer vanishing. **Nothing else plays alongside
+it**: whatever was playing in the *Music* category is stopped just before, and the game keeps
+its own music to itself until the battle is over.
 
 | `battle.music` | Result |
 | --- | --- |
@@ -537,9 +538,10 @@ The trainer references the **key** in `sounds.json`, never the file path:
 
 - **`"stream": true` is essential** on a long track, otherwise Minecraft loads the whole file
   into memory at once.
-- **Use a stereo file**: Minecraft plays those at a constant volume, with no falloff over
-  distance. A mono one would be positioned like a block sound.
-- **The track does not loop**: a battle longer than the track ends in silence.
+- **The track loops**: it starts over the moment it ends, with no gap, until the battle is
+  over. So pick one whose end runs into its beginning.
+- **The track is played on the player**, with no falloff: a mono file is not positioned in the
+  world. Stereo is still the better choice for music.
 
 ## Translating your text
 
