@@ -123,8 +123,8 @@ messages, musique et récompenses de combat.
   dresseur, et sa fin de vie. Même section.
 - **`TrainerGaze`** - donne à chaque dresseur chargé un `LookAtPlayerGoal`, pour qu'il tourne la
   tête vers un joueur qui s'approche. Voir « Le regard des dresseurs ».
-- **`battle.TrainerLead`** - qui ouvre le combat pour un joueur, et la mémoire par joueur de ce
-  que son client a annoncé. Voir « Le Pokémon qui ouvre le combat ».
+- **`battle.TrainerLead`** - qui ouvre le combat, des deux côtés, et la mémoire par joueur de
+  ce que son client a annoncé. Voir « Le Pokémon qui ouvre le combat ».
 - **`dialogue.TrainerDialogue`** - tout ce qu'un dresseur dit, monté en `Dialogue` Cobblemon.
   Voir « Les dialogues ».
 - **`advancement.TrainerDefeatedTrigger`** - le critère `cobblemon-trainers:trainer_defeated`.
@@ -743,7 +743,14 @@ Points à ne pas redécouvrir :
 `BattleBuilder.pvn` prend un `leadingPokemon` que `PartyStore.toBattleTeam` remonte en tête de
 l'équipe. Personne ne le remplissait, donc un combat partait toujours sur le premier slot.
 `TrainerLead` répond à sa place, en trois temps : le slot sélectionné dans l'overlay, sinon le
-Pokémon sorti, sinon rien - et rien rend à Cobblemon son premier slot.
+Pokémon sorti, sinon le premier de l'équipe qui tienne debout.
+
+**Une règle tient les deux côtés du combat : un Pokémon K.O. n'ouvre jamais un combat.** Rien
+dans Cobblemon ne la fait respecter - `toBattleTeam` sert l'équipe dans l'ordre des slots sans
+jamais lire une barre de vie -, et Showdown répond à un combat qu'il ne peut pas ouvrir par
+`Can't switch: You can't switch to a fainted Pokémon`, une erreur que personne ne reçoit : le
+camp qui l'a envoyée ne peut plus jouer du tout. C'est le soft lock de l'issue #32, et il
+frappait le joueur et le dresseur pour la même raison.
 
 Points à ne pas redécouvrir :
 
@@ -763,6 +770,24 @@ Points à ne pas redécouvrir :
   le refus de combat : celui-ci porte sur l'équipe entière et ne souffre aucune exception, alors
   qu'ici un format qui ajuste les niveaux soigne l'équipe, donc une sélection K.O. y est honorée
   au lieu d'être sautée. Le refus garantit qu'il reste toujours quelqu'un debout à faire entrer.
+- **Rendre `null` ne veut plus dire « garde le défaut de Cobblemon ».** Ce défaut *est* le
+  premier slot quel que soit son état : c'était lui le soft lock. Le dernier repli nomme donc le
+  premier Pokémon en état de combattre - ce qui redonne le slot un quand l'équipe est en ordre,
+  et le corrige sinon. `null` ne reste que pour l'équipe sans personne à envoyer, déjà refusée
+  par `TrainerBattleInteraction.partyRefusal`, ou vide, ce que Cobblemon dit mieux que nous.
+- **Le dresseur n'a pas de `leadingPokemon`**, donc `TrainerLead.orderTeam` range son équipe
+  elle-même : les K.O. passent derrière. Un dresseur en `battle.healParty: false` garde ses
+  dégâts d'un combat à l'autre, donc celui qui a perdu son premier Pokémon rouvrait le combat
+  suivant avec lui. Réécrire ce store est permis là où ça ne l'est pas côté joueur : il est à
+  nous, monté à l'apparition, et aucun joueur ne l'a arrangé. Un dresseur qui soigne est laissé
+  tranquille - `toBattleTeam` soigne son équipe juste après, et le réordonner changerait en
+  douce le lead choisi par le pack.
+- **Le cas doubles/triples est refusé, pas corrigé.** `leadingPokemon` ne remplit que la
+  première place, et l'équipe d'un joueur lui appartient : un format qui envoie deux ou trois
+  Pokémon d'un coup est le seul cas que le mod voit venir sans pouvoir le réparer.
+  `partyRefusal` regarde les places d'ouverture que `TrainerLead.teamOrder` reconstitue - la
+  même liste que `toBattleTeam` - et dit quoi soigner ou remonter. Un refus lisible vaut mieux
+  qu'un combat bloqué.
 - **La sélection est de la session, pas du joueur.** Elle est oubliée à la déconnexion des deux
   côtés, plutôt que de survivre à une équipe réorganisée entre-temps.
 - **Le client compare avant de parler.** Il n'existe aucun événement sur ce champ, d'où le tick ;

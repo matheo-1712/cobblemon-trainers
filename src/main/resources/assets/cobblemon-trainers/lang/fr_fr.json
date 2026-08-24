@@ -79,6 +79,7 @@
   "cobblemon-trainers.chat.locked": "%s ne veut pas encore te combattre.",
 
   "cobblemon-trainers.chat.no_healthy_pokemon": "Aucun de tes Pokémon ne peut combattre. Soigne ton équipe avant de défier un dresseur.",
+  "cobblemon-trainers.chat.fainted_in_lead": "Les %s premiers Pokémon de ton équipe combattent tous ici. Soigne-les, ou remonte un Pokémon en forme.",
 
   "cobblemon-trainers.chat.call.arrival": "Je t'attends en %s, %s, %s.",
   "cobblemon-trainers.chat.call.busy": "Je suis déjà quelque part par ici.",
