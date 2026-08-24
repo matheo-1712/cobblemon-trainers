@@ -179,10 +179,13 @@ combat à `5`.
 commande `/cobblemontrainers debugai` pour voir en combat ce que le mod a corrigé et pourquoi.
 
 `healParty: false` fait persister dégâts et PP d'un combat à l'autre - pratique pour un boss
-qu'on use en plusieurs tentatives.
+qu'on use en plusieurs tentatives. Ses Pokémon K.O. passent en fin d'équipe, pour qu'il ouvre
+le combat suivant avec quelqu'un qui tient debout.
 
 Un `doubles` exige au moins 2 Pokémon **de chaque côté**, un `triples` au moins 3. Si l'une
-des équipes est trop courte, Cobblemon refuse le combat et l'explique dans le chat.
+des équipes est trop courte, Cobblemon refuse le combat et l'explique dans le chat. Côté
+joueur, ces 2 ou 3 premiers Pokémon doivent en plus pouvoir combattre : le mod refuse plutôt
+que de laisser le combat se bloquer.
 
 ### `messages`
 

@@ -79,6 +79,7 @@
   "cobblemon-trainers.chat.locked": "%s will not battle you yet.",
 
   "cobblemon-trainers.chat.no_healthy_pokemon": "None of your Pokémon can fight. Heal your team before challenging a trainer.",
+  "cobblemon-trainers.chat.fainted_in_lead": "The first %s Pokémon of your team all have to fight in this battle. Heal them, or move a healthy one up.",
 
   "cobblemon-trainers.chat.call.arrival": "I am waiting for you at %s, %s, %s.",
   "cobblemon-trainers.chat.call.busy": "I am already around here somewhere.",

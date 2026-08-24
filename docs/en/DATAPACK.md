@@ -176,10 +176,13 @@ impossible mistakes at `3`, entry hazards at `4`, and reading the battle in full
 `/cobblemontrainers debugai` command, which shows you in battle what the mod corrected and why.
 
 `healParty: false` carries damage and PP from one battle to the next - handy for a boss you
-wear down over several attempts.
+wear down over several attempts. Its fainted Pokémon move to the back of the team, so that it
+opens the next battle with one still standing.
 
 A `doubles` battle needs at least 2 Pokémon **on each side**, a `triples` at least 3. If either
-team is too short, Cobblemon refuses the battle and says so in the chat.
+team is too short, Cobblemon refuses the battle and says so in the chat. On the player's side
+those first 2 or 3 also have to be able to fight: the mod refuses rather than let the battle
+lock up.
 
 ### `messages`
 
