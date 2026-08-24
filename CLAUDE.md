@@ -486,6 +486,17 @@ Points à ne pas redécouvrir :
 onglet par datapack, un intertitre par catégorie, et le skin de chacun. C'est le pendant
 joueur de `/cobblemontrainers list`, qui reste opérateur - l'objet ne donne aucun pouvoir, il lit.
 
+**Le craft du Battle Phone** est `data/cobblemon-trainers/recipe/battle_phone.json` : quatre
+lingots de fer aux coins, quatre de cuivre sur les côtés, une noigrume bleue au centre. Trois
+choses à savoir avant d'y toucher :
+
+- **Le dossier est `recipe/`, au singulier**, comme `advancement/` depuis 1.21.
+- **Les ingrédients sont des items, pas des tags.** `c:ingots/iron` marcherait - Cobblemon
+  l'emploie - mais un tag vide échoue *en silence* : la recette disparaît sans un mot dans le
+  log. Deux lingots vanilla ne valent pas ce risque.
+- **La noigrume vient de Cobblemon** (`cobblemon:blue_apricorn`), qui est une dépendance dure :
+  la recette ne peut donc pas se retrouver sans son ingrédient.
+
 Points à ne pas redécouvrir :
 
 - **L'onglet, c'est le namespace.** Un « datapack » n'existe pas à l'exécution : ce que le mod
@@ -785,9 +796,15 @@ Points à ne pas redécouvrir :
 `BuiltInRegistries.TRIGGER_TYPES`, depuis `onInitialize` - avant la lecture des datapacks, sans
 quoi un advancement qui l'utilise échoue au parsing.
 
-Le mod ne livre aucun advancement : ils vivraient dans tous les mondes et, contrairement à un
-dresseur, un advancement n'a pas d'interrupteur `listed`. Les exemples sont dans
-`examples/cobblemonrlm/data/cobblemonrlm/advancement/` (dossier au **singulier** depuis 1.21).
+Le mod ne livre aucun advancement **de jeu** : ils vivraient dans tous les mondes et,
+contrairement à un dresseur, un advancement n'a pas d'interrupteur `listed`. Les exemples sont
+dans `examples/cobblemonrlm/data/cobblemonrlm/advancement/` (dossier au **singulier** depuis
+1.21).
+
+La seule exception est `advancement/recipes/battle_phone.json`, qui n'est pas un objectif mais
+le déblocage de recette du Battle Phone : sans lui la recette existe mais n'apparaît jamais
+dans le livre de recettes. Il est invisible dans l'arbre et ne fait ni toast ni annonce, comme
+tous ceux de vanilla. Voir « Le craft du Battle Phone ».
 
 Points à ne pas redécouvrir :
 

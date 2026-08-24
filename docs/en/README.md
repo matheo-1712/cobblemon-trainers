@@ -10,6 +10,7 @@ covers installing it; the pages below are the **reference** - this is where the 
 
 | Page | What is in it |
 | --- | --- |
+| [COMMANDS.md](COMMANDS.md) | The four verbs of `/cobblemontrainers`, their arguments and what they return |
 | [DATAPACK.md](DATAPACK.md) | Making a trainer pack: layout, every field, categories, locks, advancements, Showdown teams, skins, music, rewards, translations |
 | [SPAWNING.md](SPAWNING.md) | Getting a trainer to turn up: the `location` block and calling one from the Battle Phone |
 | [DIFFICULTY.md](DIFFICULTY.md) | Exactly what `battle.difficulty` does, from `0` to `5` |
@@ -20,10 +21,16 @@ An example pack covering every option lives in
 [release](https://github.com/matheo-1712/cobblemon-trainers/releases) attaches it ready-zipped,
 under the name `exemple_trainer_datapack.zip`.
 
+**Eight trainers ship with the mod**, in the `cobblemon-trainers` namespace: iconic trainers
+at level 80, each callable from one biome, and a level 100 one locked behind them that only
+answers in the End. They show up in the Battle Phone in their own tab, next to the
+ones from your packs.
+
 ## By question
 
 | I want to… | Go to |
 | --- | --- |
+| Learn the commands | [The commands](COMMANDS.md) |
 | Write my first trainer | [Your first trainer](DATAPACK.md#your-first-trainer) |
 | Know where to put my pack | [Where to put the pack](DATAPACK.md#where-to-put-the-pack) |
 | See every JSON field | [Field reference](DATAPACK.md#field-reference) |
@@ -44,6 +51,7 @@ under the name `exemple_trainer_datapack.zip`.
 
 Each subject is described in exactly one place, and the other pages link to it:
 
+- the **commands** are in `COMMANDS.md`;
 - the **trainer format** is in `DATAPACK.md`;
 - anything about **calling a trainer over** is in `SPAWNING.md`;
 - anything the **AI** does is in `DIFFICULTY.md`.

@@ -9,6 +9,7 @@ ses commandes ; les pages ci-dessous sont la **référence** - c'est là que vit
 
 | Page | Ce qu'on y trouve |
 | --- | --- |
+| [COMMANDS.md](COMMANDS.md) | Les quatre verbes de `/cobblemontrainers`, leurs arguments et ce qu'ils renvoient |
 | [DATAPACK.md](DATAPACK.md) | Créer un pack de dresseurs : arborescence, tous les champs, catégories, conditions, advancements, équipes Showdown, skins, musique, récompenses, traductions |
 | [SPAWNING.md](SPAWNING.md) | Faire venir un dresseur : le bloc `location` et l'appel depuis le Battle Phone |
 | [DIFFICULTE.md](DIFFICULTE.md) | Ce que fait exactement `battle.difficulty`, de `0` à `5` |
@@ -19,10 +20,16 @@ datapack (`data/`) et resource pack (`assets/`). Chaque
 [release](https://github.com/matheo-1712/cobblemon-trainers/releases) l'attache déjà zippé,
 sous le nom `exemple_trainer_datapack.zip`.
 
+**Huit dresseurs sont livrés avec le mod**, dans le namespace `cobblemon-trainers` : des
+dresseurs iconiques niveau 80, appelables chacun depuis un biome, et un dernier niveau 100
+verrouillé derrière l'un d'eux, qui ne répond que dans l'End. Ils apparaissent dans le Battle
+Phone sous leur propre onglet, à côté de ceux de tes packs.
+
 ## Par question
 
 | Je veux… | Aller à |
 | --- | --- |
+| Connaître les commandes | [Les commandes](COMMANDS.md) |
 | Écrire mon premier dresseur | [Le premier dresseur](DATAPACK.md#le-premier-dresseur) |
 | Savoir où poser mon pack | [Où poser le pack](DATAPACK.md#où-poser-le-pack) |
 | La liste de tous les champs JSON | [Tous les champs](DATAPACK.md#tous-les-champs) |
@@ -43,6 +50,7 @@ sous le nom `exemple_trainer_datapack.zip`.
 
 Chaque sujet n'est décrit qu'à un seul endroit, et les autres pages y renvoient :
 
+- les **commandes** sont dans `COMMANDS.md` ;
 - le **format des dresseurs** est dans `DATAPACK.md` ;
 - tout ce qui touche à **l'appel d'un dresseur** est dans `SPAWNING.md` ;
 - tout ce que fait **l'IA** est dans `DIFFICULTE.md`.

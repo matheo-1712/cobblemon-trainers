@@ -308,6 +308,10 @@ Le compte est lu dans la progression enregistrée, celle-là même qu'affiche
 `progress.rematch` décide si on peut redéfier le dresseur, `rewards` ce qu'on gagne, et chaque
 récompense décide elle-même à quelle fréquence elle tombe.
 
+Un dresseur rejouable est donc une **méthode de farm**, et c'est ton pack qui décide laquelle :
+des baies à chaque victoire, un minerai, une ressource qu'on n'obtient pas autrement. Le mod ne
+livre aucune de ces boucles, seulement de quoi les écrire.
+
 ```json
 {
   "progress": { "rematch": "never" },
@@ -579,6 +583,8 @@ telle quelle - un bon moyen de repérer une clé oubliée.
 /cobblemontrainers list
 /cobblemontrainers defeat mon_pack:champions/erika
 ```
+
+**➜ Chaque commande est détaillée dans [COMMANDS.md](COMMANDS.md)**, arguments compris.
 
 `/reload` recharge les dresseurs sans redémarrer. L'autocomplétion de `spawn` propose
 les dresseurs effectivement chargés, sous leur ID complet : si le tien n'y est pas, il n'a pas

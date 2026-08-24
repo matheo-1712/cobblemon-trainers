@@ -10,38 +10,120 @@
   <sub><strong>Compatible with</strong> · Minecraft 1.21.1 · Fabric · Cobblemon 1.7.3 · Java 21 · needed on client <em>and</em> server</sub>
 </p>
 
+## What makes it different
+
+**No trainer ever spawns on its own.** That is the starting decision, and there is no setting
+to undo it: a world does not end up littered with trainers standing around in biomes nobody
+crosses. A trainer is only ever there because somebody wanted them there - an admin, or the
+player themselves.
+
+**On the admin side**, two ways to populate a world:
+
+- `/cobblemontrainers spawn` puts a trainer down here and now, for a test or an event;
+- the **trainer spawner block** gives one a post. It is invisible, remembers which trainer to
+  summon, and puts them back whenever they are missing - killed, wandered off, or gone with an
+  unloaded chunk. That is what keeps a champion in their gym.
+
+And because a configured block **travels inside a structure** with its settings, dropping one
+into a saved building is enough for every generated copy to come with *its own* trainer already
+in place. A village of trainers is built once.
+
+**On the player side, meeting a trainer works nothing like that**: it all goes through the
+**Battle Phone**, an item, not a command.
+
+It is **crafted**: four iron ingots in the corners, four copper ingots on the sides, and a
+**blue apricorn** in the middle.
+
+| | | |
+| --- | --- | --- |
+| Iron | Copper | Iron |
+| Copper | **Blue apricorn** | Copper |
+| Iron | Copper | Iron |
+
+<!-- Craft image: replace the line below with
+     <p align="center"><img src="https://raw.githubusercontent.com/matheo-1712/cobblemon-trainers/refs/heads/master/assets/battle_phone_craft.png" alt="Battle Phone recipe"></p> -->
+*(recipe image coming)*
+
+Open the Battle Phone, pick a trainer from the list, call them. But a trainer only comes
+**where they said they would be**: in the badlands at night, in a thunderstorm, on a structure,
+in the End. Their page shows that place, the **Call** button sits right next to it, and if you
+are not there the refusal names exactly what is missing. Finding a trainer means reading their
+page and travelling to the right spot - and the world stays empty until you do.
+
 ---
 
 ## What you get
 
-- **Real trainer battles.** Right-click a trainer, get a proper Cobblemon battle in
-  singles, doubles or triples - with battle music playing over everything else. The battle
-  opens on the Pokémon you have selected, not on your first slot.
-- **Trainers who come when called.** Give a trainer a place - a biome, a structure, an area -
-  and any player can call them over from the Battle Phone once they are standing in it.
-- **Trainers that stay where you put them.** An invisible spawner block holds one trainer in
-  place: kill it and it comes back, walk it away and it returns. Configure it by right-clicking,
-  and it keeps its settings inside a structure.
-- **Showdown teams, pasted in.** Copy an export straight from Pokémon Showdown: items,
-  abilities, natures, EVs/IVs, moves, shininess, nicknames. Unknown lines are ignored, so
-  it just works.
-- **Any skin you like.** Borrow a Minecraft account's skin by username or UUID, or ship
-  your own PNG in the pack. Custom textures are sent by the server, so every player sees
-  them.
-- **Rewards and one-time bosses.** Hand out items on victory, once or every time. Make a
-  champion a single encounter per player with `"rematch": "never"`.
-- **Progress tracking, in game.** The Battle Phone item gives every player their own board:
-  one tab per pack, a heading per category, each trainer's skin - and their team, once beaten.
-- **Leagues, not just trainers.** Sort trainers into categories with folders, lock one behind
-  another - a badge, an advancement, eight victories - and hang ordinary Minecraft advancements
-  off any win.
-- **Adjustable AI.** Skill from 0 (plays randomly) to 5 (plays to win), independent from
-  Pokémon level.
-- **Translatable text.** Trainer names and dialogue accept translation keys, so every
-  player reads them in their own language - floating nameplate included.
-- **Trainers in the box.** The mod ships seven of its own, in their own tab: six iconic
-  trainers at level 80, each answering a call from one biome, and a level 100 one locked
-  behind them that only answers in the End.
+- **Real trainer battles** - right-click, singles, doubles or triples, with battle music.
+- **Trainers who come when called** - from the Battle Phone, wherever they said they would be.
+- **Trainers that stay put** - an invisible block holds one in place for good.
+- **Showdown teams, pasted in** - copy an export, paste it, done.
+- **Any skin you like** - a Minecraft account's, or your own PNG.
+- **Rewards** - items on victory, once or every time.
+- **Progress tracking in game** - the Battle Phone, one board per player.
+- **Leagues, not just trainers** - categories, locks, advancements.
+- **Adjustable AI** - several difficulty levels, up to you per trainer.
+- **Regional forms and fakemon** - any Cobblemon form, including ones other packs add.
+- **Translatable text** - names and dialogue in every player's own language.
+- **Eight trainers in the box** - ready to fight, in their own tab.
+
+---
+
+## In detail
+
+**Real trainer battles.** Right-click a trainer and you get a proper Cobblemon battle, in
+singles, doubles or triples, optionally with both teams brought to level 50. Battle music plays
+over everything else and stops however the battle ends. The battle opens on the Pokémon you
+have selected, not on your first slot.
+
+**Trainers who come when called.** Give a trainer a place - a biome, a structure, an area, a
+time, a weather - and any player can call them over from the Battle Phone once they are
+standing in it. Give them none and they wait wherever an admin put them.
+
+**Trainers that stay where you put them.** An invisible spawner block holds one trainer in
+place: kill it and it comes back, walk it away and it returns. Configure it by right-clicking,
+and it keeps its settings inside a structure - so every generated copy of a building arrives
+with its own trainer.
+
+**Showdown teams, pasted in.** Copy an export straight from Pokémon Showdown: items,
+abilities, natures, EVs/IVs, moves, shininess, nicknames. Unknown lines are ignored, so it just
+works. Regional forms and fakemon go through an `Aspects:` line, the same syntax as
+`/pokespawn`.
+
+**Any skin you like.** Borrow a Minecraft account's skin by username or UUID, or ship your own
+PNG in the pack. Custom textures are sent by the server, so every player sees them even without
+your pack.
+
+**Rewards, and one-time bosses.** Hand out items on victory - every time, or only on the first
+win, reward by reward. A reward can be kept secret until it is won. Make a champion a single
+encounter per player with `"rematch": "never"`.
+
+That is what rewards are for: a rematchable trainer is a **way to farm**, and the datapack
+decides which one. A trainer paying out berries on every win is a plantation you play instead
+of wait for; another can pay out an ore, a resource you get no other way, or a step in a
+progression. The mod ships none of those loops - it ships the hook, and packs will do the
+rest.
+
+**Progress tracking, in game.** The Battle Phone item gives every player their own board: one
+tab per pack, a heading per category, each trainer's skin, what they still owe you, and whether
+you have beaten them. Beat one and their full team opens up, models, forms and shinies
+included. Operators get the same from `/cobblemontrainers list`. Progress is saved with the
+world and survives `/reload` and restarts.
+
+**Leagues, not just trainers.** Sort trainers into categories with folders, lock one behind
+another - a badge, an advancement, eight victories - and hang ordinary Minecraft advancements
+off any win.
+
+**Adjustable AI.** Each trainer sets its own difficulty, from a first opponent to a champion
+who plays to win. It is independent from the Pokémon's level, so a low-level trainer can still
+be a real fight.
+
+**Translatable text.** Trainer names and dialogue accept translation keys, so every player
+reads them in their own language - floating nameplate included.
+
+**Eight trainers in the box.** The mod ships its own, in their own tab: iconic trainers at
+level 80, each answering a call from one biome, and a level 100 one locked behind them that
+only answers in the End.
 
 ---
 
@@ -54,6 +136,8 @@
 /cobblemontrainers debugai
 ```
 
+Every verb is detailed in
+[the commands page](https://github.com/matheo-1712/cobblemon-trainers/blob/master/docs/en/COMMANDS.md).
 They all require permission level 2 (operator). Autocomplete lists every loaded trainer under
 its full `<pack>:<trainer>` ID, and searches both halves - typing `jac` finds
 `my_pack:jacinthe`.
@@ -115,6 +199,13 @@ Developed by **Mathéo** ([matheo-1712](https://github.com/matheo-1712)).
   every field, the `location` block, and what each AI difficulty does
 - **Example pack:** [downloadable](https://github.com/matheo-1712/cobblemon-trainers/releases) next to the jar on every release, on assets - one folder that works as
   a datapack and a resource pack at once, covering every option.
+
+## Trainer packs to play
+
+Nothing here yet - this is where packs built with the mod will be listed, so you have trainers
+to fight without writing any. Made one you want listed? Open an issue on GitHub with the link.
+
+---
 
 Found a bug, or a trainer that won't load? Open an issue on GitHub with your JSON and the
 server log - the mod names the file it choked on.

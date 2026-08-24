@@ -6,6 +6,47 @@ image livrée par le pack -, des messages, une musique de combat, et de quoi mon
 progression - catégories, conditions à remplir pour être défié, advancements à la victoire.
 Les dresseurs se déclarent dans un datapack, donc sans toucher au code.
 
+## Ce qui distingue ce mod
+
+**Aucun dresseur n'apparaît naturellement.** C'est le choix de départ, et il n'y a pas de
+réglage pour l'annuler : un monde ne se retrouve pas semé de dresseurs qui attendent dans le
+vide, dans des biomes que personne ne traverse. Un dresseur n'existe que parce que quelqu'un
+l'a voulu là - un administrateur ou le joueur lui-même.
+
+**Côté administrateur**, deux façons de peupler un monde :
+
+- `/cobblemontrainers spawn` pose un dresseur ici et maintenant, le temps d'un test ou d'un
+  événement ;
+- le **bloc de dresseur** lui donne un poste. Le bloc est invisible, retient quel dresseur
+  invoquer, et le remet en place chaque fois qu'il manque à l'appel - tué, égaré, ou disparu
+  avec un chunk. C'est ce qui tient un champion dans son arène ou le PNJ du spawn.
+
+Et comme un bloc configuré **voyage dans une structure** avec ses réglages, il suffit d'en
+poser un dans un bâtiment sauvegardé pour que chaque copie générée arrive avec *son* dresseur
+déjà en place. Un village de dresseurs se construit une fois.
+
+**Côté joueur, la façon de rencontrer un dresseur est complètement différente** : tout passe
+par le **Battle Phone**, un objet, pas une commande.
+
+Il se **craft**, à l'établi : quatre lingots de fer aux coins, quatre lingots de cuivre sur
+les côtés, et une **noigrume bleue** au centre.
+
+| | | |
+| --- | --- | --- |
+| Fer | Cuivre | Fer |
+| Cuivre | **Noigrume bleue** | Cuivre |
+| Fer | Cuivre | Fer |
+
+<!-- Remplacer la ligne ci-dessous par l'image : ![Craft du Battle Phone](assets/battle_phone_craft.png) -->
+*(image du craft à ajouter)*
+
+Le joueur ouvre son Battle Phone, choisit un dresseur dans la liste, et l'appelle. Mais un
+dresseur ne vient que **là où il a dit qu'il serait** : dans les mesas la nuit, sous un orage,
+dans une structure, dans l'End. La fiche du dresseur affiche ce lieu, le bouton **Appeler**
+est juste à côté, et si le joueur n'y est pas, le refus dit exactement ce qui manque. Trouver
+un dresseur, c'est donc lire sa fiche puis aller au bon endroit - et le monde reste vide
+jusque-là.
+
 ## Prérequis
 
 | | Version |
@@ -34,6 +75,9 @@ Tout passe par une commande unique, `/cobblemontrainers`, et un verbe :
 ```
 
 Niveau de permission 2 (opérateur), vérifié une fois sur la racine.
+
+**➜ Le détail de chaque verbe est dans [docs/COMMANDS.md](docs/COMMANDS.md)** : les arguments,
+les formes acceptées de l'ID, ce que chaque commande renvoie, et les messages d'erreur.
 
 `debugai` est un interrupteur : tant qu'il est actif, chaque décision que le mod corrige chez
 l'IA d'un dresseur est expliquée dans votre chat pendant le combat - coup refusé, changement
@@ -68,7 +112,7 @@ joueur enfermé face à un adversaire absent.
 
 ### Les dresseurs livrés avec le mod
 
-Le mod apporte ses propres dresseurs, dans le namespace `cobblemon-trainers` : six *dresseurs
+Le mod apporte **huit dresseurs**, dans le namespace `cobblemon-trainers` : des *dresseurs
 iconiques* niveau 80, chacun appelable depuis un biome donné, et un dernier verrouillé
 derrière l'un d'eux, niveau 100, qui ne répond que dans l'End. Ils apparaissent dans le Battle
 Phone sous leur propre onglet, à côté de ceux de tes packs, et servent d'exemple jouable de ce
@@ -99,8 +143,9 @@ affichent les modèles de ses Pokémon, formes et chromatiques comprises. Passer
 l'une d'elles donne le nom et le niveau du Pokémon.
 
 L'objet ne retient rien : il lit la progression du serveur, donc deux exemplaires affichent
-la même chose et le perdre ne perd rien. On le trouve dans l'onglet créatif
-**Cobblemon Trainers**, ou avec :
+la même chose et le perdre ne perd rien. Il se craft avec du fer, du cuivre et une noigrume
+bleue - voir [le craft](#ce-qui-distingue-ce-mod) -, se trouve dans l'onglet créatif
+**Cobblemon Trainers**, ou s'obtient avec :
 
 ```
 /give @s cobblemon-trainers:battle_phone
@@ -225,6 +270,13 @@ Ce qu'un joueur a accompli est retenu par ID de dresseur : battre un exemplaire 
 que lisent `"rematch": "never"` (une seule rencontre) et, sur une récompense,
 `"firstWinOnly": true` (un butin qui ne retombe pas). Les deux se combinent : un même combat
 rejouable peut donner un trophée une fois et du consommable à chaque victoire.
+
+**C'est là tout l'intérêt des récompenses** : un dresseur rejouable est une *méthode de farm*,
+et c'est le datapack qui décide laquelle. Un dresseur qui rend des baies à chaque victoire est
+une plantation qui se joue au lieu de s'attendre ; un autre peut rendre un minerai, une
+ressource qu'on n'obtient pas autrement, ou de quoi avancer dans une progression. Le mod ne
+livre aucune de ces boucles - il livre le crochet, et les packs à venir en feront ce qu'ils
+voudront.
 
 Un bloc `requires` ferme un dresseur tant qu'un joueur n'a pas battu tel autre dresseur,
 gagné tant de combats, obtenu tel advancement ou tel objet - de quoi monter une ligue à

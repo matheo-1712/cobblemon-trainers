@@ -304,6 +304,10 @@ it survives a restart and is not wiped by `/reload`.
 `progress.rematch` decides whether the trainer can be challenged again, `rewards` decides what
 you get, and each reward decides for itself how often it drops.
 
+A rematchable trainer is therefore a **way to farm**, and your pack decides which one: berries
+on every win, an ore, a resource you get no other way. The mod ships none of those loops, only
+what it takes to write them.
+
 ```json
 {
   "progress": { "rematch": "never" },
@@ -569,6 +573,8 @@ to spot a key you forgot.
 /cobblemontrainers list
 /cobblemontrainers defeat my_pack:champions/erika
 ```
+
+**➜ Every command is detailed in [COMMANDS.md](COMMANDS.md)**, arguments included.
 
 `/reload` reloads the trainers without a restart. The autocompletion on `spawn` offers the
 trainers that actually loaded, under their full ID: if yours is not there, it was not read - the
