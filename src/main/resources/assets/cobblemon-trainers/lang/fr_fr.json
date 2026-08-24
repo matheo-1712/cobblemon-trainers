@@ -73,6 +73,7 @@
   "cobblemon-trainers.dialogue.option.cancel": "Annuler",
 
   "cobblemon-trainers.chat.trainer_gone": "Le dresseur a quitté le combat. La rencontre s'arrête.",
+  "cobblemon-trainers.chat.too_far": "Tu t'es trop éloigné du dresseur. La rencontre s'arrête.",
 
   "cobblemon-trainers.chat.already_defeated": "%s a déjà été battu et ne prend pas de revanche.",
 

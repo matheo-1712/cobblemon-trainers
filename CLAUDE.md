@@ -139,6 +139,8 @@ messages, musique et récompenses de combat.
   récompenses et l'enregistrement de la victoire. Il surveille aussi la mort et la
   suppression des entités, pour arrêter le combat d'un dresseur qui quitte le monde (voir
   plus bas).
+- **`battle.TrainerBattleRange`** - la distance au-delà de laquelle un combat de dresseur
+  s'arrête, celle d'un combat contre un Pokémon sauvage. Même section.
 - **`battle.ai.TrainerBattleAI`** - la couche qui refuse les décisions intenables du
   `StrongBattleAI` de Cobblemon, épaulée par `BattleTypeChart` (efficacité des types, talents
   compris), `BattleDamage` (dégâts en points de vie), `BattleGuards` (ce qui encaisse un coup
@@ -1120,6 +1122,32 @@ déchargement de chunk ne compte pas) appellent `battle.stop()` sur les `npc.bat
 deux se déclenchent pour un même dresseur tué, c'est voulu : le combat déjà fermé n'est plus
 dans le registre, donc l'opération est idempotente. Le filtre `TrainerRegistry.findByAspects`
 évite de toucher aux NPC qui ne viennent pas du mod.
+
+Un joueur qui s'éloigne, lui, n'était rattrapé par personne : `PokemonBattle.tick` n'appelle
+son `checkFlee` que `if (isPvW)`, donc **un combat contre un NPC n'est jamais mesuré** et le
+joueur restait enfermé dedans à l'autre bout du monde - le bug #36. `TrainerBattleRange`
+transcrit ce `checkFlee` pour nos combats : la distance est le `defaultFleeDistance` de la
+config Cobblemon, celle-là même que `BattleBuilder.pve` donne à un Pokémon sauvage, et elle
+se mesure du dresseur au joueur le plus proche.
+
+Points à ne pas redécouvrir :
+
+- **Le tick est celui du serveur, pas celui du combat**, et il est conditionné aux
+  `dispatches` comme celui de Cobblemon : couper un combat au milieu de sa file d'actions,
+  c'est poser un `>forcetie` sur un combat qui parlait encore.
+- **Un joueur dans une autre dimension compte comme parti**, faute d'être à une distance
+  quelconque du dresseur. C'est le comportement de `checkFlee`, dont le filtre de niveau
+  élimine simplement l'entité.
+- **La position du dresseur est lue même une fois l'entité retirée**, et c'est justement le
+  cas que ça répare : un chunk déchargé ne passe pas le `removalReason.shouldDestroy()`
+  ci-dessus, donc un dresseur déchargé n'arrêtait pas son propre combat. Sa dernière
+  position connue est la bonne : la question est de savoir si le joueur est loin de là où le
+  dresseur se tenait.
+- **Les joueurs sont relus sur les acteurs, pas sur `battle.players`.** Cette liste est figée
+  à la construction du combat, donc elle garde le `ServerPlayer` qu'une reconnexion a
+  remplacé ; `PlayerBattleActor.entity` refait la recherche par UUID à chaque appel.
+- **Les combats sont arrêtés hors de l'itération** : `stop()` déclenche les `onEndHandlers`,
+  dont l'un revient effacer l'entrée de la map qu'on est en train de parcourir.
 
 ### Livrer un pack
 

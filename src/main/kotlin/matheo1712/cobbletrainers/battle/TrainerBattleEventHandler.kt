@@ -17,6 +17,8 @@ import matheo1712.cobbletrainers.trainers.TrainerRegistry
 import matheo1712.cobbletrainers.trainers.TrainerRewards
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents
 import net.minecraft.ChatFormatting
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.Entity
@@ -24,7 +26,7 @@ import net.minecraft.world.entity.Entity
 /**
  * Drives what surrounds a trainer battle: the battle music, the trainer's closing words, the
  * rewards and the record of who beat whom, and the fate of a battle whose trainer leaves the
- * world.
+ * world - or whose players walk away from it, which is [TrainerBattleRange]'s half.
  *
  * The battle actor of an NPC is an [com.cobblemon.mod.common.entity.npc.NPCBattleActor], which exposes the entity directly - no
  * need to look it up by UUID. Note that [com.cobblemon.mod.common.entity.npc.NPCBattleActor] does not extend `TrainerBattleActor`;
@@ -46,6 +48,13 @@ object TrainerBattleEventHandler {
         ServerEntityEvents.ENTITY_UNLOAD.register { entity, _ ->
             if (entity.removalReason?.shouldDestroy() == true) endBattlesOf(entity)
         }
+
+        // Registered here rather than from onInitialize so that everything depending on
+        // Cobblemon being installed goes through the one try/catch that guards these hooks.
+        ServerTickEvents.END_SERVER_TICK.register { TrainerBattleRange.tick() }
+        // A battle left behind by a world that closed mid-fight would otherwise hold on to its
+        // trainer for the lifetime of the game.
+        ServerLifecycleEvents.SERVER_STOPPED.register { TrainerBattleRange.clear() }
     }
 
     private fun handleBattleStart(battle: PokemonBattle) {
@@ -55,9 +64,13 @@ object TrainerBattleEventHandler {
         if (players.isEmpty()) return
 
         TrainerBattleMusic.start(definition.battle.music, players)
+        // Cobblemon only measures how far a player has strayed in a battle against a wild
+        // Pokémon, so a trainer battle has to be measured here. See TrainerBattleRange.
+        TrainerBattleRange.watch(battle, npc)
         // Cobblemon has no "battle over" event - see the class docs - so everything that has to
         // happen whichever way a battle ends hangs off this one handler.
         battle.onEndHandlers.add { ended ->
+            TrainerBattleRange.forget(ended)
             TrainerBattleMusic.stop(definition.battle.music, ended.players)
             // A trainer who came when called leaves once they are done, win or lose. The delay
             // that grants is also what leaves room for their closing words: `end()` runs these
