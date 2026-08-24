@@ -16,6 +16,7 @@ import net.minecraft.ChatFormatting
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.RegistryFriendlyByteBuf
 import net.minecraft.network.chat.Component
+import net.minecraft.network.chat.MutableComponent
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerPlayer
 import java.util.Locale
@@ -143,50 +144,70 @@ class TrainerBattleInteraction : NPCInteractConfiguration {
             val missing = TrainerLock.unmet(player, trainerId, definition)
             if (missing.isNotEmpty()) return TrainerLock.refusalLines(definition, missing)
 
-            if (isWipedOut(player)) return listOf(CobblemonTrainers.lang("chat.no_healthy_pokemon"))
+            partyRefusal(player, battleFormatOf(definition.battle.format))?.let { return listOf(it) }
 
             return emptyList()
         }
 
         /**
-         * Whether nobody in the player's party can be sent out.
+         * What the player's party alone is turned down with, or null when it can open the
+         * battle. Both refusals are about the same blind spot in Cobblemon.
          *
-         * Cobblemon counts the party without ever asking what is still standing in it: `pvn`
-         * filters on health for the trainer's side only, so a wiped player would hand Showdown
-         * a team nobody can enter from. The rule has no exception - not even a level-adjusting
-         * format, which heals the copies it battles with and would hand a wiped player a full
-         * team for free. The empty party is the one case left to Cobblemon, which refuses it
-         * too and says it better than we would.
+         * A wiped party is the first. Cobblemon counts the party without ever asking what is
+         * still standing in it: `pvn` filters on health for the trainer's side only, so a wiped
+         * player would hand Showdown a team nobody can enter from. The rule has no exception -
+         * not even a level-adjusting format, which heals the copies it battles with and would
+         * hand a wiped player a full team for free. The empty party is the one case left to
+         * Cobblemon, which refuses it too and says it better than we would.
+         *
+         * A fainted Pokémon among the opening slots is the second, and it only ever shows up in
+         * doubles and triples. `leadingPokemon` fills the first slot and no more (see
+         * [TrainerLead]), and a player's party is theirs to arrange, so a format that sends two
+         * or three out at once is the one case the mod can see coming and not fix. Turning it
+         * down says which Pokémon to heal or move; letting it through locks the battle.
          */
-        private fun isWipedOut(player: ServerPlayer): Boolean {
+        private fun partyRefusal(player: ServerPlayer, format: BattleFormat): MutableComponent? {
             val party = player.party()
-            return party.any() && party.none { !it.isFainted() }
+            if (party.any() && party.none { !it.isFainted() }) {
+                return CobblemonTrainers.lang("chat.no_healthy_pokemon")
+            }
+
+            val slots = format.battleType.slotsPerActor
+            // A level-adjusting format heals the copies it battles with: nothing is fainted by
+            // the time Showdown reads the team.
+            if (slots < 2 || format.adjustLevel > 0) return null
+
+            val opening = TrainerLead.teamOrder(player, format).take(slots)
+            if (opening.size < slots || opening.none { it.isFainted() }) return null
+
+            return CobblemonTrainers.lang("chat.fainted_in_lead", slots)
         }
 
         /**
          * Opens the battle itself, once the player has said yes in the dialogue box.
          *
          * The refusals of [refusal] are not re-run here - the box was built from them a moment
-         * ago - with the one exception of [isWipedOut], which also guards the two paths that
+         * ago - with the one exception of [partyRefusal], which also guards the two paths that
          * reach this without a box at all. Everything else that can still go wrong, an empty
          * party or a trainer with no team, is Cobblemon's own answer to give.
          */
         fun startBattle(npc: NPCEntity, player: ServerPlayer, definition: TrainerDefinition?) {
-            if (isWipedOut(player)) {
-                player.sendSystemMessage(
-                    CobblemonTrainers.lang("chat.no_healthy_pokemon").withStyle(ChatFormatting.GRAY)
-                )
+            val format = battleFormatOf(definition?.battle?.format)
+
+            partyRefusal(player, format)?.let { refused ->
+                player.sendSystemMessage(refused.withStyle(ChatFormatting.GRAY))
                 return
             }
 
-            val format = battleFormatOf(definition?.battle?.format)
+            // The trainer has no `leadingPokemon` of its own: its party is put in order instead.
+            TrainerLead.orderTeam(npc)
 
             BattleBuilder.pvn(
                 player = player,
                 npcEntity = npc,
                 battleFormat = format,
-                // Whoever the player has selected opens the battle. Cobblemon leads with slot one
-                // otherwise, and null keeps exactly that.
+                // Whoever the player has selected opens the battle, and never someone who
+                // cannot fight - Cobblemon's own slot-one default does not check. See TrainerLead.
                 leadingPokemon = TrainerLead.leadFor(player, format),
                 // A level-adjusting format must battle on copies. See `LVL_50_SINGLES` above.
                 cloneParties = format.adjustLevel > 0

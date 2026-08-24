@@ -181,13 +181,16 @@ combat à `5`.
 commande `/cobblemontrainers debugai` pour voir en combat ce que le mod a corrigé et pourquoi.
 
 `healParty: false` fait persister dégâts et PP d'un combat à l'autre - pratique pour un boss
-qu'on use en plusieurs tentatives.
+qu'on use en plusieurs tentatives. Ses Pokémon K.O. passent en fin d'équipe, pour qu'il ouvre
+le combat suivant avec quelqu'un qui tient debout.
 
 **➜ `gimmicks` est décrit dans [GIMMICKS.md](GIMMICKS.md)** : ce qu'il faut installer, la
 gemme à donner au Pokémon et l'objet de repli quand le mod qui la fournit n'est pas là.
 
 Un `doubles` exige au moins 2 Pokémon **de chaque côté**, un `triples` au moins 3. Si l'une
-des équipes est trop courte, Cobblemon refuse le combat et l'explique dans le chat.
+des équipes est trop courte, Cobblemon refuse le combat et l'explique dans le chat. Côté
+joueur, ces 2 ou 3 premiers Pokémon doivent en plus pouvoir combattre : le mod refuse plutôt
+que de laisser le combat se bloquer.
 
 ### `messages`
 
@@ -554,9 +557,10 @@ Sans image à toi, le mod en fournit une pour essayer :
 
 ## Musique de combat
 
-La musique est envoyée aux joueurs du combat et coupée à la fin, quelle qu'elle soit :
-victoire, défaite, fuite, `/stopbattle`, ou un dresseur qui disparaît. **Rien d'autre ne joue
-en même temps** : ce qui passait en catégorie *Musique* est arrêté juste avant.
+La musique est envoyée aux joueurs du combat, tourne en boucle, et s'arrête à la fin, quelle
+qu'elle soit : victoire, défaite, fuite, `/stopbattle`, ou un dresseur qui disparaît. **Rien
+d'autre ne joue en même temps** : ce qui passait en catégorie *Musique* est arrêté juste avant,
+et le jeu garde la sienne pour lui jusqu'au bout du combat.
 
 | `battle.music` | Effet |
 | --- | --- |
@@ -590,9 +594,10 @@ Le dresseur référence la **clé** de `sounds.json`, jamais le chemin du fichie
 
 - **`"stream": true` est indispensable** sur un morceau long, sinon Minecraft charge tout le
   fichier en mémoire d'un coup.
-- **Prends un fichier stéréo** : Minecraft les joue à volume constant, sans atténuation avec
-  la distance. Un mono serait spatialisé comme un bruit de bloc.
-- **La piste ne boucle pas** : un combat plus long que le morceau finit en silence.
+- **La piste boucle** : elle repart aussitôt finie, sans blanc, jusqu'à la fin du combat.
+  Choisis donc un morceau dont la fin enchaîne sur le début.
+- **La piste est jouée sur le joueur**, sans atténuation : un fichier mono n'est pas spatialisé.
+  Le stéréo reste préférable pour une musique.
 
 ## Traduire les textes
 

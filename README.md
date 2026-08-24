@@ -62,7 +62,11 @@ jusque-là.
 ## Installation
 
 Place `cobblemon-trainers-<version>.jar` dans le dossier `mods/`, à côté de Cobblemon,
-Fabric API et Fabric Language Kotlin. Le mod fonctionne côté serveur comme en solo.
+Fabric API et Fabric Language Kotlin. En solo, il n'y a rien de plus à faire.
+
+**En multijoueur, le mod est requis des deux côtés** : le serveur et chaque joueur. Le Battle
+Phone, l'écran du bloc de dresseur et la musique de combat sont des choses qu'un client doit
+avoir pour en profiter - un client sans le mod se connecte, mais n'y a pas droit.
 
 ## Utilisation
 
@@ -396,9 +400,9 @@ sans risque : sans jeton, il écrit ce qu'il aurait envoyé dans `build/mod-publ
   nécessitent un accès réseau et un pseudo existant. En cas d'échec, le dresseur garde le
   skin par défaut et la raison est écrite dans les logs. Le type `texture`, lui, n'a besoin
   de rien d'autre que d'une image dans le pack.
-- La musique de combat ne boucle pas : un combat plus long que la piste finit en silence.
-  Faire boucler un son est une décision du client, prise par le moteur audio auquel le mod ne
-  touche pas.
+- La musique de combat n'est jouée que pour un joueur qui a le mod : c'est son client qui la
+  fait tourner, ce qui est aussi ce qui la fait boucler et qui met la musique du jeu en
+  attente le temps du combat.
 
 ## Licence
 

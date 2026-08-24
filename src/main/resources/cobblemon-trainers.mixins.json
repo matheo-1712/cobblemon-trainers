@@ -11,7 +11,8 @@
 	],
 	"client": [
 		"client.ClientLevelMixin",
-		"client.MinecraftMixin"
+		"client.MinecraftMixin",
+		"client.MusicManagerMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

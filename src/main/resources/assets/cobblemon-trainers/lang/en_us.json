@@ -73,12 +73,14 @@
   "cobblemon-trainers.dialogue.option.cancel": "Cancel",
 
   "cobblemon-trainers.chat.trainer_gone": "The trainer left the battle. The fight is over.",
+  "cobblemon-trainers.chat.too_far": "You went too far from the trainer. The fight is over.",
 
   "cobblemon-trainers.chat.already_defeated": "%s has already been defeated and does not take rematches.",
 
   "cobblemon-trainers.chat.locked": "%s will not battle you yet.",
 
   "cobblemon-trainers.chat.no_healthy_pokemon": "None of your Pokémon can fight. Heal your team before challenging a trainer.",
+  "cobblemon-trainers.chat.fainted_in_lead": "The first %s Pokémon of your team all have to fight in this battle. Heal them, or move a healthy one up.",
 
   "cobblemon-trainers.chat.call.arrival": "I am waiting for you at %s, %s, %s.",
   "cobblemon-trainers.chat.call.busy": "I am already around here somewhere.",
