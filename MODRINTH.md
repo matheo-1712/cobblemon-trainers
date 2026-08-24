@@ -155,6 +155,20 @@ stores nothing - it reads the server - so losing it loses nothing. Find it in th
 
 You can see all details in [DATAPACK DOCS](https://github.com/matheo-1712/cobblemon-trainers/blob/master/docs/en/DATAPACK.md)
 
+---
+
+## Mega Evolution
+
+Trainers Mega Evolve when you let them. Hand a Pokémon its Mega Stone, add `"gimmicks": ["mega"]`
+to the trainer's `battle` block, and they transform on the first turn - once per battle, whatever
+their AI difficulty.
+
+It needs [Cobblemon: Mega Showdown](https://modrinth.com/mod/mega-showdown), which stays
+**optional**: without it the mod loads and plays exactly as before, and a team can name a
+`Fallback Item:` so its Pokémon holds something sensible instead of the stone it cannot have.
+
+Full guide: [GIMMICKS DOCS](https://github.com/matheo-1712/cobblemon-trainers/blob/master/docs/en/GIMMICKS.md)
+
 ## Known limitations
 
 - Forms are declared through their aspects (`Aspects: alolan`), not the Showdown name

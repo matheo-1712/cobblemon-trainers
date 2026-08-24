@@ -15,9 +15,10 @@ For installing the mod and for the commands, see the [README](../../README.md).
   [Advancements](#advancements) · [Calling a trainer over](SPAWNING.md)
 - [Rematches and rewards](#rematches-and-rewards) ·
   [Farmable or not](#farmable-or-not) · [Progress tracking](#progress-tracking)
-- [The team format](#the-team-format) · [The `Aspects:` line](#the-aspects-line)
+- [The team format](#the-team-format) · [The `Aspects:` line](#the-aspects-line) ·
+  [The `Fallback Item:` line](#the-fallback-item-line)
 - [Skins](#skins) · [Battle music](#battle-music) ·
-  [Translating your text](#translating-your-text)
+  [Battle gimmicks](GIMMICKS.md) · [Translating your text](#translating-your-text)
 - [Testing your pack](#testing-your-pack) · [Common mistakes](#common-mistakes)
 
 ## Layout
@@ -153,6 +154,7 @@ leaving it out makes a trainer you have to go and find.
 | `difficulty` | `5` | [How well the AI plays](DIFFICULTY.md), from 0 (at random) to 5 (playing to win) |
 | `healParty` | `true` | Heals the trainer's team before and after every battle |
 | `music` | the mod's track | Sound ID played during the battle, `null` for silence |
+| `gimmicks` | `[]` | [Battle gimmicks](GIMMICKS.md) the trainer uses: `["mega"]` for Mega Evolution |
 
 The `_50` suffix (`singles_50`, `doubles_50`, `triples_50`) puts **both teams** at level 50 for
 the battle. `level` therefore has no visible effect on a `_50` trainer.
@@ -177,6 +179,9 @@ impossible mistakes at `3`, entry hazards at `4`, and reading the battle in full
 
 `healParty: false` carries damage and PP from one battle to the next - handy for a boss you
 wear down over several attempts.
+
+**➜ `gimmicks` is covered in [GIMMICKS.md](GIMMICKS.md)**: what has to be installed, the stone
+to hand the Pokémon, and the fallback item for when the mod providing it is not there.
 
 A `doubles` battle needs at least 2 Pokémon **on each side**, a `triples` at least 3. If either
 team is too short, Cobblemon refuses the battle and says so in the chat.
@@ -422,6 +427,7 @@ Lines that are recognised, on top of the first one:
 | --- | --- |
 | First line | `Nickname (Species) (M) @ Item` - nickname, gender and item optional |
 | Form | `Aspects: rlm, poison` |
+| Fallback item | `Fallback Item: Life Orb` |
 | Ability | `Ability: Static` |
 | Level | `Level: 88` |
 | Shiny | `Shiny: Yes` |
@@ -438,10 +444,13 @@ Three details that catch people out:
   `Will-O-Wisp`, `Farfetch'd`, `Flabébé`, `Mr. Mime` are converted to Cobblemon identifiers.
   A move that does not exist is skipped with a warning, and the Pokémon shows up with the rest.
   The one exception is the form suffix (`Raichu-Alola`): see [`Aspects:`](#the-aspects-line).
-- **A held item with no namespace gets `cobblemon:`**: `Light Ball` becomes
-  `cobblemon:light_ball`, `Heavy-Duty Boots` becomes `cobblemon:heavy_duty_boots`. For a vanilla
-  item, write it out in full (`minecraft:stick`). An item that cannot be found is skipped with a
-  warning, and the Pokémon shows up empty-handed.
+- **A held item with no namespace is looked up in `cobblemon:` first**: `Light Ball` becomes
+  `cobblemon:light_ball`, `Heavy-Duty Boots` becomes `cobblemon:heavy_duty_boots`. Failing that,
+  the same name is looked up across every loaded mod, and is only accepted when exactly one
+  matches - which is what makes `@ Charizardite X` work without naming the mod providing it.
+  Ambiguous or not found, the item is skipped with a warning and the Pokémon shows up
+  empty-handed, unless it declares a [fallback item](#the-fallback-item-line). Write the ID out
+  in full (`minecraft:stick`) to settle any doubt.
 - **Stat abbreviations are translated by the mod**: `HP`, `Atk`, `Def`, `SpA`, `SpD`, `Spe`, and
   the long names. An abbreviation outside that list is ignored silently.
 
@@ -471,6 +480,24 @@ the name of the `data/<ns>/cobblemon/species_features/<name>.json` file.
 - **An unknown aspect is ignored** with a warning: the trainer gets the Pokémon in its base
   form. Typically, the pack defining the form is not loaded.
 - **The form needs nothing else**: stats, types, abilities and model all follow.
+
+## The `Fallback Item:` line
+
+What the Pokémon holds when the item on its first line does not exist - typically because the
+mod providing it is not installed.
+
+```json
+"team": ["Charizard @ Charizardite X
+Fallback Item: Life Orb
+Level: 80
+- Flare Blitz"]
+```
+
+- **The first item that exists is the one held**, the rest are ignored. Several
+  `Fallback Item:` lines are tried in the order they are written.
+- **The rule covers any item**, not just Mega Stones: the mod only looks at what the game has
+  registered.
+- **When nothing resolves**, the Pokémon shows up empty-handed, exactly as without the line.
 
 ## Skins
 

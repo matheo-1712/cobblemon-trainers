@@ -20,6 +20,10 @@ import java.util.Locale
  *
  * Known limitation: Showdown writes a form as a suffix of the species name (`Raichu-Alola`),
  * which is not translated here - forms are declared with an `Aspects:` line instead.
+ *
+ * Two lines are ours rather than Showdown's, both written in the shape of theirs: `Aspects:`
+ * for forms, and `Fallback Item:` for what a Pokémon holds when the mod providing its real item
+ * is not installed.
  */
 object ShowdownTeamParser {
 
@@ -30,6 +34,12 @@ object ShowdownTeamParser {
     // CONFIGURATION
     /////////////////////////////////////
     private const val DEFAULT_ITEM_NAMESPACE = "cobblemon"
+
+    /**
+     * The line a Pokémon writes to name what it holds when its real item is not there. Not part
+     * of the Showdown format - a line of ours, in the shape of theirs, like `Aspects:`.
+     */
+    private const val FALLBACK_ITEM_LINE = "Fallback Item:"
     private val STAT_NAMES = mapOf(
         "hp" to "hp",
         "atk" to "attack",
@@ -158,11 +168,15 @@ object ShowdownTeamParser {
 
         val moves = mutableListOf<String>()
         val aspects = mutableListOf<String>()
+        val fallbackItems = mutableListOf<String>()
 
         for (line in lines.drop(1)) {
             when {
                 line.startsWith("Aspects:", ignoreCase = true) ->
                     aspects += splitAspects(line.substringAfter(':'))
+
+                line.startsWith(FALLBACK_ITEM_LINE, ignoreCase = true) ->
+                    line.substringAfter(':').trim().takeIf { it.isNotEmpty() }?.let { fallbackItems += it }
 
                 line.startsWith("Ability:", ignoreCase = true) ->
                     builder.append(" ability=${normalizeName(line.substringAfter(':'))}")
@@ -219,13 +233,8 @@ object ShowdownTeamParser {
         if (nickname.isNotBlank() && !nickname.equals(species, ignoreCase = true)) {
             properties.nickname = Component.literal(nickname)
         }
-        if (itemPart.isNotBlank()) {
-            val item = normalizeItem(itemPart)
-            if (isRegisteredItem(item)) {
-                properties.heldItem = item
-            } else {
-                LOGGER.warn("Ignoring held item '{}' (read as '{}'): no such item is registered", itemPart.trim(), item)
-            }
+        resolveHeldItem(listOfNotNull(itemPart.takeIf { it.isNotBlank() }) + fallbackItems)?.let {
+            properties.heldItem = it
         }
 
         return properties
@@ -256,13 +265,65 @@ object ShowdownTeamParser {
         builder.append(' ').append(if (aspect.contains('=')) aspect else "$aspect=true")
     }
 
-    private fun normalizeItem(raw: String): String {
+    /**
+     * The first of these item names that resolves, or null when none of them does.
+     *
+     * The list is what the Pokémon asked to hold, in order: the `@` of its first line, then
+     * every `Fallback Item:` line it wrote. A pack declares one so that a team stays playable
+     * when the mod providing the real item is not installed - a Mega Stone with a Life Orb
+     * behind it battles either way. The rule knows nothing about mega stones: it is simply the
+     * first name that exists.
+     */
+    private fun resolveHeldItem(candidates: List<String>): String? =
+        candidates.firstNotNullOfOrNull { resolveItem(it) }
+
+    /**
+     * One item name, as a registered item ID, or null.
+     *
+     * A Showdown export writes items for a human (`Heavy-Duty Boots`) and never says which mod
+     * they belong to, so an unqualified name is read as Cobblemon's first - that is where the
+     * held items of a team come from. Failing that, the same path is looked up in every
+     * namespace the game has loaded, which is what lets a pack name an item from another mod
+     * (a Mega Stone, say) without writing that mod into its team. Several matches is not an
+     * answer, so it is refused rather than guessed.
+     *
+     * Every refusal is logged here rather than by the caller: each has its own reason, and a
+     * name that fails is exactly what a `Fallback Item:` line answers, so silence would leave a
+     * pack author with a Pokémon holding the wrong thing and nothing to read.
+     */
+    private fun resolveItem(raw: String): String? {
         val trimmed = raw.trim()
-        if (!trimmed.contains(':')) {
-            return "$DEFAULT_ITEM_NAMESPACE:${normalizeItemPath(trimmed)}"
+
+        if (trimmed.contains(':')) {
+            val namespace = trimmed.substringBefore(':').trim().lowercase(Locale.ROOT)
+            val qualified = "$namespace:${normalizeItemPath(trimmed.substringAfter(':'))}"
+            if (isRegisteredItem(qualified)) return qualified
+
+            LOGGER.warn("Ignoring held item '{}' (read as '{}'): no such item is registered", trimmed, qualified)
+            return null
         }
-        val namespace = trimmed.substringBefore(':').trim().lowercase(Locale.ROOT)
-        return "$namespace:${normalizeItemPath(trimmed.substringAfter(':'))}"
+
+        val path = normalizeItemPath(trimmed)
+        val cobblemon = "$DEFAULT_ITEM_NAMESPACE:$path"
+        if (isRegisteredItem(cobblemon)) return cobblemon
+
+        val matches = BuiltInRegistries.ITEM.keySet().filter { it.path == path }
+        return when (matches.size) {
+            0 -> {
+                LOGGER.warn("Ignoring held item '{}' (read as '{}'): no such item is registered", trimmed, path)
+                null
+            }
+
+            1 -> matches.first().toString()
+
+            else -> {
+                LOGGER.warn(
+                    "Ignoring held item '{}': '{}' is registered in several namespaces ({}). Write the full ID.",
+                    trimmed, path, matches.joinToString(", ")
+                )
+                null
+            }
+        }
     }
 
     private fun normalizeItemPath(raw: String): String =

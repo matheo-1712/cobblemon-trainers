@@ -14,6 +14,7 @@ covers installing it; the pages below are the **reference** - this is where the 
 | [DATAPACK.md](DATAPACK.md) | Making a trainer pack: layout, every field, categories, locks, advancements, Showdown teams, skins, music, rewards, translations |
 | [SPAWNING.md](SPAWNING.md) | Getting a trainer to turn up: the `location` block and calling one from the Battle Phone |
 | [DIFFICULTY.md](DIFFICULTY.md) | Exactly what `battle.difficulty` does, from `0` to `5` |
+| [GIMMICKS.md](GIMMICKS.md) | Making a trainer Mega Evolve: `battle.gimmicks`, the stone and the fallback item |
 
 An example pack covering every option lives in
 [`examples/cobblemonrlm/`](../../examples/cobblemonrlm): one folder that works as a datapack
@@ -43,6 +44,7 @@ ones from your packs.
 | Fire an advancement | [Advancements](DATAPACK.md#advancements) |
 | Make a trainer callable | [The `location` block](SPAWNING.md#the-location-block) |
 | Pick an AI level | [Which level to pick](DIFFICULTY.md#which-level-to-pick) |
+| Make a trainer Mega Evolve | [Battle gimmicks](GIMMICKS.md) |
 | Understand an AI correction in game | [Checking in game](DIFFICULTY.md#checking-in-game) |
 | Translate my trainers | [Translating your text](DATAPACK.md#translating-your-text) |
 | Work out why my pack will not load | [Common mistakes](DATAPACK.md#common-mistakes) |
@@ -54,7 +56,8 @@ Each subject is described in exactly one place, and the other pages link to it:
 - the **commands** are in `COMMANDS.md`;
 - the **trainer format** is in `DATAPACK.md`;
 - anything about **calling a trainer over** is in `SPAWNING.md`;
-- anything the **AI** does is in `DIFFICULTY.md`.
+- anything the **AI** does is in `DIFFICULTY.md`;
+- anything about **battle gimmicks** is in `GIMMICKS.md`.
 
 A rule written in two places is a rule that ends up wrong in one of them. Adding a field means
 adding a row to the `DATAPACK.md` table, not a section.

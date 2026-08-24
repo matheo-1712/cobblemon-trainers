@@ -27,7 +27,8 @@ La doc utilisateur est en français : `README.md` (installation, commandes),
 chaque niveau de `battle.difficulty`) et `docs/SPAWNING.md` (le bloc `location` et l'appel
 depuis le Battle Phone). Ce qui touche au format des dresseurs - nouveau champ,
 nouvelle règle de parsing - se répercute dans `docs/DATAPACK.md`, qui est la référence ; le
-README n'en garde qu'un résumé. **Toute règle de l'IA va dans `docs/DIFFICULTE.md`**, et **tout
+README n'en garde qu'un résumé. **Toute règle de l'IA va dans `docs/DIFFICULTE.md`**, **tout
+ce qui touche aux gimmicks de combat dans `docs/GIMMICKS.md`**, et **tout
 ce qui touche à l'appel d'un dresseur dans `docs/SPAWNING.md`**, jamais
 dans `docs/DATAPACK.md`, qui n'en garde qu'un renvoi : une règle décrite à deux endroits est une
 règle qui finit fausse à l'un des deux. `docs/DATAPACK.md` est tenu **aussi
@@ -35,8 +36,9 @@ concis que possible** : une idée par phrase, un tableau plutôt qu'un paragraph
 soit déjà dit ailleurs dans le fichier. Ajouter un champ, c'est ajouter une ligne de tableau,
 pas une section.
 
-`docs/en/` est la **traduction anglaise** de ces trois pages plus leur index
-(`DATAPACK.md`, `SPAWNING.md`, `DIFFICULTY.md` - au nom anglais -, `README.md`), destinée aux
+`docs/en/` est la **traduction anglaise** de ces quatre pages plus leur index
+(`DATAPACK.md`, `SPAWNING.md`, `DIFFICULTY.md` et `GIMMICKS.md` - aux noms anglais -,
+`README.md`), destinée aux
 joueurs qui arrivent par Modrinth. Le français reste la version de référence : **une règle se
 change d'abord dans `docs/`, puis dans `docs/en/` dans le même commit**. Deux pages qui
 divergent sont pires qu'une page absente, la seconde ayant l'air à jour. `MODRINTH.md`, à la
@@ -58,7 +60,9 @@ Sur Windows, utiliser `.\gradlew.bat`.
 Il n'existe pas de source set `src/test` - `build` ne lance donc aucun test.
 Toute vérification passe par `runClient`/`runServer`, dont les mondes vivent dans `run/`
 (gitignoré). **Ne pas mettre de jar Cobblemon dans `run/mods/`** : il est déjà fourni par
-`modImplementation`, et le doublon fait planter le client au démarrage.
+`modImplementation`, et le doublon fait planter le client au démarrage. Mega Showdown et ses
+dépendances, elles, y sont bien - c'est `copyDevMods` qui les y dépose avant chaque `runClient`,
+et c'est voulu (voir « Les gimmicks de combat »).
 
 Le projet cible **Java 21**, imposé par un toolchain Gradle dans `build.gradle.kts`.
 Cobblemon déclare `depends: java [21]`, une version exacte : sans le toolchain, `runClient`
@@ -70,6 +74,10 @@ Toutes les versions sont dans `gradle.properties`, jamais en dur dans `build.gra
 Cobblemon et Architectury sont tirés du **Maven Modrinth** et référencés par **ID de
 version Modrinth** (`cobblemon_version=kF7CvxTo`), pas par numéro sémantique : pour
 changer de version, il faut récupérer le nouvel ID sur Modrinth.
+
+Mega Showdown, `accessories` et `owo` sont là aussi, dans la configuration `devMods` : rien ne
+compile contre eux, ils ne servent qu'au jeu de dev (voir « Les gimmicks de combat »). Ils ne
+sont pas non plus déclarés en dépendance Modrinth à la publication - le mod tourne sans.
 
 Un ID Modrinth ne dit rien de la version de jeu ni du loader qu'il cible - une erreur ici
 passe la résolution Gradle et casse le build plus loin. Symptôme rencontré : Loom échoue en
@@ -136,6 +144,8 @@ messages, musique et récompenses de combat.
   compris), `BattleDamage` (dégâts en points de vie), `BattleGuards` (ce qui encaisse un coup
   qu'on croyait décisif), `BattleSpeed` (qui frappe en premier) et `TrainerAiDebug`
   (l'interrupteur de débogage). Voir « L'IA de combat ».
+- **`battle.ai.TrainerGimmicks`** - le vocabulaire de `battle.gimmicks` et ce que le combat
+  offre ce tour-ci. Voir « Les gimmicks de combat ».
 - **`TrainerProgress`** - `SavedData` du monde : qui a battu quel dresseur. Voir « Revanches
   et récompenses ».
 - **`TrainerRewards`** - remet les objets au vainqueur.
@@ -979,6 +989,66 @@ Points à ne pas redécouvrir :
   qui ont activé `/cobblemontrainers debugai`. Sans ça un seuil est intuable : un changement
   refusé et un changement que personne n'a proposé se ressemblent exactement depuis l'autre côté
   du combat. `TrainerAiDebug.idle()` évite de formater une ligne que personne ne lira.
+
+### Les gimmicks de combat
+
+Un dresseur qui déclare `battle.gimmicks: ["mega"]` méga-évolue en combat. `TrainerGimmicks`
+tient le vocabulaire, `TrainerBattleAI.withGimmick` la décision. Toute la doc joueur est dans
+`docs/GIMMICKS.md`, jamais dans `docs/DATAPACK.md`, qui n'en garde qu'une ligne de tableau et un
+renvoi.
+
+**Cobblemon 1.7.3 fait déjà tout.** `MoveActionResponse` porte un `gimmickID` à côté de son coup
+et de sa cible, et le `ShowdownMoveset` que reçoit `choose()` dit ce que le simulateur offre ce
+tour-ci (`canMegaEvo`). Répondre `mega` à côté du coup est tout ce qu'il y a à faire.
+
+**Aucune ligne du mod ne nomme Mega Showdown**, et rien ne compile contre lui. Ce qu'il
+apporte : les gemmes, le patch du simulateur qui les lui fait voir, et la forme à l'écran - via
+le `MegaEvolutionEvent` de Cobblemon, qui ne regarde pas à qui appartient le Pokémon.
+
+**Le jeu de dev le charge depuis `run/mods/`**, où `copyDevMods` copie la configuration
+`devMods` (Mega Showdown, `accessories` dont il dépend en dur, `owo` dont accessories dépend).
+Un `modRuntimeOnly` a été essayé et retiré : un jar de mod embarque ses bibliothèques en JiJ -
+owo y range endec et jankson - et Loom ne les met pas sur le classpath de dev, donc le jeu
+plantait sur un `NoClassDefFoundError: io/wispforest/endec/util/MapCarrier`. Fabric, lui, les
+déballe comme chez un joueur et remappe les mods au passage.
+
+Points à ne pas redécouvrir :
+
+- **Rien ne filtre le côté PNJ.** `ShowdownActionRequest.sanitize` ne coupe un gimmick que pour
+  un acteur dont l'UUID est celui d'un **joueur** du combat sans la key item qui va avec
+  (`cobblemon:key_stone` pour la méga). Un `NPCBattleActor` n'y correspond jamais. Conséquence
+  assumée : un dresseur méga-évolue face à un joueur qui n'a pas de Key Stone, et c'est au pack
+  de compenser.
+- **Le gimmick est posé hors du garde `CorrectionLevel`.** `choose()` rendait la décision de
+  Cobblemon telle quelle en dessous de la difficulté 3 ; un dresseur facile n'aurait donc jamais
+  méga-évolué. C'est le pack qui a donné la gemme et écrit le mot, pas l'IA qui a eu une bonne
+  idée. D'où la découpe en `decide()` (les corrections) puis `withGimmick()` (le gimmick).
+- **La mémoire est la requête, pas un booléen.** Un camp ne méga-évolue qu'une fois, donc le
+  second actif d'un double doit être refusé - mais Cobblemon demande sa décision **deux fois par
+  tour** (voir « L'IA de combat »), et répondre la seconde fois sans le `gimmickID` écraserait la
+  première réponse et annulerait la méga. Comparer la `DecisionKey` répond aux deux d'un coup :
+  même requête, même réponse ; requête différente, refus.
+- **`isValid` ne vérifie pas la disponibilité du gimmick.** Répondre `mega` quand le simulateur
+  ne l'offre pas est une erreur Showdown en plein combat, pas un refus poli. `canMegaEvo` est
+  donc le seul garde qui compte, et il est lu à chaque décision.
+- **On copie la réponse, on ne la mute pas.** `gimmickID` est un `var`, mais l'objet vient du
+  délégué.
+- **Le mot du pack est l'id de Cobblemon** (`mega`, `terastal`, `zmove`, `dynamax`, `ultra`).
+  Les quatre non supportés sont reconnus au chargement et signalés comme tels, pour qu'un pack
+  qui les écrit ne les confonde pas avec une faute de frappe.
+
+### Les objets tenus d'une équipe
+
+`ShowdownTeamParser` cherche un objet sans namespace chez `cobblemon:` d'abord, puis par chemin
+dans **tous** les namespaces enregistrés, et n'accepte que s'il n'y en a qu'un. C'est ce qui fait
+qu'un `@ Charizardite X` collé depuis Showdown trouve la gemme de Mega Showdown sans que le
+parseur connaisse ce mod. Ambigu, c'est refusé plutôt que deviné.
+
+La ligne `Fallback Item:` est à nous, écrite dans la forme de celles de Showdown comme
+`Aspects:`. Le premier objet de la chaîne qui existe est porté ; plusieurs lignes sont essayées
+dans l'ordre écrit. La règle ne connaît pas les gemmes : c'est la réponse générale à un objet
+qu'un mod absent ne fournit pas, et elle évite qu'un Pokémon prévu avec un objet se batte les
+mains vides. Toutes les raisons de refus sont loguées dans `resolveItem`, une par cas.
 
 ### Les dialogues
 

@@ -44,10 +44,37 @@ import kotlin.math.roundToInt
  * hold on that - so difficulty grades the quality of the decisions rather than the information
  * behind them. It also cannot make the AI act where Cobblemon proposed nothing: the layer can
  * refuse a heal, never add one.
+ *
+ * One thing here is not a correction at all: the battle gimmicks a trainer declares - Mega
+ * Evolution today - are attached to whatever move comes out, difficulty included. See
+ * [withGimmick] and [TrainerGimmicks].
  */
-class TrainerBattleAI(private val delegate: BattleAI, private val difficulty: Int) : BattleAI {
+class TrainerBattleAI(
+    private val delegate: BattleAI,
+    private val difficulty: Int,
+    gimmicks: List<String> = emptyList()
+) : BattleAI {
 
     private val level = CorrectionLevel.of(difficulty)
+
+    /**
+     * Whether this trainer mega evolves when the battle offers it - the `mega` of its
+     * `battle.gimmicks`. Read once: the definition cannot change mid-battle, and a `/reload`
+     * would not reach a fight already under way.
+     */
+    private val usesMega = TrainerGimmicks.uses(gimmicks, TrainerGimmicks.MEGA)
+
+    /**
+     * The request the mega evolution was answered on, or null while it is still to come.
+     *
+     * Not a plain boolean, because it answers two questions at once. Cobblemon asks each active
+     * Pokémon *twice* a turn (see [lastRequest]) and the second answer overwrites the first, so
+     * the same request has to be answered the same way or the gimmick would be dropped on the
+     * way out. And a side may only mega evolve once, so the *other* active of a double battle,
+     * asked on the same turn, has to be turned down. Keyed like any other decision, both fall
+     * out of one comparison.
+     */
+    private var megaPlayedFor: DecisionKey? = null
 
     /**
      * Whether the opening move has already been spent. One flag for the whole actor, so that in
@@ -93,12 +120,25 @@ class TrainerBattleAI(private val delegate: BattleAI, private val difficulty: In
         moveset: ShowdownMoveset?,
         forceSwitch: Boolean
     ): ShowdownActionResponse {
+        val request = DecisionKey(battle.turn, activePokemon.battlePokemon?.uuid, forceSwitch)
+        val decision = decide(activePokemon, battle, aiSide, moveset, forceSwitch, request)
+        return withGimmick(decision, activePokemon, battle, moveset, request)
+    }
+
+    /** The move or the switch, before any gimmick is attached to it. */
+    private fun decide(
+        activePokemon: ActiveBattlePokemon,
+        battle: PokemonBattle,
+        aiSide: BattleSide,
+        moveset: ShowdownMoveset?,
+        forceSwitch: Boolean,
+        request: DecisionKey
+    ): ShowdownActionResponse {
         val choice = delegate.choose(activePokemon, battle, aiSide, moveset, forceSwitch)
         if (level == CorrectionLevel.NONE || moveset == null) return choice
 
         // The same question asked twice gets the same answer, as long as it still stands - a
         // response the battle would reject has to be worked out again rather than repeated.
-        val request = DecisionKey(battle.turn, activePokemon.battlePokemon?.uuid, forceSwitch)
         lastResponse?.let {
             if (request == lastRequest && it.isValid(activePokemon, moveset, forceSwitch)) return it
         }
@@ -115,6 +155,49 @@ class TrainerBattleAI(private val delegate: BattleAI, private val difficulty: In
             LOGGER.error("Trainer AI correction failed, keeping Cobblemon's choice", exception)
             choice
         }
+    }
+
+    /**
+     * Mega evolves alongside the move that was just chosen, if the trainer has one to spend and
+     * the battle is offering it.
+     *
+     * Deliberately outside everything above: a gimmick is the pack's decision - it gave the
+     * stone and wrote the word - not a matter of how well the trainer plays, so it must not sit
+     * behind the [CorrectionLevel] gate that lets a low-difficulty trainer past untouched.
+     *
+     * The moment needs no judging either. Mega evolving costs no turn and is offered exactly
+     * while it is legal, so the first chance is always as good as any later one - which is also
+     * what a trainer does in the games. The one thing to get right is spending it once, see
+     * [megaPlayedFor].
+     */
+    private fun withGimmick(
+        response: ShowdownActionResponse,
+        active: ActiveBattlePokemon,
+        battle: PokemonBattle,
+        moveset: ShowdownMoveset?,
+        request: DecisionKey
+    ): ShowdownActionResponse {
+        if (!usesMega || moveset == null || response !is MoveActionResponse) return response
+        if (!TrainerGimmicks.offered(moveset, TrainerGimmicks.MEGA)) return response
+
+        // Answering the same request again keeps the gimmick; the other active Pokémon of a
+        // double battle, asked on the same turn, does not get a second one. Across turns there
+        // is nothing to refuse: a mega evolution that went through stops being offered, and one
+        // that somehow did not is worth another try rather than lost for the whole battle.
+        val played = megaPlayedFor
+        if (played != null && played != request && played.turn == request.turn) return response
+
+        if (played != request) {
+            megaPlayedFor = request
+            val detail = "mega evolves, playing ${response.moveName}"
+            LOGGER.debug("Trainer AI: {}", detail)
+            if (!TrainerAiDebug.idle()) {
+                val name = active.battlePokemon?.effectedPokemon?.species?.name ?: "?"
+                TrainerAiDebug.report(battle, "$name: $detail")
+            }
+        }
+
+        return response.copy(gimmickID = TrainerGimmicks.MEGA)
     }
 
     /** Everything a correction needs, read once per turn. Null when there is nothing to judge. */
