@@ -1,5 +1,8 @@
 package matheo1712.cobbletrainers.trainers
 
+import com.cobblemon.mod.common.api.pokemon.PokemonProperties
+import com.cobblemon.mod.common.api.pokemon.PokemonSpecies
+import com.cobblemon.mod.common.util.party
 import matheo1712.cobbletrainers.CobblemonTrainers
 import net.minecraft.ChatFormatting
 import net.minecraft.core.registries.BuiltInRegistries
@@ -8,6 +11,7 @@ import net.minecraft.network.chat.MutableComponent
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.item.Item
+import java.util.Locale
 
 /**
  * Decides whether a player may challenge a trainer, and says what is missing when they may not.
@@ -100,6 +104,26 @@ object TrainerLock {
             }
         }
 
+        requirements.party.forEach { requirement ->
+            val needed = requirement.count.coerceAtLeast(1)
+            val query = query(requirement.pokemon, trainerId)
+            if (query == null) {
+                // Same failure as an unknown item: a typo closes the trainer rather than
+                // opening it, and the player is told what the pack asked for.
+                missing += CobblemonTrainers.lang(
+                    "requirement.party",
+                    Component.literal(requirement.pokemon),
+                    0, needed
+                )
+                return@forEach
+            }
+
+            val held = player.party().count { query.properties.matches(it) }
+            if (held < needed) {
+                missing += CobblemonTrainers.lang("requirement.party", query.label, held, needed)
+            }
+        }
+
         requirements.advancement?.takeIf { it.isNotBlank() }?.let { raw ->
             val id = ResourceLocation.tryParse(raw)
             val holder = id?.let { player.server.advancements.get(it) }
@@ -169,6 +193,66 @@ object TrainerLock {
     private fun resolve(raw: String, requiredBy: ResourceLocation): ResourceLocation? =
         if (raw.contains(':')) ResourceLocation.tryParse(raw)
         else ResourceLocation.tryBuild(requiredBy.namespace, raw)
+
+    /**
+     * A party requirement as it is asked and as it is shown: the properties a party member has
+     * to match, and the name the player reads.
+     *
+     * The two are built together for the same reason a [TrainerPlace] check carries its own
+     * label - a screen that names something other than what is tested is worse than a screen
+     * that names nothing.
+     */
+    private class PartyQuery(val properties: PokemonProperties, val label: Component)
+
+    /**
+     * Reads a party requirement, or null when the pack wrote something Cobblemon cannot answer.
+     *
+     * The string is lowercased before parsing because every Cobblemon identifier is - species,
+     * aspects, feature values - so `Staraptor` and `staraptor` ask the same thing, which is what
+     * a pack author writing a species by hand expects.
+     *
+     * The label is the **translated species name** when the requirement is a bare species, and
+     * the raw string otherwise: `staraptor shiny=true` has no name of its own, and inventing one
+     * would risk promising less than what is tested.
+     */
+    private fun query(raw: String, requiredBy: ResourceLocation): PartyQuery? {
+        val trimmed = raw.trim().lowercase(Locale.ROOT)
+        if (trimmed.isEmpty()) {
+            CobblemonTrainers.LOGGER.warn("Trainer {} has a party requirement with no 'pokemon'", requiredBy)
+            return null
+        }
+
+        val properties = PokemonProperties.parse(trimmed)
+        val species = properties.species?.let { name ->
+            // Resolved the way `matches` resolves it - by identifier, `cobblemon:` implied -
+            // rather than by display name, so that anything accepted here is something the
+            // match itself can find. A species written as it reads (`farfetch'd`) is not an
+            // identifier and is turned down here, where the log can say so.
+            val id = ResourceLocation.tryParse(if (name.contains(':')) name else "cobblemon:$name")
+            id?.let { PokemonSpecies.getByIdentifier(it) } ?: run {
+                CobblemonTrainers.LOGGER.warn(
+                    "Trainer {} requires an unknown species '{}'", requiredBy, name
+                )
+                return null
+            }
+        }
+
+        // Unknown keys are dropped by Cobblemon's parser without a word, so a requirement that
+        // asked for nothing at all is a typo that would otherwise open the trainer to everyone.
+        if (properties.asString(" ").isBlank()) {
+            CobblemonTrainers.LOGGER.warn(
+                "Trainer {} has a party requirement Cobblemon reads as empty: '{}'", requiredBy, raw
+            )
+            return null
+        }
+
+        val label = if (species != null && !trimmed.contains(' ')) {
+            species.translatedName
+        } else {
+            Component.literal(raw.trim())
+        }
+        return PartyQuery(properties, label)
+    }
 
     /** How many of an item the player is carrying, across every slot and every stack. */
     private fun countInInventory(player: ServerPlayer, item: Item): Int {

@@ -242,6 +242,7 @@ in the Battle Phone.
   "defeated": ["champions/jasmine", "champions/brock"],
   "victories": { "count": 8, "category": "champions" },
   "items": [{ "item": "my_pack:boulder_badge", "count": 1 }],
+  "party": [{ "pokemon": "staraptor", "count": 1 }],
   "advancement": "my_pack:league_access",
   "hidden": false,
   "message": "trainer.my_pack.champion.locked"
@@ -253,6 +254,7 @@ in the Battle Phone.
 | `defeated` | Trainers that must have been beaten. Without a namespace, the ID is read inside the pack of the trainer requiring it - path included (`champions/jasmine`) |
 | `victories` | A number of trainers beaten: `count`, narrowed by `pack` and/or `category`. Leaving `count` out means **all of that group** |
 | `items` | Items the player has to be carrying, full ID. **Never consumed** |
+| `party` | Pokémon the player has to have with them: `pokemon` is written the way `/pokespawn` takes it, `count` says how many. **Never taken** |
 | `advancement` | An advancement that must have been earned, vanilla or from a pack |
 | `hidden` | `true` by default: the trainer is absent from the Battle Phone while locked. `false` keeps them there, locked and with their conditions shown |
 | `message` | What the trainer answers. By default, a line from the mod - the list of what is missing is appended either way |
@@ -260,8 +262,11 @@ in the Battle Phone.
 - **Every declared condition has to be met.** They add up, they are never alternatives.
 - `victories` only counts `listed` trainers, and **never the trainer requiring it**: a champion
   can therefore ask for "beat every champion".
-- An item, trainer or advancement ID that cannot be found counts as unmet, with a warning in
-  the log: a typo closes a trainer off, it never opens them up.
+- An item, species, trainer or advancement ID that cannot be found counts as unmet, with a
+  warning in the log: a typo closes a trainer off, it never opens them up.
+- `party` reads the **party** only, never the PC, and **only what is written is checked**:
+  `staraptor` accepts any level, gender and form, fainted included. The rest of the syntax
+  follows: `staraptor shiny=true` asks for a shiny, `rotom appliance=wash` for one form.
 - The refusal is returned **before** the battle is built: no healed team, no music.
 
 ## Advancements

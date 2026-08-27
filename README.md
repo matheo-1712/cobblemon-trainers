@@ -288,8 +288,8 @@ livre aucune de ces boucles - il livre le crochet, et les packs à venir en fero
 voudront.
 
 Un bloc `requires` ferme un dresseur tant qu'un joueur n'a pas battu tel autre dresseur,
-gagné tant de combats, obtenu tel advancement ou tel objet - de quoi monter une ligue à
-badges. Et battre un dresseur déclenche le critère `cobblemon-trainers:trainer_defeated`, sur
+gagné tant de combats, obtenu tel advancement ou tel objet, ou n'a pas tel Pokémon dans son
+équipe - de quoi monter une ligue à badges. Et battre un dresseur déclenche le critère `cobblemon-trainers:trainer_defeated`, sur
 lequel un pack branche ses propres advancements.
 
 `/cobblemontrainers list` liste les dresseurs restants et ceux déjà vaincus, groupés par

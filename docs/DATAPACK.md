@@ -261,6 +261,7 @@ le Battle Phone.
   "defeated": ["champions/jacinthe", "champions/pierre"],
   "victories": { "count": 8, "category": "champions" },
   "items": [{ "item": "mon_pack:badge_roche", "count": 1 }],
+  "party": [{ "pokemon": "staraptor", "count": 1 }],
   "advancement": "mon_pack:acces_ligue",
   "hidden": false,
   "message": "trainer.mon_pack.maitre.locked"
@@ -272,6 +273,7 @@ le Battle Phone.
 | `defeated` | Dresseurs à avoir battus. Sans namespace, l'ID est lu dans le pack du dresseur qui l'exige - chemin compris (`champions/jacinthe`) |
 | `victories` | Un nombre de dresseurs battus : `count`, restreint par `pack` et/ou `category`. `count` omis veut dire **tous ceux du groupe** |
 | `items` | Objets à avoir sur soi, ID complet. **Jamais consommés** |
+| `party` | Pokémon à avoir dans son équipe : `pokemon` s'écrit comme pour `/pokespawn`, `count` dit combien. **Jamais pris** |
 | `advancement` | Un advancement à avoir obtenu, vanilla ou d'un pack |
 | `hidden` | `true` par défaut : le dresseur est absent du Battle Phone tant qu'il est verrouillé. `false` l'y laisse, verrouillé et avec ses conditions affichées |
 | `message` | Ce que le dresseur répond. Par défaut, une phrase du mod - la liste de ce qui manque est ajoutée dans les deux cas |
@@ -280,8 +282,13 @@ le Battle Phone.
   jamais des alternatives.
 - `victories` ne compte que les dresseurs `listed`, et **jamais le dresseur qui l'exige** :
   un champion peut donc demander « battre tous les champions ».
-- Un ID d'objet, de dresseur ou d'advancement introuvable compte comme non rempli, avec un
-  avertissement dans les logs : une faute de frappe ferme le dresseur, elle ne l'ouvre pas.
+- Un ID d'objet, d'espèce, de dresseur ou d'advancement introuvable compte comme non rempli,
+  avec un avertissement dans les logs : une faute de frappe ferme le dresseur, elle ne l'ouvre
+  pas.
+- `party` ne regarde que l'**équipe**, jamais le PC, et **seul ce qui est écrit est vérifié** :
+  `staraptor` accepte n'importe quel niveau, sexe et forme, K.O. compris. Le reste de la
+  syntaxe suit : `staraptor shiny=true` exige un chromatique, `rotom appliance=wash` une forme
+  précise.
 - Le refus est renvoyé **avant** que le combat ne se construise : ni équipe soignée, ni
   musique.
 

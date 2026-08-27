@@ -226,6 +226,7 @@ data class TrainerReward(
  *   the namespace of the trainer that requires it.
  * @param victories A number of trainers beaten, rather than named ones.
  * @param items Items the player must be carrying.
+ * @param party Pokémon the player must have with them.
  * @param advancement An advancement the player must have completed. Any ID works, vanilla or
  *   from a pack, which is how a requirement the mod knows nothing about gets expressed.
  * @param hidden Whether the trainer is left out of the battle phone while locked. True by
@@ -238,6 +239,7 @@ data class TrainerRequirements(
     val defeated: List<String> = emptyList(),
     val victories: TrainerVictoriesRequirement? = null,
     val items: List<TrainerItemRequirement> = emptyList(),
+    val party: List<TrainerPartyRequirement> = emptyList(),
     val advancement: String? = null,
     val hidden: Boolean = true,
     val message: String? = null
@@ -245,7 +247,8 @@ data class TrainerRequirements(
 
     /** A block holding only presentation fields locks nothing. */
     val isEmpty: Boolean
-        get() = defeated.isEmpty() && victories == null && items.isEmpty() && advancement.isNullOrBlank()
+        get() = defeated.isEmpty() && victories == null && items.isEmpty() && party.isEmpty() &&
+            advancement.isNullOrBlank()
 }
 
 /**
@@ -274,6 +277,24 @@ data class TrainerVictoriesRequirement(
  */
 data class TrainerItemRequirement(
     val item: String = "",
+    val count: Int = 1
+)
+
+/**
+ * A Pokémon the player must have in their party. Never taken from them, never asked to be in
+ * any particular shape: a fainted party member still counts, because the question is who
+ * travels with the player, not who could fight right now.
+ *
+ * The party alone is read, never the PC. "Have a Staraptor with you" is a thing a player can
+ * see at a glance and act on; a box search would be a requirement nobody could check.
+ *
+ * @param pokemon A Cobblemon property string, written exactly as `/pokespawn` takes it:
+ *   `staraptor`, or `staraptor shiny=true`, or `rotom appliance=wash` for a form. **Only what
+ *   is written is checked** - a bare species accepts any level, gender and form.
+ * @param count How many party members have to match it.
+ */
+data class TrainerPartyRequirement(
+    val pokemon: String = "",
     val count: Int = 1
 )
 

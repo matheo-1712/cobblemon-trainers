@@ -866,6 +866,22 @@ Points à ne pas redécouvrir :
   comme rempli ouvrirait le dresseur à tout le monde sur une faute de frappe.
 - **Rien n'est jamais consommé.** Un `items` est une clé que le joueur garde, sans quoi une
   revanche demanderait de refarmer l'objet. Ça a été posé comme règle, pas comme défaut.
+- **`party` se répond avec `PokemonProperties.matches`**, pas avec une comparaison d'espèce.
+  C'est le seul usage prévu du champ `aspects` (voir « Formes et aspects »), et c'est ce qui
+  fait qu'un pack peut demander un chromatique ou une forme précise sans que le mod ait un
+  champ pour chacun. La chaîne est mise en minuscules avant `parse` : tous les identifiants de
+  Cobblemon le sont, donc `Staraptor` et `staraptor` demandent la même chose.
+- **Une exigence que Cobblemon lit comme vide est refusée.** Son parseur laisse tomber sans un
+  mot les clés qu'il ne connaît pas, donc une faute de frappe donnerait des propriétés qui
+  matchent n'importe quel Pokémon - c'est-à-dire un dresseur ouvert à tout le monde, l'exact
+  inverse de ce qu'une condition doit faire en échouant. D'où le test sur `asString`.
+- **La condition et son libellé sont construits ensemble** (`PartyQuery`), pour la même raison
+  que le `Check` de `TrainerPlace` : le nom affiché ne peut pas désigner autre chose que ce
+  qui est testé. Le nom traduit de l'espèce n'est pris que pour une espèce nue ; dès qu'il y a
+  une propriété en plus, c'est la chaîne du pack qui est montrée, faute de savoir la nommer.
+- **Seule l'équipe est lue, jamais le PC, et un K.O. compte.** La question est qui voyage avec
+  le joueur, pas qui peut se battre - et une condition qu'un joueur ne peut pas vérifier d'un
+  coup d'œil serait une condition qu'il subit.
 - **`victories` exclut le dresseur qui l'exige** de son propre pool, pour qu'un champion puisse
   demander « battre tous les champions ». Le pool ne contient que des dresseurs `listed`.
 - **Le masquage est décidé côté serveur.** Un dresseur `hidden` et verrouillé n'est pas envoyé

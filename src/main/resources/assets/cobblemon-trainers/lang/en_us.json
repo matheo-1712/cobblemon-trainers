@@ -118,6 +118,7 @@
   "cobblemon-trainers.requirement.victories": "Defeat trainers: %s / %s",
   "cobblemon-trainers.requirement.victories_category": "Defeat %s: %s / %s",
   "cobblemon-trainers.requirement.item": "Carry %s: %s / %s",
+  "cobblemon-trainers.requirement.party": "Have %s with you: %s / %s",
   "cobblemon-trainers.requirement.advancement": "Earn the advancement %s",
 
   "cobblemon-trainers.npc.interaction.battle": "Trainer Battle",
@@ -137,6 +138,7 @@
   "trainer.cobblemon-trainers.ultra-rerebleue.battle_start": "Don't ask me why I have an E in my name. Let's battle instead!",
   "trainer.cobblemon-trainers.ultra-rerebleue.win": "Too easy 😎",
   "trainer.cobblemon-trainers.ultra-rerebleue.lose": "Not bad! You did well.",
+  "trainer.cobblemon-trainers.ultra-rerebleue.locked": "You are not ready for this one yet.",
 
   "trainer.cobblemon-trainers.theazertor.name": "TheAzertor",
   "trainer.cobblemon-trainers.theazertor.battle_start": "You need a soul!",
