@@ -985,8 +985,9 @@ propose autre chose. Trois défauts sont couverts, tous constatés en jeu à ski
   qui ne se résoudra jamais.
 - **Les écrans sont joués comme n'importe quelle capacité d'installation.** Ils sont dans les
   `setupMoves` de Cobblemon, donc tirés au sort, sans regarder ce qui est déjà posé, ce que
-  l'adversaire frappe, ni si une Lumargile est en main - un dresseur bâti autour d'eux n'y venait
-  quasiment jamais.
+  l'adversaire frappe, ni si une Lumargile est en main. Les deux moitiés du défaut ont été vues
+  en jeu : un dresseur bâti autour d'eux n'y venait quasiment jamais, et un dresseur qui en avait
+  déjà un debout reposait le même pour un « Mais cela échoue ! ».
 
 Points à ne pas redécouvrir :
 
@@ -1039,6 +1040,13 @@ Points à ne pas redécouvrir :
 - **Voile Aurore ferme la question.** Il vaut les deux autres écrans, donc tant qu'il est debout
   la règle rend la main - sans quoi le dresseur enchaînait trois tours d'installation pour un
   seul effet utile.
+- **Poser un écran et en refuser un sont deux règles séparées, à deux niveaux.** `putUpScreen`
+  *ajoute* une décision et attend la difficulté 4, comme le piège d'entrée ; `redundantScreen`
+  refuse un écran qui ne peut rien faire et tourne dès 3, comme une attaque sur une immunité -
+  c'est la même famille d'erreur. Les fusionner ferait attendre la 4 à un refus qui n'a rien
+  d'un plan de jeu.
+- **Le remplaçant d'un écran refusé est `bestAttack`, pas `best`.** La meilleure capacité tout
+  court peut être l'autre écran, qui échouerait exactement pareil.
 - **La mémoire n'est jamais effacée quand un écran saute** (Casse-Brique, Anti-Brume). Un écran
   reposé huit tours plus tard est une erreur bien plus petite qu'un écran reposé tous les tours,
   et c'est exactement ce dont on revient.

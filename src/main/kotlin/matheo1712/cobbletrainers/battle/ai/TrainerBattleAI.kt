@@ -320,6 +320,39 @@ class TrainerBattleAI(
      * Difficulty 4 rather than a whole [CorrectionLevel], the same bar as [leadHazard] and for
      * the same reason: this is what a trainer with a game plan does.
      */
+    /**
+     * Refuses a screen that cannot do anything: one already standing, one Aurora Veil covers
+     * already, or an Aurora Veil with no snow to hold it up.
+     *
+     * Cobblemon files screens under `setupMoves` and plays them on a coin flip, without ever
+     * asking whether one is up - so a trainer that knows Reflect keeps re-laying it, and Showdown
+     * answers "But it failed!" while the player attacks for free. That is the same shape of
+     * mistake as a Ground move at a Flying type, so it is refused from difficulty 3 like the
+     * other impossible ones, and unlike [putUpScreen] which *adds* a screen and waits for 4.
+     *
+     * The replacement is the best attack rather than [Situation.best]: the best move overall
+     * could easily be another screen, which would fail in exactly the same way.
+     */
+    private fun redundantScreen(chosen: ScoredMove, s: Situation): ShowdownActionResponse? {
+        val id = chosen.move.id
+        if (id !in BattleScreens.ALL) return null
+
+        val standing = standingScreens(s)
+        val reason = when {
+            id in standing -> "$id is already up"
+            BattleScreens.AURORA_VEIL in standing -> "Aurora Veil already covers both sides"
+            id == BattleScreens.AURORA_VEIL && !BattleScreens.veilWeather(s.battle) ->
+                "Aurora Veil needs snow on the field"
+            else -> return null
+        }
+
+        val replacement = s.bestAttack
+            ?: s.moves.filterNot { it.useless || it.move.id in BattleScreens.ALL }.maxByOrNull { it.damage }
+            ?: return null
+
+        return use(replacement.move, s, reason)
+    }
+
     private fun putUpScreen(chosen: ScoredMove, s: Situation): ShowdownActionResponse? {
         if (difficulty < SCREEN_DIFFICULTY) return null
         if (chosen.move.id in BattleScreens.ALL || chosen.recovery) return null
@@ -368,6 +401,7 @@ class TrainerBattleAI(
         // An unknown id means a gimmick move or something we cannot judge: leave it alone.
         val chosen = s.moves.firstOrNull { it.move.id == choice.moveName } ?: return choice
 
+        redundantScreen(chosen, s)?.let { return it }
         putUpScreen(chosen, s)?.let { return it }
 
         if (level == CorrectionLevel.FULL) {

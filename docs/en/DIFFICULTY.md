@@ -17,7 +17,7 @@ To set the field on a trainer, see [DATAPACK.md](DATAPACK.md#battle).
 | `0` | every turn | never | nothing |
 | `1` | 4 turns out of 5 | never | nothing |
 | `2` | 3 turns out of 5 | never | nothing |
-| `3` | 2 turns out of 5 | 1 time in 5 | the impossible mistakes |
+| `3` | 2 turns out of 5 | 1 time in 5 | the impossible mistakes, screens included |
 | `4` | 1 turn out of 5 | 3 times in 5 | the same, plus entry hazards and screens |
 | `5` | never | always | everything, reading the battle included |
 
@@ -65,6 +65,23 @@ is **not** seen — that comes at level 5.
 
 This rule also catches the random roll: a move picked at random that happens to be immune is
 turned down like any other.
+
+### No re-laying a screen that is up
+
+Reflect, Light Screen and Aurora Veil are no longer replayed while the screen holds: Cobblemon
+files them among its setup moves and plays them on a coin flip, without ever looking at what is
+already standing - which cost a turn and put a "But it failed!" in the chat. The trainer attacks
+instead.
+
+Three cases are turned down:
+
+| Case | Why |
+| --- | --- |
+| The screen is already standing | Screens do not stack |
+| Aurora Veil is standing | It is already Reflect and Light Screen |
+| Aurora Veil with no snow or hail | The move fails |
+
+A screen that has been set counts as standing for eight turns, the length a Light Clay gives it.
 
 ### A switch has to be worth something
 

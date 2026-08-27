@@ -17,7 +17,7 @@ Pour poser le champ dans un dresseur, voir [DATAPACK.md](DATAPACK.md#battle).
 | `0` | tous les tours | jamais | rien |
 | `1` | 4 tours sur 5 | jamais | rien |
 | `2` | 3 tours sur 5 | jamais | rien |
-| `3` | 2 tours sur 5 | 1 fois sur 5 | les erreurs impossibles |
+| `3` | 2 tours sur 5 | 1 fois sur 5 | les erreurs impossibles, écrans compris |
 | `4` | 1 tour sur 5 | 3 fois sur 5 | idem, plus les pièges d'entrée et les écrans |
 | `5` | jamais | toujours | tout, y compris la lecture du combat |
 
@@ -66,6 +66,23 @@ n'est **pas** vu — ça vient au niveau 5.
 
 Cette règle rattrape aussi le tirage au hasard : une capacité tirée au sort qui se trouve être
 immunisée est refusée comme les autres.
+
+### Plus d'écran déjà posé
+
+Protection, Mur Lumière et Voile Aurore ne sont plus rejoués tant que l'écran tient : Cobblemon
+les range parmi ses capacités d'installation et les joue au hasard, sans jamais regarder ce qui
+est en place, ce qui donnait un tour perdu et un « Mais cela échoue ! » dans le chat. Le
+dresseur attaque à la place.
+
+Trois cas sont refusés :
+
+| Cas | Pourquoi |
+| --- | --- |
+| L'écran est déjà debout | Les écrans ne se cumulent pas |
+| Voile Aurore est debout | Il vaut déjà Protection et Mur Lumière |
+| Voile Aurore sans neige ni grêle | La capacité échoue |
+
+Un écran posé compte comme en place pendant huit tours, la durée que lui donne la Lumargile.
 
 ### Un changement doit servir à quelque chose
 
