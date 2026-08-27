@@ -174,7 +174,7 @@ pour les entrées Showdown sans `Level:` -, le second est la qualité du jeu de 
 dresseur niveau 100 en `difficulty: 0` reste facile.
 
 `difficulty` décide aussi de ce que le mod corrige chez l'IA de Cobblemon : rien en dessous
-de `3`, les erreurs impossibles à `3`, les pièges d'entrée à `4`, la lecture complète du
+de `3`, les erreurs impossibles à `3`, les pièges d'entrée et les écrans à `4`, la lecture complète du
 combat à `5`.
 
 **➜ Le détail exact de chaque niveau est dans [DIFFICULTE.md](DIFFICULTE.md)**, avec la

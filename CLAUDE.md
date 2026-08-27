@@ -152,8 +152,9 @@ messages, musique et récompenses de combat.
 - **`battle.ai.TrainerBattleAI`** - la couche qui refuse les décisions intenables du
   `StrongBattleAI` de Cobblemon, épaulée par `BattleTypeChart` (efficacité des types, talents
   compris), `BattleDamage` (dégâts en points de vie), `BattleGuards` (ce qui encaisse un coup
-  qu'on croyait décisif), `BattleSpeed` (qui frappe en premier) et `TrainerAiDebug`
-  (l'interrupteur de débogage). Voir « L'IA de combat ».
+  qu'on croyait décisif), `BattleSpeed` (qui frappe en premier), `BattleScreens` (les écrans et
+  ce qui les rend utiles) et `TrainerAiDebug` (l'interrupteur de débogage). Voir « L'IA de
+  combat ».
 - **`battle.ai.TrainerGimmicks`** - le vocabulaire de `battle.gimmicks` et ce que le combat
   offre ce tour-ci. Voir « Les gimmicks de combat ».
 - **`TrainerProgress`** - `SavedData` du monde : qui a battu quel dresseur. Voir « Revanches
@@ -982,6 +983,10 @@ propose autre chose. Trois défauts sont couverts, tous constatés en jeu à ski
 - **La riposte n'entre dans aucun calcul.** Rien ne compare ce qu'on rend à ce qu'on prend, ni ne
   regarde qui frappe en premier : un dresseur sur le point de tomber pose tranquillement un boost
   qui ne se résoudra jamais.
+- **Les écrans sont joués comme n'importe quelle capacité d'installation.** Ils sont dans les
+  `setupMoves` de Cobblemon, donc tirés au sort, sans regarder ce qui est déjà posé, ce que
+  l'adversaire frappe, ni si une Lumargile est en main - un dresseur bâti autour d'eux n'y venait
+  quasiment jamais.
 
 Points à ne pas redécouvrir :
 
@@ -1013,12 +1018,36 @@ Points à ne pas redécouvrir :
   sans les juger, plus celui du dresseur muré (tout résisté), et seul le changement réellement
   motivé par le type passe par le seuil. Ne pas y remettre `slowstart` et `truant` sans le
   demander : c'est un choix, pas un oubli.
-- **Le piège d'entrée est la seule règle qui *ajoute* une décision**, tout le reste refuse. Elle
-  s'allume à la difficulté 4 et non sur un `CorrectionLevel` entier, parce que c'est là qu'elle a
-  été demandée - d'où le `difficulty` brut gardé à côté du niveau. Aucun test « le piège est-il
-  déjà posé » n'est nécessaire : c'est le premier tour, rien n'a bougé. Et `openingPlayed` est
-  porté par l'acteur, pas par le Pokémon, sinon les deux leads d'un combat double poseraient deux
-  fois le même piège.
+- **Le piège d'entrée et l'écran sont les deux seules règles qui *ajoutent* une décision**, tout
+  le reste refuse. Elles s'allument à la difficulté 4 et non sur un `CorrectionLevel` entier,
+  parce que c'est là qu'elles ont été demandées - d'où le `difficulty` brut gardé à côté du
+  niveau. Pour le piège, aucun test « est-il déjà posé » n'est nécessaire : c'est le premier
+  tour, rien n'a bougé. Et `openingPlayed` est porté par l'acteur, pas par le Pokémon, sinon les
+  deux leads d'un combat double poseraient deux fois le même piège.
+- **C'est la Lumargile qui autorise l'écran, pas l'IA.** Un objet qui ne fait rien tant qu'aucun
+  écran n'est posé est une intention de pack, au même titre qu'une méga-gemme : la couche
+  l'exécute au lieu de la juger. Sans lui, Cobblemon garde la main - il range les écrans dans
+  ses `setupMoves`, joués au hasard et sans savoir si l'un est déjà en place.
+- **Ce qui est déjà debout se lit à deux endroits, comme une Frimousse.** Les `BattleContext`
+  d'abord - les écrans dans le `contextManager` du **côté** (`Type.SCREEN`), la météo dans celui
+  du **combat** (`Type.WEATHER`) -, et notre propre `screensPlayed` ensuite, qui note le tour où
+  un écran a été joué. Le second n'est pas une ceinture : en jeu, le contexte de camp n'est pas
+  arrivé, et une règle qui ne lisait que lui reposait le Voile Aurore **à chaque tour**. Une
+  mémoire est toujours là, donc le pire cas est un écran reposé huit tours trop tard.
+  `ContextManager.get` peut rendre null, d'où le `orEmpty()`, et `BattleActor.getSide()` est une
+  méthode Java : Kotlin ne l'expose pas en propriété.
+- **Voile Aurore ferme la question.** Il vaut les deux autres écrans, donc tant qu'il est debout
+  la règle rend la main - sans quoi le dresseur enchaînait trois tours d'installation pour un
+  seul effet utile.
+- **La mémoire n'est jamais effacée quand un écran saute** (Casse-Brique, Anti-Brume). Un écran
+  reposé huit tours plus tard est une erreur bien plus petite qu'un écran reposé tous les tours,
+  et c'est exactement ce dont on revient.
+- **Les ids de contexte sont déjà normalisés à la Showdown** (`Effect.Companion` passe en
+  minuscules et retire le reste), donc `auroraveil` et `lightscreen` tombent exactement sur les
+  ids de capacité. Le `normalise` de `BattleScreens` est une ceinture, pas une traduction.
+- **Voile Aurore hors neige n'est pas refusé par Showdown**, il échoue. D'où la lecture de la
+  météo avant de le proposer, avec `hail` gardé à côté de `snow` : c'est le même écran, sous le
+  nom que Showdown envoyait avant la génération 9.
 - **Le soin est jugé, jamais ajouté.** `correctHeal` refuse le soin quand un coup met KO ce
   tour-ci, quand l'adversaire rend au moins autant que ce qui est restauré (le tour ne rachète
   rien), et quand la barre n'a pas assez descendu pour l'absorber (`MIN_HEAL_USED`). Un wrapper

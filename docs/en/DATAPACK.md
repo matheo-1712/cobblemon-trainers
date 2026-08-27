@@ -172,7 +172,7 @@ Showdown entries with no `Level:` line -, the second is how well the AI plays. A
 trainer at `difficulty: 0` is still easy.
 
 `difficulty` also decides what the mod corrects in Cobblemon's AI: nothing below `3`, the
-impossible mistakes at `3`, entry hazards at `4`, and reading the battle in full at `5`.
+impossible mistakes at `3`, entry hazards and screens at `4`, and reading the battle in full at `5`.
 
 **➜ Exactly what each level does is in [DIFFICULTY.md](DIFFICULTY.md)**, together with the
 `/cobblemontrainers debugai` command, which shows you in battle what the mod corrected and why.

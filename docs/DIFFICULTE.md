@@ -18,7 +18,7 @@ Pour poser le champ dans un dresseur, voir [DATAPACK.md](DATAPACK.md#battle).
 | `1` | 4 tours sur 5 | jamais | rien |
 | `2` | 3 tours sur 5 | jamais | rien |
 | `3` | 2 tours sur 5 | 1 fois sur 5 | les erreurs impossibles |
-| `4` | 1 tour sur 5 | 3 fois sur 5 | idem, plus les pièges d'entrée |
+| `4` | 1 tour sur 5 | 3 fois sur 5 | idem, plus les pièges d'entrée et les écrans |
 | `5` | jamais | toujours | tout, y compris la lecture du combat |
 
 Un dresseur `0` n'est pas « un peu moins bon » qu'un `5` : il joue littéralement une capacité
@@ -86,9 +86,13 @@ meilleur matchup :
 Dans le dernier cas, le dresseur part **même si Cobblemon ne l'avait pas proposé** — mais
 seulement vers un remplaçant strictement meilleur, faute de quoi la boucle reviendrait.
 
-## Niveau 4 — les pièges d'entrée
+## Niveau 4 — le plan de jeu
 
-Tout ce que fait le niveau 3, plus une règle.
+Tout ce que fait le niveau 3, plus deux règles. Ce sont les deux seules de tout le système qui
+**ajoutent** une décision : partout ailleurs, la couche se contente de refuser celles de
+Cobblemon.
+
+### Les pièges d'entrée
 
 Si le **premier** Pokémon envoyé connaît un piège d'entrée, il le pose au premier tour. Ordre de
 préférence quand il en connaît plusieurs :
@@ -101,8 +105,30 @@ préférence quand il en connaît plusieurs :
 Un seul piège est posé par dresseur, donc les deux premiers Pokémon d'un combat double n'en
 posent pas deux fois le même. Aucun autre Pokémon de l'équipe n'en posera plus tard.
 
-C'est la seule règle de tout le système qui **ajoute** une décision. Toutes les autres se
-contentent de refuser celles de Cobblemon.
+### Les écrans, avec une Lumargile
+
+Un Pokémon qui tient une **Lumargile** et connaît Protection, Mur Lumière ou Voile Aurore pose
+son écran plutôt que d'attaquer. L'objet est ce qui déclenche la règle : sans écran il ne sert
+à rien, donc un pack qui l'a donné a déjà pris la décision.
+
+| Il pose | Quand |
+| --- | --- |
+| Voile Aurore | Il neige ou il grêle - l'écran vaut alors pour les deux camps de dégâts à la fois |
+| Protection | Le coup le plus dur qui l'attend est physique |
+| Mur Lumière | Le coup le plus dur qui l'attend est spécial |
+
+- **Jamais deux fois le même** : un écran déjà posé compte comme en place pendant huit tours,
+  la durée que lui donne la Lumargile. Le dresseur passe donc à autre chose dès le tour
+  suivant.
+- **Après Voile Aurore, plus aucun écran** : il vaut Protection et Mur Lumière à lui seul, les
+  poser ensuite ne ferait que dépenser des tours.
+- **Voile Aurore hors neige n'est jamais joué** : la capacité échoue, Showdown la propose
+  quand même.
+- **Quatre situations rendent la main** : un KO est disponible ce tour-ci, le Pokémon tombe ce
+  tour-ci, Cobblemon voulait se soigner, ou il jouait déjà un écran de lui-même.
+
+Sans Lumargile, rien ne change : Cobblemon joue ses écrans comme n'importe quelle capacité
+d'installation, au hasard et sans savoir si l'un est déjà en place.
 
 ## Niveau 5 — la lecture du combat
 
@@ -213,8 +239,9 @@ demanderait un état auquel la couche n'a pas accès.
   pas la puissance de l'équipe. Un dresseur niveau 100 en `difficulty: 0` reste facile, un
   dresseur niveau 20 en `difficulty: 5` reste faible.
 
-Enfin, la couche ne juge que ce que Cobblemon lui propose. Sauf pour le piège d'entrée du
-niveau 4, elle ne peut pas faire jouer une action à laquelle Cobblemon n'avait pas pensé.
+Enfin, la couche ne juge que ce que Cobblemon lui propose. Sauf pour les deux règles du
+niveau 4 - le piège d'entrée et l'écran sous Lumargile -, elle ne peut pas faire jouer une
+action à laquelle Cobblemon n'avait pas pensé.
 
 ## Vérifier en jeu
 
