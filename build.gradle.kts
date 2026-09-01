@@ -20,6 +20,22 @@ repositories {
 	}
 }
 
+/**
+ * Mods the dev game runs with, and nothing else: they are never compiled against, never
+ * published as a dependency, and never part of the jar.
+ *
+ * Trainers mega evolve through Cobblemon's own gimmick API, so not a line of this mod mentions
+ * Mega Showdown - it is only what puts the Mega Stones in the game, and therefore the only way
+ * to test `battle.gimmicks` at all. `accessories` comes along because Mega Showdown hard-depends
+ * on it, and `owo` because accessories does; the loader refuses to start without either.
+ *
+ * They are **copied into `run/mods`** rather than declared `modRuntimeOnly`, because a mod jar
+ * carries its libraries nested inside it (owo ships endec and jankson that way) and Loom does
+ * not put those on the dev classpath - the game crashed on a missing `endec` class. Fabric
+ * unpacks them like it would for a player, and remaps the mods on the way in.
+ */
+val devMods: Configuration by configurations.creating
+
 dependencies {
 	// To change the versions see the gradle.properties file
 	minecraft("com.mojang:minecraft:${providers.gradleProperty("minecraft_version").get()}")
@@ -35,7 +51,24 @@ dependencies {
     
     // Dependencies for Cobblemon
     modImplementation("maven.modrinth:architectury-api:${project.property("architectury_version")}")
+
+    // Mega Showdown and what it needs, dropped into `run/mods` for the dev game. See the
+    // `devMods` configuration above.
+    devMods("maven.modrinth:cobblemon-mega-showdown:${project.property("mega_showdown_version")}")
+    devMods("maven.modrinth:accessories:${project.property("accessories_version")}")
+    devMods("maven.modrinth:owo-lib:${project.property("owo_version")}")
 }
+
+val copyDevMods = tasks.register<Copy>("copyDevMods") {
+	description = "Copies the dev-only mods into run/mods."
+	group = "fabric"
+
+	from(devMods)
+	into(layout.projectDirectory.dir("run/mods"))
+}
+
+tasks.named("runClient") { dependsOn(copyDevMods) }
+tasks.named("runServer") { dependsOn(copyDevMods) }
 
 tasks.processResources {
 	val version = version

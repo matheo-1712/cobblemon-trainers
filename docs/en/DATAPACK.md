@@ -15,9 +15,10 @@ For installing the mod and for the commands, see the [README](../../README.md).
   [Advancements](#advancements) · [Calling a trainer over](SPAWNING.md)
 - [Rematches and rewards](#rematches-and-rewards) ·
   [Farmable or not](#farmable-or-not) · [Progress tracking](#progress-tracking)
-- [The team format](#the-team-format) · [The `Aspects:` line](#the-aspects-line)
+- [The team format](#the-team-format) · [The `Aspects:` line](#the-aspects-line) ·
+  [The `Fallback Item:` line](#the-fallback-item-line)
 - [Skins](#skins) · [Battle music](#battle-music) ·
-  [Translating your text](#translating-your-text)
+  [Battle gimmicks](GIMMICKS.md) · [Translating your text](#translating-your-text)
 - [Testing your pack](#testing-your-pack) · [Common mistakes](#common-mistakes)
 
 ## Layout
@@ -153,6 +154,7 @@ leaving it out makes a trainer you have to go and find.
 | `difficulty` | `5` | [How well the AI plays](DIFFICULTY.md), from 0 (at random) to 5 (playing to win) |
 | `healParty` | `true` | Heals the trainer's team before and after every battle |
 | `music` | the mod's track | Sound ID played during the battle, `null` for silence |
+| `gimmicks` | `[]` | [Battle gimmicks](GIMMICKS.md) the trainer uses: `["mega"]` for Mega Evolution |
 
 The `_50` suffix (`singles_50`, `doubles_50`, `triples_50`) puts **both teams** at level 50 for
 the battle. `level` therefore has no visible effect on a `_50` trainer.
@@ -170,7 +172,7 @@ Showdown entries with no `Level:` line -, the second is how well the AI plays. A
 trainer at `difficulty: 0` is still easy.
 
 `difficulty` also decides what the mod corrects in Cobblemon's AI: nothing below `3`, the
-impossible mistakes at `3`, entry hazards at `4`, and reading the battle in full at `5`.
+impossible mistakes at `3`, entry hazards and screens at `4`, and reading the battle in full at `5`.
 
 **➜ Exactly what each level does is in [DIFFICULTY.md](DIFFICULTY.md)**, together with the
 `/cobblemontrainers debugai` command, which shows you in battle what the mod corrected and why.
@@ -178,6 +180,9 @@ impossible mistakes at `3`, entry hazards at `4`, and reading the battle in full
 `healParty: false` carries damage and PP from one battle to the next - handy for a boss you
 wear down over several attempts. Its fainted Pokémon move to the back of the team, so that it
 opens the next battle with one still standing.
+
+**➜ `gimmicks` is covered in [GIMMICKS.md](GIMMICKS.md)**: what has to be installed, the stone
+to hand the Pokémon, and the fallback item for when the mod providing it is not there.
 
 A `doubles` battle needs at least 2 Pokémon **on each side**, a `triples` at least 3. If either
 team is too short, Cobblemon refuses the battle and says so in the chat. On the player's side
@@ -237,6 +242,7 @@ in the Battle Phone.
   "defeated": ["champions/jasmine", "champions/brock"],
   "victories": { "count": 8, "category": "champions" },
   "items": [{ "item": "my_pack:boulder_badge", "count": 1 }],
+  "party": [{ "pokemon": "staraptor", "count": 1 }],
   "advancement": "my_pack:league_access",
   "hidden": false,
   "message": "trainer.my_pack.champion.locked"
@@ -248,6 +254,7 @@ in the Battle Phone.
 | `defeated` | Trainers that must have been beaten. Without a namespace, the ID is read inside the pack of the trainer requiring it - path included (`champions/jasmine`) |
 | `victories` | A number of trainers beaten: `count`, narrowed by `pack` and/or `category`. Leaving `count` out means **all of that group** |
 | `items` | Items the player has to be carrying, full ID. **Never consumed** |
+| `party` | Pokémon the player has to have with them: `pokemon` is written the way `/pokespawn` takes it, `count` says how many. **Never taken** |
 | `advancement` | An advancement that must have been earned, vanilla or from a pack |
 | `hidden` | `true` by default: the trainer is absent from the Battle Phone while locked. `false` keeps them there, locked and with their conditions shown |
 | `message` | What the trainer answers. By default, a line from the mod - the list of what is missing is appended either way |
@@ -255,8 +262,11 @@ in the Battle Phone.
 - **Every declared condition has to be met.** They add up, they are never alternatives.
 - `victories` only counts `listed` trainers, and **never the trainer requiring it**: a champion
   can therefore ask for "beat every champion".
-- An item, trainer or advancement ID that cannot be found counts as unmet, with a warning in
-  the log: a typo closes a trainer off, it never opens them up.
+- An item, species, trainer or advancement ID that cannot be found counts as unmet, with a
+  warning in the log: a typo closes a trainer off, it never opens them up.
+- `party` reads the **party** only, never the PC, and **only what is written is checked**:
+  `staraptor` accepts any level, gender and form, fainted included. The rest of the syntax
+  follows: `staraptor shiny=true` asks for a shiny, `rotom appliance=wash` for one form.
 - The refusal is returned **before** the battle is built: no healed team, no music.
 
 ## Advancements
@@ -425,6 +435,7 @@ Lines that are recognised, on top of the first one:
 | --- | --- |
 | First line | `Nickname (Species) (M) @ Item` - nickname, gender and item optional |
 | Form | `Aspects: rlm, poison` |
+| Fallback item | `Fallback Item: Life Orb` |
 | Ability | `Ability: Static` |
 | Level | `Level: 88` |
 | Shiny | `Shiny: Yes` |
@@ -441,10 +452,13 @@ Three details that catch people out:
   `Will-O-Wisp`, `Farfetch'd`, `Flabébé`, `Mr. Mime` are converted to Cobblemon identifiers.
   A move that does not exist is skipped with a warning, and the Pokémon shows up with the rest.
   The one exception is the form suffix (`Raichu-Alola`): see [`Aspects:`](#the-aspects-line).
-- **A held item with no namespace gets `cobblemon:`**: `Light Ball` becomes
-  `cobblemon:light_ball`, `Heavy-Duty Boots` becomes `cobblemon:heavy_duty_boots`. For a vanilla
-  item, write it out in full (`minecraft:stick`). An item that cannot be found is skipped with a
-  warning, and the Pokémon shows up empty-handed.
+- **A held item with no namespace is looked up in `cobblemon:` first**: `Light Ball` becomes
+  `cobblemon:light_ball`, `Heavy-Duty Boots` becomes `cobblemon:heavy_duty_boots`. Failing that,
+  the same name is looked up across every loaded mod, and is only accepted when exactly one
+  matches - which is what makes `@ Charizardite X` work without naming the mod providing it.
+  Ambiguous or not found, the item is skipped with a warning and the Pokémon shows up
+  empty-handed, unless it declares a [fallback item](#the-fallback-item-line). Write the ID out
+  in full (`minecraft:stick`) to settle any doubt.
 - **Stat abbreviations are translated by the mod**: `HP`, `Atk`, `Def`, `SpA`, `SpD`, `Spe`, and
   the long names. An abbreviation outside that list is ignored silently.
 
@@ -474,6 +488,24 @@ the name of the `data/<ns>/cobblemon/species_features/<name>.json` file.
 - **An unknown aspect is ignored** with a warning: the trainer gets the Pokémon in its base
   form. Typically, the pack defining the form is not loaded.
 - **The form needs nothing else**: stats, types, abilities and model all follow.
+
+## The `Fallback Item:` line
+
+What the Pokémon holds when the item on its first line does not exist - typically because the
+mod providing it is not installed.
+
+```json
+"team": ["Charizard @ Charizardite X
+Fallback Item: Life Orb
+Level: 80
+- Flare Blitz"]
+```
+
+- **The first item that exists is the one held**, the rest are ignored. Several
+  `Fallback Item:` lines are tried in the order they are written.
+- **The rule covers any item**, not just Mega Stones: the mod only looks at what the game has
+  registered.
+- **When nothing resolves**, the Pokémon shows up empty-handed, exactly as without the line.
 
 ## Skins
 

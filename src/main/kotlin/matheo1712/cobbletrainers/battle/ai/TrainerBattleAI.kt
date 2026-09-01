@@ -44,10 +44,37 @@ import kotlin.math.roundToInt
  * hold on that - so difficulty grades the quality of the decisions rather than the information
  * behind them. It also cannot make the AI act where Cobblemon proposed nothing: the layer can
  * refuse a heal, never add one.
+ *
+ * One thing here is not a correction at all: the battle gimmicks a trainer declares - Mega
+ * Evolution today - are attached to whatever move comes out, difficulty included. See
+ * [withGimmick] and [TrainerGimmicks].
  */
-class TrainerBattleAI(private val delegate: BattleAI, private val difficulty: Int) : BattleAI {
+class TrainerBattleAI(
+    private val delegate: BattleAI,
+    private val difficulty: Int,
+    gimmicks: List<String> = emptyList()
+) : BattleAI {
 
     private val level = CorrectionLevel.of(difficulty)
+
+    /**
+     * Whether this trainer mega evolves when the battle offers it - the `mega` of its
+     * `battle.gimmicks`. Read once: the definition cannot change mid-battle, and a `/reload`
+     * would not reach a fight already under way.
+     */
+    private val usesMega = TrainerGimmicks.uses(gimmicks, TrainerGimmicks.MEGA)
+
+    /**
+     * The request the mega evolution was answered on, or null while it is still to come.
+     *
+     * Not a plain boolean, because it answers two questions at once. Cobblemon asks each active
+     * Pokémon *twice* a turn (see [lastRequest]) and the second answer overwrites the first, so
+     * the same request has to be answered the same way or the gimmick would be dropped on the
+     * way out. And a side may only mega evolve once, so the *other* active of a double battle,
+     * asked on the same turn, has to be turned down. Keyed like any other decision, both fall
+     * out of one comparison.
+     */
+    private var megaPlayedFor: DecisionKey? = null
 
     /**
      * Whether the opening move has already been spent. One flag for the whole actor, so that in
@@ -67,6 +94,18 @@ class TrainerBattleAI(private val delegate: BattleAI, private val difficulty: In
 
     /** Whether the previous decision was a Protect, which is what makes a second one a bad bet. */
     private var lastWasProtect = false
+
+    /**
+     * The turn each screen was last played on, by move id.
+     *
+     * The same two-source trick as [struck], and for the same reason: Cobblemon does record a
+     * standing screen in the side's `BattleContext` bucket, but a rule that can only see that
+     * bucket has no answer at all when the entry does not arrive - and the answer it gives then
+     * is "no screen is up", every turn, which is a trainer that does nothing but hang curtains.
+     * Our own note is always there, so the worst case is a screen re-laid a turn late rather
+     * than a battle spent laying it.
+     */
+    private val screensPlayed = mutableMapOf<String, Int>()
 
     /**
      * The decision already given for the request being answered, and what it was answering.
@@ -93,12 +132,25 @@ class TrainerBattleAI(private val delegate: BattleAI, private val difficulty: In
         moveset: ShowdownMoveset?,
         forceSwitch: Boolean
     ): ShowdownActionResponse {
+        val request = DecisionKey(battle.turn, activePokemon.battlePokemon?.uuid, forceSwitch)
+        val decision = decide(activePokemon, battle, aiSide, moveset, forceSwitch, request)
+        return withGimmick(decision, activePokemon, battle, moveset, request)
+    }
+
+    /** The move or the switch, before any gimmick is attached to it. */
+    private fun decide(
+        activePokemon: ActiveBattlePokemon,
+        battle: PokemonBattle,
+        aiSide: BattleSide,
+        moveset: ShowdownMoveset?,
+        forceSwitch: Boolean,
+        request: DecisionKey
+    ): ShowdownActionResponse {
         val choice = delegate.choose(activePokemon, battle, aiSide, moveset, forceSwitch)
         if (level == CorrectionLevel.NONE || moveset == null) return choice
 
         // The same question asked twice gets the same answer, as long as it still stands - a
         // response the battle would reject has to be worked out again rather than repeated.
-        val request = DecisionKey(battle.turn, activePokemon.battlePokemon?.uuid, forceSwitch)
         lastResponse?.let {
             if (request == lastRequest && it.isValid(activePokemon, moveset, forceSwitch)) return it
         }
@@ -115,6 +167,49 @@ class TrainerBattleAI(private val delegate: BattleAI, private val difficulty: In
             LOGGER.error("Trainer AI correction failed, keeping Cobblemon's choice", exception)
             choice
         }
+    }
+
+    /**
+     * Mega evolves alongside the move that was just chosen, if the trainer has one to spend and
+     * the battle is offering it.
+     *
+     * Deliberately outside everything above: a gimmick is the pack's decision - it gave the
+     * stone and wrote the word - not a matter of how well the trainer plays, so it must not sit
+     * behind the [CorrectionLevel] gate that lets a low-difficulty trainer past untouched.
+     *
+     * The moment needs no judging either. Mega evolving costs no turn and is offered exactly
+     * while it is legal, so the first chance is always as good as any later one - which is also
+     * what a trainer does in the games. The one thing to get right is spending it once, see
+     * [megaPlayedFor].
+     */
+    private fun withGimmick(
+        response: ShowdownActionResponse,
+        active: ActiveBattlePokemon,
+        battle: PokemonBattle,
+        moveset: ShowdownMoveset?,
+        request: DecisionKey
+    ): ShowdownActionResponse {
+        if (!usesMega || moveset == null || response !is MoveActionResponse) return response
+        if (!TrainerGimmicks.offered(moveset, TrainerGimmicks.MEGA)) return response
+
+        // Answering the same request again keeps the gimmick; the other active Pokémon of a
+        // double battle, asked on the same turn, does not get a second one. Across turns there
+        // is nothing to refuse: a mega evolution that went through stops being offered, and one
+        // that somehow did not is worth another try rather than lost for the whole battle.
+        val played = megaPlayedFor
+        if (played != null && played != request && played.turn == request.turn) return response
+
+        if (played != request) {
+            megaPlayedFor = request
+            val detail = "mega evolves, playing ${response.moveName}"
+            LOGGER.debug("Trainer AI: {}", detail)
+            if (!TrainerAiDebug.idle()) {
+                val name = active.battlePokemon?.effectedPokemon?.species?.name ?: "?"
+                TrainerAiDebug.report(battle, "$name: $detail")
+            }
+        }
+
+        return response.copy(gimmickID = TrainerGimmicks.MEGA)
     }
 
     /** Everything a correction needs, read once per turn. Null when there is nothing to judge. */
@@ -164,7 +259,7 @@ class TrainerBattleAI(private val delegate: BattleAI, private val difficulty: In
         return result
     }
 
-    /** Notes what was played, for the two rules that need to know what happened last turn. */
+    /** Notes what was played, for the rules that need to know what happened before. */
     private fun remember(response: ShowdownActionResponse, s: Situation) {
         val played = (response as? MoveActionResponse)
             ?.moveName
@@ -172,6 +267,10 @@ class TrainerBattleAI(private val delegate: BattleAI, private val difficulty: In
 
         lastWasProtect = played?.protect == true
         if (played?.damaging == true) s.opponents.forEach { struck.add(it.uuid) }
+
+        // Screens are noted wherever they came from, ours and Cobblemon's alike: what matters to
+        // the next turn is that one went up, not who decided it.
+        played?.move?.id?.takeIf { it in BattleScreens.ALL }?.let { screensPlayed[it] = s.battle.turn }
     }
 
     /**
@@ -199,9 +298,111 @@ class TrainerBattleAI(private val delegate: BattleAI, private val difficulty: In
         return use(hazard.move, s, "opening the battle with a hazard")
     }
 
+    /**
+     * Puts up Reflect, Light Screen or Aurora Veil when the Pokémon carries a Light Clay.
+     *
+     * The second rule that *adds* a decision rather than refusing one, and it is the item that
+     * earns it the right to: a Light Clay does nothing at all unless a screen goes up, so a pack
+     * that handed one over has already decided this. Cobblemon plays screens as a plain
+     * `setupMoves` entry, on a coin flip and with no idea whether one is already standing, so a
+     * trainer built around them mostly never gets round to it.
+     *
+     * Aurora Veil is preferred when the weather allows it - it is both other screens in one turn
+     * - and otherwise the choice answers where the damage is coming from, see
+     * [BattleScreens.bestAgainst]. A screen already standing is never laid twice: side conditions
+     * do not stack, so that turn would be given away.
+     *
+     * Four situations hand the turn back, because a curtain is worth nothing in any of them: a
+     * knockout is available, the Pokémon is being knocked out this turn, Cobblemon wanted to
+     * heal (which [correctHeal] judges better than this can), or it was already playing a screen
+     * of its own.
+     *
+     * Difficulty 4 rather than a whole [CorrectionLevel], the same bar as [leadHazard] and for
+     * the same reason: this is what a trainer with a game plan does.
+     */
+    /**
+     * Refuses a screen that cannot do anything: one already standing, one Aurora Veil covers
+     * already, or an Aurora Veil with no snow to hold it up.
+     *
+     * Cobblemon files screens under `setupMoves` and plays them on a coin flip, without ever
+     * asking whether one is up - so a trainer that knows Reflect keeps re-laying it, and Showdown
+     * answers "But it failed!" while the player attacks for free. That is the same shape of
+     * mistake as a Ground move at a Flying type, so it is refused from difficulty 3 like the
+     * other impossible ones, and unlike [putUpScreen] which *adds* a screen and waits for 4.
+     *
+     * The replacement is the best attack rather than [Situation.best]: the best move overall
+     * could easily be another screen, which would fail in exactly the same way.
+     */
+    private fun redundantScreen(chosen: ScoredMove, s: Situation): ShowdownActionResponse? {
+        val id = chosen.move.id
+        if (id !in BattleScreens.ALL) return null
+
+        val standing = standingScreens(s)
+        val reason = when {
+            id in standing -> "$id is already up"
+            BattleScreens.AURORA_VEIL in standing -> "Aurora Veil already covers both sides"
+            id == BattleScreens.AURORA_VEIL && !BattleScreens.veilWeather(s.battle) ->
+                "Aurora Veil needs snow on the field"
+            else -> return null
+        }
+
+        val replacement = s.bestAttack
+            ?: s.moves.filterNot { it.useless || it.move.id in BattleScreens.ALL }.maxByOrNull { it.damage }
+            ?: return null
+
+        return use(replacement.move, s, reason)
+    }
+
+    private fun putUpScreen(chosen: ScoredMove, s: Situation): ShowdownActionResponse? {
+        if (difficulty < SCREEN_DIFFICULTY) return null
+        if (chosen.move.id in BattleScreens.ALL || chosen.recovery) return null
+        if (s.facingLethal || s.moves.any { it.kills }) return null
+        if (!BattleScreens.holdsLightClay(s.selfBattle)) return null
+
+        val known = s.moves.filter { it.move.id in BattleScreens.ALL }
+        if (known.isEmpty()) return null
+
+        val standing = standingScreens(s)
+        // Aurora Veil is Reflect and Light Screen at once: once it is up there is nothing left
+        // for the other two to add, and the turn is better spent attacking.
+        if (BattleScreens.AURORA_VEIL in standing) return null
+
+        val veil = known.firstOrNull { it.move.id == BattleScreens.AURORA_VEIL }
+        if (veil != null && BattleScreens.veilWeather(s.battle)) {
+            return use(veil.move, s, "Light Clay in hand and snow on the field, Aurora Veil covers both")
+        }
+
+        val preferred = BattleScreens.bestAgainst(s.selfBattle, s.opponents)
+        val screen = known.firstOrNull { it.move.id == preferred && it.move.id !in standing }
+            ?: known.firstOrNull { it.move.id != BattleScreens.AURORA_VEIL && it.move.id !in standing }
+            ?: return null
+
+        return use(screen.move, s, "Light Clay in hand, ${screen.move.id} holds for eight turns")
+    }
+
+    /**
+     * The screens that count as up right now: the ones Cobblemon has on the side, plus the ones
+     * this trainer played recently enough for a Light Clay to still be holding them.
+     *
+     * Whichever source says "up" wins, exactly as in [BattleGuards.guardIntact]. The memory is
+     * what keeps the rule from looping: a screen that went up without the side context following
+     * would otherwise be laid again every turn for the rest of the battle. It is deliberately not
+     * cleared when a screen is dispelled - Brick Break and Defog do happen, and a screen re-laid
+     * eight turns later is a far smaller mistake than one laid every turn.
+     */
+    private fun standingScreens(s: Situation): Set<String> {
+        val remembered = screensPlayed
+            .filterValues { s.battle.turn - it < SCREEN_TURNS }
+            .keys
+        return BattleScreens.standing(s.active) + remembered
+    }
+
     private fun correctMove(choice: MoveActionResponse, s: Situation): ShowdownActionResponse {
         // An unknown id means a gimmick move or something we cannot judge: leave it alone.
         val chosen = s.moves.firstOrNull { it.move.id == choice.moveName } ?: return choice
+
+        redundantScreen(chosen, s)?.let { return it }
+        putUpScreen(chosen, s)?.let { return it }
 
         if (level == CorrectionLevel.FULL) {
             tactics(chosen, s)?.let { return it }
@@ -614,6 +815,16 @@ class TrainerBattleAI(private val delegate: BattleAI, private val difficulty: In
 
         /** Difficulty from which a lead opens with its entry hazard. */
         private const val LEAD_HAZARD_DIFFICULTY = 4
+
+        /** Difficulty from which a Light Clay holder puts its screen up. See [putUpScreen]. */
+        private const val SCREEN_DIFFICULTY = 4
+
+        /**
+         * How long a screen is taken to hold, in turns. Eight is the Light Clay duration, and the
+         * rule never fires without one - a screen believed up a turn too long only costs a turn
+         * of halved damage, where believing it down costs the trainer its whole battle.
+         */
+        private const val SCREEN_TURNS = 8
 
         /**
          * Entry hazards, best first. Stealth Rock hits everything that comes in and ignores

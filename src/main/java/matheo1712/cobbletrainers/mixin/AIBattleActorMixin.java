@@ -61,6 +61,10 @@ public abstract class AIBattleActorMixin {
             return;
         }
 
-        this.battleAI = new TrainerBattleAI(this.battleAI, definition.getBattle().getDifficulty());
+        this.battleAI = new TrainerBattleAI(
+                this.battleAI,
+                definition.getBattle().getDifficulty(),
+                definition.getBattle().getGimmicks()
+        );
     }
 }

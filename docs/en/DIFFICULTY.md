@@ -17,8 +17,8 @@ To set the field on a trainer, see [DATAPACK.md](DATAPACK.md#battle).
 | `0` | every turn | never | nothing |
 | `1` | 4 turns out of 5 | never | nothing |
 | `2` | 3 turns out of 5 | never | nothing |
-| `3` | 2 turns out of 5 | 1 time in 5 | the impossible mistakes |
-| `4` | 1 turn out of 5 | 3 times in 5 | the same, plus entry hazards |
+| `3` | 2 turns out of 5 | 1 time in 5 | the impossible mistakes, screens included |
+| `4` | 1 turn out of 5 | 3 times in 5 | the same, plus entry hazards and screens |
 | `5` | never | always | everything, reading the battle included |
 
 A `0` trainer is not "a bit worse" than a `5`: they literally play a random move every turn. The
@@ -66,6 +66,23 @@ is **not** seen — that comes at level 5.
 This rule also catches the random roll: a move picked at random that happens to be immune is
 turned down like any other.
 
+### No re-laying a screen that is up
+
+Reflect, Light Screen and Aurora Veil are no longer replayed while the screen holds: Cobblemon
+files them among its setup moves and plays them on a coin flip, without ever looking at what is
+already standing - which cost a turn and put a "But it failed!" in the chat. The trainer attacks
+instead.
+
+Three cases are turned down:
+
+| Case | Why |
+| --- | --- |
+| The screen is already standing | Screens do not stack |
+| Aurora Veil is standing | It is already Reflect and Light Screen |
+| Aurora Veil with no snow or hail | The move fails |
+
+A screen that has been set counts as standing for eight turns, the length a Light Clay gives it.
+
 ### A switch has to be worth something
 
 A voluntary switch is only accepted if the Pokémon coming in genuinely improves the matchup — by
@@ -84,9 +101,12 @@ Four situations are exempt, because the trainer is not looking for a better matc
 In that last case the trainer leaves **even if Cobblemon had not suggested it** — but only
 towards a strictly better replacement, otherwise the loop would come back.
 
-## Level 4 — entry hazards
+## Level 4 — the game plan
 
-Everything level 3 does, plus one rule.
+Everything level 3 does, plus two rules. They are the only two in the whole system that **add**
+a decision: everywhere else the layer merely turns Cobblemon's own down.
+
+### Entry hazards
 
 If the **first** Pokémon sent out knows an entry hazard, they set it on turn one. Order of
 preference when they know several:
@@ -99,8 +119,28 @@ preference when they know several:
 One hazard is set per trainer, so the two leads of a double battle do not set the same one twice.
 No other Pokémon on the team will set one later.
 
-This is the only rule in the whole system that **adds** a decision. All the others merely turn
-Cobblemon's own down.
+### Screens, with a Light Clay
+
+A Pokémon holding a **Light Clay** that knows Reflect, Light Screen or Aurora Veil puts its
+screen up instead of attacking. The item is what triggers the rule: it does nothing at all
+without a screen, so a pack that handed one over has already made the decision.
+
+| It sets | When |
+| --- | --- |
+| Aurora Veil | Snow or hail is on the field - the screen then covers both kinds of damage at once |
+| Reflect | The hardest hit coming is physical |
+| Light Screen | The hardest hit coming is special |
+
+- **Never the same one twice**: a screen that has been set counts as standing for eight turns,
+  the length a Light Clay gives it. The trainer moves on to something else the very next turn.
+- **Nothing follows Aurora Veil**: it is Reflect and Light Screen in one, so setting either
+  afterwards would only spend turns.
+- **Aurora Veil is never played outside snow**: the move fails, and Showdown offers it anyway.
+- **Four situations hand the turn back**: a knockout is available this turn, the Pokémon is
+  going down this turn, Cobblemon wanted to heal, or it was already playing a screen of its own.
+
+Without a Light Clay nothing changes: Cobblemon plays its screens like any other setup move, on
+a coin flip and with no idea whether one is already up.
 
 ## Level 5 — reading the battle
 
@@ -207,8 +247,9 @@ layer has no access to.
   the team is. A level 100 trainer at `difficulty: 0` is still easy, a level 20 trainer at
   `difficulty: 5` is still weak.
 
-Finally, the layer only judges what Cobblemon hands it. Apart from the level 4 entry hazard, it
-cannot make a trainer play an action Cobblemon had not thought of.
+Finally, the layer only judges what Cobblemon hands it. Apart from the two level 4 rules - the
+entry hazard and the screen under a Light Clay - it cannot make a trainer play an action
+Cobblemon had not thought of.
 
 ## Checking in game
 

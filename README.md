@@ -288,8 +288,8 @@ livre aucune de ces boucles - il livre le crochet, et les packs à venir en fero
 voudront.
 
 Un bloc `requires` ferme un dresseur tant qu'un joueur n'a pas battu tel autre dresseur,
-gagné tant de combats, obtenu tel advancement ou tel objet - de quoi monter une ligue à
-badges. Et battre un dresseur déclenche le critère `cobblemon-trainers:trainer_defeated`, sur
+gagné tant de combats, obtenu tel advancement ou tel objet, ou n'a pas tel Pokémon dans son
+équipe - de quoi monter une ligue à badges. Et battre un dresseur déclenche le critère `cobblemon-trainers:trainer_defeated`, sur
 lequel un pack branche ses propres advancements.
 
 `/cobblemontrainers list` liste les dresseurs restants et ceux déjà vaincus, groupés par
@@ -316,6 +316,11 @@ le comportement exact de `battle.difficulty`, de `0` à `5`.
 
 **➜ Comment un dresseur se fait appeler est dans [docs/SPAWNING.md](docs/SPAWNING.md)** :
 le bloc `location` et tout ce qui l'entoure.
+
+**➜ Faire méga-évoluer un dresseur est dans [docs/GIMMICKS.md](docs/GIMMICKS.md)** :
+`battle.gimmicks`, la gemme à lui donner et l'objet de repli. Ça demande
+[Cobblemon: Mega Showdown](https://modrinth.com/mod/mega-showdown), qui reste **facultatif** -
+sans lui, le mod se charge et se joue comme avant.
 
 Un pack d'exemple couvrant chaque option vit dans
 [`examples/cobblemonrlm/`](examples/cobblemonrlm) : un seul dossier qui fait à la fois

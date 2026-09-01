@@ -35,7 +35,8 @@ La doc utilisateur est en français : `README.md` (installation, commandes),
 chaque niveau de `battle.difficulty`) et `docs/SPAWNING.md` (le bloc `location` et l'appel
 depuis le Battle Phone). Ce qui touche au format des dresseurs - nouveau champ,
 nouvelle règle de parsing - se répercute dans `docs/DATAPACK.md`, qui est la référence ; le
-README n'en garde qu'un résumé. **Toute règle de l'IA va dans `docs/DIFFICULTE.md`**, et **tout
+README n'en garde qu'un résumé. **Toute règle de l'IA va dans `docs/DIFFICULTE.md`**, **tout
+ce qui touche aux gimmicks de combat dans `docs/GIMMICKS.md`**, et **tout
 ce qui touche à l'appel d'un dresseur dans `docs/SPAWNING.md`**, jamais
 dans `docs/DATAPACK.md`, qui n'en garde qu'un renvoi : une règle décrite à deux endroits est une
 règle qui finit fausse à l'un des deux. `docs/DATAPACK.md` est tenu **aussi
@@ -43,8 +44,9 @@ concis que possible** : une idée par phrase, un tableau plutôt qu'un paragraph
 soit déjà dit ailleurs dans le fichier. Ajouter un champ, c'est ajouter une ligne de tableau,
 pas une section.
 
-`docs/en/` est la **traduction anglaise** de ces trois pages plus leur index
-(`DATAPACK.md`, `SPAWNING.md`, `DIFFICULTY.md` - au nom anglais -, `README.md`), destinée aux
+`docs/en/` est la **traduction anglaise** de ces quatre pages plus leur index
+(`DATAPACK.md`, `SPAWNING.md`, `DIFFICULTY.md` et `GIMMICKS.md` - aux noms anglais -,
+`README.md`), destinée aux
 joueurs qui arrivent par Modrinth. Le français reste la version de référence : **une règle se
 change d'abord dans `docs/`, puis dans `docs/en/` dans le même commit**. Deux pages qui
 divergent sont pires qu'une page absente, la seconde ayant l'air à jour. `MODRINTH.md`, à la
@@ -66,7 +68,9 @@ Sur Windows, utiliser `.\gradlew.bat`.
 Il n'existe pas de source set `src/test` - `build` ne lance donc aucun test.
 Toute vérification passe par `runClient`/`runServer`, dont les mondes vivent dans `run/`
 (gitignoré). **Ne pas mettre de jar Cobblemon dans `run/mods/`** : il est déjà fourni par
-`modImplementation`, et le doublon fait planter le client au démarrage.
+`modImplementation`, et le doublon fait planter le client au démarrage. Mega Showdown et ses
+dépendances, elles, y sont bien - c'est `copyDevMods` qui les y dépose avant chaque `runClient`,
+et c'est voulu (voir « Les gimmicks de combat »).
 
 Le projet cible **Java 21**, imposé par un toolchain Gradle dans `build.gradle.kts`.
 Cobblemon déclare `depends: java [21]`, une version exacte : sans le toolchain, `runClient`
@@ -78,6 +82,10 @@ Toutes les versions sont dans `gradle.properties`, jamais en dur dans `build.gra
 Cobblemon et Architectury sont tirés du **Maven Modrinth** et référencés par **ID de
 version Modrinth** (`cobblemon_version=kF7CvxTo`), pas par numéro sémantique : pour
 changer de version, il faut récupérer le nouvel ID sur Modrinth.
+
+Mega Showdown, `accessories` et `owo` sont là aussi, dans la configuration `devMods` : rien ne
+compile contre eux, ils ne servent qu'au jeu de dev (voir « Les gimmicks de combat »). Ils ne
+sont pas non plus déclarés en dépendance Modrinth à la publication - le mod tourne sans.
 
 Un ID Modrinth ne dit rien de la version de jeu ni du loader qu'il cible - une erreur ici
 passe la résolution Gradle et casse le build plus loin. Symptôme rencontré : Loom échoue en
@@ -144,8 +152,11 @@ messages, musique et récompenses de combat.
 - **`battle.ai.TrainerBattleAI`** - la couche qui refuse les décisions intenables du
   `StrongBattleAI` de Cobblemon, épaulée par `BattleTypeChart` (efficacité des types, talents
   compris), `BattleDamage` (dégâts en points de vie), `BattleGuards` (ce qui encaisse un coup
-  qu'on croyait décisif), `BattleSpeed` (qui frappe en premier) et `TrainerAiDebug`
-  (l'interrupteur de débogage). Voir « L'IA de combat ».
+  qu'on croyait décisif), `BattleSpeed` (qui frappe en premier), `BattleScreens` (les écrans et
+  ce qui les rend utiles) et `TrainerAiDebug` (l'interrupteur de débogage). Voir « L'IA de
+  combat ».
+- **`battle.ai.TrainerGimmicks`** - le vocabulaire de `battle.gimmicks` et ce que le combat
+  offre ce tour-ci. Voir « Les gimmicks de combat ».
 - **`TrainerProgress`** - `SavedData` du monde : qui a battu quel dresseur. Voir « Revanches
   et récompenses ».
 - **`TrainerRewards`** - remet les objets au vainqueur.
@@ -856,6 +867,22 @@ Points à ne pas redécouvrir :
   comme rempli ouvrirait le dresseur à tout le monde sur une faute de frappe.
 - **Rien n'est jamais consommé.** Un `items` est une clé que le joueur garde, sans quoi une
   revanche demanderait de refarmer l'objet. Ça a été posé comme règle, pas comme défaut.
+- **`party` se répond avec `PokemonProperties.matches`**, pas avec une comparaison d'espèce.
+  C'est le seul usage prévu du champ `aspects` (voir « Formes et aspects »), et c'est ce qui
+  fait qu'un pack peut demander un chromatique ou une forme précise sans que le mod ait un
+  champ pour chacun. La chaîne est mise en minuscules avant `parse` : tous les identifiants de
+  Cobblemon le sont, donc `Staraptor` et `staraptor` demandent la même chose.
+- **Une exigence que Cobblemon lit comme vide est refusée.** Son parseur laisse tomber sans un
+  mot les clés qu'il ne connaît pas, donc une faute de frappe donnerait des propriétés qui
+  matchent n'importe quel Pokémon - c'est-à-dire un dresseur ouvert à tout le monde, l'exact
+  inverse de ce qu'une condition doit faire en échouant. D'où le test sur `asString`.
+- **La condition et son libellé sont construits ensemble** (`PartyQuery`), pour la même raison
+  que le `Check` de `TrainerPlace` : le nom affiché ne peut pas désigner autre chose que ce
+  qui est testé. Le nom traduit de l'espèce n'est pris que pour une espèce nue ; dès qu'il y a
+  une propriété en plus, c'est la chaîne du pack qui est montrée, faute de savoir la nommer.
+- **Seule l'équipe est lue, jamais le PC, et un K.O. compte.** La question est qui voyage avec
+  le joueur, pas qui peut se battre - et une condition qu'un joueur ne peut pas vérifier d'un
+  coup d'œil serait une condition qu'il subit.
 - **`victories` exclut le dresseur qui l'exige** de son propre pool, pour qu'un champion puisse
   demander « battre tous les champions ». Le pool ne contient que des dresseurs `listed`.
 - **Le masquage est décidé côté serveur.** Un dresseur `hidden` et verrouillé n'est pas envoyé
@@ -956,6 +983,11 @@ propose autre chose. Trois défauts sont couverts, tous constatés en jeu à ski
 - **La riposte n'entre dans aucun calcul.** Rien ne compare ce qu'on rend à ce qu'on prend, ni ne
   regarde qui frappe en premier : un dresseur sur le point de tomber pose tranquillement un boost
   qui ne se résoudra jamais.
+- **Les écrans sont joués comme n'importe quelle capacité d'installation.** Ils sont dans les
+  `setupMoves` de Cobblemon, donc tirés au sort, sans regarder ce qui est déjà posé, ce que
+  l'adversaire frappe, ni si une Lumargile est en main. Les deux moitiés du défaut ont été vues
+  en jeu : un dresseur bâti autour d'eux n'y venait quasiment jamais, et un dresseur qui en avait
+  déjà un debout reposait le même pour un « Mais cela échoue ! ».
 
 Points à ne pas redécouvrir :
 
@@ -987,12 +1019,43 @@ Points à ne pas redécouvrir :
   sans les juger, plus celui du dresseur muré (tout résisté), et seul le changement réellement
   motivé par le type passe par le seuil. Ne pas y remettre `slowstart` et `truant` sans le
   demander : c'est un choix, pas un oubli.
-- **Le piège d'entrée est la seule règle qui *ajoute* une décision**, tout le reste refuse. Elle
-  s'allume à la difficulté 4 et non sur un `CorrectionLevel` entier, parce que c'est là qu'elle a
-  été demandée - d'où le `difficulty` brut gardé à côté du niveau. Aucun test « le piège est-il
-  déjà posé » n'est nécessaire : c'est le premier tour, rien n'a bougé. Et `openingPlayed` est
-  porté par l'acteur, pas par le Pokémon, sinon les deux leads d'un combat double poseraient deux
-  fois le même piège.
+- **Le piège d'entrée et l'écran sont les deux seules règles qui *ajoutent* une décision**, tout
+  le reste refuse. Elles s'allument à la difficulté 4 et non sur un `CorrectionLevel` entier,
+  parce que c'est là qu'elles ont été demandées - d'où le `difficulty` brut gardé à côté du
+  niveau. Pour le piège, aucun test « est-il déjà posé » n'est nécessaire : c'est le premier
+  tour, rien n'a bougé. Et `openingPlayed` est porté par l'acteur, pas par le Pokémon, sinon les
+  deux leads d'un combat double poseraient deux fois le même piège.
+- **C'est la Lumargile qui autorise l'écran, pas l'IA.** Un objet qui ne fait rien tant qu'aucun
+  écran n'est posé est une intention de pack, au même titre qu'une méga-gemme : la couche
+  l'exécute au lieu de la juger. Sans lui, Cobblemon garde la main - il range les écrans dans
+  ses `setupMoves`, joués au hasard et sans savoir si l'un est déjà en place.
+- **Ce qui est déjà debout se lit à deux endroits, comme une Frimousse.** Les `BattleContext`
+  d'abord - les écrans dans le `contextManager` du **côté** (`Type.SCREEN`), la météo dans celui
+  du **combat** (`Type.WEATHER`) -, et notre propre `screensPlayed` ensuite, qui note le tour où
+  un écran a été joué. Le second n'est pas une ceinture : en jeu, le contexte de camp n'est pas
+  arrivé, et une règle qui ne lisait que lui reposait le Voile Aurore **à chaque tour**. Une
+  mémoire est toujours là, donc le pire cas est un écran reposé huit tours trop tard.
+  `ContextManager.get` peut rendre null, d'où le `orEmpty()`, et `BattleActor.getSide()` est une
+  méthode Java : Kotlin ne l'expose pas en propriété.
+- **Voile Aurore ferme la question.** Il vaut les deux autres écrans, donc tant qu'il est debout
+  la règle rend la main - sans quoi le dresseur enchaînait trois tours d'installation pour un
+  seul effet utile.
+- **Poser un écran et en refuser un sont deux règles séparées, à deux niveaux.** `putUpScreen`
+  *ajoute* une décision et attend la difficulté 4, comme le piège d'entrée ; `redundantScreen`
+  refuse un écran qui ne peut rien faire et tourne dès 3, comme une attaque sur une immunité -
+  c'est la même famille d'erreur. Les fusionner ferait attendre la 4 à un refus qui n'a rien
+  d'un plan de jeu.
+- **Le remplaçant d'un écran refusé est `bestAttack`, pas `best`.** La meilleure capacité tout
+  court peut être l'autre écran, qui échouerait exactement pareil.
+- **La mémoire n'est jamais effacée quand un écran saute** (Casse-Brique, Anti-Brume). Un écran
+  reposé huit tours plus tard est une erreur bien plus petite qu'un écran reposé tous les tours,
+  et c'est exactement ce dont on revient.
+- **Les ids de contexte sont déjà normalisés à la Showdown** (`Effect.Companion` passe en
+  minuscules et retire le reste), donc `auroraveil` et `lightscreen` tombent exactement sur les
+  ids de capacité. Le `normalise` de `BattleScreens` est une ceinture, pas une traduction.
+- **Voile Aurore hors neige n'est pas refusé par Showdown**, il échoue. D'où la lecture de la
+  météo avant de le proposer, avec `hail` gardé à côté de `snow` : c'est le même écran, sous le
+  nom que Showdown envoyait avant la génération 9.
 - **Le soin est jugé, jamais ajouté.** `correctHeal` refuse le soin quand un coup met KO ce
   tour-ci, quand l'adversaire rend au moins autant que ce qui est restauré (le tour ne rachète
   rien), et quand la barre n'a pas assez descendu pour l'absorber (`MIN_HEAL_USED`). Un wrapper
@@ -1047,6 +1110,66 @@ Points à ne pas redécouvrir :
   qui ont activé `/cobblemontrainers debugai`. Sans ça un seuil est intuable : un changement
   refusé et un changement que personne n'a proposé se ressemblent exactement depuis l'autre côté
   du combat. `TrainerAiDebug.idle()` évite de formater une ligne que personne ne lira.
+
+### Les gimmicks de combat
+
+Un dresseur qui déclare `battle.gimmicks: ["mega"]` méga-évolue en combat. `TrainerGimmicks`
+tient le vocabulaire, `TrainerBattleAI.withGimmick` la décision. Toute la doc joueur est dans
+`docs/GIMMICKS.md`, jamais dans `docs/DATAPACK.md`, qui n'en garde qu'une ligne de tableau et un
+renvoi.
+
+**Cobblemon 1.7.3 fait déjà tout.** `MoveActionResponse` porte un `gimmickID` à côté de son coup
+et de sa cible, et le `ShowdownMoveset` que reçoit `choose()` dit ce que le simulateur offre ce
+tour-ci (`canMegaEvo`). Répondre `mega` à côté du coup est tout ce qu'il y a à faire.
+
+**Aucune ligne du mod ne nomme Mega Showdown**, et rien ne compile contre lui. Ce qu'il
+apporte : les gemmes, le patch du simulateur qui les lui fait voir, et la forme à l'écran - via
+le `MegaEvolutionEvent` de Cobblemon, qui ne regarde pas à qui appartient le Pokémon.
+
+**Le jeu de dev le charge depuis `run/mods/`**, où `copyDevMods` copie la configuration
+`devMods` (Mega Showdown, `accessories` dont il dépend en dur, `owo` dont accessories dépend).
+Un `modRuntimeOnly` a été essayé et retiré : un jar de mod embarque ses bibliothèques en JiJ -
+owo y range endec et jankson - et Loom ne les met pas sur le classpath de dev, donc le jeu
+plantait sur un `NoClassDefFoundError: io/wispforest/endec/util/MapCarrier`. Fabric, lui, les
+déballe comme chez un joueur et remappe les mods au passage.
+
+Points à ne pas redécouvrir :
+
+- **Rien ne filtre le côté PNJ.** `ShowdownActionRequest.sanitize` ne coupe un gimmick que pour
+  un acteur dont l'UUID est celui d'un **joueur** du combat sans la key item qui va avec
+  (`cobblemon:key_stone` pour la méga). Un `NPCBattleActor` n'y correspond jamais. Conséquence
+  assumée : un dresseur méga-évolue face à un joueur qui n'a pas de Key Stone, et c'est au pack
+  de compenser.
+- **Le gimmick est posé hors du garde `CorrectionLevel`.** `choose()` rendait la décision de
+  Cobblemon telle quelle en dessous de la difficulté 3 ; un dresseur facile n'aurait donc jamais
+  méga-évolué. C'est le pack qui a donné la gemme et écrit le mot, pas l'IA qui a eu une bonne
+  idée. D'où la découpe en `decide()` (les corrections) puis `withGimmick()` (le gimmick).
+- **La mémoire est la requête, pas un booléen.** Un camp ne méga-évolue qu'une fois, donc le
+  second actif d'un double doit être refusé - mais Cobblemon demande sa décision **deux fois par
+  tour** (voir « L'IA de combat »), et répondre la seconde fois sans le `gimmickID` écraserait la
+  première réponse et annulerait la méga. Comparer la `DecisionKey` répond aux deux d'un coup :
+  même requête, même réponse ; requête différente, refus.
+- **`isValid` ne vérifie pas la disponibilité du gimmick.** Répondre `mega` quand le simulateur
+  ne l'offre pas est une erreur Showdown en plein combat, pas un refus poli. `canMegaEvo` est
+  donc le seul garde qui compte, et il est lu à chaque décision.
+- **On copie la réponse, on ne la mute pas.** `gimmickID` est un `var`, mais l'objet vient du
+  délégué.
+- **Le mot du pack est l'id de Cobblemon** (`mega`, `terastal`, `zmove`, `dynamax`, `ultra`).
+  Les quatre non supportés sont reconnus au chargement et signalés comme tels, pour qu'un pack
+  qui les écrit ne les confonde pas avec une faute de frappe.
+
+### Les objets tenus d'une équipe
+
+`ShowdownTeamParser` cherche un objet sans namespace chez `cobblemon:` d'abord, puis par chemin
+dans **tous** les namespaces enregistrés, et n'accepte que s'il n'y en a qu'un. C'est ce qui fait
+qu'un `@ Charizardite X` collé depuis Showdown trouve la gemme de Mega Showdown sans que le
+parseur connaisse ce mod. Ambigu, c'est refusé plutôt que deviné.
+
+La ligne `Fallback Item:` est à nous, écrite dans la forme de celles de Showdown comme
+`Aspects:`. Le premier objet de la chaîne qui existe est porté ; plusieurs lignes sont essayées
+dans l'ordre écrit. La règle ne connaît pas les gemmes : c'est la réponse générale à un objet
+qu'un mod absent ne fournit pas, et elle évite qu'un Pokémon prévu avec un objet se batte les
+mains vides. Toutes les raisons de refus sont loguées dans `resolveItem`, une par cas.
 
 ### Les dialogues
 

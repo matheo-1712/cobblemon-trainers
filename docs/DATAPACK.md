@@ -15,9 +15,10 @@ Pour l'installation du mod et les commandes, voir le [README](../README.md).
   [Advancements](#advancements) · [Faire venir un dresseur](SPAWNING.md)
 - [Revanches et récompenses](#revanches-et-récompenses) ·
   [Farmable ou pas](#farmable-ou-pas) · [Le suivi de progression](#le-suivi-de-progression)
-- [Le format d'équipe](#le-format-déquipe) · [La ligne `Aspects:`](#la-ligne-aspects)
+- [Le format d'équipe](#le-format-déquipe) · [La ligne `Aspects:`](#la-ligne-aspects) ·
+  [La ligne `Fallback Item:`](#la-ligne-fallback-item)
 - [Skins](#skins) · [Musique de combat](#musique-de-combat) ·
-  [Traduire les textes](#traduire-les-textes)
+  [Gimmicks de combat](GIMMICKS.md) · [Traduire les textes](#traduire-les-textes)
 - [Tester son pack](#tester-son-pack) · [Erreurs fréquentes](#erreurs-fréquentes)
 
 ## Arborescence
@@ -155,6 +156,7 @@ appelable ; ne pas le déclarer fait un dresseur qu'il faut aller trouver.
 | `difficulty` | `5` | [Intelligence de l'IA](DIFFICULTE.md), de 0 (au hasard) à 5 (sérieux) |
 | `healParty` | `true` | Soigne l'équipe du dresseur avant et après chaque combat |
 | `music` | piste du mod | ID du son joué pendant le combat, `null` pour le silence |
+| `gimmicks` | `[]` | [Gimmicks de combat](GIMMICKS.md) utilisés : `["mega"]` pour la méga-évolution |
 
 Le suffixe `_50` (`singles_50`, `doubles_50`, `triples_50`) met **les deux équipes** au
 niveau 50 le temps du combat. `level` n'a donc plus d'effet visible sur un dresseur en `_50`.
@@ -172,7 +174,7 @@ pour les entrées Showdown sans `Level:` -, le second est la qualité du jeu de 
 dresseur niveau 100 en `difficulty: 0` reste facile.
 
 `difficulty` décide aussi de ce que le mod corrige chez l'IA de Cobblemon : rien en dessous
-de `3`, les erreurs impossibles à `3`, les pièges d'entrée à `4`, la lecture complète du
+de `3`, les erreurs impossibles à `3`, les pièges d'entrée et les écrans à `4`, la lecture complète du
 combat à `5`.
 
 **➜ Le détail exact de chaque niveau est dans [DIFFICULTE.md](DIFFICULTE.md)**, avec la
@@ -181,6 +183,9 @@ commande `/cobblemontrainers debugai` pour voir en combat ce que le mod a corrig
 `healParty: false` fait persister dégâts et PP d'un combat à l'autre - pratique pour un boss
 qu'on use en plusieurs tentatives. Ses Pokémon K.O. passent en fin d'équipe, pour qu'il ouvre
 le combat suivant avec quelqu'un qui tient debout.
+
+**➜ `gimmicks` est décrit dans [GIMMICKS.md](GIMMICKS.md)** : ce qu'il faut installer, la
+gemme à donner au Pokémon et l'objet de repli quand le mod qui la fournit n'est pas là.
 
 Un `doubles` exige au moins 2 Pokémon **de chaque côté**, un `triples` au moins 3. Si l'une
 des équipes est trop courte, Cobblemon refuse le combat et l'explique dans le chat. Côté
@@ -256,6 +261,7 @@ le Battle Phone.
   "defeated": ["champions/jacinthe", "champions/pierre"],
   "victories": { "count": 8, "category": "champions" },
   "items": [{ "item": "mon_pack:badge_roche", "count": 1 }],
+  "party": [{ "pokemon": "staraptor", "count": 1 }],
   "advancement": "mon_pack:acces_ligue",
   "hidden": false,
   "message": "trainer.mon_pack.maitre.locked"
@@ -267,6 +273,7 @@ le Battle Phone.
 | `defeated` | Dresseurs à avoir battus. Sans namespace, l'ID est lu dans le pack du dresseur qui l'exige - chemin compris (`champions/jacinthe`) |
 | `victories` | Un nombre de dresseurs battus : `count`, restreint par `pack` et/ou `category`. `count` omis veut dire **tous ceux du groupe** |
 | `items` | Objets à avoir sur soi, ID complet. **Jamais consommés** |
+| `party` | Pokémon à avoir dans son équipe : `pokemon` s'écrit comme pour `/pokespawn`, `count` dit combien. **Jamais pris** |
 | `advancement` | Un advancement à avoir obtenu, vanilla ou d'un pack |
 | `hidden` | `true` par défaut : le dresseur est absent du Battle Phone tant qu'il est verrouillé. `false` l'y laisse, verrouillé et avec ses conditions affichées |
 | `message` | Ce que le dresseur répond. Par défaut, une phrase du mod - la liste de ce qui manque est ajoutée dans les deux cas |
@@ -275,8 +282,13 @@ le Battle Phone.
   jamais des alternatives.
 - `victories` ne compte que les dresseurs `listed`, et **jamais le dresseur qui l'exige** :
   un champion peut donc demander « battre tous les champions ».
-- Un ID d'objet, de dresseur ou d'advancement introuvable compte comme non rempli, avec un
-  avertissement dans les logs : une faute de frappe ferme le dresseur, elle ne l'ouvre pas.
+- Un ID d'objet, d'espèce, de dresseur ou d'advancement introuvable compte comme non rempli,
+  avec un avertissement dans les logs : une faute de frappe ferme le dresseur, elle ne l'ouvre
+  pas.
+- `party` ne regarde que l'**équipe**, jamais le PC, et **seul ce qui est écrit est vérifié** :
+  `staraptor` accepte n'importe quel niveau, sexe et forme, K.O. compris. Le reste de la
+  syntaxe suit : `staraptor shiny=true` exige un chromatique, `rotom appliance=wash` une forme
+  précise.
 - Le refus est renvoyé **avant** que le combat ne se construise : ni équipe soignée, ni
   musique.
 
@@ -452,6 +464,7 @@ Lignes reconnues, en plus de la première :
 | --- | --- |
 | Première ligne | `Surnom (Espèce) (M) @ Objet` - surnom, genre et objet facultatifs |
 | Forme | `Aspects: rlm, poison` |
+| Objet de repli | `Fallback Item: Life Orb` |
 | Talent | `Ability: Static` |
 | Niveau | `Level: 88` |
 | Chromatique | `Shiny: Yes` |
@@ -468,10 +481,13 @@ Trois détails qui piègent :
   `Farfetch'd`, `Flabébé`, `Mr. Mime` sont convertis en identifiants Cobblemon. Une capacité
   inexistante est ignorée avec un avertissement, le Pokémon apparaît avec les autres. Seule
   exception, le suffixe de forme (`Raichu-Alola`) : voir [`Aspects:`](#la-ligne-aspects).
-- **Un objet tenu sans namespace reçoit `cobblemon:`** : `Light Ball` devient
-  `cobblemon:light_ball`, `Heavy-Duty Boots` `cobblemon:heavy_duty_boots`. Pour un objet
-  vanilla, écris-le en entier (`minecraft:stick`). Un objet introuvable est ignoré avec un
-  avertissement, le Pokémon apparaît les mains vides.
+- **Un objet tenu sans namespace est cherché chez `cobblemon:` d'abord** : `Light Ball`
+  devient `cobblemon:light_ball`, `Heavy-Duty Boots` `cobblemon:heavy_duty_boots`. S'il n'y est
+  pas, le même nom est cherché chez tous les mods chargés, et n'est accepté que s'il n'y en a
+  qu'un - c'est ce qui fait marcher `@ Charizardite X` sans écrire le mod qui la fournit.
+  Ambigu ou introuvable, l'objet est ignoré avec un avertissement et le Pokémon apparaît les
+  mains vides, sauf s'il déclare un [objet de repli](#la-ligne-fallback-item). Pour lever un
+  doute, écris l'ID en entier (`minecraft:stick`).
 - **Les abréviations de stats sont traduites par le mod** : `HP`, `Atk`, `Def`, `SpA`, `SpD`,
   `Spe`, et les noms longs. Une abréviation hors de cette liste est ignorée en silence.
 
@@ -502,6 +518,21 @@ fichier `data/<ns>/cobblemon/species_features/<nom>.json`.
 - **Un aspect inconnu est ignoré** avec un avertissement : le dresseur reçoit le Pokémon dans
   sa forme de base. Typiquement, le pack qui définit la forme n'est pas chargé.
 - **La forme n'a besoin de rien d'autre** : statistiques, types, talents et modèle suivent.
+
+## La ligne `Fallback Item:`
+
+Ce que le Pokémon tient si l'objet de sa première ligne n'existe pas - typiquement parce que le
+mod qui le fournit n'est pas installé.
+
+```json
+"team": ["Charizard @ Charizardite X\nFallback Item: Life Orb\nLevel: 80\n- Flare Blitz"]
+```
+
+- **Le premier objet qui existe est porté**, les autres sont ignorés. Plusieurs lignes
+  `Fallback Item:` sont essayées dans l'ordre écrit.
+- **La règle vaut pour n'importe quel objet**, pas seulement les méga-gemmes : le mod ne
+  regarde que ce qui est enregistré dans le jeu.
+- **Si rien ne se résout**, le Pokémon apparaît les mains vides, comme sans la ligne.
 
 ## Skins
 

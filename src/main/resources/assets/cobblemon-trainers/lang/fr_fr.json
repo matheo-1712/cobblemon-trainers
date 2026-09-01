@@ -118,6 +118,7 @@
   "cobblemon-trainers.requirement.victories": "Battre des dresseurs : %s / %s",
   "cobblemon-trainers.requirement.victories_category": "Battre %s : %s / %s",
   "cobblemon-trainers.requirement.item": "Avoir sur soi %s : %s / %s",
+  "cobblemon-trainers.requirement.party": "Avoir %s dans son équipe : %s / %s",
   "cobblemon-trainers.requirement.advancement": "Obtenir le progrès %s",
 
   "cobblemon-trainers.npc.interaction.battle": "Combat de dresseur",
@@ -133,6 +134,12 @@
   "trainer.cobblemon-trainers.rerebleue.win": "Pas mal ! tu t'es bien débrouillé.",
   "trainer.cobblemon-trainers.rerebleue.lose": "Trop facile 😎",
 
+  "trainer.cobblemon-trainers.ultra-rerebleue.name": "Ultra-RereBleue",
+  "trainer.cobblemon-trainers.ultra-rerebleue.battle_start": "Me demande pas pourquoi j'ai un E dans mon nom. Combattons plutôt !",
+  "trainer.cobblemon-trainers.ultra-rerebleue.win": "Trop facile 😎",
+  "trainer.cobblemon-trainers.ultra-rerebleue.lose": "Pas mal ! tu t'es bien débrouillé.",
+  "trainer.cobblemon-trainers.ultra-rerebleue.locked": "Tu n'es pas encore prêt pour celui-là.",
+
   "trainer.cobblemon-trainers.theazertor.name": "TheAzertor",
   "trainer.cobblemon-trainers.theazertor.battle_start": "Il vous faut une âme !",
   "trainer.cobblemon-trainers.theazertor.win": "Il vous faut une âme ! (Pas mal)",
@@ -146,5 +153,15 @@
   "trainer.cobblemon-trainers.kagumi.name": "Kagumi",
   "trainer.cobblemon-trainers.kagumi.battle_start": "!",
   "trainer.cobblemon-trainers.kagumi.win": ".....",
-  "trainer.cobblemon-trainers.kagumi.lose": "WIN !!!!"
+  "trainer.cobblemon-trainers.kagumi.lose": "WIN !!!!",
+
+  "trainer.cobblemon-trainers.griff501.name": "Griff501",
+  "trainer.cobblemon-trainers.griff501.battle_start": "!",
+  "trainer.cobblemon-trainers.griff501.win": ".....",
+  "trainer.cobblemon-trainers.griff501.lose": "WIN !!!!",
+
+  "trainer.cobblemon-trainers.aeliothys.name": "Aeliothys",
+  "trainer.cobblemon-trainers.aeliothys.battle_start": "!",
+  "trainer.cobblemon-trainers.aeliothys.win": ".....",
+  "trainer.cobblemon-trainers.aeliothys.lose": "WIN !!!!"
 }
