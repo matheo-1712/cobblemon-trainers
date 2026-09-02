@@ -53,7 +53,15 @@ object BattleTypeChart {
 
     /** What the type chart alone says about a [moveType] hit on [defender]. */
     fun typeMultiplier(moveType: ElementalType, defender: Pokemon): Double =
-        defender.types.fold(1.0) { acc, type -> acc * AIUtility.getDamageMultiplier(moveType, type) }
+        typeMultiplier(moveType, defender.types)
+
+    /**
+     * The same reading against a chosen set of defending types rather than the ones the Pokémon
+     * currently has. Terastallization is what needs it: the question "would this hit still be
+     * lethal after the type changes" is asked before the type has changed. See [BattleTera].
+     */
+    fun typeMultiplier(moveType: ElementalType, defenderTypes: Iterable<ElementalType>): Double =
+        defenderTypes.fold(1.0) { acc, type -> acc * AIUtility.getDamageMultiplier(moveType, type) }
 
     /**
      * How much damage a [moveType] hit does to [defender], as a multiplier. 0.0 means the hit
@@ -62,9 +70,18 @@ object BattleTypeChart {
      * With [withAbilities], an ability or a held item can bring it to zero on its own; without,
      * only the type chart is read. That is what separates a partly corrected trainer from a
      * fully corrected one - see [CorrectionLevel].
+     *
+     * [asTypes] answers the chart part for a defender that is about to change type - a
+     * Terastallization, see [BattleTera]. The ability and the held item are read from the real
+     * Pokémon either way: neither is touched by a tera type.
      */
-    fun multiplier(moveType: ElementalType, defender: Pokemon, withAbilities: Boolean): Double {
-        val fromTypes = typeMultiplier(moveType, defender)
+    fun multiplier(
+        moveType: ElementalType,
+        defender: Pokemon,
+        withAbilities: Boolean,
+        asTypes: Iterable<ElementalType>? = null
+    ): Double {
+        val fromTypes = typeMultiplier(moveType, asTypes ?: defender.types)
         if (fromTypes == 0.0 || !withAbilities) return fromTypes
 
         val ability = defender.ability.name.lowercase(Locale.ROOT)

@@ -46,8 +46,8 @@ import kotlin.math.roundToInt
  * refuse a heal, never add one.
  *
  * One thing here is not a correction at all: the battle gimmicks a trainer declares - Mega
- * Evolution today - are attached to whatever move comes out, difficulty included. See
- * [withGimmick] and [TrainerGimmicks].
+ * Evolution and Terastallization - are attached to whatever move comes out, difficulty included.
+ * See [withGimmick], [TrainerGimmicks] and [BattleTera].
  */
 class TrainerBattleAI(
     private val delegate: BattleAI,
@@ -58,23 +58,35 @@ class TrainerBattleAI(
     private val level = CorrectionLevel.of(difficulty)
 
     /**
-     * Whether this trainer mega evolves when the battle offers it - the `mega` of its
-     * `battle.gimmicks`. Read once: the definition cannot change mid-battle, and a `/reload`
-     * would not reach a fight already under way.
+     * The gimmicks this trainer uses when the battle offers them - its `battle.gimmicks`, kept in
+     * the order of [TrainerGimmicks.SUPPORTED] rather than the order the pack wrote them in, so
+     * that the turn where two are offered at once always resolves the same way. Read once: the
+     * definition cannot change mid-battle, and a `/reload` would not reach a fight already under
+     * way.
      */
-    private val usesMega = TrainerGimmicks.uses(gimmicks, TrainerGimmicks.MEGA)
+    private val declaredGimmicks =
+        TrainerGimmicks.SUPPORTED.filter { TrainerGimmicks.uses(gimmicks, it) }
 
     /**
-     * The request the mega evolution was answered on, or null while it is still to come.
+     * The request each gimmick was spent on, by gimmick id, empty while they are still to come.
      *
-     * Not a plain boolean, because it answers two questions at once. Cobblemon asks each active
-     * Pokémon *twice* a turn (see [lastRequest]) and the second answer overwrites the first, so
-     * the same request has to be answered the same way or the gimmick would be dropped on the
-     * way out. And a side may only mega evolve once, so the *other* active of a double battle,
-     * asked on the same turn, has to be turned down. Keyed like any other decision, both fall
-     * out of one comparison.
+     * A side only gets one of each, so this is what turns down the *other* active of a double
+     * battle asked on the same turn. It is the request rather than a flag because the turn is
+     * what the rule is about, and a request already carries it.
      */
-    private var megaPlayedFor: DecisionKey? = null
+    private val gimmickPlayedFor = mutableMapOf<String, DecisionKey>()
+
+    /**
+     * The request the gimmicks were last weighed for, and what came out of it - a gimmick id, or
+     * null for "not this turn".
+     *
+     * Cobblemon asks twice a turn, and the second pass must not be judged afresh: by then
+     * [remember] has filled [struck] from the first one, so an unbroken Disguise would read as
+     * broken and a Terastallization kept in hand on the first pass would go out on the second.
+     * The same reason [decide] answers a repeat from memory.
+     */
+    private var gimmickRequest: DecisionKey? = null
+    private var gimmickChosen: String? = null
 
     /**
      * Whether the opening move has already been spent. One flag for the whole actor, so that in
@@ -170,17 +182,24 @@ class TrainerBattleAI(
     }
 
     /**
-     * Mega evolves alongside the move that was just chosen, if the trainer has one to spend and
-     * the battle is offering it.
+     * Attaches a gimmick to the move that was just chosen, if the trainer has one to spend and
+     * this is the turn to spend it.
      *
-     * Deliberately outside everything above: a gimmick is the pack's decision - it gave the
-     * stone and wrote the word - not a matter of how well the trainer plays, so it must not sit
-     * behind the [CorrectionLevel] gate that lets a low-difficulty trainer past untouched.
+     * Deliberately outside everything above: a gimmick is the pack's decision - it gave the stone
+     * or the Tera type and wrote the word - not a matter of how well the trainer plays, so it must
+     * not sit behind the [CorrectionLevel] gate that lets a low-difficulty trainer past untouched.
      *
-     * The moment needs no judging either. Mega evolving costs no turn and is offered exactly
-     * while it is legal, so the first chance is always as good as any later one - which is also
-     * what a trainer does in the games. The one thing to get right is spending it once, see
-     * [megaPlayedFor].
+     * The two supported gimmicks want opposite things of the moment, which is why [reasonFor]
+     * answers per gimmick rather than once for all of them:
+     *
+     * - **Mega Evolution needs no judging.** It costs no turn and is offered exactly while it is
+     *   legal, so the first chance is as good as any later one - which is also what a trainer does
+     *   in the games.
+     * - **Terastallization does.** One use decides a whole battle, and spending it on turn one
+     *   because it was offered is how that battle is lost. See [BattleTera].
+     *
+     * A response carries one `gimmickID`, so the turn that offers both spends the first one
+     * [TrainerGimmicks.SUPPORTED] lists and leaves the other for later.
      */
     private fun withGimmick(
         response: ShowdownActionResponse,
@@ -189,28 +208,81 @@ class TrainerBattleAI(
         moveset: ShowdownMoveset?,
         request: DecisionKey
     ): ShowdownActionResponse {
-        if (!usesMega || moveset == null || response !is MoveActionResponse) return response
-        if (!TrainerGimmicks.offered(moveset, TrainerGimmicks.MEGA)) return response
+        if (declaredGimmicks.isEmpty() || moveset == null || response !is MoveActionResponse) return response
 
-        // Answering the same request again keeps the gimmick; the other active Pokémon of a
-        // double battle, asked on the same turn, does not get a second one. Across turns there
-        // is nothing to refuse: a mega evolution that went through stops being offered, and one
-        // that somehow did not is worth another try rather than lost for the whole battle.
-        val played = megaPlayedFor
-        if (played != null && played != request && played.turn == request.turn) return response
+        // The same question asked twice gets the same answer, gimmick included. See [gimmickRequest].
+        if (request == gimmickRequest) {
+            return gimmickChosen?.let { response.copy(gimmickID = it) } ?: response
+        }
 
-        if (played != request) {
-            megaPlayedFor = request
-            val detail = "mega evolves, playing ${response.moveName}"
+        gimmickRequest = request
+        gimmickChosen = null
+
+        for (gimmick in declaredGimmicks) {
+            // A side gets one of each, so the other active Pokémon of a double battle, asked on
+            // the same turn, is turned down. Across turns there is nothing to refuse: a gimmick
+            // that went through stops being offered, and one that somehow did not is worth
+            // another try rather than lost for the whole battle.
+            val played = gimmickPlayedFor[gimmick]
+            if (played != null && played.turn == request.turn) continue
+
+            if (!TrainerGimmicks.offered(moveset, gimmick)) continue
+            val reason = reasonFor(gimmick, response, active, moveset) ?: continue
+
+            gimmickPlayedFor[gimmick] = request
+            gimmickChosen = gimmick
+
+            val detail = "$gimmick, playing ${response.moveName} - $reason"
             LOGGER.debug("Trainer AI: {}", detail)
             if (!TrainerAiDebug.idle()) {
                 val name = active.battlePokemon?.effectedPokemon?.species?.name ?: "?"
                 TrainerAiDebug.report(battle, "$name: $detail")
             }
+
+            return response.copy(gimmickID = gimmick)
         }
 
-        return response.copy(gimmickID = TrainerGimmicks.MEGA)
+        return response
     }
+
+    /**
+     * Why [gimmick] is worth spending on this turn, or null to keep it in hand.
+     *
+     * A battle waits on the decision this is attached to, so a gimmick that cannot be judged is
+     * never allowed to cost the answer: anything thrown here is logged and read as "not now".
+     */
+    private fun reasonFor(
+        gimmick: String,
+        response: MoveActionResponse,
+        active: ActiveBattlePokemon,
+        moveset: ShowdownMoveset
+    ): String? = try {
+        when (gimmick) {
+            TrainerGimmicks.MEGA -> "no reason to wait"
+
+            TrainerGimmicks.TERASTAL -> {
+                val self = active.battlePokemon
+                val tera = TrainerGimmicks.teraType(moveset)
+                if (self == null || tera == null) {
+                    null
+                } else {
+                    BattleTera.reason(tera, response.moveName, self, opponentsOf(active), struck)
+                }
+            }
+
+            else -> null
+        }
+    } catch (exception: Exception) {
+        LOGGER.error("Trainer AI could not judge the {} gimmick, keeping it in hand", gimmick, exception)
+        null
+    }
+
+    /** The living opponents of [active], which is who every reading here is about. */
+    private fun opponentsOf(active: ActiveBattlePokemon): List<BattlePokemon> =
+        active.getAllActivePokemon()
+            .filterIsInstance<ActiveBattlePokemon>()
+            .filter { !active.isAllied(it) && it.isAlive() }
+            .mapNotNull { it.battlePokemon }
 
     /** Everything a correction needs, read once per turn. Null when there is nothing to judge. */
     private fun read(
@@ -219,10 +291,7 @@ class TrainerBattleAI(
         moveset: ShowdownMoveset
     ): Situation? {
         val selfBattle = active.battlePokemon ?: return null
-        val opponents = active.getAllActivePokemon()
-            .filterIsInstance<ActiveBattlePokemon>()
-            .filter { !active.isAllied(it) && it.isAlive() }
-            .mapNotNull { it.battlePokemon }
+        val opponents = opponentsOf(active)
         if (opponents.isEmpty()) return null
 
         val usable = moveset.moves.filter { it.canBeUsed() && !it.disabled }

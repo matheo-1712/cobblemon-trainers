@@ -250,8 +250,11 @@ demanderait un état auquel la couche n'a pas accès.
 - **Le remplaçant envoyé après un KO.** C'est un choix entièrement laissé à Cobblemon.
 - **Une capacité imposée** : Encore, Colère, un objet qui verrouille le choix. Il n'y a rien à
   décider.
-- **Les capacités spéciales de gimmick** (Téracristallisation et assimilés) que la couche ne
-  sait pas évaluer.
+- **Les gimmicks de combat** (méga-évolution, téracristallisation). Ils ne dépendent pas de
+  `difficulty` du tout : c'est le pack qui les déclare, pas l'IA qui a une bonne idée. Voir
+  [GIMMICKS.md](GIMMICKS.md). Le téracristal se lit quand même mieux à `difficulty: 5` - l'un de
+  ses deux déclencheurs porte sur le coup déjà choisi, et un dresseur qui choisit mal a rarement
+  le bon coup en main.
 - **Le niveau, les statistiques et l'équipe du dresseur.** `difficulty` est la qualité du jeu,
   pas la puissance de l'équipe. Un dresseur niveau 100 en `difficulty: 0` reste facile, un
   dresseur niveau 20 en `difficulty: 5` reste faible.

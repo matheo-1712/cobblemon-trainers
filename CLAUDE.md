@@ -156,7 +156,8 @@ messages, musique et récompenses de combat.
   ce qui les rend utiles) et `TrainerAiDebug` (l'interrupteur de débogage). Voir « L'IA de
   combat ».
 - **`battle.ai.TrainerGimmicks`** - le vocabulaire de `battle.gimmicks` et ce que le combat
-  offre ce tour-ci. Voir « Les gimmicks de combat ».
+  offre ce tour-ci, épaulé par `BattleTera` pour le seul gimmick dont le moment se juge. Voir
+  « Les gimmicks de combat ».
 - **`TrainerProgress`** - `SavedData` du monde : qui a battu quel dresseur. Voir « Revanches
   et récompenses ».
 - **`TrainerRewards`** - remet les objets au vainqueur.
@@ -1113,14 +1114,19 @@ Points à ne pas redécouvrir :
 
 ### Les gimmicks de combat
 
-Un dresseur qui déclare `battle.gimmicks: ["mega"]` méga-évolue en combat. `TrainerGimmicks`
-tient le vocabulaire, `TrainerBattleAI.withGimmick` la décision. Toute la doc joueur est dans
-`docs/GIMMICKS.md`, jamais dans `docs/DATAPACK.md`, qui n'en garde qu'une ligne de tableau et un
-renvoi.
+Un dresseur qui déclare `battle.gimmicks` méga-évolue ou téracristallise en combat.
+`TrainerGimmicks` tient le vocabulaire, `TrainerBattleAI.withGimmick` la décision, et
+`BattleTera` le moment. Toute la doc joueur est dans `docs/GIMMICKS.md`, jamais dans
+`docs/DATAPACK.md`, qui n'en garde qu'une ligne de tableau et un renvoi.
 
 **Cobblemon 1.7.3 fait déjà tout.** `MoveActionResponse` porte un `gimmickID` à côté de son coup
 et de sa cible, et le `ShowdownMoveset` que reçoit `choose()` dit ce que le simulateur offre ce
-tour-ci (`canMegaEvo`). Répondre `mega` à côté du coup est tout ce qu'il y a à faire.
+tour-ci - `canMegaEvo`, un booléen, et `canTerastallize`, une **`String?`** qui porte le type
+Tera offert. Répondre `mega` ou `terastal` à côté du coup est tout ce qu'il y a à faire.
+
+**Le téracristal ne demande aucun mod tiers**, contrairement à la méga : `TeraTypes`,
+`TerastallizeInstruction`, `TerastallizationEvent` et l'Orbe Tera sont dans Cobblemon. C'est la
+seule différence de nature entre les deux, et elle rend celui-ci testable en `runClient` nu.
 
 **Aucune ligne du mod ne nomme Mega Showdown**, et rien ne compile contre lui. Ce qu'il
 apporte : les gemmes, le patch du simulateur qui les lui fait voir, et la forme à l'écran - via
@@ -1137,26 +1143,61 @@ Points à ne pas redécouvrir :
 
 - **Rien ne filtre le côté PNJ.** `ShowdownActionRequest.sanitize` ne coupe un gimmick que pour
   un acteur dont l'UUID est celui d'un **joueur** du combat sans la key item qui va avec
-  (`cobblemon:key_stone` pour la méga). Un `NPCBattleActor` n'y correspond jamais. Conséquence
-  assumée : un dresseur méga-évolue face à un joueur qui n'a pas de Key Stone, et c'est au pack
-  de compenser.
+  (`cobblemon:key_stone` pour la méga, `cobblemon:tera_orb` pour le téracristal). Un
+  `NPCBattleActor` n'y correspond jamais. Conséquence assumée : un dresseur se sert de son
+  gimmick face à un joueur qui n'a pas l'objet, et c'est au pack de compenser.
 - **Le gimmick est posé hors du garde `CorrectionLevel`.** `choose()` rendait la décision de
   Cobblemon telle quelle en dessous de la difficulté 3 ; un dresseur facile n'aurait donc jamais
   méga-évolué. C'est le pack qui a donné la gemme et écrit le mot, pas l'IA qui a eu une bonne
   idée. D'où la découpe en `decide()` (les corrections) puis `withGimmick()` (le gimmick).
-- **La mémoire est la requête, pas un booléen.** Un camp ne méga-évolue qu'une fois, donc le
-  second actif d'un double doit être refusé - mais Cobblemon demande sa décision **deux fois par
-  tour** (voir « L'IA de combat »), et répondre la seconde fois sans le `gimmickID` écraserait la
-  première réponse et annulerait la méga. Comparer la `DecisionKey` répond aux deux d'un coup :
-  même requête, même réponse ; requête différente, refus.
+- **La méga ne se juge pas, le téracristal si**, et c'est toute la raison d'être de
+  `BattleTera`. La méga ne coûte pas de tour et ne peut pas être un mauvais choix : première
+  occasion. Le téracristal ne coûte pas de tour non plus, mais un camp n'y a droit qu'une fois et
+  le dépenser au tour 1 parce qu'il était offert, c'est le perdre. D'où deux déclencheurs, et
+  rien d'autre : le coup **déjà choisi** devient létal grâce au bonus Tera, ou le coup adverse
+  létal cesse de l'être contre le type Tera.
+- **Le déclencheur offensif lit le coup déjà choisi, jamais le meilleur coup.** Un gimmick
+  s'accroche à une décision, il n'en prend pas : réécrire le coup ici serait une correction
+  déguisée. Effet de bord voulu - un `difficulty: 0` joue au hasard, il aura donc rarement en
+  main le coup qui bascule, et téracristallise donc moins. C'est l'échelle qui fait son travail,
+  pas un trou.
+- **Stellar n'a pas de type**, donc aucune lecture défensive ne veut dire quoi que ce soit pour
+  lui : seul le déclencheur offensif tourne, avec son propre bonus (×2 sur un coup déjà STAB,
+  ×1,2 sinon). C'est pour ça que le bonus voyage en `Double` dans `BattleDamage.estimate` plutôt
+  qu'en type. Un nom de type Tera qui n'est ni Stellar ni un type élémentaire - une version
+  future de Cobblemon - éteint les deux déclencheurs et garde le téracristal en main : ce qu'on
+  ne sait pas juger ne se dépense pas, la même réponse que le `try/catch` de `reasonFor`.
+- **Il y a deux mémoires, et elles répondent à deux questions.** `gimmickPlayedFor` retient sur
+  quelle requête chaque gimmick a été dépensé : un camp n'y a droit qu'une fois, donc le second
+  actif d'un double, interrogé le même tour, est refusé. `gimmickRequest` / `gimmickChosen`
+  retiennent la réponse donnée à *cette* requête, parce que Cobblemon demande sa décision **deux
+  fois par tour** (voir « L'IA de combat ») : répondre la seconde fois sans le `gimmickID`
+  écraserait la première réponse et annulerait le gimmick. Les fusionner ne marche pas : la
+  seconde passe lirait un `struck` que la première vient de remplir, donc une Frimousse intacte y
+  paraîtrait cassée et un téracristal gardé en main partirait quand même. C'est exactement la
+  raison qui fait mémoriser `decide()`.
+- **Une réponse porte un seul `gimmickID`.** Le tour qui offre les deux dépense donc le premier
+  de `TrainerGimmicks.SUPPORTED` - la méga, qui est liée au Pokémon portant la gemme, alors que
+  le téracristal appartient au camp et ne perd rien à attendre. Cet ordre est celui de la liste,
+  pas celui que le pack a écrit : deux packs qui déclarent les mêmes gimmicks jouent pareil.
 - **`isValid` ne vérifie pas la disponibilité du gimmick.** Répondre `mega` quand le simulateur
-  ne l'offre pas est une erreur Showdown en plein combat, pas un refus poli. `canMegaEvo` est
-  donc le seul garde qui compte, et il est lu à chaque décision.
+  ne l'offre pas est une erreur Showdown en plein combat, pas un refus poli. `canMegaEvo` et
+  `canTerastallize` sont donc les seuls gardes qui comptent, et ils sont lus à chaque décision.
+- **Le jugement ne doit jamais coûter la réponse.** `reasonFor` est entouré d'un `try/catch` pour
+  la même raison que `decide()` : un combat attend cette décision, et un gimmick qu'on n'a pas su
+  juger se garde en main plutôt que de bloquer le tour.
 - **On copie la réponse, on ne la mute pas.** `gimmickID` est un `var`, mais l'objet vient du
   délégué.
 - **Le mot du pack est l'id de Cobblemon** (`mega`, `terastal`, `zmove`, `dynamax`, `ultra`).
-  Les quatre non supportés sont reconnus au chargement et signalés comme tels, pour qu'un pack
+  Les trois non supportés sont reconnus au chargement et signalés comme tels, pour qu'un pack
   qui les écrit ne les confonde pas avec une faute de frappe.
+- **Le type Tera se déclare dans l'équipe, pas dans le dresseur.** La ligne `Tera Type:` de
+  `ShowdownTeamParser` - la vraie ligne de Showdown, contrairement à `Aspects:` et
+  `Fallback Item:` - donne la propriété `tera_type=`. Elle est validée par `TeraTypes.getByName`
+  pour la même raison que les capacités passent par `Moves.getByName` : le parseur de propriétés
+  laisse tomber en silence ce qu'il ne connaît pas, et un défaut silencieux est exactement ce que
+  cette ligne existe pour remplacer. Un champ `battle.teraType` au niveau du dresseur a été
+  écarté : deux endroits qui décident du même réglage finissent par se contredire.
 
 ### Les objets tenus d'une équipe
 

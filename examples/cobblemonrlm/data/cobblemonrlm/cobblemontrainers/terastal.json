@@ -1,0 +1,50 @@
+{
+  "name": "trainer.cobblemonrlm.terastal.name",
+  "skin": {
+    "type": "player_username",
+    "value": "Alex"
+  },
+  "battle": {
+    "level": 70,
+    "difficulty": 5,
+    "gimmicks": ["terastal"]
+  },
+  "messages": {
+    "greeting": "trainer.cobblemonrlm.terastal.greeting",
+    "start": "trainer.cobblemonrlm.terastal.battle_start",
+    "win": "trainer.cobblemonrlm.terastal.win",
+    "lose": "trainer.cobblemonrlm.terastal.lose"
+  },
+  "team": [
+    "Garganacl @ Leftovers",
+    "Ability: Purifying Salt",
+    "Level: 70",
+    "Tera Type: Fairy",
+    "EVs: 252 HP / 252 Def / 4 SpD",
+    "Impish Nature",
+    "- Salt Cure",
+    "- Recover",
+    "- Earthquake",
+    "- Stealth Rock",
+    "Baxcalibur @ Loaded Dice",
+    "Ability: Thermal Exchange",
+    "Level: 70",
+    "Tera Type: Ground",
+    "EVs: 4 HP / 252 Atk / 252 Spe",
+    "Jolly Nature",
+    "- Icicle Spear",
+    "- Earthquake",
+    "- Dragon Dance",
+    "- Ice Shard",
+    "Gholdengo @ Choice Specs",
+    "Ability: Good as Gold",
+    "Level: 70",
+    "Tera Type: Stellar",
+    "EVs: 4 HP / 252 SpA / 252 Spe",
+    "Timid Nature",
+    "- Make It Rain",
+    "- Shadow Ball",
+    "- Thunderbolt",
+    "- Trick"
+  ]
+}

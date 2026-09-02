@@ -3,6 +3,7 @@ package matheo1712.cobbletrainers.parser
 import com.cobblemon.mod.common.api.moves.Moves
 import com.cobblemon.mod.common.api.pokemon.PokemonProperties
 import com.cobblemon.mod.common.api.properties.CustomPokemonProperty
+import com.cobblemon.mod.common.api.types.tera.TeraTypes
 import matheo1712.cobbletrainers.CobblemonTrainers
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.network.chat.Component
@@ -191,6 +192,9 @@ object ShowdownTeamParser {
                     }
                 }
 
+                line.startsWith("Tera Type:", ignoreCase = true) ->
+                    appendTeraType(builder, line.substringAfter(':'))
+
                 line.startsWith("Shiny:", ignoreCase = true) -> {
                     if (line.substringAfter(':').trim().equals("yes", ignoreCase = true)) {
                         builder.append(" shiny=yes")
@@ -238,6 +242,28 @@ object ShowdownTeamParser {
         }
 
         return properties
+    }
+
+    /**
+     * The `Tera Type:` line of a Showdown export, as Cobblemon's `tera_type` property.
+     *
+     * Without it a Pokémon keeps Cobblemon's default Tera type, so a trainer that declares
+     * `terastal` would Terastallize into something the pack never chose. The name is checked
+     * against [TeraTypes] for the same reason moves go through `Moves.getByName`: the property
+     * parser drops what it does not recognise without a word, and a silent default is exactly
+     * what this line exists to replace.
+     */
+    private fun appendTeraType(builder: StringBuilder, raw: String) {
+        val name = raw.trim()
+        if (name.isEmpty()) return
+
+        val resolved = TeraTypes.getByName(name)
+        if (resolved == null) {
+            LOGGER.warn("Ignoring unknown Tera type '{}'", name)
+            return
+        }
+
+        builder.append(" tera_type=${resolved.id}")
     }
 
     private fun splitAspects(raw: String): List<String> =

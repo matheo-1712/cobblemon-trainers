@@ -317,8 +317,9 @@ le comportement exact de `battle.difficulty`, de `0` à `5`.
 **➜ Comment un dresseur se fait appeler est dans [docs/SPAWNING.md](docs/SPAWNING.md)** :
 le bloc `location` et tout ce qui l'entoure.
 
-**➜ Faire méga-évoluer un dresseur est dans [docs/GIMMICKS.md](docs/GIMMICKS.md)** :
-`battle.gimmicks`, la gemme à lui donner et l'objet de repli. Ça demande
+**➜ Les gimmicks de combat sont dans [docs/GIMMICKS.md](docs/GIMMICKS.md)** :
+`battle.gimmicks`, la méga-évolution et le téracristal. Le téracristal ne demande rien de plus
+que Cobblemon ; la méga demande
 [Cobblemon: Mega Showdown](https://modrinth.com/mod/mega-showdown), qui reste **facultatif** -
 sans lui, le mod se charge et se joue comme avant.
 

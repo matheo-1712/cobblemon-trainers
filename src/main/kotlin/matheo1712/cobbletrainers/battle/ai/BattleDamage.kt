@@ -4,6 +4,7 @@ import com.cobblemon.mod.common.api.moves.MoveTemplate
 import com.cobblemon.mod.common.api.moves.categories.DamageCategories
 import com.cobblemon.mod.common.api.pokemon.stats.Stat
 import com.cobblemon.mod.common.api.pokemon.stats.Stats
+import com.cobblemon.mod.common.api.types.ElementalType
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon
 
 /**
@@ -36,12 +37,17 @@ object BattleDamage {
      * What [move] would take off [defender], before accuracy. Accuracy is deliberately left out:
      * a move that hits for a KO nine times out of ten still hits for a KO, and folding the miss
      * chance in here would turn a yes/no question into an average.
+     *
+     * [stab] overrides the same-type bonus this would work out on its own. Only [BattleTera]
+     * passes it: after Terastallization the bonus no longer follows from the attacker's types,
+     * and Stellar changes it without changing any type at all.
      */
     fun estimate(
         move: MoveTemplate,
         attacker: BattlePokemon,
         defender: BattlePokemon,
-        multiplier: Double
+        multiplier: Double,
+        stab: Double? = null
     ): Double {
         if (multiplier == 0.0 || move.damageCategory == DamageCategories.STATUS) return 0.0
 
@@ -55,11 +61,15 @@ object BattleDamage {
         val base = (2.0 * level / 5.0 + 2.0) * power * attack / defence / 50.0 + 2.0
 
         val type = move.getEffectiveElementalType(attacker.effectedPokemon)
-        val stab = if (attacker.effectedPokemon.types.any { it.name.equals(type.name, true) }) STAB else 1.0
+        val sameType = stab ?: stabFor(type, attacker)
         val burn = if (physical && isBurned(attacker)) BURN_PENALTY else 1.0
 
-        return base * stab * multiplier * burn * AVERAGE_ROLL
+        return base * sameType * multiplier * burn * AVERAGE_ROLL
     }
+
+    /** The same-type bonus [attacker] gets on a [moveType] hit as things stand. */
+    fun stabFor(moveType: ElementalType, attacker: BattlePokemon): Double =
+        if (attacker.effectedPokemon.types.any { it.name.equals(moveType.name, true) }) STAB else 1.0
 
     /**
      * The move [attacker] would most likely reach for against [defender]: its damage, and the
@@ -68,8 +78,15 @@ object BattleDamage {
      * The two travel together on purpose. Taking the opponent's *highest* priority instead would
      * make the trainer believe it never moves first against anyone carrying a Quick Attack, and
      * a Pokemon does not open with its priority move unless that is also its best one.
+     *
+     * [defenderTypes] reads the exchange against types the defender does not have yet, which is
+     * how [BattleTera] asks whether a Terastallization would take the hit out of lethal range.
      */
-    fun strongestAgainst(defender: BattlePokemon, attacker: BattlePokemon): Pair<Double, Int> {
+    fun strongestAgainst(
+        defender: BattlePokemon,
+        attacker: BattlePokemon,
+        defenderTypes: Iterable<ElementalType>? = null
+    ): Pair<Double, Int> {
         var damage = 0.0
         var priority = 0
         for (move in attacker.effectedPokemon.moveSet.getMoves()) {
@@ -77,7 +94,8 @@ object BattleDamage {
             val multiplier = BattleTypeChart.multiplier(
                 template.getEffectiveElementalType(attacker.effectedPokemon),
                 defender.effectedPokemon,
-                withAbilities = true
+                withAbilities = true,
+                asTypes = defenderTypes
             )
             val estimated = estimate(template, attacker, defender, multiplier)
             if (estimated > damage) {
@@ -94,8 +112,11 @@ object BattleDamage {
      * This is what tells a heal apart from a wasted turn. It reads the opponent's real move set,
      * which is knowledge Cobblemon's AI already has - its tracker holds the live `Pokemon`.
      */
-    fun worstIncoming(defender: BattlePokemon, attackers: List<BattlePokemon>): Double =
-        attackers.maxOfOrNull { strongestAgainst(defender, it).first } ?: 0.0
+    fun worstIncoming(
+        defender: BattlePokemon,
+        attackers: List<BattlePokemon>,
+        defenderTypes: Iterable<ElementalType>? = null
+    ): Double = attackers.maxOfOrNull { strongestAgainst(defender, it, defenderTypes).first } ?: 0.0
 
     /** The priority of the move [attacker] is most likely to answer [defender] with. */
     fun threatPriority(defender: BattlePokemon, attacker: BattlePokemon): Int =

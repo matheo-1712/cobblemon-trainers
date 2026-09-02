@@ -52,6 +52,7 @@ le groupe « Dresseurs ».
 | `cobblemonrlm:champions/maitre_cache` | Un `requires` **caché** : absent du Battle Phone tant que les deux autres champions n'ont pas été battus. `victories` sans `count` veut dire « tous ceux de la catégorie », lui-même excepté |
 | `cobblemonrlm:debutants/recompense_unique` | Rejouable autant qu'on veut, et **deux récompenses de régimes différents** : le Câble Liaison en `firstWinOnly` ne tombe qu'une fois, les bonbons Exp tombent à chaque victoire |
 | `cobblemonrlm:formes` | Lignes `Aspects:` : un Raichu d'Alola et un Smogogo de Galar (caractéristiques à drapeau, `alolan` / `galarian`), un Motisma-Lavage (caractéristique à choix, `appliance=wash`) |
+| `cobblemonrlm:terastal` | `battle.gimmicks` en `["terastal"]` et des lignes `Tera Type:` - dont un `Stellar`. Le dresseur garde son téracristal jusqu'au tour où il décide quelque chose, voir [GIMMICKS.md](../../docs/GIMMICKS.md) |
 | `cobblemonrlm:polyglotte` | Textes en clés de traduction, fournies par `assets/cobblemonrlm/lang/` - passe ton jeu en anglais puis en français pour voir la différence, nom flottant compris |
 | `cobblemonrlm:champions/jacinthe` | Le cas complet : équipe de six, textes traduits, et `battle.music` pointant sur une piste du pack plutôt que sur celle du mod |
 | `cobblemonrlm:kanto/minimaliste` | JSON réduit au strict minimum : tous les autres champs prennent leur valeur par défaut. Son dossier `kanto/` fait partie de son ID **et** de son affichage |

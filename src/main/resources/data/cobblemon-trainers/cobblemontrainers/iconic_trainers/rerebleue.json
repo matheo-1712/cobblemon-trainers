@@ -10,7 +10,7 @@
     "difficulty": 5,
     "music": "cobblemon-trainers:battle_music.neoflare",
     "gimmicks": [
-      "mega"
+      "mega", "terastal"
     ]
   },
   "messages": {
