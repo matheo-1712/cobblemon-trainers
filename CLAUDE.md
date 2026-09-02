@@ -1195,9 +1195,16 @@ Points à ne pas redécouvrir :
   `ShowdownTeamParser` - la vraie ligne de Showdown, contrairement à `Aspects:` et
   `Fallback Item:` - donne la propriété `tera_type=`. Elle est validée par `TeraTypes.getByName`
   pour la même raison que les capacités passent par `Moves.getByName` : le parseur de propriétés
-  laisse tomber en silence ce qu'il ne connaît pas, et un défaut silencieux est exactement ce que
-  cette ligne existe pour remplacer. Un champ `battle.teraType` au niveau du dresseur a été
-  écarté : deux endroits qui décident du même réglage finissent par se contredire.
+  laisse tomber en silence ce qu'il ne connaît pas. Un champ `battle.teraType` au niveau du
+  dresseur a été écarté : deux endroits qui décident du même réglage finissent par se contredire.
+- **Sans la ligne, le type Tera est le type primaire du Pokémon**, posé par
+  `ShowdownTeamParser.createPokemon`. Ce n'est pas cosmétique : livré à lui-même, Cobblemon tire
+  un type Tera au hasard (`teraTypeRate`), donc le même dresseur téracristallisait dans un type
+  différent à chaque apparition - constaté en jeu, un Élecsprint Tera Fée. Deux choses à ne pas
+  intervertir : le défaut se pose **après** `create()`, parce que la forme peut changer le type
+  primaire (un Goupix d'Alola est Glace), et il se décide sur `properties.teraType == null`,
+  seul endroit qui distingue le silence d'un pack de son choix. Les deux appelants de `create()`
+  passent par là, le Battle Phone compris, bien qu'il ne lise pas encore le type Tera.
 
 ### Les objets tenus d'une équipe
 

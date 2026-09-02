@@ -166,7 +166,7 @@ object BattlePhoneNetworking {
         ShowdownTeamParser.parse(definition.team).mapNotNull { properties ->
             if (properties.level == null) properties.level = definition.battle.level
             try {
-                val pokemon = properties.create()
+                val pokemon = ShowdownTeamParser.createPokemon(properties)
                 TrainerTeamMember(
                     species = pokemon.species.resourceIdentifier.toString(),
                     aspects = pokemon.aspects.toList(),

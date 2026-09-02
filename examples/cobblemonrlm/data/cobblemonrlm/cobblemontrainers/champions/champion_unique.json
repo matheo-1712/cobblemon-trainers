@@ -32,21 +32,8 @@
     }
   ],
   "team": [
-    "Dragonite (M) @ cobblemon:leftovers",
-    "Ability: Multiscale",
-    "Level: 62",
-    "Adamant Nature",
-    "- Dragon Dance",
-    "- Outrage",
-    "- Earthquake",
-    "- Fire Punch",
-    "Tyranitar (F) @ cobblemon:assault_vest",
-    "Ability: Sand Stream",
-    "Level: 60",
-    "- Stone Edge",
-    "- Crunch",
-    "- Ice Punch",
-    "- Earthquake"
+    "Dragonite (M) @ cobblemon:leftovers\nAbility: Multiscale\nLevel: 62\nAdamant Nature\n- Dragon Dance\n- Outrage\n- Earthquake\n- Fire Punch",
+    "Tyranitar (F) @ cobblemon:assault_vest\nAbility: Sand Stream\nLevel: 60\n- Stone Edge\n- Crunch\n- Ice Punch\n- Earthquake"
   ],
   "requires": {
     "defeated": [

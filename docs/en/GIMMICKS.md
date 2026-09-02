@@ -116,9 +116,14 @@ Tera Type: Fairy
 All eighteen types are accepted, plus `Stellar`. An unknown name is reported in the log and
 ignored.
 
-**Without the line**, the Pokémon keeps whatever Tera type Cobblemon gives it by default. The
-trainer still Terastallizes, but into a type the pack never chose - so write the line as soon as
-you write `terastal`.
+**Without the line**, the Pokémon takes **its own primary type**: a Rhydon is Tera Ground, a
+Gengar is Tera Ghost. Terastallizing is then a pure same-type boost with no defensive change -
+useful, predictable, and never a surprise to the pack.
+
+That default is the mod's. Left alone, Cobblemon rolls a Tera type at **random** (its
+`teraTypeRate` setting), so the same trainer would Terastallize into a different type on every
+spawn. The primary type is read **after** the form: an Alolan Vulpix is Tera Ice, not Tera
+Fire.
 
 ## When the trainer Terastallizes
 

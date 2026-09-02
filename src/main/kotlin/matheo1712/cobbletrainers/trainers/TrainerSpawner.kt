@@ -141,7 +141,7 @@ object TrainerSpawner {
             // an unknown species or held item throws here. One bad entry costs its Pokémon, not
             // the trainer, and not the tick that asked for the spawn.
             try {
-                party.add(properties.create())
+                party.add(ShowdownTeamParser.createPokemon(properties))
             } catch (e: Exception) {
                 LOGGER.warn("Skipping a Pokémon of trainer {}: {} ({})", trainerId, e.message, properties.asString(" "))
             }

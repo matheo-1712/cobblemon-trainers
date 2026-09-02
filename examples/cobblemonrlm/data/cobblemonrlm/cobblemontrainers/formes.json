@@ -13,35 +13,8 @@
     "lose": "trainer.cobblemonrlm.formes.lose"
   },
   "team": [
-    "Raichu (M) @ Life Orb",
-    "Aspects: alolan",
-    "Ability: Surge Surfer",
-    "Level: 60",
-    "EVs: 4 HP / 252 SpA / 252 Spe",
-    "Timid Nature",
-    "- Thunderbolt",
-    "- Psychic",
-    "- Surf",
-    "- Nasty Plot",
-    "Weezing (F) @ Black Sludge",
-    "Aspects: galarian",
-    "Ability: Levitate",
-    "Level: 60",
-    "EVs: 252 HP / 252 Def / 4 SpD",
-    "Bold Nature",
-    "- Sludge Bomb",
-    "- Strange Steam",
-    "- Pain Split",
-    "- Protect",
-    "Rotom @ Choice Scarf",
-    "Aspects: appliance=wash",
-    "Ability: Levitate",
-    "Level: 60",
-    "EVs: 4 HP / 252 SpA / 252 Spe",
-    "Timid Nature",
-    "- Hydro Pump",
-    "- Thunderbolt",
-    "- Volt Switch",
-    "- Trick"
+    "Raichu (M) @ Life Orb\nAspects: alolan\nAbility: Surge Surfer\nLevel: 60\nEVs: 4 HP / 252 SpA / 252 Spe\nTimid Nature\n- Thunderbolt\n- Psychic\n- Surf\n- Nasty Plot",
+    "Weezing (F) @ Black Sludge\nAspects: galarian\nAbility: Levitate\nLevel: 60\nEVs: 252 HP / 252 Def / 4 SpD\nBold Nature\n- Sludge Bomb\n- Strange Steam\n- Pain Split\n- Protect",
+    "Rotom @ Choice Scarf\nAspects: appliance=wash\nAbility: Levitate\nLevel: 60\nEVs: 4 HP / 252 SpA / 252 Spe\nTimid Nature\n- Hydro Pump\n- Thunderbolt\n- Volt Switch\n- Trick"
   ]
 }

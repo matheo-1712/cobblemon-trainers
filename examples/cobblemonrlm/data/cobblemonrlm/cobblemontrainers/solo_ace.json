@@ -24,35 +24,8 @@
     "busy": "trainer.cobblemonrlm.solo_ace.busy"
   },
   "team": [
-    "Etincelle (Jolteon) (M) @ Choice Specs",
-    "Ability: Volt Absorb",
-    "Level: 56",
-    "Shiny: Yes",
-    "EVs: 4 HP / 252 SpA / 252 Spe",
-    "IVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe",
-    "Timid Nature",
-    "- Thunderbolt",
-    "- Volt Switch",
-    "- Shadow Ball",
-    "- Hidden Power",
-    "Snorlax (M) @ cobblemon:leftovers",
-    "Ability: Thick Fat",
-    "Level: 55",
-    "EVs: 252 HP / 252 Def / 4 SpD",
-    "Careful Nature",
-    "- Body Slam",
-    "- Rest",
-    "- Sleep Talk",
-    "- Earthquake",
-    "Gengar @ Life Orb",
-    "Ability: Cursed Body",
-    "Level: 54",
-    "Gender: M",
-    "EVs: 4 HP / 252 SpA / 252 Spe",
-    "Timid Nature",
-    "- Shadow Ball",
-    "- Sludge Bomb",
-    "- Focus Blast",
-    "- Destiny Bond"
+    "Etincelle (Jolteon) (M) @ Choice Specs\nAbility: Volt Absorb\nLevel: 56\nShiny: Yes\nEVs: 4 HP / 252 SpA / 252 Spe\nIVs: 31 HP / 31 Atk / 31 Def / 31 SpA / 31 SpD / 31 Spe\nTimid Nature\n- Thunderbolt\n- Volt Switch\n- Shadow Ball\n- Hidden Power",
+    "Snorlax (M) @ cobblemon:leftovers\nAbility: Thick Fat\nLevel: 55\nEVs: 252 HP / 252 Def / 4 SpD\nCareful Nature\n- Body Slam\n- Rest\n- Sleep Talk\n- Earthquake",
+    "Gengar @ Life Orb\nAbility: Cursed Body\nLevel: 54\nGender: M\nEVs: 4 HP / 252 SpA / 252 Spe\nTimid Nature\n- Shadow Ball\n- Sludge Bomb\n- Focus Blast\n- Destiny Bond"
   ]
 }

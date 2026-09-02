@@ -24,9 +24,9 @@
     "biome": "minecraft:plains"
   },
   "team": [
-    "Rem (Swampert) (F) @ Rocky Helmet  \nAbility: Torrent  \nTera Type: Water  \nEVs: 252 HP / 252 Atk / 4 SpD  \nAdamant Nature  \n- Stealth Rock  \n- Flip Turn  \n- Knock Off  \n- Earthquake",
-    "Ram (Hydreigon) (F) @ Choice Scarf\nAbility: Levitate\nTera Type: Dark\nEVs: 4 HP / 252 SpA / 252 Spe\nTimid Nature\nIVs: 0 Atk\n- Dark Pulse\n- Draco Meteor\n- Earth Power\n- Fire Blast",
-    "Al (Mimikyu) (M) @ Life Orb\nAbility: Disguise\nTera Type: Ghost\nEVs: 4 HP / 252 Atk / 252 Spe\nJolly Nature\n- Play Rough\n- Shadow Claw\n- Shadow Sneak\n- Swords Dance",
+    "Rem (Swampert) (F) @ Rocky Helmet  \nAbility: Torrent  \nTera Type: Dark  \nEVs: 252 HP / 252 Atk / 4 SpD  \nAdamant Nature  \n- Stealth Rock  \n- Flip Turn  \n- Knock Off  \n- Earthquake",
+    "Ram (Hydreigon) (F) @ Choice Scarf\nAbility: Levitate\nTera Type: Fire\nEVs: 4 HP / 252 SpA / 252 Spe\nTimid Nature\nIVs: 0 Atk\n- Dark Pulse\n- Draco Meteor\n- Earth Power\n- Fire Blast",
+    "Al (Mimikyu) (M) @ Life Orb\nAbility: Disguise\nTera Type: Fairy\nEVs: 4 HP / 252 Atk / 252 Spe\nJolly Nature\n- Play Rough\n- Shadow Claw\n- Shadow Sneak\n- Swords Dance",
     "Pételgeuse (Lucario) (M) @ Lucarionite\nFallback Item: Life Orb\nAbility: Justified  \nTera Type: Fighting  \nEVs: 4 HP / 252 Atk / 252 Spe  \nJolly Nature  \n- Close Combat  \n- Swords Dance  \n- Meteor Mash  \n- Extreme Speed",
     "Subaru (Archeops) (M) @ Sitrus Berry\nAbility: Defeatist\nTera Type: Rock\nEVs: 4 HP / 252 Atk / 252 Spe\nJolly Nature\n- Acrobatics\n- U-turn\n- Earthquake\n- Stone Edge",
     "Satella (Snorlax) (F) @ Leftovers\nAbility: Immunity\nTera Type: Normal\nEVs: 252 HP / 252 Def / 4 SpD\nSassy Nature\n- Earthquake\n- Curse\n- Body Slam\n- Rest"

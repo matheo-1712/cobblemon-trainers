@@ -119,9 +119,14 @@ Tera Type: Fairy
 Les dix-huit types sont acceptés, plus `Stellar`. Un nom inconnu est signalé dans le log et
 ignoré.
 
-**Sans cette ligne**, le Pokémon garde le type Tera que Cobblemon lui donne par défaut. Le
-dresseur téracristallise quand même, mais dans un type que le pack n'a pas choisi : la ligne est
-donc à écrire dès qu'on met `terastal`.
+**Sans cette ligne**, le Pokémon prend **son propre type primaire** : un Rhinoféros est Tera
+Sol, un Ectoplasma Tera Spectre. Le téracristal devient alors une pure amélioration de son STAB,
+sans changement défensif - utile, prévisible, et jamais une surprise pour le pack.
+
+C'est le mod qui pose ce défaut. Livré à lui-même, Cobblemon tire un type Tera **au hasard**
+(son réglage `teraTypeRate`), donc le même dresseur téracristallisait dans un type différent à
+chaque apparition. Le type primaire est calculé **après** la forme : un Goupix d'Alola est donc
+Tera Glace, pas Tera Feu.
 
 ## Quand le dresseur téracristallise
 
