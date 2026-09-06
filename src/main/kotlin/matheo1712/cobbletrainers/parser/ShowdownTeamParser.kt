@@ -3,6 +3,8 @@ package matheo1712.cobbletrainers.parser
 import com.cobblemon.mod.common.api.moves.Moves
 import com.cobblemon.mod.common.api.pokemon.PokemonProperties
 import com.cobblemon.mod.common.api.properties.CustomPokemonProperty
+import com.cobblemon.mod.common.api.types.tera.TeraTypes
+import com.cobblemon.mod.common.pokemon.Pokemon
 import matheo1712.cobbletrainers.CobblemonTrainers
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.network.chat.Component
@@ -93,6 +95,33 @@ object ShowdownTeamParser {
     /** The Pokémon of a `team` array, one block of Showdown lines each. */
     private fun blocksOf(teamEntries: List<String>): List<List<String>> =
         teamEntries.flatMap { splitIntoBlocks(it) }
+
+    /**
+     * Builds a Pokémon from [properties], filling in the Tera type the pack left unsaid.
+     *
+     * Cobblemon does not leave that field empty: a Pokémon created without one is rolled against
+     * the `teraTypeRate` config, so a team with no `Tera Type:` line would Terastallize into a
+     * type nobody chose - and into a different one on every spawn. Its own primary type is the
+     * answer that surprises nobody, and it is what the games do with a Pokémon that has never
+     * been given anything else.
+     *
+     * It has to happen **after** `create()` rather than in the property string, because a form
+     * can change the primary type - an Alolan Vulpix is Ice where Vulpix is Fire - and the form
+     * only exists once the aspects have been applied. `properties.teraType` is the signal: null
+     * means the `Tera Type:` line was absent, so this is the one place that can tell a pack's
+     * silence from a pack's choice.
+     *
+     * Both callers of `create()` go through here, even the battle phone, which does not read the
+     * Tera type today: a default decided in two places is a default that ends up disagreeing with
+     * itself.
+     */
+    fun createPokemon(properties: PokemonProperties): Pokemon {
+        val pokemon = properties.create()
+        if (properties.teraType == null) {
+            pokemon.teraType = TeraTypes.forElementalType(pokemon.primaryType)
+        }
+        return pokemon
+    }
 
     /**
      * Converts a full Showdown team text into a list of [PokemonProperties]. Pokémon are
@@ -191,6 +220,9 @@ object ShowdownTeamParser {
                     }
                 }
 
+                line.startsWith("Tera Type:", ignoreCase = true) ->
+                    appendTeraType(builder, line.substringAfter(':'))
+
                 line.startsWith("Shiny:", ignoreCase = true) -> {
                     if (line.substringAfter(':').trim().equals("yes", ignoreCase = true)) {
                         builder.append(" shiny=yes")
@@ -238,6 +270,28 @@ object ShowdownTeamParser {
         }
 
         return properties
+    }
+
+    /**
+     * The `Tera Type:` line of a Showdown export, as Cobblemon's `tera_type` property.
+     *
+     * Without it a Pokémon keeps Cobblemon's default Tera type, so a trainer that declares
+     * `terastal` would Terastallize into something the pack never chose. The name is checked
+     * against [TeraTypes] for the same reason moves go through `Moves.getByName`: the property
+     * parser drops what it does not recognise without a word, and a silent default is exactly
+     * what this line exists to replace.
+     */
+    private fun appendTeraType(builder: StringBuilder, raw: String) {
+        val name = raw.trim()
+        if (name.isEmpty()) return
+
+        val resolved = TeraTypes.getByName(name)
+        if (resolved == null) {
+            LOGGER.warn("Ignoring unknown Tera type '{}'", name)
+            return
+        }
+
+        builder.append(" tera_type=${resolved.id}")
     }
 
     private fun splitAspects(raw: String): List<String> =

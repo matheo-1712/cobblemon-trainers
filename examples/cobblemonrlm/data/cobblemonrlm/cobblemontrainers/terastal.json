@@ -1,0 +1,24 @@
+{
+  "name": "trainer.cobblemonrlm.terastal.name",
+  "skin": {
+    "type": "player_username",
+    "value": "Alex"
+  },
+  "battle": {
+    "level": 70,
+    "difficulty": 5,
+    "gimmicks": ["terastal"]
+  },
+  "messages": {
+    "greeting": "trainer.cobblemonrlm.terastal.greeting",
+    "start": "trainer.cobblemonrlm.terastal.battle_start",
+    "win": "trainer.cobblemonrlm.terastal.win",
+    "lose": "trainer.cobblemonrlm.terastal.lose"
+  },
+  "team": [
+    "Garganacl @ Leftovers\nAbility: Purifying Salt\nLevel: 70\nTera Type: Fairy\nEVs: 252 HP / 252 Def / 4 SpD\nImpish Nature\n- Salt Cure\n- Recover\n- Earthquake\n- Stealth Rock",
+    "Baxcalibur @ Loaded Dice\nAbility: Thermal Exchange\nLevel: 70\nTera Type: Ground\nEVs: 4 HP / 252 Atk / 252 Spe\nJolly Nature\n- Icicle Spear\n- Earthquake\n- Dragon Dance\n- Ice Shard",
+    "Gholdengo @ Choice Specs\nAbility: Good as Gold\nLevel: 70\nTera Type: Stellar\nEVs: 4 HP / 252 SpA / 252 Spe\nTimid Nature\n- Make It Rain\n- Shadow Ball\n- Thunderbolt\n- Trick",
+    "Skeledirge @ Heavy-Duty Boots\nAbility: Unaware\nLevel: 70\nEVs: 252 HP / 4 SpA / 252 SpD\nCalm Nature\n- Torch Song\n- Slack Off\n- Hex\n- Will-O-Wisp"
+  ]
+}

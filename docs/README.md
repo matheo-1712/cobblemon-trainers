@@ -13,7 +13,7 @@ ses commandes ; les pages ci-dessous sont la **référence** - c'est là que vit
 | [DATAPACK.md](DATAPACK.md) | Créer un pack de dresseurs : arborescence, tous les champs, catégories, conditions, advancements, équipes Showdown, skins, musique, récompenses, traductions |
 | [SPAWNING.md](SPAWNING.md) | Faire venir un dresseur : le bloc `location` et l'appel depuis le Battle Phone |
 | [DIFFICULTE.md](DIFFICULTE.md) | Ce que fait exactement `battle.difficulty`, de `0` à `5` |
-| [GIMMICKS.md](GIMMICKS.md) | Faire méga-évoluer un dresseur : `battle.gimmicks`, la gemme et l'objet de repli |
+| [GIMMICKS.md](GIMMICKS.md) | Méga-évolution et téracristal : `battle.gimmicks`, la gemme, le type Tera |
 
 Un pack d'exemple couvrant chaque option vit dans
 [`examples/cobblemonrlm/`](../examples/cobblemonrlm) : un seul dossier qui fait à la fois
@@ -43,7 +43,7 @@ Phone sous leur propre onglet, à côté de ceux de tes packs.
 | Déclencher un advancement | [Advancements](DATAPACK.md#advancements) |
 | Rendre un dresseur appelable | [Le bloc `location`](SPAWNING.md#le-bloc-location) |
 | Choisir un niveau d'IA | [Quel niveau choisir](DIFFICULTE.md#quel-niveau-choisir) |
-| Faire méga-évoluer un dresseur | [Les gimmicks de combat](GIMMICKS.md) |
+| Faire méga-évoluer ou téracristalliser un dresseur | [Les gimmicks de combat](GIMMICKS.md) |
 | Comprendre une correction de l'IA en jeu | [Vérifier en jeu](DIFFICULTE.md#vérifier-en-jeu) |
 | Traduire mes dresseurs | [Traduire les textes](DATAPACK.md#traduire-les-textes) |
 | Comprendre pourquoi mon pack ne charge pas | [Erreurs fréquentes](DATAPACK.md#erreurs-fréquentes) |

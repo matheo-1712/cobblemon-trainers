@@ -242,7 +242,11 @@ layer has no access to.
 
 - **The replacement sent out after a KO.** That choice is left entirely to Cobblemon.
 - **A forced move**: Encore, Outrage, an item locking the choice. There is nothing to decide.
-- **Gimmick mechanics** (Terastallization and the like) that the layer cannot evaluate.
+- **Battle gimmicks** (Mega Evolution, Terastallization). They do not depend on `difficulty`
+  at all: the pack declares them, the AI does not have a bright idea. See
+  [GIMMICKS.md](GIMMICKS.md). A Terastallization still reads better at `difficulty: 5` - one of
+  its two triggers looks at the move already chosen, and a trainer that chooses badly is rarely
+  holding the right one.
 - **The trainer's level, stats and team.** `difficulty` is how well they play, not how strong
   the team is. A level 100 trainer at `difficulty: 0` is still easy, a level 20 trainer at
   `difficulty: 5` is still weak.

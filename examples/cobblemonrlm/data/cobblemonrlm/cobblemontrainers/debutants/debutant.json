@@ -8,13 +8,7 @@
     "biome": "#minecraft:is_forest"
   },
   "team": [
-    "Rattata (M)",
-    "Level: 8",
-    "- Tackle",
-    "- Tail Whip",
-    "Pidgey (F)",
-    "Level: 7",
-    "- Gust",
-    "- Sand Attack"
+    "Rattata (M)\nLevel: 8\n- Tackle\n- Tail Whip",
+    "Pidgey (F)\nLevel: 7\n- Gust\n- Sand Attack"
   ]
 }

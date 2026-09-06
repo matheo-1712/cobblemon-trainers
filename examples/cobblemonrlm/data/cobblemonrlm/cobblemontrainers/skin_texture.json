@@ -15,19 +15,7 @@
     "lose": "trainer.cobblemonrlm.skin_texture.lose"
   },
   "team": [
-    "Sudowoodo (M) @ Sitrus Berry",
-    "Ability: Rock Head",
-    "Level: 34",
-    "Adamant Nature",
-    "- Rock Slide",
-    "- Wood Hammer",
-    "- Sucker Punch",
-    "Noctowl (F) @ Eviolite",
-    "Ability: Insomnia",
-    "Level: 35",
-    "Modest Nature",
-    "- Air Slash",
-    "- Hypnosis",
-    "- Extrasensory"
+    "Sudowoodo (M) @ Sitrus Berry\nAbility: Rock Head\nLevel: 34\nAdamant Nature\n- Rock Slide\n- Wood Hammer\n- Sucker Punch",
+    "Noctowl (F) @ Eviolite\nAbility: Insomnia\nLevel: 35\nModest Nature\n- Air Slash\n- Hypnosis\n- Extrasensory"
   ]
 }
