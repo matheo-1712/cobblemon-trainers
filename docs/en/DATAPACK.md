@@ -186,8 +186,8 @@ the Pokémon, when the trainer uses them, and what has to be installed for mega 
 
 A `doubles` battle needs at least 2 Pokémon **on each side**, a `triples` at least 3. If either
 team is too short, Cobblemon refuses the battle and says so in the chat. On the player's side
-those first 2 or 3 also have to be able to fight: the mod refuses rather than let the battle
-lock up.
+you also need 2 or 3 Pokémon **able to fight**, wherever they sit in the team: the mod says so
+in the dialogue box, before the battle, rather than let it lock up.
 
 ### `messages`
 
@@ -439,6 +439,7 @@ Lines that are recognised, on top of the first one:
 | Ability | `Ability: Static` |
 | Level | `Level: 88` |
 | Shiny | `Shiny: Yes` |
+| Alpha | `Alpha: Yes` - bigger, Alpha mark; moves and stats untouched |
 | Tera type | `Tera Type: Fairy` - see [GIMMICKS.md](GIMMICKS.md) |
 | Gender | `Gender: M` |
 | EVs / IVs | `EVs: 252 SpA / 4 SpD / 252 Spe` |

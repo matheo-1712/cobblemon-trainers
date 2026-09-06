@@ -5,7 +5,7 @@ import com.cobblemon.mod.common.battles.ShowdownMoveset
 /**
  * What a trainer's `battle.gimmicks` means, and whether the battle is offering one right now.
  *
- * Cobblemon 1.7.3 already carries the whole mechanism: a move answer holds a `gimmickID`
+ * Cobblemon already carries the whole mechanism: a move answer holds a `gimmickID`
  * alongside its move and its target, and the moveset the AI is handed says which gimmicks the
  * simulator is offering this turn - `canMegaEvo` for Mega Evolution, `canTerastallize` for
  * Terastallization. Answering `mega` next to a move is all a trainer has to do; Showdown resolves

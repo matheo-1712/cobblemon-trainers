@@ -23,9 +23,9 @@ import java.util.Locale
  * Known limitation: Showdown writes a form as a suffix of the species name (`Raichu-Alola`),
  * which is not translated here - forms are declared with an `Aspects:` line instead.
  *
- * Two lines are ours rather than Showdown's, both written in the shape of theirs: `Aspects:`
- * for forms, and `Fallback Item:` for what a Pokémon holds when the mod providing its real item
- * is not installed.
+ * Three lines are ours rather than Showdown's, all written in the shape of theirs: `Aspects:`
+ * for forms, `Fallback Item:` for what a Pokémon holds when the mod providing its real item
+ * is not installed, and `Alpha:` for a Cobblemon 1.8 Alpha.
  */
 object ShowdownTeamParser {
 
@@ -42,6 +42,14 @@ object ShowdownTeamParser {
      * of the Showdown format - a line of ours, in the shape of theirs, like `Aspects:`.
      */
     private const val FALLBACK_ITEM_LINE = "Fallback Item:"
+
+    /**
+     * The line a Pokémon writes to be an Alpha. Ours too, and it rides in the property string
+     * rather than in `Aspects:` on purpose: `alpha` is a property of Cobblemon's own, declared by
+     * no species feature, so [appendAspect] would turn it away.
+     */
+    private const val ALPHA_LINE = "Alpha:"
+
     private val STAT_NAMES = mapOf(
         "hp" to "hp",
         "atk" to "attack",
@@ -224,9 +232,11 @@ object ShowdownTeamParser {
                     appendTeraType(builder, line.substringAfter(':'))
 
                 line.startsWith("Shiny:", ignoreCase = true) -> {
-                    if (line.substringAfter(':').trim().equals("yes", ignoreCase = true)) {
-                        builder.append(" shiny=yes")
-                    }
+                    if (readFlag(line, "Shiny:") == true) builder.append(" shiny=yes")
+                }
+
+                line.startsWith(ALPHA_LINE, ignoreCase = true) -> {
+                    if (readFlag(line, ALPHA_LINE) == true) builder.append(" alpha=yes")
                 }
 
                 line.startsWith("EVs:", ignoreCase = true) ->
@@ -293,6 +303,25 @@ object ShowdownTeamParser {
 
         builder.append(" tera_type=${resolved.id}")
     }
+
+    /**
+     * A yes/no line, or null when it says neither - and that is warned about rather than passed
+     * over in silence.
+     *
+     * Showdown only ever writes `Yes`, so a `Shiny:` line coming out of the site cannot say
+     * anything else. `Alpha:` is written by hand, by someone who has no such export to copy, and
+     * a flag that does nothing without a word in the log is the failure this file spends most of
+     * its length avoiding. `true` is accepted next to `yes` for the same reason.
+     */
+    private fun readFlag(line: String, label: String): Boolean? =
+        when (val value = line.substringAfter(':').trim().lowercase(Locale.ROOT)) {
+            "yes", "true" -> true
+            "no", "false" -> false
+            else -> {
+                LOGGER.warn("Ignoring '{} {}': expected yes or no", label, value)
+                null
+            }
+        }
 
     private fun splitAspects(raw: String): List<String> =
         raw.split(ASPECT_SEPARATOR).map { normalizeAspect(it) }.filter { it.isNotEmpty() }

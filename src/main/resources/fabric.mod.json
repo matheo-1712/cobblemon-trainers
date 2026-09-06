@@ -34,6 +34,6 @@
 		"java": ">=21",
 		"fabric-api": "*",
 		"fabric-language-kotlin": "*",
-		"cobblemon": ">=1.7.3"
+		"cobblemon": ">=1.8.0"
 	}
 }

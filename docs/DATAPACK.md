@@ -189,8 +189,9 @@ donner au Pokémon, quand le dresseur s'en sert, et ce qu'il faut installer pour
 
 Un `doubles` exige au moins 2 Pokémon **de chaque côté**, un `triples` au moins 3. Si l'une
 des équipes est trop courte, Cobblemon refuse le combat et l'explique dans le chat. Côté
-joueur, ces 2 ou 3 premiers Pokémon doivent en plus pouvoir combattre : le mod refuse plutôt
-que de laisser le combat se bloquer.
+joueur, il faut en plus 2 ou 3 Pokémon **en état de combattre**, où qu'ils soient placés dans
+l'équipe : le mod le dit dans la boîte de dialogue, avant le combat, plutôt que de laisser
+celui-ci se bloquer.
 
 ### `messages`
 
@@ -468,6 +469,7 @@ Lignes reconnues, en plus de la première :
 | Talent | `Ability: Static` |
 | Niveau | `Level: 88` |
 | Chromatique | `Shiny: Yes` |
+| Alpha | `Alpha: Yes` - plus grand, marque Alpha ; capacités et stats inchangées |
 | Type Tera | `Tera Type: Fairy` - voir [GIMMICKS.md](GIMMICKS.md) |
 | Genre | `Gender: M` |
 | EV / IV | `EVs: 252 SpA / 4 SpD / 252 Spe` |

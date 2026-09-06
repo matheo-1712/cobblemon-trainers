@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <sub><strong>Compatible with</strong> · Minecraft 1.21.1 · Fabric · Cobblemon 1.7.3 · Java 21 · needed on client <em>and</em> server</sub>
+  <sub><strong>Compatible with</strong> · Minecraft 1.21.1 · Fabric · Cobblemon 1.8.0 · Java 21 · needed on client <em>and</em> server</sub>
 </p>
 
 ## What makes it different
@@ -214,8 +214,7 @@ Developed by **Mathéo** ([matheo-1712](https://github.com/matheo-1712)).
 
 ## Trainer packs to play
 
-Nothing here yet - this is where packs built with the mod will be listed, so you have trainers
-to fight without writing any. Made one you want listed? Open an issue on GitHub with the link.
+[Cobblemon : Mega Trainers](https://modrinth.com/datapack/cobblemon-mega-trainers) → A Cobblemon Trainers datapack featuring one trainer per Mega Evolution from Cobblemon: Mega Showdown by [matheo-1712](https://github.com/matheo-1712)
 
 ---
 
