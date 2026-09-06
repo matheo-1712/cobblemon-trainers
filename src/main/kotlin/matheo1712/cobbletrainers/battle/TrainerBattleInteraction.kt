@@ -151,34 +151,42 @@ class TrainerBattleInteraction : NPCInteractConfiguration {
 
         /**
          * What the player's party alone is turned down with, or null when it can open the
-         * battle. Both refusals are about the same blind spot in Cobblemon.
+         * battle.
          *
-         * A wiped party is the first. Cobblemon counts the party without ever asking what is
-         * still standing in it: `pvn` filters on health for the trainer's side only, so a wiped
-         * player would hand Showdown a team nobody can enter from. The rule has no exception -
-         * not even a level-adjusting format, which heals the copies it battles with and would
-         * hand a wiped player a full team for free. The empty party is the one case left to
-         * Cobblemon, which refuses it too and says it better than we would.
+         * Cobblemon 1.8 asks the same question inside `pvn`, which now refuses a side whose
+         * Pokémon still standing number fewer than the format's slots - so this is no longer the
+         * only thing between a wiped party and a locked battle. It is still worth asking here,
+         * and earlier: asked before anything starts, a refusal costs nothing - no healed party,
+         * no music, no battle to close again - and the dialogue box shows it in place of the
+         * greeting rather than dropping a chat error on a player who has just said yes.
          *
-         * A fainted Pokémon among the opening slots is the second, and it only ever shows up in
-         * doubles and triples. `leadingPokemon` fills the first slot and no more (see
-         * [TrainerLead]), and a player's party is theirs to arrange, so a format that sends two
-         * or three out at once is the one case the mod can see coming and not fix. Turning it
-         * down says which Pokémon to heal or move; letting it through locks the battle.
+         * Two rules, and the same count answers both. Counting rather than inspecting the
+         * opening slots is deliberate: sorting is what Cobblemon changed in 1.8, counting is
+         * what it decides on, and a count cannot drift when the order moves again.
+         *
+         * The wiped party is the first, and it has no exception - not even a level-adjusting
+         * format, which heals the copies it battles with and would hand a wiped player a full
+         * team for free. That divergence from Cobblemon is the point, and it has been written
+         * and removed once already.
+         *
+         * Too few standing for a doubles or triples line-up is the second, and there our rule
+         * and Cobblemon's agree exactly. The empty party, and any party shorter than the slots
+         * it has to fill, is left to Cobblemon: it refuses those too and names the count.
          */
         private fun partyRefusal(player: ServerPlayer, format: BattleFormat): MutableComponent? {
             val party = player.party()
-            if (party.any() && party.none { !it.isFainted() }) {
+            val standing = party.count { !it.isFainted() }
+
+            if (party.any() && standing == 0) {
                 return CobblemonTrainers.lang("chat.no_healthy_pokemon")
             }
 
             val slots = format.battleType.slotsPerActor
-            // A level-adjusting format heals the copies it battles with: nothing is fainted by
-            // the time Showdown reads the team.
+            // A level-adjusting format heals what it battles with before Cobblemon counts it, so
+            // nothing is fainted by the time either of us asks.
             if (slots < 2 || format.adjustLevel > 0) return null
 
-            val opening = TrainerLead.teamOrder(player, format).take(slots)
-            if (opening.size < slots || opening.none { it.isFainted() }) return null
+            if (standing >= slots || party.count() < slots) return null
 
             return CobblemonTrainers.lang("chat.fainted_in_lead", slots)
         }
@@ -199,15 +207,12 @@ class TrainerBattleInteraction : NPCInteractConfiguration {
                 return
             }
 
-            // The trainer has no `leadingPokemon` of its own: its party is put in order instead.
-            TrainerLead.orderTeam(npc)
-
             BattleBuilder.pvn(
                 player = player,
                 npcEntity = npc,
                 battleFormat = format,
-                // Whoever the player has selected opens the battle, and never someone who
-                // cannot fight - Cobblemon's own slot-one default does not check. See TrainerLead.
+                // Whoever the player has selected opens the battle: Cobblemon sorts the fainted
+                // out of the way but has no idea which Pokémon the player meant. See TrainerLead.
                 leadingPokemon = TrainerLead.leadFor(player, format),
                 // A level-adjusting format must battle on copies. See `LVL_50_SINGLES` above.
                 cloneParties = format.adjustLevel > 0

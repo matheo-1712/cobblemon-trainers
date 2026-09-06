@@ -55,7 +55,7 @@ jusque-là.
 | Minecraft | 1.21.1 |
 | Fabric Loader | ≥ 0.17.2 |
 | Java | 21 (exactement - Cobblemon refuse les autres) |
-| Cobblemon | ≥ 1.7.3 |
+| Cobblemon | ≥ 1.8.0 |
 | Fabric API | requis |
 | Fabric Language Kotlin | requis |
 
@@ -298,6 +298,8 @@ retire de la liste avec `"listed": false`.
 
 Une forme - régionale, méga, fakemon d'un autre pack - s'obtient avec une ligne `Aspects:`,
 qui reprend la syntaxe de `/pokespawn` : `"Aspects: rlm, poison"` pour un Haxorus RLM Poison.
+Une ligne `Alpha: Yes` en fait un **Alpha** de Cobblemon 1.8 - plus grand et marqué, avec les
+capacités et les stats que le pack lui a écrites.
 
 Un dresseur ne se promène jamais, mais il **tourne la tête vers le joueur qui s'approche** -
 à huit blocs, comme un villageois. Rien à régler : c'est le cas de tous les dresseurs, qu'ils

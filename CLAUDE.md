@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Projet
 
 Mod Fabric pour Minecraft 1.21.1 qui ajoute des dresseurs Pokémon configurables à
-Cobblemon 1.7.3. Code principal en Kotlin (`matheo1712.cobbletrainers`), les mixins en Java.
+Cobblemon 1.8.0. Code principal en Kotlin (`matheo1712.cobbletrainers`), les mixins en Java.
 L'essentiel du travail se fait côté serveur logique - les dresseurs viennent de datapacks et
 combattent là-bas - mais **le mod a un côté client, requis, et c'est un endroit légitime pour
 ce qui appartient au client** : un écran, un dessin, une instance sonore, un réglage que seul
@@ -80,12 +80,36 @@ hérite du JDK de Gradle et le loader refuse de démarrer. Le CI utilise le mêm
 
 Toutes les versions sont dans `gradle.properties`, jamais en dur dans `build.gradle.kts`.
 Cobblemon et Architectury sont tirés du **Maven Modrinth** et référencés par **ID de
-version Modrinth** (`cobblemon_version=kF7CvxTo`), pas par numéro sémantique : pour
+version Modrinth** (`cobblemon_version=YgmyyFcs`), pas par numéro sémantique : pour
 changer de version, il faut récupérer le nouvel ID sur Modrinth.
 
-Mega Showdown, `accessories` et `owo` sont là aussi, dans la configuration `devMods` : rien ne
-compile contre eux, ils ne servent qu'au jeu de dev (voir « Les gimmicks de combat »). Ils ne
-sont pas non plus déclarés en dépendance Modrinth à la publication - le mod tourne sans.
+Mega Showdown, `accessories`, `owo` et `architectury` sont là aussi, dans la configuration
+`devMods` : rien ne compile contre eux, ils ne servent qu'au jeu de dev (voir « Les gimmicks de
+combat »). Ils ne sont pas non plus déclarés en dépendance Modrinth à la publication - le mod
+tourne sans. **Architectury n'est plus une dépendance de compilation** : Cobblemon 1.8 ne le
+mentionne ni dans son `fabric.mod.json` ni dans une seule de ses classes, et le mod n'en a
+jamais eu besoin. Il reste parce que Mega Showdown, lui, le réclame en dur.
+
+`copyDevMods` **supprime les jars périmés** avant de copier. Un `Copy` n'enlève jamais rien, et
+ces jars portent leur ID de version Modrinth dans leur nom : bumper Mega Showdown laissait
+l'ancien à côté du neuf, et Fabric s'arrête sur deux exemplaires du même mod. Le nettoyage ne
+vise que les noms de module de `devMods`, donc un mod que l'auteur a posé lui-même dans
+`run/mods` n'est pas touché.
+
+`cobblemonLibs` **dépaquette les bibliothèques imbriquées dans le jar de Cobblemon** et les pose
+sur le classpath de run via `localRuntime`. C'est la même faille que ci-dessus, mais côté
+Cobblemon : 1.7.3 shadait GraalJS dans son propre jar, sous `com.cobblemon.mod.relocations`, donc
+il arrivait avec le mod ; 1.8 le livre en JiJ sous ses vrais noms (`graal-sdk`, `js`,
+`truffle-api`, `regex`, `icu4j`, les drivers Mongo), et **Loom met les classes d'un mod sur le
+classpath de dev mais pas les jars imbriqués dedans**. Fabric les déballe chez un joueur, donc
+seul le jeu de dev en manque : il démarre normalement, puis le thread Showdown meurt sur
+`NoClassDefFoundError: org/graalvm/polyglot/HostAccess` et plus aucun combat n'est possible.
+Symptôme trompeur - le jeu se lance, la faute n'apparaît qu'à l'ouverture du service Showdown.
+
+Deux choix à ne pas défaire : les jars sont **tirés de l'archive** plutôt que nommés par
+coordonnées Maven, pour qu'aucune seconde liste de versions ne dérive de `cobblemon_version` ; et
+`fabric-language-kotlin` est **exclu** du lot, puisqu'il est déjà une vraie dépendance, en plus
+récent, et qu'un second exemplaire sur le classpath serait le problème plutôt que le remède.
 
 Un ID Modrinth ne dit rien de la version de jeu ni du loader qu'il cible - une erreur ici
 passe la résolution Gradle et casse le build plus loin. Symptôme rencontré : Loom échoue en
@@ -131,8 +155,8 @@ messages, musique et récompenses de combat.
   dresseur, et sa fin de vie. Même section.
 - **`TrainerGaze`** - donne à chaque dresseur chargé un `LookAtPlayerGoal`, pour qu'il tourne la
   tête vers un joueur qui s'approche. Voir « Le regard des dresseurs ».
-- **`battle.TrainerLead`** - qui ouvre le combat, des deux côtés, et la mémoire par joueur de
-  ce que son client a annoncé. Voir « Le Pokémon qui ouvre le combat ».
+- **`battle.TrainerLead`** - lequel des Pokémon du joueur ouvre le combat, et la mémoire par
+  joueur de ce que son client a annoncé. Voir « Le Pokémon qui ouvre le combat ».
 - **`dialogue.TrainerDialogue`** - tout ce qu'un dresseur dit, monté en `Dialogue` Cobblemon.
   Voir « Les dialogues ».
 - **`advancement.TrainerDefeatedTrigger`** - le critère `cobblemon-trainers:trainer_defeated`.
@@ -344,7 +368,7 @@ serveur, lisant les lang depuis le datapack, a existé puis été retirée volon
 faisait deux chemins concurrents pour le même résultat, et ne savait de toute façon pas
 traduire le nom flottant par joueur.
 
-### Contraintes de l'API NPC de Cobblemon 1.7.3
+### Contraintes de l'API NPC de Cobblemon
 
 Ces points ne se devinent pas depuis notre code seul et ont chacun causé un bug :
 
@@ -369,14 +393,20 @@ Ces points ne se devinent pas depuis notre code seul et ont chacun causé un bug
   duplication de l'issue #22. `TrainerBattleInteraction` pose donc `cloneParties` lui-même.
   L'expérience et les EV ne changent pas : Cobblemon les attribue sur
   `BattlePokemon.originalPokemon`, qui reste le vrai Pokémon.
-- **`pvn` ne regarde pas la santé de l'équipe du joueur.** Il filtre bien sur les PV du côté du
-  dresseur, mais du côté joueur il ne compte que la taille de l'équipe : un joueur K.O. entrait
-  donc en combat avec une équipe où personne ne peut être envoyé (issue #25).
-  `TrainerBattleInteraction` refuse avant `pvn`, **sans exception** - un format qui ajuste les
-  niveaux soigne pourtant les copies avec lesquelles il combat, mais laisser passer une équipe
-  K.O. là revenait à offrir une équipe pleine à qui n'en a plus. L'exemption a été écrite puis
-  retirée, ne pas la remettre. Seule l'équipe vide est laissée à Cobblemon, qui la refuse aussi
-  et dont l'erreur le dit mieux.
+- **`pvn` compte désormais les Pokémon debout, des deux côtés.** En 1.7.3 il ne filtrait sur les
+  PV que du côté du dresseur ; côté joueur il ne comptait que la taille de l'équipe, donc un
+  joueur K.O. entrait en combat avec une équipe où personne ne peut être envoyé (issue #25).
+  Cobblemon 1.8 a fermé ça : chaque camp est refusé par un `insufficientPokemon` dès que ses
+  Pokémon valides sont moins nombreux que les places du format, et le compte est pris **après**
+  le soin d'un format qui ajuste les niveaux. `TrainerBattleInteraction.partyRefusal` reste
+  quand même, et reste **avant** `pvn`, pour deux raisons : un refus posé là ne coûte rien - ni
+  équipe soignée, ni musique, ni combat à refermer - et la boîte de dialogue le montre à la
+  place du `greeting` au lieu de lâcher une erreur en chat à un joueur qui vient de dire oui.
+  Une seule divergence est voulue, l'équipe entièrement K.O. refusée **sans exception** - un
+  format qui ajuste les niveaux soigne pourtant ses copies, mais laisser passer là revenait à
+  offrir une équipe pleine à qui n'en a plus. L'exemption a été écrite puis retirée, ne pas la
+  remettre. L'équipe vide, et toute équipe plus courte que les places à remplir, sont laissées à
+  Cobblemon, qui les refuse aussi et dont l'erreur nomme le compte.
 - **Un nom Cobblemon ne garde que `[a-z0-9]`.** Espèces, capacités, talents et natures sont
   nommés d'après leur nom affiché débarrassé de tout le reste, accents compris : `uturn`,
   `willowisp`, `kingsshield`, `hooh`, `porygonz`, `mrmime`, `farfetchd`, `flabebe`. D'où
@@ -411,7 +441,7 @@ Ces points ne se devinent pas depuis notre code seul et ont chacun causé un bug
   jamais visible en combat. `TrainerSpawner.applyTeam` remplit donc lui-même le
   `NPCPartyStore` - le reste de `provide()` n'est que le niveau par défaut et la création du
   store.
-- **Il n'existe pas de classe `cobblemon:humanoid`.** Cobblemon 1.7.3 ne livre que
+- **Il n'existe pas de classe `cobblemon:humanoid`.** Cobblemon ne livre toujours que
   `ai_test`, `kitchen_sink`, `sacchi` et `standard`.
 - **`resourceIdentifier` pilote le rendu.** Laissé vide, `NPCClasses.reload` le remplace
   par l'ID de la classe - donc `cobblemon-trainers:trainer`, pour lequel aucun asset
@@ -609,8 +639,14 @@ Points à ne pas redécouvrir :
   `ShowdownTeamParser.countPokemon` pour le listing, qui lui n'a besoin que du nombre.
 - **Les modèles sont rendus par `drawProfilePokemon`** (`com.cobblemon.mod.common.client.gui`),
   avec un `FloatingState` par case, jeté quand la sélection change : un état appartient au
-  modèle pour lequel il a été posé. `applyProfileTransform` est laissé à sa valeur par défaut,
-  c'est lui qui met un Wailord et un Joltik à la même échelle utile.
+  modèle pour lequel il a été posé. C'est lui qui met un Wailord et un Joltik à la même échelle
+  utile, et **l'appel ne nomme que les paramètres qu'il veut** - ce qui est la seule raison pour
+  laquelle le passage à Cobblemon 1.8 n'a rien cassé ici. Sa signature a bougé : le booléen
+  `applyProfileTransform` est devenu un `ProfileTransformType` (`PROFILE`, `NONE`, `POKEDEX`,
+  `SUMMARY`, pour les `profilePokedexScale` et compagnie des posers), et un `int` de lumière a
+  été ajouté en fin de liste. Les deux sont laissés à leur défaut, et `PROFILE` est exactement
+  ce que valait l'ancien `true` - vérifié dans le bytecode des deux versions. Passer l'un des
+  deux positionnellement casserait au prochain paramètre ajouté.
 - **La taille tient en deux facteurs, pas un.** Le `scale` de `drawProfilePokemon` est un
   `matrixStack.scale` brut : seul, il rend un Pokémon haut de quelques pixels. Cobblemon met un
   `scale(2.5f, 2.5f, 1f)` sur la pose *avant* l'appel et passe `4.5f` - c'est ce couple qui est
@@ -759,12 +795,18 @@ l'équipe. Personne ne le remplissait, donc un combat partait toujours sur le pr
 `TrainerLead` répond à sa place, en trois temps : le slot sélectionné dans l'overlay, sinon le
 Pokémon sorti, sinon le premier de l'équipe qui tienne debout.
 
-**Une règle tient les deux côtés du combat : un Pokémon K.O. n'ouvre jamais un combat.** Rien
-dans Cobblemon ne la fait respecter - `toBattleTeam` sert l'équipe dans l'ordre des slots sans
-jamais lire une barre de vie -, et Showdown répond à un combat qu'il ne peut pas ouvrir par
-`Can't switch: You can't switch to a fainted Pokémon`, une erreur que personne ne reçoit : le
-camp qui l'a envoyée ne peut plus jouer du tout. C'est le soft lock de l'issue #32, et il
-frappait le joueur et le dresseur pour la même raison.
+**Une règle tient les deux côtés du combat : un Pokémon K.O. n'ouvre jamais un combat.** En
+1.7.3, rien dans Cobblemon ne la faisait respecter - `toBattleTeam` servait l'équipe dans
+l'ordre des slots sans jamais lire une barre de vie -, et Showdown répondait à un combat qu'il
+ne peut pas ouvrir par `Can't switch: You can't switch to a fainted Pokémon`, une erreur que
+personne ne reçoit : le camp qui l'a envoyée ne peut plus jouer du tout. C'était le soft lock de
+l'issue #32, et il frappait le joueur et le dresseur pour la même raison.
+
+**Cobblemon 1.8 a fermé ce trou lui-même.** `toBattleTeam` se termine maintenant sur un
+`sortedBy { it.health <= 0 }` stable, appliqué après le soin et après la remontée du
+`leadingPokemon` : les K.O. passent derrière tous les valides, des deux côtés du combat. Ce qui
+reste au mod est la moitié que Cobblemon ne peut pas connaître - **lequel** des Pokémon valides
+du joueur il voulait envoyer.
 
 Points à ne pas redécouvrir :
 
@@ -780,28 +822,29 @@ Points à ne pas redécouvrir :
 - **Ce que le client annonce n'est jamais cru.** L'UUID est retrouvé dans la vraie équipe au
   moment du combat : un Pokémon qui n'est pas au joueur ne trouve rien et le repli joue. Le
   paquet est un indice, pas une instruction.
-- **Un Pokémon K.O. n'est jamais choisi**, et le repli continue. Ce n'est pas la même règle que
-  le refus de combat : celui-ci porte sur l'équipe entière et ne souffre aucune exception, alors
-  qu'ici un format qui ajuste les niveaux soigne l'équipe, donc une sélection K.O. y est honorée
-  au lieu d'être sautée. Le refus garantit qu'il reste toujours quelqu'un debout à faire entrer.
-- **Rendre `null` ne veut plus dire « garde le défaut de Cobblemon ».** Ce défaut *est* le
-  premier slot quel que soit son état : c'était lui le soft lock. Le dernier repli nomme donc le
-  premier Pokémon en état de combattre - ce qui redonne le slot un quand l'équipe est en ordre,
-  et le corrige sinon. `null` ne reste que pour l'équipe sans personne à envoyer, déjà refusée
-  par `TrainerBattleInteraction.partyRefusal`, ou vide, ce que Cobblemon dit mieux que nous.
-- **Le dresseur n'a pas de `leadingPokemon`**, donc `TrainerLead.orderTeam` range son équipe
-  elle-même : les K.O. passent derrière. Un dresseur en `battle.healParty: false` garde ses
-  dégâts d'un combat à l'autre, donc celui qui a perdu son premier Pokémon rouvrait le combat
-  suivant avec lui. Réécrire ce store est permis là où ça ne l'est pas côté joueur : il est à
-  nous, monté à l'apparition, et aucun joueur ne l'a arrangé. Un dresseur qui soigne est laissé
-  tranquille - `toBattleTeam` soigne son équipe juste après, et le réordonner changerait en
-  douce le lead choisi par le pack.
-- **Le cas doubles/triples est refusé, pas corrigé.** `leadingPokemon` ne remplit que la
-  première place, et l'équipe d'un joueur lui appartient : un format qui envoie deux ou trois
-  Pokémon d'un coup est le seul cas que le mod voit venir sans pouvoir le réparer.
-  `partyRefusal` regarde les places d'ouverture que `TrainerLead.teamOrder` reconstitue - la
-  même liste que `toBattleTeam` - et dit quoi soigner ou remonter. Un refus lisible vaut mieux
-  qu'un combat bloqué.
+- **Un Pokémon K.O. n'est jamais choisi**, et le repli continue. Le tri de Cobblemon le
+  repousserait de toute façon, mais choisir directement quelqu'un debout évite d'annoncer un
+  lead que le tri va contredire. L'exception est un format qui ajuste les niveaux : il soigne
+  l'équipe, donc une sélection K.O. y est honorée au lieu d'être sautée.
+- **Le dernier repli nomme le premier Pokémon en état de combattre.** Rendre `null` voulait dire
+  « garde le défaut de Cobblemon », et ce défaut *était* le premier slot quel que soit son état.
+  `null` ne reste que pour l'équipe sans personne à envoyer, déjà refusée par
+  `TrainerBattleInteraction.partyRefusal`, ou vide, ce que Cobblemon dit mieux que nous.
+- **`orderTeam` a été retiré avec le passage à 1.8.** Il réordonnait le `NPCPartyStore` du
+  dresseur sur place, parce que `pvn` n'offre pas de `leadingPokemon` pour ce camp et qu'un
+  dresseur en `battle.healParty: false` garde ses dégâts d'un combat à l'autre. Le tri de
+  Cobblemon couvre ce cas, et le couvre sans écrire dans un store qui survit au combat. Ne pas
+  le remettre.
+- **`teamOrder` est parti avec lui.** Il reconstituait la ligne d'ouverture pour que
+  `partyRefusal` la regarde, et 1.8 en a fait la mauvaise forme : `pvn` refuse maintenant un
+  camp dont les Pokémon debout sont moins nombreux que les places du format, donc ce qui décide
+  est un **compte** - et un compte se moque de l'ordre de la liste. `partyRefusal` compte donc
+  lui aussi, ce qui ne peut plus diverger si l'ordre rebouge.
+- **Le cas doubles/triples n'est plus le nôtre à réparer, seulement à annoncer tôt.**
+  `leadingPokemon` ne remplit toujours que la première place, mais le tri remplit le reste :
+  une équipe qui a assez de Pokémon debout s'ouvre désormais quelles que soient les places des
+  K.O. Il ne reste à refuser que le vrai manque, et `partyRefusal` le dit dans la boîte de
+  dialogue avant que le joueur accepte, là où Cobblemon le dirait en chat après.
 - **La sélection est de la session, pas du joueur.** Elle est oubliée à la déconnexion des deux
   côtés, plutôt que de survivre à une équipe réorganisée entre-temps.
 - **Le client compare avant de parler.** Il n'existe aucun événement sur ce champ, d'où le tick ;
@@ -974,7 +1017,11 @@ propose autre chose. Trois défauts sont couverts, tous constatés en jeu à ski
   probabilité de `0, 0, 0, 0.2, 0.6, 1.0` pour les skills 0 à 5 - donc **toujours** à 5 - et
   `shouldSwitchOut` n'a aucune mémoire du tour précédent. Un mauvais matchup fuit vers un autre
   mauvais matchup, chaque tour, pendant que le joueur tape gratuitement. Les skills bas ne sont
-  pas plus malins : c'est le dé qui casse la boucle.
+  pas plus malins : c'est le dé qui casse la boucle. Cobblemon 1.8 a resserré `shouldSwitchOut`
+  - il rend `false` au premier tour d'un Pokémon, et deux de ses seuils ont durci - mais la
+  cause est intacte : la fonction ne sait toujours rien du tour précédent, et
+  `checkSwitchOutSkill` garde exactement la même table de probabilités. La boucle est plus rare,
+  pas fermée.
 - **Le soin sur une règle plate.** Cobblemon joue le **premier** coup de soin de la liste dès que
   les PV passent sous la moitié, sans jamais demander ce que l'adversaire rend au tour suivant,
   ni si un KO était en main, ni combien le coup restaure vraiment.
@@ -1104,9 +1151,14 @@ Points à ne pas redécouvrir :
   se voyait pas avant que la couche ne garde une mémoire entre les tours. `DecisionKey` rend la
   réponse déjà donnée tant qu'elle reste valide. Sans ça, la seconde passe lisait un `struck`
   que la première venait de remplir : une Frimousse intacte y paraissait cassée.
-- **Rien ne doit remonter de `choose()`.** Un combat attend cette réponse : une exception y
-  laisserait le joueur enfermé dans un combat où personne ne peut jouer. D'où le `try/catch`, qui
-  rend la décision de Cobblemon telle quelle.
+- **Rien de *nous* ne doit remonter de `choose()`.** Un combat attend cette réponse : une
+  exception y laisserait le joueur enfermé dans un combat où personne ne peut jouer. D'où le
+  `try/catch`, qui rend la décision de Cobblemon telle quelle. Il entoure nos corrections
+  seulement : l'appel au délégué est **au-dessus**, délibérément. Cobblemon 1.8 y a ajouté un
+  chemin qui lève - plus de coup jouable et pas de Lutte injectée, et c'est une
+  `IllegalActionChoiceException` -, et cette exception est la sienne, à traiter comme si notre
+  couche n'était pas là. L'avaler rendrait à sa place une décision qu'il vient de déclarer
+  impossible.
 - **Chaque substitution est loguée en `debug` avec sa raison**, et envoyée en chat aux joueurs
   qui ont activé `/cobblemontrainers debugai`. Sans ça un seuil est intuable : un changement
   refusé et un changement que personne n'a proposé se ressemblent exactement depuis l'autre côté
@@ -1119,7 +1171,7 @@ Un dresseur qui déclare `battle.gimmicks` méga-évolue ou téracristallise en 
 `BattleTera` le moment. Toute la doc joueur est dans `docs/GIMMICKS.md`, jamais dans
 `docs/DATAPACK.md`, qui n'en garde qu'une ligne de tableau et un renvoi.
 
-**Cobblemon 1.7.3 fait déjà tout.** `MoveActionResponse` porte un `gimmickID` à côté de son coup
+**Cobblemon fait déjà tout.** `MoveActionResponse` porte un `gimmickID` à côté de son coup
 et de sa cible, et le `ShowdownMoveset` que reçoit `choose()` dit ce que le simulateur offre ce
 tour-ci - `canMegaEvo`, un booléen, et `canTerastallize`, une **`String?`** qui porte le type
 Tera offert. Répondre `mega` ou `terastal` à côté du coup est tout ce qu'il y a à faire.
@@ -1219,6 +1271,30 @@ dans l'ordre écrit. La règle ne connaît pas les gemmes : c'est la réponse g�
 qu'un mod absent ne fournit pas, et elle évite qu'un Pokémon prévu avec un objet se batte les
 mains vides. Toutes les raisons de refus sont loguées dans `resolveItem`, une par cas.
 
+### Les Pokémon Alpha
+
+La ligne `Alpha: Yes` d'une équipe fait de ce Pokémon un Alpha de Cobblemon 1.8. Elle est à
+nous, écrite dans la forme de celles de Showdown comme `Aspects:` et `Fallback Item:`.
+
+Points à ne pas redécouvrir :
+
+- **`alpha` est une propriété de Cobblemon, pas un aspect.** `PokemonProperties.parse` connaît
+  les clés `alpha` et `is_alpha` et les lit avec le même `parseBooleanProperty` que `shiny`. La
+  ligne passe donc par la chaîne de propriétés ; l'écrire dans `Aspects:` ne marcherait pas,
+  `appendAspect` refusant une clé qu'aucune caractéristique d'espèce ne déclare.
+- **`Pokemon.setAlpha` ne touche ni aux capacités, ni aux stats, ni au niveau.** Il pose le
+  drapeau, échange la marque `alpha`, règle le `scaleModifier` et rappelle `updateAspects()`.
+  L'équipe qu'un pack a écrite lui survit intacte - ce qui compte, parce que le reste de ce que
+  le changelog annonce pour un Alpha (« connaît toujours une capacité de CT », « s'adapte pour
+  être plus fort que ton équipe ») appartient au chemin d'**apparition sauvage**, pas à ce
+  setter. Un Alpha de dresseur est donc plus gros et marqué, rien de plus.
+- **Le Battle Phone le montre sans rien coder.** La fiche d'équipe passe par `create()`, donc
+  l'aspect et l'échelle arrivent avec, comme pour un chromatique ou une forme régionale.
+- **`readFlag` avertit au lieu de laisser tomber.** `Shiny:` sort d'un export Showdown, qui
+  n'écrit jamais que `Yes` ; `Alpha:` s'écrit à la main, sans export à copier, et un drapeau
+  ignoré en silence est exactement ce que le reste du parseur passe sa longueur à éviter. `true`
+  est accepté à côté de `yes` pour la même raison. Les deux lignes partagent le helper.
+
 ### Les dialogues
 
 Un clic droit sur un dresseur n'ouvre plus le combat : il ouvre la boîte de dialogue de
@@ -1300,6 +1376,12 @@ joueur restait enfermé dedans à l'autre bout du monde - le bug #36. `TrainerBa
 transcrit ce `checkFlee` pour nos combats : la distance est le `defaultFleeDistance` de la
 config Cobblemon, celle-là même que `BattleBuilder.pve` donne à un Pokémon sauvage, et elle
 se mesure du dresseur au joueur le plus proche.
+
+**Cobblemon 1.8 n'y a rien changé** : `checkFlee` est identique au bytecode près, et son appel
+dans `tick` est toujours sous le `isPvW`. Le `BattleFleeAttemptEvent` que la version ajoute part
+de `checkFleeAttempt`, qui concerne la fuite d'un combat sauvage, pas la distance - il ne
+remplace pas `TrainerBattleRange`, et s'abonner dessus ne donnerait rien pour un combat de
+dresseur, qui ne l'atteint jamais.
 
 Points à ne pas redécouvrir :
 
