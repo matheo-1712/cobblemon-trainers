@@ -53,9 +53,16 @@ le groupe « Dresseurs ».
 | `cobblemonrlm:debutants/recompense_unique` | Rejouable autant qu'on veut, et **deux récompenses de régimes différents** : le Câble Liaison en `firstWinOnly` ne tombe qu'une fois, les bonbons Exp tombent à chaque victoire |
 | `cobblemonrlm:formes` | Lignes `Aspects:` : un Raichu d'Alola et un Smogogo de Galar (caractéristiques à drapeau, `alolan` / `galarian`), un Motisma-Lavage (caractéristique à choix, `appliance=wash`) |
 | `cobblemonrlm:terastal` | `battle.gimmicks` en `["terastal"]` et des lignes `Tera Type:` - dont un `Stellar`. Le dresseur garde son téracristal jusqu'au tour où il décide quelque chose, voir [GIMMICKS.md](../../docs/GIMMICKS.md) |
+| `cobblemonrlm:zmove` | `battle.gimmicks` en `["zmove"]` et un cristal Z en objet tenu sur chacun : trois cristaux **de type** et un cristal **spécifique** (`Aloraichium Z` sur un Raichu d'Alola, pour sa Tonnerre). Chacun a son `Fallback Item:`, sans quoi ils combattraient les mains vides quand Mega Showdown n'est pas là |
+| `cobblemonrlm:dynamax` | `battle.gimmicks` en `["max"]` - le mot est `max`, pas `dynamax`. **Rien à donner aux Pokémon** : c'est le seul gimmick qui ne demande aucun objet ni aucune ligne d'équipe. Le Corvaillus a un Repos au milieu de ses attaques, pour montrer qu'un tour de statut ne déclenche jamais le dynamax |
 | `cobblemonrlm:polyglotte` | Textes en clés de traduction, fournies par `assets/cobblemonrlm/lang/` - passe ton jeu en anglais puis en français pour voir la différence, nom flottant compris |
 | `cobblemonrlm:champions/jacinthe` | Le cas complet : équipe de six, textes traduits, et `battle.music` pointant sur une piste du pack plutôt que sur celle du mod |
 | `cobblemonrlm:kanto/minimaliste` | JSON réduit au strict minimum : tous les autres champs prennent leur valeur par défaut. Son dossier `kanto/` fait partie de son ID **et** de son affichage |
+
+**Le pack entier se charge sur une installation nue**, mais `zmove` et `dynamax` demandent
+[Cobblemon: Mega Showdown](https://modrinth.com/mod/mega-showdown) pour faire ce qu'ils
+annoncent. Sans lui les deux combattent normalement, sans jamais sortir leur gimmick : le
+dresseur au Z-Move porte ses objets de repli, celui au dynamax n'a rien perdu du tout.
 
 ## Les advancements
 

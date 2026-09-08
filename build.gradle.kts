@@ -139,8 +139,37 @@ val copyDevMods = tasks.register<Copy>("copyDevMods") {
 	}
 }
 
-tasks.named("runClient") { dependsOn(copyDevMods) }
-tasks.named("runServer") { dependsOn(copyDevMods) }
+/**
+ * The example pack, laid into `run/mods` so every dev world has it.
+ *
+ * It goes in as a **folder without `fabric.mod.json`**, which is the one shape that loads from
+ * there. The two others do not: a symlink or a junction to `examples/cobblemonrlm` would bring
+ * that file along, and `ModsFolderPackSource` skips anything carrying mod metadata on the
+ * grounds that Fabric has already loaded it - except Fabric only ever loads `.jar` *files* out
+ * of `mods/`, so a linked folder would load from nowhere at all. Vanilla's `DirectoryValidator`
+ * is the second reason: `allowed_symlinks.txt` is empty by default, so it turns a symlinked pack
+ * away before anything else gets a look at it.
+ *
+ * A [Sync] rather than a [Copy] so that a file deleted from `examples/` disappears from the run
+ * folder too - a stale trainer left behind there would keep loading, and its id would look like
+ * a pack that refuses to go away. The target is a folder of its own, so nothing else in
+ * `run/mods` is in reach.
+ *
+ * It re-runs on every `runClient`, which is when it matters; a `/reload` mid-session re-reads
+ * this copy rather than `examples/`, so editing a trainer and reloading wants the task run again.
+ */
+val copyExamplePack = tasks.register<Sync>("copyExamplePack") {
+	description = "Lays examples/cobblemonrlm into run/mods, for the dev game."
+	group = "fabric"
+
+	from("examples/cobblemonrlm") {
+		exclude("fabric.mod.json")
+	}
+	into(layout.projectDirectory.dir("run/mods/cobblemonrlm"))
+}
+
+tasks.named("runClient") { dependsOn(copyDevMods, copyExamplePack) }
+tasks.named("runServer") { dependsOn(copyDevMods, copyExamplePack) }
 
 tasks.processResources {
 	val version = version

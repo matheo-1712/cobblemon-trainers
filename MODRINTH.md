@@ -157,21 +157,24 @@ You can see all details in [DATAPACK DOCS](https://github.com/matheo-1712/cobble
 
 ---
 
-## Mega Evolution and Terastallization
+## Mega Evolution, Z-Moves, Dynamax and Terastallization
 
 Trainers use battle gimmicks when you let them, through the `"gimmicks"` list in their `battle`
-block.
+block: `"mega"`, `"zmove"`, `"max"` and `"terastal"`.
 
 **Terastallization** needs nothing but Cobblemon. Give a Pokémon a `Tera Type:` line, add
 `"gimmicks": ["terastal"]`, and the trainer holds its one use back until it decides something:
 until the move it was about to play turns lethal, or until the hit that would knock it out stops
-being lethal against its Tera type.
+being lethal against its Tera type. **Z-Moves and Dynamax** are judged the same way, on the same
+kind of moment - a knockout that was not there, or a turn that was lost.
 
 **Mega Evolution** is the opposite - it costs no turn, so it goes out at the first opportunity.
-Hand a Pokémon its Mega Stone and add `"gimmicks": ["mega"]`. It needs
-[Cobblemon: Mega Showdown](https://modrinth.com/mod/mega-showdown), which stays **optional**:
-without it the mod loads and plays exactly as before, and a team can name a `Fallback Item:` so
-its Pokémon holds something sensible instead of the stone it cannot have.
+Hand a Pokémon its Mega Stone and add `"gimmicks": ["mega"]`.
+
+Those three need [Cobblemon: Mega Showdown](https://modrinth.com/mod/mega-showdown), which stays
+**optional**: without it the mod loads and plays exactly as before, and a team can name a
+`Fallback Item:` so its Pokémon holds something sensible instead of the stone or crystal it
+cannot have.
 
 Full guide: [GIMMICKS DOCS](https://github.com/matheo-1712/cobblemon-trainers/blob/master/docs/en/GIMMICKS.md)
 

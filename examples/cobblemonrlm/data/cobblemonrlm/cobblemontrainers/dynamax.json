@@ -1,0 +1,24 @@
+{
+  "name": "trainer.cobblemonrlm.dynamax.name",
+  "skin": {
+    "type": "player_username",
+    "value": "Steve"
+  },
+  "battle": {
+    "level": 75,
+    "difficulty": 5,
+    "gimmicks": ["max"]
+  },
+  "messages": {
+    "greeting": "trainer.cobblemonrlm.dynamax.greeting",
+    "start": "trainer.cobblemonrlm.dynamax.battle_start",
+    "win": "trainer.cobblemonrlm.dynamax.win",
+    "lose": "trainer.cobblemonrlm.dynamax.lose"
+  },
+  "team": [
+    "Corviknight @ Leftovers\nAbility: Mirror Armor\nLevel: 75\nEVs: 252 HP / 252 Def / 4 SpD\nImpish Nature\n- Brave Bird\n- Body Press\n- Iron Head\n- Roost",
+    "Toxtricity @ Throat Spray\nAbility: Punk Rock\nLevel: 75\nEVs: 4 HP / 252 SpA / 252 Spe\nTimid Nature\n- Overdrive\n- Boomburst\n- Sludge Wave\n- Volt Switch",
+    "Dragapult @ Life Orb\nAbility: Clear Body\nLevel: 75\nEVs: 4 HP / 252 Atk / 252 Spe\nJolly Nature\n- Dragon Darts\n- Phantom Force\n- Sucker Punch\n- U-turn",
+    "Copperajah @ Assault Vest\nAbility: Sheer Force\nLevel: 75\nEVs: 252 HP / 252 Atk / 4 SpD\nAdamant Nature\n- Heavy Slam\n- High Horsepower\n- Play Rough\n- Iron Head"
+  ]
+}

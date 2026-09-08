@@ -84,9 +84,8 @@ object BattleTera {
     /**
      * Whether the move already chosen only knocks out with the Tera bonus behind it.
      *
-     * A target that is already going down is no reason to spend the use, and a guard that eats
-     * the hit whole - Disguise, Sturdy, a Focus Sash - means there is no knockout to secure
-     * either way. Both are the same reading [TrainerBattleAI] does when it scores a move.
+     * All this adds to [BattleDamage.securedKnockout] is the bonus itself: a Terastallization
+     * that does not lift the chosen move at all is nothing to weigh in the first place.
      */
     private fun securesKnockout(
         moveId: String?,
@@ -103,24 +102,11 @@ object BattleTera {
         val after = stabAfter(before, moveType, elemental, stellar)
         if (after <= before) return null
 
-        for (opponent in opponents) {
-            if (BattleGuards.survivesLethalHit(opponent)) continue
-            if (BattleGuards.guardIntact(opponent, opponent.uuid in struck)) continue
+        val secured = BattleDamage.securedKnockout(move, self, opponents, struck, stab = after)
+            ?: return null
 
-            val multiplier = BattleTypeChart.multiplier(moveType, opponent.effectedPokemon, withAbilities = true)
-            if (multiplier == 0.0) continue
-
-            val plain = BattleDamage.estimate(move, self, opponent, multiplier)
-            if (plain >= opponent.health) continue
-
-            val boosted = BattleDamage.estimate(move, self, opponent, multiplier, after)
-            if (boosted >= opponent.health) {
-                return "$moveId only knocks out with the Tera bonus " +
-                    "(${plain.roundToInt()} to ${boosted.roundToInt()}, ${opponent.health} left)"
-            }
-        }
-
-        return null
+        return "$moveId only knocks out with the Tera bonus " +
+            "(${secured.plain.roundToInt()} to ${secured.lifted.roundToInt()}, ${secured.health} left)"
     }
 
     /**

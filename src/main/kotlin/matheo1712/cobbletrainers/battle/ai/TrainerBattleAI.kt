@@ -46,8 +46,8 @@ import kotlin.math.roundToInt
  * refuse a heal, never add one.
  *
  * One thing here is not a correction at all: the battle gimmicks a trainer declares - Mega
- * Evolution and Terastallization - are attached to whatever move comes out, difficulty included.
- * See [withGimmick], [TrainerGimmicks] and [BattleTera].
+ * Evolution, Z-Power, Dynamax and Terastallization - are attached to whatever move comes out,
+ * difficulty included. See [withGimmick] and [TrainerGimmicks].
  */
 class TrainerBattleAI(
     private val delegate: BattleAI,
@@ -189,17 +189,18 @@ class TrainerBattleAI(
      * or the Tera type and wrote the word - not a matter of how well the trainer plays, so it must
      * not sit behind the [CorrectionLevel] gate that lets a low-difficulty trainer past untouched.
      *
-     * The two supported gimmicks want opposite things of the moment, which is why [reasonFor]
+     * The supported gimmicks want different things of the moment, which is why [reasonFor]
      * answers per gimmick rather than once for all of them:
      *
      * - **Mega Evolution needs no judging.** It costs no turn and is offered exactly while it is
      *   legal, so the first chance is as good as any later one - which is also what a trainer does
      *   in the games.
-     * - **Terastallization does.** One use decides a whole battle, and spending it on turn one
-     *   because it was offered is how that battle is lost. See [BattleTera].
+     * - **The other three do.** Each is one use that decides a whole battle, and spending it on
+     *   turn one because it was offered is how that battle is lost. See [BattleZMove],
+     *   [BattleDynamax] and [BattleTera].
      *
-     * A response carries one `gimmickID`, so the turn that offers both spends the first one
-     * [TrainerGimmicks.SUPPORTED] lists and leaves the other for later.
+     * A response carries one `gimmickID`, so a turn that offers several spends the first one
+     * [TrainerGimmicks.SUPPORTED] lists and leaves the rest for later.
      */
     private fun withGimmick(
         response: ShowdownActionResponse,
@@ -259,6 +260,28 @@ class TrainerBattleAI(
     ): String? = try {
         when (gimmick) {
             TrainerGimmicks.MEGA -> "no reason to wait"
+
+            TrainerGimmicks.Z_POWER -> {
+                val self = active.battlePokemon
+                // Unlike the other three this one can be offered to the side and still have
+                // nothing for the move that was chosen: a crystal only answers its own type.
+                val zMove = TrainerGimmicks.gimmickMove(moveset, gimmick, response.moveName)
+                if (self == null || zMove == null) {
+                    null
+                } else {
+                    BattleZMove.reason(zMove.move, response.moveName, self, opponentsOf(active), struck)
+                }
+            }
+
+            TrainerGimmicks.DYNAMAX -> {
+                val self = active.battlePokemon
+                if (self == null) {
+                    null
+                } else {
+                    val maxMove = TrainerGimmicks.gimmickMove(moveset, gimmick, response.moveName)?.move
+                    BattleDynamax.reason(maxMove, response.moveName, self, opponentsOf(active), struck)
+                }
+            }
 
             TrainerGimmicks.TERASTAL -> {
                 val self = active.battlePokemon
