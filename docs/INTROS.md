@@ -270,7 +270,9 @@ L'ancre tombe sur les **vrais** bords de la fenêtre, sans mise à l'échelle : 
 Tout se compte en ticks, 20 par seconde, depuis le lever de l'écran.
 
 - `at` est le moment où un calque commence à entrer, `for` la durée de cette entrée.
-- La **sortie est commune** : `fadeOut` emmène tout l'écran d'un coup.
+- La **sortie est commune** : `fadeOut` emmène tout l'écran d'un coup. Un calque plat s'y
+  fond ; une figure et un `pokemon` s'en vont **en bougeant**, par où ils sont entrés ou en
+  rétrécissant sur place, un modèle ne pouvant pas se fondre. Rien à écrire pour ça.
 - Le joueur peut passer l'écran **une fois la dernière entrée finie** - le plus grand
   `at + for` de tous les calques. Avant, rien ne répond : une touche maintenue se répète, et
   personne ne doit sauter un écran qu'il n'a pas vu.

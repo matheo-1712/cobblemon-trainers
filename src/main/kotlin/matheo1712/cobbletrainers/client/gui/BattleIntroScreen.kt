@@ -8,6 +8,7 @@ import com.cobblemon.mod.common.entity.npc.NPCEntity
 import com.cobblemon.mod.common.pokemon.RenderablePokemon
 import com.cobblemon.mod.common.util.math.fromEulerXYZDegrees
 import com.mojang.blaze3d.platform.NativeImage
+import com.mojang.blaze3d.systems.RenderSystem
 import matheo1712.cobbletrainers.CobblemonTrainers
 import matheo1712.cobbletrainers.client.cache.TrainerSkinCache
 import matheo1712.cobbletrainers.intro.IntroLayer
@@ -60,6 +61,12 @@ import org.joml.Vector3f
  * - **The entity is posed, then put back.** `renderEntityInInventory` draws whatever rotation
  *   the entity carries, so the yaw a layer asks for is written onto it for the length of one
  *   call - the name tag included, which would otherwise float in the middle of the screen.
+ * - **The whole screen leaves at once, but not all of it by fading.** What a layer is made of
+ *   decides whether the fade reaches it: a fill or a text takes it, an image only once blending
+ *   is turned back on around its blit, an item only through the shader colour, and a posed
+ *   model not at all - entity render types blend nothing, so a figure leaves by going instead.
+ *   Left alone, each of those stands at full strength until the screen cuts out, which is the
+ *   whole of issue #47.
  * - **Skipping only starts once the last entrance has landed.** A held key repeats, so a player
  *   walking up to a trainer with a finger on their movement key would otherwise skip the screen
  *   on the very frame it opened.
@@ -133,7 +140,10 @@ class BattleIntroScreen(private val intro: BattleIntroPayload) :
         // hands it back rather than cutting to it twice.
         val fadeIn = scene.fadeIn.coerceAtLeast(1).toFloat()
         val fadeOut = scene.fadeOut.coerceAtLeast(1).toFloat()
-        val alpha = eased(elapsed / fadeIn) * (1f - eased((elapsed - (ticks - fadeOut)) / fadeOut))
+        // How much of the screen is left: 1 until the fade-out starts, 0 as it ends. It is the
+        // fade itself for everything that takes a colour, and the way out for what does not.
+        val leaving = 1f - eased((elapsed - (ticks - fadeOut)) / fadeOut)
+        val alpha = eased(elapsed / fadeIn) * leaving
         if (alpha <= 0f) return
 
         scene.layers.forEachIndexed { index, layer ->
@@ -141,7 +151,7 @@ class BattleIntroScreen(private val intro: BattleIntroPayload) :
             if (elapsed < layer.at) return@forEachIndexed
 
             playSound(index, layer, elapsed)
-            drawLayer(guiGraphics, index, layer, entrance, alpha, partialTick)
+            drawLayer(guiGraphics, index, layer, entrance, alpha, leaving, partialTick)
         }
 
         if (elapsed >= skipAt) {
@@ -168,12 +178,18 @@ class BattleIntroScreen(private val intro: BattleIntroPayload) :
         return ease(layer.ease, (since / over).coerceIn(0f, 1f))
     }
 
+    /**
+     * One layer, where its entrance has got it to and under what is left of the screen.
+     *
+     * @param leaving What the fade-out has left, 1 until it starts and 0 as it ends.
+     */
     private fun drawLayer(
         guiGraphics: GuiGraphics,
         index: Int,
         layer: IntroLayer,
         entrance: Float,
         screenAlpha: Float,
+        leaving: Float,
         partialTick: Float
     ) {
         val restX = anchorX(layer.anchor) + layer.offsetX * uiScale
@@ -200,6 +216,21 @@ class BattleIntroScreen(private val intro: BattleIntroPayload) :
         }
 
         if (alpha <= 0f) return
+
+        // A model is drawn on an entity render type, which blends nothing: the screen's fade
+        // never reaches it, and it would still be standing at full strength once the scene
+        // around it had gone. So it leaves by moving - back out the way it came in, or
+        // shrinking away when it came in on the spot - which no render type can ignore.
+        if (layer.type == IntroLayer.FIGURE || layer.type == IntroLayer.POKEMON) {
+            when (layer.from) {
+                "left" -> x = lerp(-span, x, leaving)
+                "right" -> x = lerp(width + span, x, leaving)
+                "top" -> y = lerp(-span, y, leaving)
+                "bottom" -> y = lerp(height + span, y, leaving)
+                else -> scale *= leaving
+            }
+            if (scale <= 0f) return
+        }
 
         when (layer.type) {
             IntroLayer.FILL -> fill(guiGraphics, layer, x, y, scale, alpha)
@@ -404,6 +435,12 @@ class BattleIntroScreen(private val intro: BattleIntroPayload) :
             (tint and 0xFF) / 255f,
             alpha
         )
+        // With blending off, that alpha is written and never read: the image draws at full
+        // strength whatever a layer asked for, and stays there while the rest of the screen
+        // fades away. `GuiGraphics.blit` leaves the state to its caller and the flush
+        // `setColor` just did turned it off, so it is turned back on here, per blit.
+        RenderSystem.enableBlend()
+        RenderSystem.defaultBlendFunc()
         guiGraphics.blit(
             texture,
             (x - drawWidth / 2f).toInt(),
@@ -439,7 +476,11 @@ class BattleIntroScreen(private val intro: BattleIntroPayload) :
             pose.pushPose()
             pose.translate(ballX, top, 0f)
             pose.scale(size / ITEM_PIXELS, size / ITEM_PIXELS, 1f)
+            // An item is drawn on the translucent sheet, so the fade does reach it - but only
+            // through the shader colour, `renderItem` taking no tint of its own.
+            guiGraphics.setColor(1f, 1f, 1f, alpha)
             guiGraphics.renderItem(POKE_BALL, 0, 0)
+            guiGraphics.setColor(1f, 1f, 1f, 1f)
             pose.popPose()
 
             // An empty slot is the same ball under a veil, drawn on the overlay layer - a plain
