@@ -72,6 +72,15 @@ Toute vérification passe par `runClient`/`runServer`, dont les mondes vivent da
 dépendances, elles, y sont bien - c'est `copyDevMods` qui les y dépose avant chaque `runClient`,
 et c'est voulu (voir « Les gimmicks de combat »).
 
+`copyExamplePack` y dépose aussi le pack d'exemple, en dossier `run/mods/cobblemonrlm/`, pour que
+tout monde de dev ait ses dresseurs sans rien installer. Un lien symbolique vers
+`examples/cobblemonrlm` ne marcherait pas, pour deux raisons : il emporterait le `fabric.mod.json`
+que `ModsFolderPackSource` refuse, alors que Fabric ne charge que des `.jar` du dossier - le pack
+ne se chargerait de nulle part -, et le `DirectoryValidator` de vanilla écarte tout lien absent
+d'`allowed_symlinks.txt`, qui est vide par défaut. D'où une copie, et un `Sync` plutôt qu'un
+`Copy` : un dresseur retiré d'`examples/` doit disparaître du monde de dev aussi. Contrepartie
+assumée : un `/reload` relit la copie, donc éditer un dresseur demande de relancer la tâche.
+
 Le projet cible **Java 21**, imposé par un toolchain Gradle dans `build.gradle.kts`.
 Cobblemon déclare `depends: java [21]`, une version exacte : sans le toolchain, `runClient`
 hérite du JDK de Gradle et le loader refuse de démarrer. Le CI utilise le même JDK 21.
@@ -180,8 +189,8 @@ messages, musique et récompenses de combat.
   ce qui les rend utiles) et `TrainerAiDebug` (l'interrupteur de débogage). Voir « L'IA de
   combat ».
 - **`battle.ai.TrainerGimmicks`** - le vocabulaire de `battle.gimmicks` et ce que le combat
-  offre ce tour-ci, épaulé par `BattleTera` pour le seul gimmick dont le moment se juge. Voir
-  « Les gimmicks de combat ».
+  offre ce tour-ci, épaulé par `BattleZMove`, `BattleDynamax` et `BattleTera` pour les trois
+  gimmicks dont le moment se juge. Voir « Les gimmicks de combat ».
 - **`TrainerProgress`** - `SavedData` du monde : qui a battu quel dresseur. Voir « Revanches
   et récompenses ».
 - **`TrainerRewards`** - remet les objets au vainqueur.
@@ -1166,23 +1175,30 @@ Points à ne pas redécouvrir :
 
 ### Les gimmicks de combat
 
-Un dresseur qui déclare `battle.gimmicks` méga-évolue ou téracristallise en combat.
-`TrainerGimmicks` tient le vocabulaire, `TrainerBattleAI.withGimmick` la décision, et
-`BattleTera` le moment. Toute la doc joueur est dans `docs/GIMMICKS.md`, jamais dans
+Un dresseur qui déclare `battle.gimmicks` méga-évolue, sort un Z-Move, dynamaxe ou
+téracristallise en combat. `TrainerGimmicks` tient le vocabulaire, `TrainerBattleAI.withGimmick`
+la décision, et `BattleZMove`, `BattleDynamax` et `BattleTera` le moment de chacun des trois qui
+se jugent. Toute la doc joueur est dans `docs/GIMMICKS.md`, jamais dans
 `docs/DATAPACK.md`, qui n'en garde qu'une ligne de tableau et un renvoi.
 
 **Cobblemon fait déjà tout.** `MoveActionResponse` porte un `gimmickID` à côté de son coup
 et de sa cible, et le `ShowdownMoveset` que reçoit `choose()` dit ce que le simulateur offre ce
-tour-ci - `canMegaEvo`, un booléen, et `canTerastallize`, une **`String?`** qui porte le type
-Tera offert. Répondre `mega` ou `terastal` à côté du coup est tout ce qu'il y a à faire.
+tour-ci : `canMegaEvo` et `canDynamax`, deux booléens ; `canTerastallize`, une **`String?`** qui
+porte le type Tera offert ; et `canZMove` / `maxMoves`, deux **listes parallèles à
+`moveset.moves`**, une entrée par slot. Répondre `mega`, `zmove`, `max` ou `terastal` à côté du
+coup est tout ce qu'il y a à faire - `toShowdownString` écrit l'index du coup dans
+`moveset.moves` puis le gimmick, donc le coup reste le coup de base et c'est Showdown qui le
+transforme.
 
-**Le téracristal ne demande aucun mod tiers**, contrairement à la méga : `TeraTypes`,
+**Le téracristal ne demande aucun mod tiers**, contrairement aux trois autres : `TeraTypes`,
 `TerastallizeInstruction`, `TerastallizationEvent` et l'Orbe Tera sont dans Cobblemon. C'est la
-seule différence de nature entre les deux, et elle rend celui-ci testable en `runClient` nu.
+seule différence de nature entre eux, et elle rend celui-là testable en `runClient` nu.
 
 **Aucune ligne du mod ne nomme Mega Showdown**, et rien ne compile contre lui. Ce qu'il
-apporte : les gemmes, le patch du simulateur qui les lui fait voir, et la forme à l'écran - via
-le `MegaEvolutionEvent` de Cobblemon, qui ne regarde pas à qui appartient le Pokémon.
+apporte : les gemmes, les cristaux Z, le dynamax, le patch du simulateur qui les lui fait voir,
+et la forme à l'écran - via le `MegaEvolutionEvent` de Cobblemon, qui ne regarde pas à qui
+appartient le Pokémon. Cobblemon a bien les instructions (`ZPowerInstruction`), les événements et
+les boutons de combat des quatre, mais rien dans une installation nue n'offre les trois autres.
 
 **Le jeu de dev le charge depuis `run/mods/`**, où `copyDevMods` copie la configuration
 `devMods` (Mega Showdown, `accessories` dont il dépend en dur, `owo` dont accessories dépend).
@@ -1195,24 +1211,51 @@ Points à ne pas redécouvrir :
 
 - **Rien ne filtre le côté PNJ.** `ShowdownActionRequest.sanitize` ne coupe un gimmick que pour
   un acteur dont l'UUID est celui d'un **joueur** du combat sans la key item qui va avec
-  (`cobblemon:key_stone` pour la méga, `cobblemon:tera_orb` pour le téracristal). Un
-  `NPCBattleActor` n'y correspond jamais. Conséquence assumée : un dresseur se sert de son
-  gimmick face à un joueur qui n'a pas l'objet, et c'est au pack de compenser.
+  (`cobblemon:key_stone`, `cobblemon:z_ring`, `cobblemon:dynamax_band`, `cobblemon:tera_orb`). Un
+  `NPCBattleActor` n'y correspond jamais, et le `ShowdownActionRequestMixin` de Mega Showdown fait
+  exactement pareil pour le dynamax - il parcourt `battle.players`. Conséquence assumée : un
+  dresseur se sert de son gimmick face à un joueur qui n'a pas l'objet, et c'est au pack de
+  compenser.
 - **Le gimmick est posé hors du garde `CorrectionLevel`.** `choose()` rendait la décision de
   Cobblemon telle quelle en dessous de la difficulté 3 ; un dresseur facile n'aurait donc jamais
   méga-évolué. C'est le pack qui a donné la gemme et écrit le mot, pas l'IA qui a eu une bonne
   idée. D'où la découpe en `decide()` (les corrections) puis `withGimmick()` (le gimmick).
-- **La méga ne se juge pas, le téracristal si**, et c'est toute la raison d'être de
-  `BattleTera`. La méga ne coûte pas de tour et ne peut pas être un mauvais choix : première
-  occasion. Le téracristal ne coûte pas de tour non plus, mais un camp n'y a droit qu'une fois et
-  le dépenser au tour 1 parce qu'il était offert, c'est le perdre. D'où deux déclencheurs, et
-  rien d'autre : le coup **déjà choisi** devient létal grâce au bonus Tera, ou le coup adverse
-  létal cesse de l'être contre le type Tera.
+- **La méga ne se juge pas, les trois autres si.** La méga ne coûte pas de tour et ne peut pas
+  être un mauvais choix : première occasion. Les trois autres ne coûtent pas de tour non plus,
+  mais un camp n'y a droit qu'une fois et les dépenser au tour 1 parce qu'ils étaient offerts,
+  c'est les perdre. D'où un ou deux déclencheurs chacun, et rien d'autre : le coup **déjà choisi**
+  devient létal (les trois), ou le coup adverse létal cesse de l'être - contre le type Tera pour
+  `BattleTera`, contre une barre de vie doublée pour `BattleDynamax`.
+- **Le Z-Move n'a pas de déclencheur défensif, et ce n'est pas un oubli.** Un Z-Move est un coup
+  puis plus rien : il ne change pas ce que le Pokémon *est*, contrairement aux deux autres. Les Z
+  de statut, qui seraient la seule lecture défensive possible, remplaceraient la capacité choisie
+  par autre chose - exactement ce qu'un gimmick ne doit pas faire ici. `BattleZMove` rend donc la
+  main sur toute capacité de statut. Même raison pour `BattleDynamax`, qui transforme *toutes* les
+  capacités de statut en Draco-Barrière : le déclencheur défensif du dynamax existe, mais il
+  n'attend qu'un tour où le dresseur attaque.
+- **La question « ce coup devient-il létal » est écrite une fois**, dans
+  `BattleDamage.securedKnockout` : les trois jugements ne diffèrent que par ce qui soulève le
+  coup - un `stab` pour le téracristal, une `power` pour les deux autres. Les gardes (Frimousse,
+  Baraka, Ceinture Force) et l'immunité de type y sont lus une fois pour les trois.
 - **Le déclencheur offensif lit le coup déjà choisi, jamais le meilleur coup.** Un gimmick
   s'accroche à une décision, il n'en prend pas : réécrire le coup ici serait une correction
   déguisée. Effet de bord voulu - un `difficulty: 0` joue au hasard, il aura donc rarement en
-  main le coup qui bascule, et téracristallise donc moins. C'est l'échelle qui fait son travail,
-  pas un trou.
+  main le coup qui bascule, et se sert donc moins de ses gimmicks. C'est l'échelle qui fait son
+  travail, pas un trou.
+- **La puissance d'un Z-Move et d'une Capsule Max est calculée, pas lue.** Les entrées que
+  Showdown livre sous ces noms portent une puissance de remplissage (1 et 10) ; la vraie se
+  déduit de la capacité de base, par les tables de `BattleZMove.power` et `BattleDynamax.power` -
+  celle du dynamax ayant une seconde colonne pour les capacités Combat et Poison. Une capacité à
+  puissance variable n'a d'entrée dans aucune des deux et garde le gimmick en main, la même
+  réponse que partout ailleurs quand on ne sait pas juger. Le prix est un gimmick sorti un tour
+  trop tôt ou trop tard sur les rares capacités dont la puissance en Z est posée à la main, ce que
+  `BattleDamage` tolère par construction.
+- **`gimmickMove` lit `canZMove` et `maxMoves` directement**, pas l'`InBattleMove.gimmickMove` que
+  `ShowdownMoveset.setGimmickMapping` remplit : ce mapping préfère `canZMove` dès que les deux
+  listes sont là, donc un Pokémon qui porte un cristal *et* peut dynamaxer annoncerait son Z-Move
+  comme sa Capsule Max. C'est aussi le seul vrai garde par slot : un cristal Z ne répond que pour
+  les capacités de son type, alors que le dynamax soulève les quatre slots - d'où un `canZMove`
+  offert au camp mais rien pour le coup choisi, un cas que les trois autres gimmicks n'ont pas.
 - **Stellar n'a pas de type**, donc aucune lecture défensive ne veut dire quoi que ce soit pour
   lui : seul le déclencheur offensif tourne, avec son propre bonus (×2 sur un coup déjà STAB,
   ×1,2 sinon). C'est pour ça que le bonus voyage en `Double` dans `BattleDamage.estimate` plutôt
@@ -1228,21 +1271,26 @@ Points à ne pas redécouvrir :
   seconde passe lirait un `struck` que la première vient de remplir, donc une Frimousse intacte y
   paraîtrait cassée et un téracristal gardé en main partirait quand même. C'est exactement la
   raison qui fait mémoriser `decide()`.
-- **Une réponse porte un seul `gimmickID`.** Le tour qui offre les deux dépense donc le premier
-  de `TrainerGimmicks.SUPPORTED` - la méga, qui est liée au Pokémon portant la gemme, alors que
-  le téracristal appartient au camp et ne perd rien à attendre. Cet ordre est celui de la liste,
-  pas celui que le pack a écrit : deux packs qui déclarent les mêmes gimmicks jouent pareil.
+- **Une réponse porte un seul `gimmickID`.** Le tour qui en offre plusieurs dépense donc le
+  premier de `TrainerGimmicks.SUPPORTED` - la méga d'abord, la seule qui ne se *dépense* pas, puis
+  les trois jugés du moins durable au plus durable : un Z-Move est un coup, un dynamax trois
+  tours, un téracristal le reste du combat. Quand deux répondent à la même question, autant lâcher
+  celui qui laisse le moins derrière lui. Cet ordre est celui de la liste, pas celui que le pack a
+  écrit : deux packs qui déclarent les mêmes gimmicks jouent pareil.
 - **`isValid` ne vérifie pas la disponibilité du gimmick.** Répondre `mega` quand le simulateur
-  ne l'offre pas est une erreur Showdown en plein combat, pas un refus poli. `canMegaEvo` et
-  `canTerastallize` sont donc les seuls gardes qui comptent, et ils sont lus à chaque décision.
+  ne l'offre pas est une erreur Showdown en plein combat, pas un refus poli. `canMegaEvo`,
+  `canZMove`, `canDynamax` et `canTerastallize` sont donc les seuls gardes qui comptent, et ils
+  sont lus à chaque décision.
 - **Le jugement ne doit jamais coûter la réponse.** `reasonFor` est entouré d'un `try/catch` pour
   la même raison que `decide()` : un combat attend cette décision, et un gimmick qu'on n'a pas su
   juger se garde en main plutôt que de bloquer le tour.
 - **On copie la réponse, on ne la mute pas.** `gimmickID` est un `var`, mais l'objet vient du
   délégué.
-- **Le mot du pack est l'id de Cobblemon** (`mega`, `terastal`, `zmove`, `dynamax`, `ultra`).
-  Les trois non supportés sont reconnus au chargement et signalés comme tels, pour qu'un pack
-  qui les écrit ne les confonde pas avec une faute de frappe.
+- **Le mot du pack est l'id de Cobblemon** (`mega`, `zmove`, `max`, `terastal`, `ultra`). Le
+  dynamax s'écrit donc **`max`** : c'est l'id de `ShowdownMoveset.Gimmick.DYNAMAX`, et un alias
+  `dynamax` ferait un second vocabulaire pour une seule chose. `ultra`, le seul non supporté, est
+  reconnu au chargement et signalé comme tel, pour qu'un pack qui l'écrit ne le confonde pas avec
+  une faute de frappe.
 - **Le type Tera se déclare dans l'équipe, pas dans le dresseur.** La ligne `Tera Type:` de
   `ShowdownTeamParser` - la vraie ligne de Showdown, contrairement à `Aspects:` et
   `Fallback Item:` - donne la propriété `tera_type=`. Elle est validée par `TeraTypes.getByName`
@@ -1608,7 +1656,9 @@ Le zip **exclut `fabric.mod.json`**. Ce fichier n'existe que pour permettre de c
 dossier en `.jar` que Fabric charge, et il nuit à un `.zip` : Fabric ignore les archives qui ne
 sont pas des `.jar`, tandis que `ModsFolderPackSource` saute tout ce qui porte des métadonnées de
 mod - le pack ne se chargerait donc de nulle part. Sans lui, le même zip marche dans `mods/`,
-`datapacks/` et `resourcepacks/`.
+`datapacks/` et `resourcepacks/`. `copyExamplePack` retire le même fichier pour la même raison
+(voir « Commandes ») : c'est la seule exclusion que les deux tâches partagent, et la seule qui
+décide si le pack se charge.
 
 ## Limites connues
 

@@ -83,10 +83,11 @@ data class TrainerDefinition(
  * @param music Sound ID played to the players for the duration of the battle. Defaults to the
  *   track shipped by the mod; set it to `null` or `""` for a silent trainer, or to your own
  *   sound ID - provided by a resource pack - for another track.
- * @param gimmicks Battle gimmicks this trainer uses when the fight offers them - `mega` for
- *   Mega Evolution. Empty by default: giving a Pokémon a Mega Stone is not on its own a
- *   declaration that the trainer knows what to do with it. Every one of them needs the mod
- *   providing the items to be installed, and does nothing without it. See `docs/GIMMICKS.md`.
+ * @param gimmicks Battle gimmicks this trainer uses when the fight offers them - `mega`,
+ *   `zmove`, `max` and `terastal`. Empty by default: giving a Pokémon a Mega Stone is not on its
+ *   own a declaration that the trainer knows what to do with it. Only `terastal` works on a
+ *   plain install; the other three need the mod that teaches the simulator about them, and do
+ *   nothing without it. See `docs/GIMMICKS.md`.
  */
 data class TrainerBattleSettings(
     val level: Int = 1,
@@ -98,9 +99,9 @@ data class TrainerBattleSettings(
 ) {
 
     /**
-     * Logs the gimmick names that mean nothing here. A pack writing `terastal` today has asked
-     * for something the mod does not do yet, which is worth saying plainly: silence would read
-     * as a trainer who simply never gets the chance to use it.
+     * Logs the gimmick names that mean nothing here. A pack writing `ultra` today has asked for
+     * something the mod does not do yet, which is worth saying plainly: silence would read as a
+     * trainer who simply never gets the chance to use it.
      */
     fun validate(id: ResourceLocation) {
         for (name in gimmicks) {
@@ -109,7 +110,7 @@ data class TrainerBattleSettings(
             if (TrainerGimmicks.isKnownToCobblemon(name)) {
                 CobblemonTrainers.LOGGER.warn(
                     "Trainer {}: battle.gimmicks lists '{}', which this mod does not support yet. " +
-                        "Only '{}' is used.",
+                        "Only '{}' are used.",
                     id, name, TrainerGimmicks.SUPPORTED.joinToString("', '")
                 )
             } else {

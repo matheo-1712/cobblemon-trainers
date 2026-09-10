@@ -1,0 +1,24 @@
+{
+  "name": "trainer.cobblemonrlm.zmove.name",
+  "skin": {
+    "type": "player_username",
+    "value": "Alex"
+  },
+  "battle": {
+    "level": 70,
+    "difficulty": 5,
+    "gimmicks": ["zmove"]
+  },
+  "messages": {
+    "greeting": "trainer.cobblemonrlm.zmove.greeting",
+    "start": "trainer.cobblemonrlm.zmove.battle_start",
+    "win": "trainer.cobblemonrlm.zmove.win",
+    "lose": "trainer.cobblemonrlm.zmove.lose"
+  },
+  "team": [
+    "Raichu @ Aloraichium Z\nFallback Item: Life Orb\nAspects: alolan\nAbility: Surge Surfer\nLevel: 70\nEVs: 4 HP / 252 SpA / 252 Spe\nTimid Nature\n- Thunderbolt\n- Psychic\n- Surf\n- Nasty Plot",
+    "Charizard @ Firium Z\nFallback Item: Charcoal Stick\nAbility: Blaze\nLevel: 70\nEVs: 4 HP / 252 SpA / 252 Spe\nModest Nature\n- Fire Blast\n- Air Slash\n- Dragon Pulse\n- Roost",
+    "Garchomp @ Groundium Z\nFallback Item: Life Orb\nAbility: Rough Skin\nLevel: 70\nEVs: 4 HP / 252 Atk / 252 Spe\nJolly Nature\n- Earthquake\n- Dragon Claw\n- Stone Edge\n- Swords Dance",
+    "Blastoise @ Waterium Z\nFallback Item: Mystic Water\nAbility: Torrent\nLevel: 70\nEVs: 252 HP / 4 SpA / 252 SpD\nCalm Nature\n- Hydro Pump\n- Ice Beam\n- Aura Sphere\n- Rapid Spin"
+  ]
+}

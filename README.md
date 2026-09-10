@@ -320,8 +320,8 @@ le comportement exact de `battle.difficulty`, de `0` à `5`.
 le bloc `location` et tout ce qui l'entoure.
 
 **➜ Les gimmicks de combat sont dans [docs/GIMMICKS.md](docs/GIMMICKS.md)** :
-`battle.gimmicks`, la méga-évolution et le téracristal. Le téracristal ne demande rien de plus
-que Cobblemon ; la méga demande
+`battle.gimmicks`, la méga-évolution, le Z-Move, le dynamax et le téracristal. Le téracristal ne
+demande rien de plus que Cobblemon ; les trois autres demandent
 [Cobblemon: Mega Showdown](https://modrinth.com/mod/mega-showdown), qui reste **facultatif** -
 sans lui, le mod se charge et se joue comme avant.
 

@@ -6,6 +6,7 @@ import com.cobblemon.mod.common.api.pokemon.stats.Stat
 import com.cobblemon.mod.common.api.pokemon.stats.Stats
 import com.cobblemon.mod.common.api.types.ElementalType
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon
+import java.util.UUID
 
 /**
  * Damage in hit points, so that the AI can answer questions a ranking cannot.
@@ -41,13 +42,20 @@ object BattleDamage {
      * [stab] overrides the same-type bonus this would work out on its own. Only [BattleTera]
      * passes it: after Terastallization the bonus no longer follows from the attacker's types,
      * and Stellar changes it without changing any type at all.
+     *
+     * [power] overrides the move's own base power, and is how [BattleZMove] and [BattleDynamax]
+     * read what their gimmick would hit for: a Z-Move and a Max Move keep the base move's type
+     * and category and change nothing but this number. Cobblemon cannot be asked for it - the
+     * entries Showdown ships for those moves carry a placeholder power, the real figure being
+     * worked out from the base move - so each of them brings its own table.
      */
     fun estimate(
         move: MoveTemplate,
         attacker: BattlePokemon,
         defender: BattlePokemon,
         multiplier: Double,
-        stab: Double? = null
+        stab: Double? = null,
+        power: Double? = null
     ): Double {
         if (multiplier == 0.0 || move.damageCategory == DamageCategories.STATUS) return 0.0
 
@@ -56,9 +64,9 @@ object BattleDamage {
         val defence = boosted(defender, if (physical) Stats.DEFENCE else Stats.SPECIAL_DEFENCE)
         if (defence <= 0.0) return 0.0
 
-        val power = if (move.power > 0.0) move.power else FALLBACK_POWER
+        val basePower = power ?: if (move.power > 0.0) move.power else FALLBACK_POWER
         val level = attacker.effectedPokemon.level
-        val base = (2.0 * level / 5.0 + 2.0) * power * attack / defence / 50.0 + 2.0
+        val base = (2.0 * level / 5.0 + 2.0) * basePower * attack / defence / 50.0 + 2.0
 
         val type = move.getEffectiveElementalType(attacker.effectedPokemon)
         val sameType = stab ?: stabFor(type, attacker)
@@ -70,6 +78,47 @@ object BattleDamage {
     /** The same-type bonus [attacker] gets on a [moveType] hit as things stand. */
     fun stabFor(moveType: ElementalType, attacker: BattlePokemon): Double =
         if (attacker.effectedPokemon.types.any { it.name.equals(moveType.name, true) }) STAB else 1.0
+
+    /**
+     * The target whose fate a lifted [move] would decide, or null when it decides nobody's.
+     *
+     * The three judged gimmicks all ask this, and all ask it of the move that has *already* been
+     * chosen: Terastallization lifts it with a [stab] it did not have, a Z-Move and a Dynamax
+     * with a [power] it did not have, and in every case the question is whether the target stops
+     * surviving. A target already going down is no reason to spend a use, and a guard that eats
+     * the hit whole - Disguise, Ice Face, Sturdy, a Focus Sash - means there is no knockout to
+     * secure either way. Both are the readings [TrainerBattleAI] already does when it scores a
+     * move.
+     */
+    fun securedKnockout(
+        move: MoveTemplate,
+        attacker: BattlePokemon,
+        opponents: List<BattlePokemon>,
+        struck: Set<UUID>,
+        stab: Double? = null,
+        power: Double? = null
+    ): Knockout? {
+        val type = move.getEffectiveElementalType(attacker.effectedPokemon)
+
+        for (opponent in opponents) {
+            if (BattleGuards.survivesLethalHit(opponent)) continue
+            if (BattleGuards.guardIntact(opponent, opponent.uuid in struck)) continue
+
+            val multiplier = BattleTypeChart.multiplier(type, opponent.effectedPokemon, withAbilities = true)
+            if (multiplier == 0.0) continue
+
+            val plain = estimate(move, attacker, opponent, multiplier)
+            if (plain >= opponent.health) continue
+
+            val lifted = estimate(move, attacker, opponent, multiplier, stab, power)
+            if (lifted >= opponent.health) return Knockout(plain, lifted, opponent.health)
+        }
+
+        return null
+    }
+
+    /** A knockout that only the lifted move reaches, in hit points. See [securedKnockout]. */
+    class Knockout(val plain: Double, val lifted: Double, val health: Int)
 
     /**
      * The move [attacker] would most likely reach for against [defender]: its damage, and the

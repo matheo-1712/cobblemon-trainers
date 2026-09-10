@@ -154,7 +154,7 @@ leaving it out makes a trainer you have to go and find.
 | `difficulty` | `5` | [How well the AI plays](DIFFICULTY.md), from 0 (at random) to 5 (playing to win) |
 | `healParty` | `true` | Heals the trainer's team before and after every battle |
 | `music` | the mod's track | Sound ID played during the battle, `null` for silence |
-| `gimmicks` | `[]` | [Battle gimmicks](GIMMICKS.md) the trainer uses: `["mega"]`, `["terastal"]` |
+| `gimmicks` | `[]` | [Battle gimmicks](GIMMICKS.md) the trainer uses: `mega`, `zmove`, `max`, `terastal` |
 
 The `_50` suffix (`singles_50`, `doubles_50`, `triples_50`) puts **both teams** at level 50 for
 the battle. `level` therefore has no visible effect on a `_50` trainer.
@@ -181,8 +181,8 @@ impossible mistakes at `3`, entry hazards and screens at `4`, and reading the ba
 wear down over several attempts. Its fainted Pokémon move to the back of the team, so that it
 opens the next battle with one still standing.
 
-**➜ `gimmicks` is covered in [GIMMICKS.md](GIMMICKS.md)**: the stone and the Tera type to hand
-the Pokémon, when the trainer uses them, and what has to be installed for mega evolution.
+**➜ `gimmicks` is covered in [GIMMICKS.md](GIMMICKS.md)**: the stone, the Z-Crystal and the Tera
+type to hand the Pokémon, when the trainer uses them, and what has to be installed for each.
 
 A `doubles` battle needs at least 2 Pokémon **on each side**, a `triples` at least 3. If either
 team is too short, Cobblemon refuses the battle and says so in the chat. On the player's side

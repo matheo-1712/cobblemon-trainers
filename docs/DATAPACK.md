@@ -156,7 +156,7 @@ appelable ; ne pas le déclarer fait un dresseur qu'il faut aller trouver.
 | `difficulty` | `5` | [Intelligence de l'IA](DIFFICULTE.md), de 0 (au hasard) à 5 (sérieux) |
 | `healParty` | `true` | Soigne l'équipe du dresseur avant et après chaque combat |
 | `music` | piste du mod | ID du son joué pendant le combat, `null` pour le silence |
-| `gimmicks` | `[]` | [Gimmicks de combat](GIMMICKS.md) utilisés : `["mega"]`, `["terastal"]` |
+| `gimmicks` | `[]` | [Gimmicks de combat](GIMMICKS.md) utilisés : `mega`, `zmove`, `max`, `terastal` |
 
 Le suffixe `_50` (`singles_50`, `doubles_50`, `triples_50`) met **les deux équipes** au
 niveau 50 le temps du combat. `level` n'a donc plus d'effet visible sur un dresseur en `_50`.
@@ -184,8 +184,8 @@ commande `/cobblemontrainers debugai` pour voir en combat ce que le mod a corrig
 qu'on use en plusieurs tentatives. Ses Pokémon K.O. passent en fin d'équipe, pour qu'il ouvre
 le combat suivant avec quelqu'un qui tient debout.
 
-**➜ `gimmicks` est décrit dans [GIMMICKS.md](GIMMICKS.md)** : la gemme et le type Tera à
-donner au Pokémon, quand le dresseur s'en sert, et ce qu'il faut installer pour la méga.
+**➜ `gimmicks` est décrit dans [GIMMICKS.md](GIMMICKS.md)** : la gemme, le cristal Z et le type
+Tera à donner au Pokémon, quand le dresseur s'en sert, et ce qu'il faut installer pour chacun.
 
 Un `doubles` exige au moins 2 Pokémon **de chaque côté**, un `triples` au moins 3. Si l'une
 des équipes est trop courte, Cobblemon refuse le combat et l'explique dans le chat. Côté

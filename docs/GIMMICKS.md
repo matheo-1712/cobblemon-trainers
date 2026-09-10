@@ -1,7 +1,7 @@
 # Les gimmicks de combat
 
-Un dresseur peut méga-évoluer ou téracristalliser en plein combat. C'est le champ
-`battle.gimmicks`.
+Un dresseur peut méga-évoluer, sortir un Z-Move, dynamaxer ou téracristalliser en plein combat.
+C'est le champ `battle.gimmicks`.
 
 Pour poser le champ dans un dresseur, voir [DATAPACK.md](DATAPACK.md#battle).
 
@@ -23,23 +23,35 @@ Pour poser le champ dans un dresseur, voir [DATAPACK.md](DATAPACK.md#battle).
 }
 ```
 
-Il faut les deux : la **préparation** sur le Pokémon - une gemme, un type Tera -, et le **mot**
-dans `gimmicks`. Donner la gemme sans écrire `["mega"]` fait un dresseur qui ne s'en sert jamais.
+Il faut les deux : la **préparation** sur le Pokémon - une gemme, un cristal Z, un type Tera -,
+et le **mot** dans `gimmicks`. Donner la gemme sans écrire `["mega"]` fait un dresseur qui ne
+s'en sert jamais. Le dynamax est le seul qui ne demande rien au Pokémon.
 
 ## Les valeurs acceptées
 
 | Valeur | Effet | Demande un autre mod |
 | --- | --- | --- |
 | `"mega"` | Le dresseur méga-évolue dès que le combat le lui permet | Oui, voir plus bas |
+| `"zmove"` | Le dresseur sort son Z-Move au tour où ça décide quelque chose | Oui, voir plus bas |
+| `"max"` | Le dresseur dynamaxe au tour où ça décide quelque chose | Oui, voir plus bas |
 | `"terastal"` | Le dresseur téracristallise au tour où ça décide quelque chose | Non |
 
-`zmove`, `dynamax` et `ultra` existent chez Cobblemon mais **ne sont pas encore supportés** par
-le mod : les écrire est signalé dans le log au chargement, et ne fait rien. Tout autre mot est
-signalé comme une faute de frappe.
+> Le dynamax s'écrit **`max`**, pas `dynamax` : ces quatre mots sont les identifiants de
+> Cobblemon, repris tels quels pour qu'il n'y ait qu'un vocabulaire à connaître.
 
-Un dresseur peut déclarer les deux. Le tour où le combat les offre en même temps, c'est la
-méga-évolution qui part - elle est liée au Pokémon qui porte la gemme, alors que le téracristal
-appartient au camp et attend sans rien perdre.
+`ultra` (l'Ultra-Explosion) existe chez Cobblemon mais **n'est pas encore supporté** : l'écrire
+est signalé dans le log au chargement, et ne fait rien. Tout autre mot est signalé comme une
+faute de frappe.
+
+Un dresseur peut les déclarer tous. Le tour où le combat en offre plusieurs, un seul part - une
+réponse ne porte qu'un gimmick - et l'ordre est toujours le même :
+
+1. **La méga-évolution**, parce qu'elle ne se dépense pas : elle ne coûte pas de tour et ne peut
+   pas être un mauvais choix.
+2. **Le Z-Move**, puis **le dynamax**, puis **le téracristal**. Les trois ne partent qu'au tour
+   où ils décident quelque chose, donc quand deux répondent à la même question, c'est le moins
+   cher qui part : un Z-Move est un coup puis plus rien, un dynamax dure trois tours, un
+   téracristal est ce que le Pokémon *est* pour le reste du combat.
 
 ---
 
@@ -96,6 +108,94 @@ Fallback Item: Life Orb
 Le premier objet qui existe est porté. Le détail est dans
 [DATAPACK.md](DATAPACK.md#la-ligne-fallback-item) - la règle vaut pour tous les objets, pas
 seulement les gemmes.
+
+---
+
+# Le Z-Move
+
+## Ce qu'il faut installer
+
+Le même mod que pour la méga-évolution : [Cobblemon: Mega
+Showdown](https://modrinth.com/mod/mega-showdown), des deux côtés. C'est lui qui fournit les
+cristaux Z et qui apprend au simulateur à les voir. Sans lui, un dresseur qui déclare
+`["zmove"]` combat normalement, sans jamais en sortir un.
+
+## Le cristal Z
+
+C'est un objet tenu, donc il se donne sur la première ligne du Pokémon :
+
+```
+Pikachu @ Electrium Z
+Level: 80
+- Thunderbolt
+- Volt Tackle
+```
+
+- Un cristal **de type** (`Electrium Z`, `Firium Z`, …) transforme n'importe quelle capacité de
+  ce type.
+- Un cristal **spécifique** (`Aloraichium Z`, `Decidium Z`, …) ne transforme qu'une capacité
+  précise d'un Pokémon précis, et il faut que le Pokémon la connaisse.
+
+La règle de recherche d'objet et la ligne `Fallback Item:` sont exactement celles de la gemme,
+ci-dessus.
+
+## Quand le dresseur sort son Z-Move
+
+**Pas à la première occasion.** Un camp n'y a droit qu'une fois, et un Z-Move dépensé sur une
+cible qui tombait de toute façon est un Z-Move perdu. Il n'y a donc qu'un déclencheur, le même
+que le premier du téracristal :
+
+| Il sort son Z-Move si… | Autrement dit |
+| --- | --- |
+| Le coup qu'il allait jouer devient létal grâce à la puissance du Z-Move | Il prend un KO qu'il n'avait pas |
+
+Il n'y a **pas** de second déclencheur défensif, et ce n'est pas un oubli : un Z-Move est un
+coup, puis plus rien. Les Z de statut - Z-Démoralisation qui soigne, Z-Danse Fleurie qui booste -
+remplaceraient la capacité que le dresseur avait choisie par autre chose, ce qu'un gimmick ne
+doit pas faire ici. **Sur une capacité de statut, le dresseur garde donc son Z-Move en main.**
+
+- **Une seule fois par combat.** En double, le premier des deux Pokémon pour qui ça décide
+  quelque chose le prend.
+- **Jamais sur un changement de Pokémon** : le Z-Move part avec l'attaque du tour.
+- **Une capacité à puissance variable** (Frappe Atlas, Gyroballe, Rapport…) garde le Z en main :
+  sa puissance en Z ne se calcule pas, et le mod préfère ne rien dépenser plutôt que deviner.
+- **La difficulté ne l'interdit jamais**, mais elle se voit : le déclencheur regarde *le coup
+  déjà choisi*. Un dresseur en `difficulty: 0` joue au hasard, il aura donc rarement en main le
+  coup qui bascule. Voir [DIFFICULTE.md](DIFFICULTE.md).
+
+---
+
+# Le dynamax
+
+## Ce qu'il faut installer
+
+Encore [Cobblemon: Mega Showdown](https://modrinth.com/mod/mega-showdown), des deux côtés : le
+dynamax n'existe pas dans une installation nue.
+
+**Rien à préparer sur le Pokémon.** Contrairement aux trois autres, le dynamax ne demande ni
+objet tenu ni ligne d'équipe : le mot dans `gimmicks` suffit. Côté joueur il faut un Bracelet
+Dynamax, mais un dresseur n'a pas cette contrainte - voir [plus bas](#le-joueur-lui).
+
+## Quand le dresseur dynamaxe
+
+Comme le téracristal, il attend l'un de deux moments - le dynamax fait les deux choses à la
+fois, il gonfle les capacités en Capsules Max et il double la barre de vie :
+
+| Il dynamaxe si… | Autrement dit |
+| --- | --- |
+| Le coup qu'il allait jouer devient létal grâce à la puissance de la Capsule Max | Il prend un KO qu'il n'avait pas |
+| Le coup adverse qui allait le mettre KO cesse de l'être une fois sa barre doublée | Il survit à un tour qu'il perdait |
+
+- **Une seule fois par combat**, et il dure trois tours. Le mod ne regarde pas ces trois tours :
+  ce qu'ils valent dépend de ce que le joueur fait ensuite, et chacun des deux déclencheurs vaut
+  déjà la dépense à lui seul.
+- **Jamais sur un changement de Pokémon** : le dynamax part avec l'attaque du tour.
+- **Jamais sur une capacité de statut.** Le dynamax les transforme *toutes* en Draco-Barrière,
+  donc dynamaxer sur un soin ou une danse remplacerait la décision du dresseur au lieu de s'y
+  accrocher. Il attend un tour où il attaque.
+- **La difficulté ne l'interdit jamais**, avec la même nuance que pour les deux autres :
+  seul le premier déclencheur dépend du coup déjà choisi, le second joue à toutes les
+  difficultés.
 
 ---
 
@@ -161,9 +261,10 @@ ne bascule.
 
 ## Le joueur, lui
 
-Chez Cobblemon, un joueur ne peut méga-évoluer qu'avec une **Key Stone** dans ses objets clés,
-ni téracristalliser sans **Orbe Tera**. Un dresseur n'a pas ces contraintes : il se sert de ses
-gimmicks même face à un joueur qui n'a ni l'une ni l'autre.
+Chez Cobblemon, un joueur ne se sert d'un gimmick que s'il a l'objet clé qui va avec : une Key
+Stone pour la méga, un Z-Ring pour le Z-Move, un Bracelet Dynamax pour le dynamax, une Orbe Tera
+pour le téracristal. Un dresseur n'a aucune de ces contraintes : il se sert des siens même face
+à un joueur qui n'a rien.
 
 C'est la règle de Cobblemon et le mod n'y touche pas, mais ça se prépare côté pack : un
 dresseur qui téracristallise est plus dur qu'il n'en a l'air pour un joueur en début de partie.
@@ -175,16 +276,21 @@ Mettre l'objet derrière le dresseur, ou verrouiller le dresseur avec
 1. `/cobblemontrainers spawn <id>` pour poser le dresseur.
 2. Le combattre.
    - Méga : le Pokémon doit se transformer au premier tour.
-   - Téracristal : il faut lui donner une raison. Amenez son Pokémon actif au bord du KO, ou
-     mettez-lui en face une cible qu'il ne tue que d'un cheveu.
+   - Z-Move, dynamax, téracristal : il faut lui donner une raison. Amenez son Pokémon actif au
+     bord du KO, ou mettez-lui en face une cible qu'il ne tue que d'un cheveu.
 3. Rien ne se passe ?
-   - Pour la méga : Mega Showdown est-il installé des deux côtés, la gemme correspond-elle à
-     l'espèce, et le log dit-il `Ignoring held item` au chargement du pack ?
+   - Pour la méga et le Z-Move : Mega Showdown est-il installé des deux côtés, l'objet
+     correspond-il à l'espèce et à la capacité, et le log dit-il `Ignoring held item` au
+     chargement du pack ?
+   - Pour le dynamax : Mega Showdown est-il installé des deux côtés ?
    - Pour le téracristal : le log dit-il `Ignoring unknown Tera type` ? Sinon, c'est
      probablement que l'occasion ne s'est pas présentée.
 
 `/cobblemontrainers debugai` ajoute une ligne dans le chat au moment où le dresseur se sert d'un
-gimmick, avec la raison pour le téracristal. C'est ce qui distingue « il ne le fait pas » de
-« il attend son moment ».
+gimmick, avec la raison pour les trois qui attendent leur moment. C'est ce qui distingue « il ne
+le fait pas » de « il attend son moment ».
 
-Le pack d'exemple contient `cobblemonrlm:terastal`, un dresseur bâti pour ça.
+Le pack d'exemple contient trois dresseurs bâtis pour ça : `cobblemonrlm:terastal`,
+`cobblemonrlm:zmove` (quatre cristaux Z, chacun avec son `Fallback Item:`) et
+`cobblemonrlm:dynamax` (rien à donner aux Pokémon, juste le mot). Les deux derniers ne sortent
+leur gimmick qu'avec Mega Showdown installé ; sans lui ils combattent normalement.
