@@ -1,7 +1,7 @@
 package matheo1712.cobbletrainers.trainers
 
 import matheo1712.cobbletrainers.CobblemonTrainers
-import matheo1712.cobbletrainers.battle.TrainerBattleIntro
+import matheo1712.cobbletrainers.intro.TrainerIntros
 import matheo1712.cobbletrainers.battle.TrainerBattleMusic
 import matheo1712.cobbletrainers.battle.ai.TrainerGimmicks
 import net.minecraft.resources.ResourceLocation
@@ -89,11 +89,11 @@ data class TrainerDefinition(
  *   own a declaration that the trainer knows what to do with it. Only `terastal` works on a
  *   plain install; the other three need the mod that teaches the simulator about them, and do
  *   nothing without it. See `docs/GIMMICKS.md`.
- * @param intro Versus screen shown before the battle opens, `bw` being the one there is. Null -
- *   the default - is a trainer whose battle simply starts, which is what every trainer written
- *   before this did. See [matheo1712.cobbletrainers.battle.TrainerBattleIntro].
- * @param introDuration How long that screen stays up, in ticks - 20 to a second. Clamped to
- *   what reads as a screen rather than a flash or a wait, and meaningless without [intro].
+ * @param intro The screen this trainer is announced with, named as `<namespace>:<name>` - or
+ *   bare, which is one of the mod's own, `bw` being the one it ships. Null - the default - is a
+ *   trainer whose battle simply starts, which is what every trainer written before this did.
+ *   How long it lasts is the intro's own business; see
+ *   [matheo1712.cobbletrainers.intro.TrainerIntro].
  */
 data class TrainerBattleSettings(
     val level: Int = 1,
@@ -102,8 +102,7 @@ data class TrainerBattleSettings(
     val healParty: Boolean = true,
     val music: String? = TrainerBattleMusic.DEFAULT_TRACK,
     val gimmicks: List<String> = emptyList(),
-    val intro: String? = null,
-    val introDuration: Int = TrainerBattleIntro.DEFAULT_TICKS
+    val intro: String? = null
 ) {
 
     /**
@@ -111,9 +110,9 @@ data class TrainerBattleSettings(
      * something the mod does not do yet, which is worth saying plainly: silence would read as a
      * trainer who simply never gets the chance to use it.
      *
-     * The intro is checked the same way, and for the same reason: an unknown style still shows
-     * a screen - naming one is asking for one - so nothing but this line would say the name was
-     * not understood.
+     * The intro is checked the same way, and for the same reason: a trainer naming one nobody
+     * provides simply fights without a screen, which is silence exactly where a pack author
+     * would want a word.
      */
     fun validate(id: ResourceLocation) {
         validateIntro(id)
@@ -136,21 +135,27 @@ data class TrainerBattleSettings(
         }
     }
 
+    /**
+     * Says so when `battle.intro` names an intro no pack loaded. Checked here rather than at the
+     * battle because this is the moment a pack author is reading the log - and because by then
+     * the only honest answer is to open the battle without a screen.
+     */
     private fun validateIntro(id: ResourceLocation) {
         val declared = intro?.trim()?.takeIf { it.isNotEmpty() } ?: return
 
-        if (!TrainerBattleIntro.isSupported(declared)) {
+        val introId = TrainerIntros.idOf(declared)
+        if (introId == null) {
             CobblemonTrainers.LOGGER.warn(
-                "Trainer {}: unknown battle intro '{}', showing '{}' instead. Expected one of: {}",
-                id, declared, TrainerBattleIntro.DEFAULT_STYLE, TrainerBattleIntro.STYLES.joinToString(", ")
+                "Trainer {}: battle.intro '{}' is not a valid id. Expected <namespace>:<name>.",
+                id, declared
             )
+            return
         }
 
-        val clamped = introDuration.coerceIn(TrainerBattleIntro.MIN_TICKS, TrainerBattleIntro.MAX_TICKS)
-        if (clamped != introDuration) {
+        if (TrainerIntros.get(introId) == null) {
             CobblemonTrainers.LOGGER.warn(
-                "Trainer {}: battle.introDuration is {} ticks, using {}. Expected {} to {}.",
-                id, introDuration, clamped, TrainerBattleIntro.MIN_TICKS, TrainerBattleIntro.MAX_TICKS
+                "Trainer {}: battle.intro names {}, which no pack provides. Loaded intros: {}",
+                id, introId, TrainerIntros.ids().joinToString(", ").ifEmpty { "none" }
             )
         }
     }

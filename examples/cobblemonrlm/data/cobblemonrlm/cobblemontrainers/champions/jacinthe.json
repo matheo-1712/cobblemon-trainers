@@ -6,8 +6,7 @@
     "difficulty": 5,
     "healParty": true,
     "music": "cobblemonrlm:battle_music.jacinthe",
-    "intro": "bw",
-    "introDuration": 70
+    "intro": "bw"
   },
   "messages": {
     "greeting": "trainer.cobblemonrlm.jacinthe.greeting",

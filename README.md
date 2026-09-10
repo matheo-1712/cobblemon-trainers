@@ -104,8 +104,9 @@ l'inverse et oublie la victoire - mais ne retire pas un advancement déjà obten
 l'affaire de `/advancement revoke`.
 
 Un clic droit sur le dresseur lance le combat, sur fond de musique de combat. Un dresseur qui
-déclare `battle.intro` est annoncé avant, par un écran de versus façon Noir et Blanc : le joueur
-et le dresseur glissent chacun d'un côté, la musique part là, et une touche passe l'écran. Si le
+déclare `battle.intro` est annoncé avant, par un écran de versus façon Noir et Blanc : les deux
+modèles entrent chacun d'un côté, la musique part là, et une touche passe l'écran. Cet écran
+s'écrit en datapack, calque par calque - voir [docs/INTROS.md](docs/INTROS.md). Si le
 combat ne peut pas démarrer (pas de Pokémon dans ton équipe, combat déjà en cours, dresseur sans
 équipe, dresseur qui ne prend pas de revanche, ou conditions non remplies), la raison
 s'affiche dans le chat.

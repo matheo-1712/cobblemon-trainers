@@ -34,21 +34,22 @@ passe par `assets/cobblemon-trainers/lang/` - jamais de littéral en dur.
 
 La doc utilisateur est en français : `README.md` (installation, commandes),
 `docs/DATAPACK.md` (guide complet de création de datapack), `docs/DIFFICULTE.md` (ce que fait
-chaque niveau de `battle.difficulty`) et `docs/SPAWNING.md` (le bloc `location` et l'appel
-depuis le Battle Phone). Ce qui touche au format des dresseurs - nouveau champ,
+chaque niveau de `battle.difficulty`), `docs/SPAWNING.md` (le bloc `location` et l'appel
+depuis le Battle Phone) et `docs/INTROS.md` (le format des écrans de versus). Ce qui touche au format des dresseurs - nouveau champ,
 nouvelle règle de parsing - se répercute dans `docs/DATAPACK.md`, qui est la référence ; le
 README n'en garde qu'un résumé. **Toute règle de l'IA va dans `docs/DIFFICULTE.md`**, **tout
-ce qui touche aux gimmicks de combat dans `docs/GIMMICKS.md`**, et **tout
-ce qui touche à l'appel d'un dresseur dans `docs/SPAWNING.md`**, jamais
+ce qui touche aux gimmicks de combat dans `docs/GIMMICKS.md`**, **tout
+ce qui touche à l'appel d'un dresseur dans `docs/SPAWNING.md`** et **tout ce qui touche à
+l'écran de versus dans `docs/INTROS.md`**, jamais
 dans `docs/DATAPACK.md`, qui n'en garde qu'un renvoi : une règle décrite à deux endroits est une
 règle qui finit fausse à l'un des deux. `docs/DATAPACK.md` est tenu **aussi
 concis que possible** : une idée par phrase, un tableau plutôt qu'un paragraphe, et rien qui
 soit déjà dit ailleurs dans le fichier. Ajouter un champ, c'est ajouter une ligne de tableau,
 pas une section.
 
-`docs/en/` est la **traduction anglaise** de ces quatre pages plus leur index
-(`DATAPACK.md`, `SPAWNING.md`, `DIFFICULTY.md` et `GIMMICKS.md` - aux noms anglais -,
-`README.md`), destinée aux
+`docs/en/` est la **traduction anglaise** de ces pages plus leur index
+(`DATAPACK.md`, `SPAWNING.md`, `DIFFICULTY.md`, `GIMMICKS.md` et `INTROS.md` - aux noms
+anglais -, `README.md`), destinée aux
 joueurs qui arrivent par Modrinth. Le français reste la version de référence : **une règle se
 change d'abord dans `docs/`, puis dans `docs/en/` dans le même commit**. Deux pages qui
 divergent sont pires qu'une page absente, la seconde ayant l'air à jour. `MODRINTH.md`, à la
@@ -186,6 +187,10 @@ messages, musique et récompenses de combat.
   s'arrête, celle d'un combat contre un Pokémon sauvage. Même section.
 - **`battle.TrainerBattleIntro`** - l'écran de versus d'un dresseur qui en déclare un, et
   l'attente pendant laquelle le combat est retenu. Voir « L'écran de versus ».
+- **`intro.TrainerIntro` / `intro.IntroLayer`** - le format d'une intro : la scène et ses
+  calques, tels qu'un pack les écrit. Même section.
+- **`intro.TrainerIntros`** - le registre qui les charge, depuis
+  `data/<ns>/cobblemontrainers_intros/`. Même section.
 - **`battle.ai.TrainerBattleAI`** - la couche qui refuse les décisions intenables du
   `StrongBattleAI` de Cobblemon, épaulée par `BattleTypeChart` (efficacité des types, talents
   compris), `BattleDamage` (dégâts en points de vie), `BattleGuards` (ce qui encaisse un coup
@@ -238,7 +243,8 @@ messages, musique et récompenses de combat.
   `client.MusicManagerMixin`.
 - **`client.gui.TrainerSpawnerScreen` / `client.gui.BattlePhoneScreen`** - les deux écrans.
 - **`client.gui.BattleIntroScreen`** - le troisième, celui que personne n'ouvre : l'écran de
-  versus, levé par le serveur avant le combat.
+  versus, levé par le serveur avant le combat. C'est le seul moteur de rendu des intros, et le
+  seul endroit du mod qui pose un modèle d'entité dans un écran.
 - **`client.gui.TrainerSkinRenderer` / `client.cache.TrainerSkinCache`** - le dessin d'un skin
   à plat, et les textures que le Battle Phone a reçues.
 - **`client.cache.TrainerTeamCache`** - les équipes que le Battle Phone a reçues, prêtes à
@@ -316,18 +322,55 @@ Points à ne pas redécouvrir :
 
 ### L'écran de versus
 
-Un dresseur qui déclare `battle.intro` est annoncé avant son combat : le joueur glisse depuis la
-gauche, le dresseur depuis la droite, un VS tombe entre les deux, et le thème de combat part là.
-C'est l'entrée d'un champion de Noir et Blanc, et c'est **facultatif, dresseur par dresseur** -
-un écran devant chaque dresseur de route serait un écran de trop.
+Un dresseur qui déclare `battle.intro` est annoncé avant son combat : les deux modèles entrent
+chacun d'un côté, un VS tombe entre eux, et le thème de combat part là. C'est l'entrée d'un
+champion de Noir et Blanc, et c'est **facultatif, dresseur par dresseur** - un écran devant
+chaque dresseur de route serait un écran de trop.
 
-Le partage est celui du reste du mod : `TrainerBattleIntro` tient le séquencement côté serveur,
-`BattleIntroNetworking` les deux paquets, et `client.gui.BattleIntroScreen` le dessin. Le style
-(`bw`, le seul) voyage dans le paquet plutôt que d'être supposé : un second look s'ajoute sans
-second paquet.
+**L'écran est écrit en datapack**, pas en Kotlin. Une intro est une **scène en calques**
+(`intro.TrainerIntro` / `intro.IntroLayer`), chargée par `intro.TrainerIntros` depuis
+`data/<ns>/cobblemontrainers_intros/`, et `bw` - celle du mod - est un de ces fichiers et rien
+d'autre. Le partage habituel : `TrainerBattleIntro` tient le séquencement serveur,
+`BattleIntroNetworking` les deux paquets, `client.gui.BattleIntroScreen` le dessin. Toute la
+doc du format est dans `docs/INTROS.md`, jamais dans `docs/DATAPACK.md`, qui n'en garde qu'une
+ligne de tableau et un renvoi.
 
 Points à ne pas redécouvrir :
 
+- **Les intros du mod sont écrites dans le format des packs, et c'est ce qui le tient honnête.**
+  Ce que nos propres intros ne sauraient pas dire est un trou du format, et il se voit tout de
+  suite. Ne pas les réécrire en Kotlin « pour les sécuriser » : ça ferait deux moteurs de rendu
+  dont un seul serait testé.
+- **Il y en a sept, et six habillent un dresseur iconique** (`plains`, `cherry`, `desert`,
+  `beach`, `hills`, `jungle`), `bw` restant la neutre. Chacune prend les couleurs du biome où son
+  dresseur répond - le seul trait qui lui appartienne déjà, donc le seul qui ne puisse pas
+  contredire le reste du fichier. Deux règles les tiennent ensemble : **la bande de gauche est du
+  même bleu partout** (la gauche, c'est le joueur, et une couleur qui change de camp d'un écran à
+  l'autre est un écran qu'il faut relire), et **la géométrie ne bouge pas** d'une intro à l'autre
+  - seuls la couleur, la pente, le sens d'entrée et le temps varient. Ajouter une intro maison,
+  c'est ajouter un fichier et une ligne au tableau de `docs/INTROS.md`.
+- **La scène voyage dans le paquet, en JSON.** Pas de registre synchronisé à la connexion, donc
+  rien à invalider, et ce que le client dessine est ce que le serveur vient de lire - un
+  `/reload` s'applique au combat suivant. Le JSON plutôt qu'un codec explicite parce qu'un
+  calque a une vingtaine de champs facultatifs : la data class est alors le codec entier, et
+  aucun champ ne peut se désynchroniser entre l'écriture et la lecture.
+- **Le serveur envoie aussi ce que les calques peuvent nommer** - nom, catégorie, niveau,
+  taille d'équipe, id de l'entité - et **l'équipe seulement si un calque `pokemon` existe**
+  (`TrainerIntro.needsTeam`). Une intro qui ne montre pas l'équipe ne l'envoie pas : c'est la
+  même règle que le Battle Phone, qui ne la sert qu'après la victoire.
+- **Une figure est un vrai modèle, posé puis remis en place.** `renderEntityInInventory` dessine
+  la rotation que porte l'entité, donc le `yaw` d'un calque lui est écrit dessus le temps d'un
+  appel. Le repli est le skin à plat que le serveur a poussé, puis une silhouette - et il est
+  logué une fois, sans quoi les deux dessins se ressemblent trop pour qu'on sache lequel a
+  tourné.
+- **Le nom flottant du dresseur est coupé par `NPCEntity.hideNameTag`, pas par
+  `isCustomNameVisible`.** `NPCRenderer.shouldShowName` ne regarde ce drapeau qu'en premier ;
+  ensuite il retombe sur `LivingEntityRenderer`, qui affiche l'étiquette d'une entité **visée**
+  quoi qu'en dise `customNameVisible` - et un joueur qui vient d'accepter un combat vise
+  forcément le dresseur. D'où le gros nom qui atterrissait sur la figure, sans équivalent côté
+  joueur. Le drapeau est tenu pour toute la vie de l'écran et rendu dans `removed()`, ce qui
+  emporte au passage l'étiquette du dresseur qu'on voit à travers le fond. Nommer quelqu'un est
+  le travail d'un calque `text`, des deux côtés.
 - **Le combat est retenu, pas décalé.** `TrainerBattleInteraction.startBattle` s'arrête à
   l'intro, et c'est le tick de `TrainerBattleIntro` qui appelle `openBattle` quelques secondes
   plus tard - d'où la découpe en deux fonctions. Rien n'est redemandé de l'autre côté de
@@ -337,26 +380,35 @@ Points à ne pas redécouvrir :
   même piste ensuite, et le client laisse tourner celle qu'il tient déjà (voir « Musique de
   combat »). Rien n'est mémorisé côté serveur pour ça. Une intro annulée, elle, reprend sa
   musique en partant.
+- **La durée appartient à l'intro, pas au dresseur.** Un `battle.introDuration` a existé une
+  journée puis a été retiré : deux endroits qui décident de la même durée finissent par se
+  contredire, et c'est la scène qui sait de combien de temps ses calques ont besoin.
+- **Une intro s'écrit sur un écran de 640×360.** Tailles et décalages passent par `uiScale`,
+  les ancres non - elles tombent sur les vrais bords, donc un coin reste un coin. Sans ça, une
+  intro écrite sur une grande fenêtre serait deux fois trop petite sur une petite.
 - **Un client sans le mod n'a pas d'écran, donc pas d'attente.** `begin` rend faux sur
-  `canSend` et le combat s'ouvre comme avant - laisser l'attente sans l'écran ferait trois
+  `canSend` et le combat s'ouvre comme avant - laisser l'attente sans l'écran ferait cinq
   secondes de monde immobile.
 - **Passer l'écran ne fait qu'avancer l'échéance.** `skip` pose `ticksLeft` à 1 : la décision
   repasse par les mêmes gardes, donc un client ne peut pas ouvrir un combat qu'ils auraient
   refusé, ni en ouvrir un dont il n'est pas l'objet - le paquet ne porte rien, l'attente étant
-  retrouvée par joueur.
+  retrouvée par joueur. Et on ne peut passer qu'une fois la dernière entrée finie
+  (`TrainerIntro.entranceEnd`) : une touche maintenue se répète, donc un joueur qui aborde un
+  dresseur le doigt sur sa touche d'avance passerait l'écran à la frame où il s'ouvre.
 - **Le skin du dresseur est poussé, jamais demandé.** `TrainerSkinCache.peek` existe pour ça :
   la demande normale du Battle Phone est refusée pour un dresseur `listed: false`, et sa réponse
-  vide arriverait *après* la bonne et l'écraserait. Le skin du joueur, lui, ne coûte rien - son
-  client l'a déjà.
+  vide arriverait *après* la bonne et l'écraserait.
+- **Un calque qu'on ne sait pas lire est retiré au chargement**, côté serveur, où l'auteur du
+  pack lit son log - jamais en plein combat. Le client ne reçoit donc que des calques qui se
+  dessinent. La même logique vaut pour le dresseur : `battle.intro` qui ne désigne rien est
+  signalé au chargement, et le combat s'ouvre sans écran.
 - **`isPauseScreen` doit rester à faux.** Un écran de pause arrête le serveur intégré, c'est-à-
   dire précisément ce qui compte les ticks jusqu'au combat : en solo, l'écran attendrait un tick
   qui ne vient pas.
-- **On ne peut passer l'écran qu'une fois les figures posées.** Une touche maintenue se répète,
-  donc un joueur qui aborde un dresseur le doigt sur sa touche d'avance passerait l'écran à la
-  frame où il s'ouvre.
-- **Tout est dessiné en aplats.** Deux skins et des rectangles, donc aucune texture à refaire à
-  chaque taille de fenêtre. Les bandes penchent, elles sont donc posées ligne par ligne :
-  `GuiGraphics.fill` ne connaît que des rectangles.
+- **Le son d'un calque est un son d'interface** (`SoundSource.MASTER`), pas de la musique : le
+  thème de combat occupe déjà cette catégorie, et un impact qui baisserait avec elle
+  disparaîtrait pour qui joue musique au minimum. Il part une fois, au tick `at`, d'où le
+  tableau de drapeaux plutôt qu'un test sur le temps.
 - **Le fondu d'une figure passe par `GuiGraphics.setColor`**, pas par `RenderSystem` : il règle
   le lot en cours avant de changer la couleur du shader, donc la teinte tombe sur la figure
   seule et pas sur ce qui partageait son batch.

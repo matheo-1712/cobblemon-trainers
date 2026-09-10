@@ -14,6 +14,7 @@ ses commandes ; les pages ci-dessous sont la **référence** - c'est là que vit
 | [SPAWNING.md](SPAWNING.md) | Faire venir un dresseur : le bloc `location` et l'appel depuis le Battle Phone |
 | [DIFFICULTE.md](DIFFICULTE.md) | Ce que fait exactement `battle.difficulty`, de `0` à `5` |
 | [GIMMICKS.md](GIMMICKS.md) | Méga-évolution, Z-Move, dynamax, téracristal : `battle.gimmicks`, la gemme, le cristal Z, le type Tera |
+| [INTROS.md](INTROS.md) | Écrire l'écran de versus d'un dresseur : les calques, leur place, leurs temps et leurs sons |
 
 Un pack d'exemple couvrant chaque option vit dans
 [`examples/cobblemonrlm/`](../examples/cobblemonrlm) : un seul dossier qui fait à la fois
@@ -44,6 +45,7 @@ Phone sous leur propre onglet, à côté de ceux de tes packs.
 | Rendre un dresseur appelable | [Le bloc `location`](SPAWNING.md#le-bloc-location) |
 | Choisir un niveau d'IA | [Quel niveau choisir](DIFFICULTE.md#quel-niveau-choisir) |
 | Faire méga-évoluer, dynamaxer ou téracristalliser un dresseur | [Les gimmicks de combat](GIMMICKS.md) |
+| Annoncer un champion par un écran de versus | [Écrire une intro](INTROS.md) |
 | Comprendre une correction de l'IA en jeu | [Vérifier en jeu](DIFFICULTE.md#vérifier-en-jeu) |
 | Traduire mes dresseurs | [Traduire les textes](DATAPACK.md#traduire-les-textes) |
 | Comprendre pourquoi mon pack ne charge pas | [Erreurs fréquentes](DATAPACK.md#erreurs-fréquentes) |
@@ -56,7 +58,8 @@ Chaque sujet n'est décrit qu'à un seul endroit, et les autres pages y renvoien
 - le **format des dresseurs** est dans `DATAPACK.md` ;
 - tout ce qui touche à **l'appel d'un dresseur** est dans `SPAWNING.md` ;
 - tout ce que fait **l'IA** est dans `DIFFICULTE.md` ;
-- tout ce qui touche aux **gimmicks de combat** est dans `GIMMICKS.md`.
+- tout ce qui touche aux **gimmicks de combat** est dans `GIMMICKS.md` ;
+- tout ce qui touche à **l'écran de versus** est dans `INTROS.md`.
 
 Une règle écrite à deux endroits est une règle qui finit fausse à l'un des deux. Ajouter un
 champ, c'est ajouter une ligne au tableau de `DATAPACK.md`, pas une section.

@@ -3,27 +3,28 @@ package matheo1712.cobbletrainers.battle
 import com.cobblemon.mod.common.entity.npc.NPCEntity
 import com.cobblemon.mod.common.util.isInBattle
 import matheo1712.cobbletrainers.CobblemonTrainers
+import matheo1712.cobbletrainers.intro.TrainerIntro
+import matheo1712.cobbletrainers.intro.TrainerIntros
 import matheo1712.cobbletrainers.network.BattleIntroNetworking
 import matheo1712.cobbletrainers.trainers.TrainerBattleSettings
 import matheo1712.cobbletrainers.trainers.TrainerDefinition
-import matheo1712.cobbletrainers.trainers.TrainerRegistry
 import net.minecraft.ChatFormatting
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerPlayer
 import java.util.UUID
 
 /**
- * The versus screen a trainer may show before their battle opens: the player and the trainer
- * sliding in from either side, and the battle theme starting on them - the way a gym leader is
- * announced in Black and White.
+ * The screen a trainer may be announced with, and the wait it costs the battle behind it.
  *
- * A trainer opts in with `battle.intro`, and names which screen they want: [STYLES] holds the
- * vocabulary, `bw` being the only one so far. A trainer that names none simply battles, which
- * is what every trainer written before this did.
+ * A trainer opts in with `battle.intro`, naming an intro any pack may have written - see
+ * [TrainerIntro] for the format and [TrainerIntros] for where those files live. A trainer that
+ * names none simply battles, which is what every trainer written before this did.
  *
- * The screen belongs to the client - see
+ * The screen itself belongs to the client - see
  * [matheo1712.cobbletrainers.client.gui.BattleIntroScreen] - so all that happens here is the
- * waiting: the packet goes out, the battle is held back for [TrainerBattleSettings.introDuration]
- * ticks, and [TrainerBattleInteraction.openBattle] is what the wait ends on.
+ * waiting: the packet goes out with the intro and everything its layers need, the battle is
+ * held back for [TrainerIntro.duration] ticks, and [TrainerBattleInteraction.openBattle] is
+ * what the wait ends on.
  *
  * Points worth not rediscovering:
  * - **The music starts with the screen, not with the battle.** That is what the intro is for.
@@ -31,12 +32,15 @@ import java.util.UUID
  *   one already playing run on - see
  *   [matheo1712.cobbletrainers.client.ClientBattleMusic.play] - so the theme is not restarted
  *   from the top just as the fight begins.
+ * - **The intro travels with the packet, resolved.** Nothing is synced to clients on join and
+ *   nothing is looked up client-side: what the screen draws is what the server read a moment
+ *   ago, so a `/reload` lands on the next battle and never mid-screen.
  * - **Nothing is held back for a client that cannot show it.** A client without the mod never
- *   gets the packet, so it would stare at the world for three seconds and then fight: [begin]
+ *   gets the packet, so it would stare at the world for five seconds and then fight: [begin]
  *   answers false there and the battle opens at once, as it always did.
- * - **The wait is guarded every tick.** Three seconds is long enough for the trainer to die,
- *   be dismissed or have its chunk unloaded, and for the player to leave - so the battle is
- *   only opened on a pair that is still there. A cancelled intro takes its music back with it.
+ * - **The wait is guarded every tick.** A few seconds is long enough for the trainer to die, be
+ *   dismissed or have its chunk unloaded, and for the player to leave - so the battle is only
+ *   opened on a pair that is still there. A cancelled intro takes its music back with it.
  * - **Skipping goes through the same countdown.** [skip] only brings the deadline forward, so
  *   a client asking to skip cannot open a battle the guards would have refused.
  * - **The player is held as an entity, like [TrainerBattleRange] holds its trainer.** A player
@@ -44,19 +48,6 @@ import java.util.UUID
  *   `hasDisconnected` answers for: the intro is dropped and they walk up to the trainer again.
  */
 object TrainerBattleIntro {
-
-    /** The only screen there is so far. What an unknown style falls back to. */
-    const val DEFAULT_STYLE = "bw"
-
-    /** Every screen a pack may name in `battle.intro`. */
-    val STYLES: List<String> = listOf(DEFAULT_STYLE)
-
-    /** How long the screen stays up when the pack does not say, in ticks. */
-    const val DEFAULT_TICKS = 60
-
-    /** A screen shorter than this is a flash, longer than that is a wait. Packs are clamped. */
-    const val MIN_TICKS = 20
-    const val MAX_TICKS = 200
 
     /** A battle waiting on its intro, and everything needed to open it once the wait is over. */
     private class Pending(
@@ -69,20 +60,16 @@ object TrainerBattleIntro {
     /** Keyed by player: a player has one battle ahead of them at a time. */
     private val pending = mutableMapOf<UUID, Pending>()
 
-    /** Whether a pack naming this style asked for something that exists. */
-    fun isSupported(style: String): Boolean = STYLES.contains(style.trim().lowercase())
-
     /**
-     * The screen to show for these settings, or null for a trainer who wants none.
-     *
-     * An unrecognised name still gets a screen: naming one *is* asking for an intro, and which
-     * one is the part a typo can get wrong. The load-time warning is in
-     * [TrainerBattleSettings.validate].
+     * The intro these settings name, and the id it was found under, or null for a trainer that
+     * names none - or names one no pack provides, which the load-time warning of
+     * [TrainerBattleSettings.validate] has already spoken about.
      */
-    fun styleOf(settings: TrainerBattleSettings): String? {
-        val declared = settings.intro?.trim()?.lowercase()?.takeIf { it.isNotEmpty() } ?: return null
+    fun resolve(settings: TrainerBattleSettings): Pair<ResourceLocation, TrainerIntro>? {
+        val declared = settings.intro?.takeIf { it.isNotBlank() } ?: return null
+        val id = TrainerIntros.idOf(declared) ?: return null
 
-        return if (isSupported(declared)) declared else DEFAULT_STYLE
+        return TrainerIntros.get(id)?.let { id to it }
     }
 
     /**
@@ -90,9 +77,13 @@ object TrainerBattleIntro {
      *
      * @return false when there is no intro to show, and the caller should open the battle now.
      */
-    fun begin(npc: NPCEntity, player: ServerPlayer, definition: TrainerDefinition): Boolean {
-        val style = styleOf(definition.battle) ?: return false
-        val trainerId = TrainerRegistry.idFromAspects(npc.aspects) ?: return false
+    fun begin(
+        npc: NPCEntity,
+        player: ServerPlayer,
+        trainerId: ResourceLocation,
+        definition: TrainerDefinition
+    ): Boolean {
+        val (introId, intro) = resolve(definition.battle) ?: return false
         // Right-clicking a trainer from inside a battle reaches this too, and a versus screen
         // over a battle interface would announce nothing: Cobblemon's own refusal is what that
         // player is owed, so the battle call is left to go through and fail.
@@ -102,11 +93,10 @@ object TrainerBattleIntro {
         // back is the one about to open. Nothing more to start, and nothing to fall through to.
         if (pending.containsKey(player.uuid)) return true
 
-        val ticks = definition.battle.introDuration.coerceIn(MIN_TICKS, MAX_TICKS)
-        pending[player.uuid] = Pending(npc, player, definition, ticks)
+        pending[player.uuid] = Pending(npc, player, definition, intro.ticks())
 
         TrainerBattleMusic.start(definition.battle.music, listOf(player))
-        BattleIntroNetworking.open(player, style, trainerId, definition, ticks)
+        BattleIntroNetworking.open(player, npc, trainerId, definition, introId, intro)
         return true
     }
 

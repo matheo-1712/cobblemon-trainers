@@ -213,7 +213,12 @@ class TrainerBattleInteraction : NPCInteractConfiguration {
                 return
             }
 
-            if (definition != null && TrainerBattleIntro.begin(npc, player, definition)) return
+            val trainerId = TrainerRegistry.idFromAspects(npc.aspects)
+            if (definition != null && trainerId != null &&
+                TrainerBattleIntro.begin(npc, player, trainerId, definition)
+            ) {
+                return
+            }
 
             openBattle(npc, player, definition)
         }

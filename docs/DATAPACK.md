@@ -18,7 +18,7 @@ Pour l'installation du mod et les commandes, voir le [README](../README.md).
 - [Le format d'équipe](#le-format-déquipe) · [La ligne `Aspects:`](#la-ligne-aspects) ·
   [La ligne `Fallback Item:`](#la-ligne-fallback-item)
 - [Skins](#skins) · [Musique de combat](#musique-de-combat) ·
-  [Écran de versus](#écran-de-versus) · [Gimmicks de combat](GIMMICKS.md) ·
+  [Écran de versus](INTROS.md) · [Gimmicks de combat](GIMMICKS.md) ·
   [Traduire les textes](#traduire-les-textes)
 - [Tester son pack](#tester-son-pack) · [Erreurs fréquentes](#erreurs-fréquentes)
 
@@ -158,8 +158,7 @@ appelable ; ne pas le déclarer fait un dresseur qu'il faut aller trouver.
 | `healParty` | `true` | Soigne l'équipe du dresseur avant et après chaque combat |
 | `music` | piste du mod | ID du son joué pendant le combat, `null` pour le silence |
 | `gimmicks` | `[]` | [Gimmicks de combat](GIMMICKS.md) utilisés : `mega`, `zmove`, `max`, `terastal` |
-| `intro` | - | [Écran de versus](#écran-de-versus) avant le combat : `bw`, ou absent pour aucun |
-| `introDuration` | `60` | Durée de cet écran, en ticks (20 par seconde), de 20 à 200 |
+| `intro` | - | [Écran de versus](INTROS.md) avant le combat : l'id d'une intro, ou absent pour aucun |
 
 Le suffixe `_50` (`singles_50`, `doubles_50`, `triples_50`) met **les deux équipes** au
 niveau 50 le temps du combat. `level` n'a donc plus d'effet visible sur un dresseur en `_50`.
@@ -614,33 +613,23 @@ Le dresseur référence la **clé** de `sounds.json`, jamais le chemin du fichie
 
 ## Écran de versus
 
-Un dresseur qui déclare `battle.intro` est annoncé avant son combat : le joueur arrive par la
-gauche, le dresseur par la droite, un VS tombe entre les deux, et **la musique de combat démarre
-là** plutôt qu'au premier tour. C'est l'entrée d'un champion de Noir et Blanc.
+Un dresseur qui déclare `battle.intro` est annoncé avant son combat : les deux combattants
+entrent, un VS tombe entre eux, et **la musique de combat démarre là** plutôt qu'au premier
+tour. C'est l'entrée d'un champion de Noir et Blanc.
 
 ```json
 "battle": {
   "music": "mon_pack:battle_music.champion",
-  "intro": "bw",
-  "introDuration": 70
+  "intro": "mon_pack:arene"
 }
 ```
 
-| Champ | Effet |
-| --- | --- |
-| absent | aucun écran, le combat s'ouvre directement |
-| `"bw"` | l'écran ci-dessus |
-| `introDuration` | sa durée en ticks, 20 par seconde, ramenée entre 20 et 200 |
+L'écran lui-même est un fichier du pack, écrit calque par calque : les figures sont les
+**modèles 3D** du dresseur et du joueur, et le reste - fonds, bandes, textes, images, Poké
+Balls, sons - est au choix de l'auteur. `"intro": "bw"` prend celle du mod, sans rien écrire.
 
-- **C'est le déclarer qui l'active**, dresseur par dresseur : le réserver aux champions et aux
-  boss est le but, un écran devant chaque dresseur de route serait un écran de trop.
-- **Le joueur peut le passer** une fois les deux figures en place, avec n'importe quelle touche
-  ou un clic : le combat s'ouvre alors immédiatement, sans attendre la fin de la durée.
-- **Les deux skins dessinés** sont celui du dresseur (son champ [`skin`](#skins)) et celui du
-  joueur. Un dresseur sans skin résoluble garde sa place, en silhouette.
-- **Rien à livrer avec** : l'écran est dessiné par le mod, il n'a besoin d'aucune texture ni
-  d'aucun resource pack. Seule la musique en demande un, comme d'habitude.
-- **Un joueur sans le mod installé** ne voit pas l'écran et combat directement.
+**➜ Tout est dans [INTROS.md](INTROS.md)** : le catalogue des calques, le placement, les temps
+et l'exemple complet.
 
 ## Traduire les textes
 

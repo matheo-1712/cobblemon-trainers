@@ -18,7 +18,7 @@ For installing the mod and for the commands, see the [README](../../README.md).
 - [The team format](#the-team-format) · [The `Aspects:` line](#the-aspects-line) ·
   [The `Fallback Item:` line](#the-fallback-item-line)
 - [Skins](#skins) · [Battle music](#battle-music) ·
-  [Versus screen](#versus-screen) · [Battle gimmicks](GIMMICKS.md) ·
+  [Versus screen](INTROS.md) · [Battle gimmicks](GIMMICKS.md) ·
   [Translating your text](#translating-your-text)
 - [Testing your pack](#testing-your-pack) · [Common mistakes](#common-mistakes)
 
@@ -156,8 +156,7 @@ leaving it out makes a trainer you have to go and find.
 | `healParty` | `true` | Heals the trainer's team before and after every battle |
 | `music` | the mod's track | Sound ID played during the battle, `null` for silence |
 | `gimmicks` | `[]` | [Battle gimmicks](GIMMICKS.md) the trainer uses: `mega`, `zmove`, `max`, `terastal` |
-| `intro` | - | [Versus screen](#versus-screen) before the battle: `bw`, or absent for none |
-| `introDuration` | `60` | How long that screen stays up, in ticks (20 a second), 20 to 200 |
+| `intro` | - | [Versus screen](INTROS.md) before the battle: an intro's id, or absent for none |
 
 The `_50` suffix (`singles_50`, `doubles_50`, `triples_50`) puts **both teams** at level 50 for
 the battle. `level` therefore has no visible effect on a `_50` trainer.
@@ -585,33 +584,24 @@ The trainer references the **key** in `sounds.json`, never the file path:
 
 ## Versus screen
 
-A trainer declaring `battle.intro` is announced before their battle: the player slides in from
-the left, the trainer from the right, a VS drops between them, and **the battle music starts
-there** rather than on the first turn. It is how a gym leader walks on in Black and White.
+A trainer declaring `battle.intro` is announced before their battle: both fighters walk on, a
+VS drops between them, and **the battle music starts there** rather than on the first turn. It
+is how a gym leader walks on in Black and White.
 
 ```json
 "battle": {
   "music": "my_pack:battle_music.champion",
-  "intro": "bw",
-  "introDuration": 70
+  "intro": "my_pack:gym"
 }
 ```
 
-| Field | Effect |
-| --- | --- |
-| absent | no screen, the battle simply opens |
-| `"bw"` | the screen above |
-| `introDuration` | how long it stays up, in ticks, 20 a second, clamped to 20-200 |
+The screen itself is a file in your pack, written one layer at a time: the figures are the
+**3D models** of the trainer and of the player, and everything else - backdrops, bands, text,
+images, Poké Balls, sounds - is yours to choose. `"intro": "bw"` takes the mod's own, with
+nothing to write.
 
-- **Declaring it is what turns it on**, one trainer at a time: keeping it for gym leaders and
-  bosses is the point, a screen in front of every route trainer would be one screen too many.
-- **The player may skip it** once both figures have landed, with any key or a click: the battle
-  then opens at once rather than waiting the duration out.
-- **The two skins drawn** are the trainer's (their [`skin`](#skins) field) and the player's own.
-  A trainer whose skin cannot be resolved keeps their place, as a silhouette.
-- **Nothing ships with it**: the screen is drawn by the mod and needs no texture and no resource
-  pack. Only the music needs one, as always.
-- **A player without the mod installed** never sees the screen and battles straight away.
+**➜ It is all in [INTROS.md](INTROS.md)**: the layer catalogue, placing, timing and the full
+example.
 
 ## Translating your text
 

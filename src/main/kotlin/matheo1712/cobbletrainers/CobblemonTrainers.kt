@@ -5,6 +5,7 @@ import matheo1712.cobbletrainers.battle.TrainerBattleEventHandler
 import matheo1712.cobbletrainers.battle.TrainerBattleInteraction
 import matheo1712.cobbletrainers.block.TrainerBlocks
 import matheo1712.cobbletrainers.command.TrainerCommands
+import matheo1712.cobbletrainers.intro.TrainerIntros
 import matheo1712.cobbletrainers.item.TrainerItems
 import matheo1712.cobbletrainers.network.BattleIntroNetworking
 import matheo1712.cobbletrainers.network.BattleLeadNetworking
@@ -118,6 +119,9 @@ object CobblemonTrainers : ModInitializer {
         override fun getFabricId(): ResourceLocation = id(TrainerRegistry.DATAPACK_DIRECTORY)
 
         override fun onResourceManagerReload(manager: ResourceManager) {
+            // Intros first: a trainer naming one that does not exist is worth a word, and that
+            // word can only be said once the intros are in.
+            TrainerIntros.reload(manager)
             TrainerRegistry.reload(manager)
             // A pack may have changed the image behind a skin name we already resolved.
             TrainerSkins.clearCache()

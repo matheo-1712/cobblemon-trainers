@@ -1,0 +1,29 @@
+{
+  "duration": 110,
+  "fadeIn": 5,
+  "fadeOut": 10,
+  "layers": [
+    { "type": "fill", "color": "#03080A", "alpha": 0.94, "from": "fade", "for": 5 },
+
+    { "type": "fill", "color": "#2F6FBF", "alpha": 0.45, "slant": 0.45,
+      "width": 118, "offset": [-128, 0], "from": "fade", "for": 16 },
+    { "type": "fill", "color": "#2E7D4F", "alpha": 0.45, "slant": 0.45,
+      "width": 118, "offset": [128, 0], "from": "fade", "for": 16 },
+
+    { "type": "fill", "color": "#F7D774", "alpha": 0.9, "height": 5,
+      "at": 20, "for": 8, "from": "pop" },
+
+    { "type": "figure", "who": "player", "height": 150, "yaw": 22,
+      "offset": [-128, 0], "at": 6, "for": 16, "from": "pop" },
+    { "type": "figure", "who": "trainer", "height": 154, "yaw": -22,
+      "offset": [128, 0], "at": 6, "for": 16, "from": "pop" },
+
+    { "type": "text", "value": "%player%", "offset": [-128, -95], "at": 22, "for": 8 },
+    { "type": "text", "value": "%name%", "color": "#F7D774", "offset": [128, -95], "at": 22, "for": 8 },
+
+    { "type": "team_balls", "who": "player", "size": 1.5, "offset": [-128, 85], "at": 26, "for": 8 },
+    { "type": "team_balls", "who": "trainer", "size": 1.5, "offset": [128, 85], "at": 26, "for": 8 },
+
+    { "type": "vs", "size": 5, "color": "#F7D774", "at": 20, "for": 10, "from": "pop" }
+  ]
+}

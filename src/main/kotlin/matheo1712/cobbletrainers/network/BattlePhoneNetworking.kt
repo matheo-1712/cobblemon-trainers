@@ -163,7 +163,7 @@ object BattlePhoneNetworking {
         val members = if (id != null && definition != null &&
             TrainerProgress.of(player.server).hasDefeated(id, player.uuid)
         ) {
-            buildTeam(definition, id)
+            teamOf(definition, id)
         } else {
             emptyList()
         }
@@ -172,12 +172,14 @@ object BattlePhoneNetworking {
     }
 
     /**
-     * Builds the team the way [matheo1712.cobbletrainers.trainers.TrainerSpawner] does, because that is the only way to know the
+     * Builds the team the way [matheo1712.cobbletrainers.trainers.TrainerSpawner] does - shared
+     * with the battle intro, whose `pokemon` layers need exactly this. That detour is the only
+     * way to know the
      * aspects a Pokémon ends up with: the parser puts a form in the property string, and only
      * `create()` turns it into the aspect set the client needs to draw the right model. One
      * bad entry costs its slot, not the whole team.
      */
-    private fun buildTeam(definition: TrainerDefinition, trainerId: ResourceLocation): List<TrainerTeamMember> =
+    fun teamOf(definition: TrainerDefinition, trainerId: ResourceLocation): List<TrainerTeamMember> =
         ShowdownTeamParser.parse(definition.team).mapNotNull { properties ->
             if (properties.level == null) properties.level = definition.battle.level
             try {
