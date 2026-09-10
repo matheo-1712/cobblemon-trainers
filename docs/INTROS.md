@@ -183,13 +183,13 @@ suffit, sans namespace.
 | Intro | Dresseur | Ce qu'elle raconte |
 | --- | --- | --- |
 | `bw` | à tout faire | Bandes bleue et rouge, glissement des deux côtés, VS qui tombe |
-| `rerebleue` | RereBleue | Le pacte : colonnes droites, blason en losange, une lame de lumière en travers |
-| `kagumi` | Kagumi | La lame : rose, penchée à l'envers, un croissant balaie l'écran et le coupe |
-| `griff501` | Griff501 | La hantise : rien ne glisse, il apparaît dans un halo violet, sourire en anneau, éclair acide |
-| `octavien29` | Octavien29 | Le soleil : un disque de rayons se lève derrière les deux, chaleur et éclat |
-| `theazertor` | TheAzertor | La forge : colonnes d'acier, aucun amorti, l'étoile tombe comme un marteau |
+| `rerebleue` | RereBleue | Le manoir : une nuit sous la lune, les fenêtres allumées, la marque des sept sorcières |
+| `kagumi` | Kagumi | Le cerisier : une fleur en filigrane, des pétales qui tombent, tout en lenteur |
+| `griff501` | Griff501 | La grenouille : il se matérialise dans un halo bleu, deux shuriken passent, éclair acide |
+| `octavien29` | Octavien29 | Le plateau : un damier, et des pièces posées une par une |
+| `theazertor` | TheAzertor | Les vacances : l'étoile d'acier en lunettes de soleil, mer et couchant, toujours sans amorti |
 | `aeliothys` | Aeliothys | La scène : les deux montent par le bas, un lapin et sa gemme, tout en rose |
-| `ultra_rerebleue` | Ultra-RereBleue | Le sceau : son blason en négatif, elle est déjà là, et son légendaire apparaît entre vous |
+| `ultra_rerebleue` | Ultra-RereBleue | L'ultra-brèche : un vortex s'ouvre derrière elle, elle en sort, quatre éclats tombent de partout |
 
 Trois conventions les tiennent ensemble, et valent d'être copiées :
 
@@ -213,16 +213,31 @@ leur donne leur teinte.
 | `burst.png` | 128 | L'éclat d'impact, huit branches, à poser sous le VS |
 | `slash.png` | 256 × 32 | Un trait effilé, pour les écrans qui tranchent au lieu de glisser |
 | `banner.png` | 192 × 32 | Une plaque à bouts biseautés, à glisser sous un nom |
-| `crest_<dresseur>.png` | 128 | L'emblème d'un dresseur : blason, croissant, sourire, soleil, étoile d'acier, lapin |
+| `crest_<dresseur>.png` | 128 | L'emblème d'un dresseur : heptagramme, fleur de cerisier, grenouille, tour d'échecs, étoile à lunettes, lapin |
+| `petal.png` | 64 | Un pétale de cerisier, à faire tomber par poignées |
+| `shuriken.png` | 96 | Une lame, à lancer depuis les coulisses |
+| `grid.png` | 256 | Un damier qui s'efface avant les bords |
+| `moon.png` | 128 | Une pleine lune et son halo |
+| `stars.png` | 256 | Un ciel |
+| `scene_manor.png` | 384 × 160 | Un manoir la nuit : la silhouette seule |
+| `scene_manor_lights.png` | 384 × 160 | Ses fenêtres allumées, au même endroit et à la même taille |
+| `ultra_rift.png` | 256 | Une brèche : douze anneaux cristallins qui tournent vers un cœur |
+| `ultra_shard.png` | 128 | Un éclat de cristal, à faire tomber par poignées |
 
-`ultra_rerebleue` reprend **le blason de `rerebleue`**, en magenta et en or, une fois derrière
-elle et une fois en sceau sur tout l'écran : c'est la même personne, et son écran doit se
-reconnaître avant qu'on lise son nom. C'est aussi la seule des huit qui pose un calque
-`pokemon` - un boss dont le légendaire *est* l'argument, et qu'on n'affronte qu'après l'avoir
-mérité.
+`ultra_rerebleue` n'a pas d'emblème : elle a une **brèche**. Le vortex s'ouvre derrière elle,
+elle en sort (`pop`), et quatre éclats prismatiques tombent des quatre côtés à quatre moments
+différents - c'est la seule des huit qui refuse la symétrie, et c'est le sujet.
+
+**Aucune des huit ne pose de calque `pokemon`**, et c'est voulu : le mod ne montre jamais une
+équipe avant le combat. Le calque existe pour les packs qui le veulent, pas pour nous.
 
 Un emblème se pose en filigrane derrière son dresseur - `alpha` autour de `0.3`, taille de 180
 à 230 - plutôt qu'en pleine lumière : ce qui doit se lire, c'est la figure.
+
+**Deux calques pour deux teintes.** Une texture est blanche et prend une seule couleur, donc un
+décor qui en demande deux se dessine en deux images posées **au même endroit et à la même
+taille**, avec la même entrée et les mêmes temps. C'est ce que font `scene_manor.png` et
+`scene_manor_lights.png` chez RereBleue : la maison en indigo sombre, ses fenêtres en or.
 
 ```json
 { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/crest_kagumi.png",

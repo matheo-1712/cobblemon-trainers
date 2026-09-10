@@ -1,36 +1,47 @@
 {
-  "duration": 110,
+  "duration": 115,
   "fadeIn": 6,
-  "fadeOut": 10,
+  "fadeOut": 11,
   "layers": [
-    { "type": "fill", "color": "#14090F", "alpha": 0.88, "from": "fade", "for": 6 },
+    { "type": "fill", "color": "#0D0A14", "alpha": 0.88, "from": "fade", "for": 6 },
 
-    { "type": "fill", "color": "#2F6FBF", "alpha": 0.45, "slant": -0.35,
+    { "type": "fill", "color": "#2F6FBF", "alpha": 0.42, "slant": -0.35,
       "width": 132, "offset": [-128, 0], "from": "left", "for": 26 },
-    { "type": "fill", "color": "#E06A9A", "alpha": 0.45, "slant": -0.35,
+    { "type": "fill", "color": "#E06A9A", "alpha": 0.42, "slant": -0.35,
       "width": 132, "offset": [128, 0], "from": "right", "for": 26 },
 
-    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/crest_kagumi.png", "width": 200, "height": 200,
-      "color": "#FFC2DC", "alpha": 0.26, "offset": [128, -8], "at": 4, "for": 24, "from": "right" },
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/crest_kagumi.png", "width": 210, "height": 210,
+      "color": "#FFD3E6", "alpha": 0.26, "offset": [128, -8], "at": 4, "for": 24, "from": "fade" },
 
     { "type": "figure", "who": "player", "height": 150, "yaw": 22,
       "offset": [-128, 0], "from": "left", "for": 26 },
     { "type": "figure", "who": "trainer", "height": 150, "yaw": -22,
       "offset": [128, 0], "from": "right", "for": 26 },
 
-    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/slash.png", "width": 660, "height": 30,
-      "color": "#FFF2F7", "alpha": 0.9, "at": 26, "for": 7, "from": "right", "ease": "linear" },
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/petal.png", "width": 26, "height": 26,
+      "color": "#FFD3E6", "alpha": 0.75, "offset": [-56, -46], "at": 10, "for": 18, "from": "top" },
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/petal.png", "width": 18, "height": 18,
+      "color": "#FFF0F6", "alpha": 0.7, "offset": [42, 8], "at": 14, "for": 18, "from": "top" },
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/petal.png", "width": 22, "height": 22,
+      "color": "#FFC2DC", "alpha": 0.65, "offset": [-14, 66], "at": 18, "for": 18, "from": "top" },
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/petal.png", "width": 15, "height": 15,
+      "color": "#FFF0F6", "alpha": 0.6, "offset": [82, -70], "at": 20, "for": 18, "from": "top" },
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/petal.png", "width": 20, "height": 20,
+      "color": "#FFD3E6", "alpha": 0.6, "offset": [-96, 30], "at": 22, "for": 18, "from": "top" },
+
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/slash.png", "width": 660, "height": 26,
+      "color": "#FFF2F7", "alpha": 0.85, "at": 28, "for": 8, "from": "right" },
 
     { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/banner.png", "width": 130, "height": 22,
-      "color": "#2A0F1B", "alpha": 0.78, "offset": [-128, -95], "at": 28, "for": 10 },
+      "color": "#2A0F1B", "alpha": 0.78, "offset": [-128, -95], "at": 29, "for": 10 },
     { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/banner.png", "width": 130, "height": 22,
-      "color": "#4A1730", "alpha": 0.82, "offset": [128, -95], "at": 28, "for": 10 },
-    { "type": "text", "value": "%player%", "offset": [-128, -95], "at": 29, "for": 10 },
-    { "type": "text", "value": "%name%", "color": "#FFD9E8", "offset": [128, -95], "at": 29, "for": 10 },
+      "color": "#4A1730", "alpha": 0.82, "offset": [128, -95], "at": 29, "for": 10 },
+    { "type": "text", "value": "%player%", "offset": [-128, -95], "at": 30, "for": 10 },
+    { "type": "text", "value": "%name%", "color": "#FFD9E8", "offset": [128, -95], "at": 30, "for": 10 },
 
-    { "type": "team_balls", "who": "player", "size": 1.5, "offset": [-128, 85], "at": 31, "for": 10 },
-    { "type": "team_balls", "who": "trainer", "size": 1.5, "offset": [128, 85], "at": 31, "for": 10 },
+    { "type": "team_balls", "who": "player", "size": 1.5, "offset": [-128, 85], "at": 32, "for": 10 },
+    { "type": "team_balls", "who": "trainer", "size": 1.5, "offset": [128, 85], "at": 32, "for": 10 },
 
-    { "type": "vs", "size": 4, "color": "#FFE4EF", "at": 27, "for": 12, "from": "fade" }
+    { "type": "vs", "size": 4, "color": "#FFE4EF", "at": 28, "for": 12, "from": "fade" }
   ]
 }

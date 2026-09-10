@@ -1,25 +1,30 @@
 {
   "duration": 105,
-  "fadeIn": 6,
+  "fadeIn": 5,
   "fadeOut": 10,
   "layers": [
-    { "type": "fill", "color": "#06040A", "alpha": 0.93, "from": "fade", "for": 6 },
+    { "type": "fill", "color": "#04070A", "alpha": 0.93, "from": "fade", "for": 5 },
 
     { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/rays.png", "width": 300, "height": 300,
-      "color": "#8A4BD6", "alpha": 0.3, "offset": [128, 0], "for": 26, "from": "fade" },
+      "color": "#1E7FB8", "alpha": 0.26, "offset": [128, 0], "for": 26, "from": "fade" },
 
     { "type": "fill", "color": "#2F6FBF", "alpha": 0.35, "slant": 0.5,
       "width": 96, "offset": [-128, 0], "from": "left", "for": 20 },
-    { "type": "fill", "color": "#5B2E86", "alpha": 0.5, "slant": 0.5,
+    { "type": "fill", "color": "#1E5C8A", "alpha": 0.5, "slant": 0.5,
       "width": 140, "offset": [128, 0], "from": "fade", "for": 20 },
 
-    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/crest_griff501.png", "width": 190, "height": 190,
-      "color": "#C79BF5", "alpha": 0.32, "offset": [128, -4], "at": 10, "for": 14, "from": "pop" },
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/crest_griff501.png", "width": 200, "height": 200,
+      "color": "#9CFF6E", "alpha": 0.3, "offset": [128, -4], "at": 10, "for": 14, "from": "pop" },
 
     { "type": "figure", "who": "player", "height": 150, "yaw": 22,
       "offset": [-128, 0], "from": "left", "for": 20 },
     { "type": "figure", "who": "trainer", "height": 150, "yaw": -22,
       "offset": [128, 0], "at": 8, "for": 16, "from": "fade" },
+
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/shuriken.png", "width": 46, "height": 46,
+      "color": "#9CFF6E", "alpha": 0.7, "offset": [-64, -78], "at": 20, "for": 5, "from": "left" },
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/shuriken.png", "width": 34, "height": 34,
+      "color": "#C9FF9E", "alpha": 0.6, "offset": [70, 74], "at": 23, "for": 5, "from": "right" },
 
     { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/slash.png", "width": 620, "height": 22,
       "color": "#9CFF6E", "alpha": 0.8, "at": 24, "for": 8, "from": "pop" },

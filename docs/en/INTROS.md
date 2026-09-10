@@ -181,13 +181,13 @@ needs saying. Any pack may name them: `"intro": "kagumi"` is enough, no namespac
 | Intro | Trainer | What it says |
 | --- | --- | --- |
 | `bw` | anything | Blue and red bands, both sides sliding in, a VS that drops |
-| `rerebleue` | RereBleue | The pact: straight columns, a diamond crest, a blade of light across |
-| `kagumi` | Kagumi | The blade: pink, leaning the other way, a crescent sweeps in and cuts |
-| `griff501` | Griff501 | The haunting: nothing slides, he fades in through a violet halo, a grin in a ring, an acid streak |
-| `octavien29` | Octavien29 | The sun: a disc of rays rises behind the two, heat and glare |
-| `theazertor` | TheAzertor | The forge: steel columns, no easing, the star falls like a hammer |
+| `rerebleue` | RereBleue | The manor: a night under the moon, lit windows, the mark of the seven witches |
+| `kagumi` | Kagumi | The cherry tree: a blossom in watermark, petals coming down, slow throughout |
+| `griff501` | Griff501 | The frog: he fades in through a blue halo, two shuriken cross, an acid streak |
+| `octavien29` | Octavien29 | The board: a chequered field, and pieces put down one at a time |
+| `theazertor` | TheAzertor | The holiday: the steel star in sunglasses, sea and sunset, still with no easing |
 | `aeliothys` | Aeliothys | The stage: the two rise from below, a rabbit and its gem, all in pink |
-| `ultra_rerebleue` | Ultra-RereBleue | The seal: her own crest inverted, she is already standing there, and her legendary appears between you |
+| `ultra_rerebleue` | Ultra-RereBleue | The rift: a vortex opens behind her, she comes through it, four shards fall in from everywhere |
 
 Three conventions hold them together, and are worth copying:
 
@@ -210,15 +210,31 @@ them. All are **white on transparent**: the layer's `color` is what gives them t
 | `burst.png` | 128 | The impact flash, eight points, made to sit under the VS |
 | `slash.png` | 256 × 32 | One tapered stroke, for the screens that cut rather than slide |
 | `banner.png` | 192 × 32 | A plate with bevelled ends, to slide under a name |
-| `crest_<trainer>.png` | 128 | A trainer's emblem: crest, crescent, grin, sun, steel star, rabbit |
+| `crest_<trainer>.png` | 128 | A trainer's emblem: heptagram, cherry blossom, frog, chess rook, star in shades, rabbit |
+| `petal.png` | 64 | A cherry petal, to be dropped in handfuls |
+| `shuriken.png` | 96 | A blade, to be thrown in from the wings |
+| `grid.png` | 256 | A chequered field, fading out before the edges |
+| `moon.png` | 128 | A full moon and its halo |
+| `stars.png` | 256 | A sky |
+| `scene_manor.png` | 384 × 160 | A manor at night: the silhouette alone |
+| `scene_manor_lights.png` | 384 × 160 | Its lit windows, at the same place and the same size |
+| `ultra_rift.png` | 256 | A rift: twelve crystalline rings turning towards a core |
+| `ultra_shard.png` | 128 | A crystal splinter, to be dropped in handfuls |
 
-`ultra_rerebleue` wears **`rerebleue`'s crest**, in magenta and gold, once behind her and once
-as a seal over the whole screen: it is the same person, and her screen should be recognisable
-before her name is read. It is also the only one of the eight with a `pokemon` layer - a boss
-whose legendary *is* the point, and who is only met once earned.
+`ultra_rerebleue` has no emblem: she has a **rift**. The vortex opens behind her, she comes
+through it (`pop`), and four prismatic shards drop in from four sides at four different
+moments - it is the only one of the eight that refuses symmetry, and that is the point.
+
+**None of the eight uses a `pokemon` layer**, deliberately: the mod never shows a team before
+the battle. The layer is there for the packs that want it, not for us.
 
 An emblem belongs behind its trainer as a watermark - `alpha` around `0.3`, sized 180 to 230 -
 rather than in full light: what has to read is the figure.
+
+**Two layers for two colours.** A texture is white and takes a single tint, so a backdrop that
+needs two is drawn as two images laid at the **same place and the same size**, with the same
+entrance and the same timings. That is what `scene_manor.png` and `scene_manor_lights.png` do
+for RereBleue: the house in dark indigo, its windows in gold.
 
 ```json
 { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/crest_kagumi.png",

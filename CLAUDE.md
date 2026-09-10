@@ -343,11 +343,15 @@ Points à ne pas redécouvrir :
   dont un seul serait testé.
 - **Il y en a huit, et sept portent le nom d'un dresseur** (`rerebleue`, `kagumi`, `griff501`,
   `octavien29`, `theazertor`, `aeliothys`, plus `ultra_rerebleue` pour la boss), `bw` restant la
-  neutre. `ultra_rerebleue` reprend volontairement le blason de `rerebleue` : c'est la même
-  personne, et son écran doit se reconnaître avant qu'on lise son nom. Elle est aussi la seule à
-  poser un calque `pokemon` - le seul cas où montrer l'équipe avant le combat se défend, un boss
-  caché derrière une victoire dont le légendaire est l'argument - et la seule dont la figure
-  entre en `none` : elle est déjà là quand l'écran s'ouvre, c'est le joueur qui arrive. Chacune est
+  neutre. `ultra_rerebleue`, la boss, est bâtie sur les Ultra-Chimères et non sur
+  RereBleue : pas d'emblème mais une brèche, dont elle sort, et quatre éclats qui tombent des
+  quatre côtés à quatre moments différents. C'est **la seule des huit qui rompt la symétrie**, et
+  c'est ce qu'elle raconte - une version antérieure reprenait le blason de `rerebleue` en
+  négatif, ce qui était plus sage et disait moins. **Aucune des huit ne pose de calque `pokemon`** : le mod ne montre
+  jamais une équipe avant le combat, Battle Phone compris, et une intro livrée qui ferait
+  l'inverse contredirait cette règle chez tout le monde. Le calque reste au catalogue pour les
+  packs, qui décident pour eux-mêmes - et c'est aussi ce qui fait que `TrainerIntro.needsTeam`
+  répond faux partout, donc qu'aucune équipe ne part sur le réseau au lever d'un écran. Chacune est
   l'écran **de ce personnage** : son emblème, ses couleurs, sa façon d'entrer - tirés de son
   équipe et de sa musique, pas de son biome. Une première version les avait construites sur le
   biome ; c'était plus facile à justifier et plus fade, et six dresseurs qui partagent une
@@ -361,7 +365,11 @@ Points à ne pas redécouvrir :
   pack. Ajouter une intro maison, c'est ajouter un fichier et une ligne au tableau de
   `docs/INTROS.md`.
 - **Les textures d'intro sont dessinées, pas peintes** : le script qui les produit est jetable,
-  ce sont les PNG qui comptent. Elles vivent sous
+  ce sont les PNG qui comptent. Une texture étant blanche et ne prenant qu'une teinte, un décor
+  qui en demande deux se fait en **deux calques posés au même endroit, à la même taille et aux
+  mêmes temps** - `scene_manor` et `scene_manor_lights` chez RereBleue, la maison et ses
+  fenêtres. C'est la seule façon d'avoir deux couleurs dans une même image, et ça vaut pour un
+  pack comme pour nous. Elles vivent sous
   `assets/cobblemon-trainers/textures/gui/intro/`, donc dans le jar, donc lisibles par tous les
   clients sans qu'un pack ait à les livrer.
 - **La scène voyage dans le paquet, en JSON.** Pas de registre synchronisé à la connexion, donc

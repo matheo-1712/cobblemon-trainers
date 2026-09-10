@@ -1,39 +1,46 @@
 {
-  "duration": 90,
-  "fadeIn": 2,
-  "fadeOut": 6,
+  "duration": 100,
+  "fadeIn": 3,
+  "fadeOut": 8,
   "layers": [
-    { "type": "fill", "color": "#060A0C", "alpha": 0.92, "from": "fade", "for": 2 },
+    { "type": "fill", "color": "#071016", "alpha": 0.9, "from": "fade", "for": 3 },
+
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/rays.png", "width": 360, "height": 360,
+      "color": "#FFB25E", "alpha": 0.2, "offset": [0, 40], "for": 22, "from": "fade" },
+    { "type": "fill", "color": "#2FC7C0", "alpha": 0.2, "height": 84,
+      "offset": [0, 46], "for": 16, "from": "fade" },
+    { "type": "fill", "color": "#FFC98A", "alpha": 0.32, "height": 6,
+      "offset": [0, 4], "at": 8, "for": 8, "from": "fade" },
 
     { "type": "fill", "color": "#2F6FBF", "alpha": 0.45, "width": 120,
-      "offset": [-128, 0], "from": "left", "for": 10, "ease": "linear" },
+      "offset": [-128, 0], "from": "left", "for": 14, "ease": "linear" },
     { "type": "fill", "color": "#4A5A66", "alpha": 0.5, "width": 120,
-      "offset": [128, 0], "from": "right", "for": 10, "ease": "linear" },
+      "offset": [128, 0], "from": "right", "for": 14, "ease": "linear" },
 
     { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/crest_theazertor.png", "width": 200, "height": 200,
-      "color": "#7FE3FF", "alpha": 0.26, "offset": [128, -6],
-      "at": 10, "for": 6, "from": "top", "ease": "linear" },
+      "color": "#CFF6FF", "alpha": 0.28, "offset": [128, -6],
+      "at": 14, "for": 8, "from": "top", "ease": "linear" },
 
     { "type": "figure", "who": "player", "height": 150, "yaw": 22,
-      "offset": [-128, 0], "from": "left", "for": 10, "ease": "linear" },
+      "offset": [-128, 0], "from": "left", "for": 14, "ease": "linear" },
     { "type": "figure", "who": "trainer", "height": 150, "yaw": -22,
-      "offset": [128, 0], "from": "right", "for": 10, "ease": "linear" },
+      "offset": [128, 0], "from": "right", "for": 14, "ease": "linear" },
 
     { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/slash.png", "width": 640, "height": 24,
-      "color": "#7FE3FF", "alpha": 0.9, "at": 12, "for": 3, "from": "pop" },
+      "color": "#FFD79A", "alpha": 0.9, "at": 16, "for": 5, "from": "pop" },
 
     { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/banner.png", "width": 130, "height": 22,
-      "color": "#0A1418", "alpha": 0.8, "offset": [-128, -95], "at": 13, "for": 4 },
+      "color": "#0A1418", "alpha": 0.8, "offset": [-128, -95], "at": 17, "for": 6 },
     { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/banner.png", "width": 130, "height": 22,
-      "color": "#16323C", "alpha": 0.85, "offset": [128, -95], "at": 13, "for": 4 },
-    { "type": "text", "value": "%player%", "offset": [-128, -95], "at": 14, "for": 4 },
-    { "type": "text", "value": "%name%", "color": "#CFF6FF", "offset": [128, -95], "at": 14, "for": 4 },
+      "color": "#1D3A42", "alpha": 0.85, "offset": [128, -95], "at": 17, "for": 6 },
+    { "type": "text", "value": "%player%", "offset": [-128, -95], "at": 18, "for": 6 },
+    { "type": "text", "value": "%name%", "color": "#FFE1B4", "offset": [128, -95], "at": 18, "for": 6 },
 
-    { "type": "team_balls", "who": "player", "size": 1.5, "offset": [-128, 85], "at": 15, "for": 4 },
-    { "type": "team_balls", "who": "trainer", "size": 1.5, "offset": [128, 85], "at": 15, "for": 4 },
+    { "type": "team_balls", "who": "player", "size": 1.5, "offset": [-128, 85], "at": 20, "for": 6 },
+    { "type": "team_balls", "who": "trainer", "size": 1.5, "offset": [128, 85], "at": 20, "for": 6 },
 
-    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/burst.png", "width": 170, "height": 170,
-      "color": "#7FE3FF", "alpha": 0.55, "at": 12, "for": 4, "from": "pop" },
-    { "type": "vs", "size": 5, "color": "#CFF6FF", "at": 12, "for": 4, "from": "pop" }
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/burst.png", "width": 180, "height": 180,
+      "color": "#FFD79A", "alpha": 0.5, "at": 16, "for": 6, "from": "pop" },
+    { "type": "vs", "size": 5, "color": "#FFF0C8", "at": 16, "for": 5, "from": "pop" }
   ]
 }
