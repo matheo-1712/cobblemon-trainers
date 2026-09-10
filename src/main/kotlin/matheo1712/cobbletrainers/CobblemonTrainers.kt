@@ -32,8 +32,8 @@ import org.slf4j.LoggerFactory
  * Main entrypoint of the Cobblemon Trainers mod.
  *
  * The mod adds configurable Pokémon trainers to Cobblemon. Trainers are declared in
- * datapacks, at `data/<namespace>/cobblemontrainers/<path>.json`, where the folder a file
- * sits in is its category.
+ * datapacks, at `data/<namespace>/cobblemontrainers/trainers/<path>.json`, where the folder a
+ * file sits in is its category.
  *
  * Features:
  * - Showdown-formatted teams
@@ -53,6 +53,16 @@ import org.slf4j.LoggerFactory
 object CobblemonTrainers : ModInitializer {
 
     const val MOD_ID: String = "cobblemon-trainers"
+
+    /**
+     * The one folder the mod reads from a datapack, one level under `data/<namespace>/`.
+     *
+     * Everything a pack declares sits in it, one sub-folder per kind:
+     * [trainers][TrainerRegistry.DATAPACK_DIRECTORY] and
+     * [intros][TrainerIntros.DATAPACK_DIRECTORY]. A pack therefore has one folder to move,
+     * and a kind added later costs no new top-level name.
+     */
+    const val DATAPACK_ROOT = "cobblemontrainers"
 
     /**
      * Prefix of the aspect linking an NPC entity to its trainer definition.
@@ -115,16 +125,57 @@ object CobblemonTrainers : ModInitializer {
     fun lang(key: String, vararg args: Any): MutableComponent =
         Component.translatable("$MOD_ID.$key", *args)
 
+    /** How many misfiled files [TrainerReloadListener] names before it just counts them. */
+    private const val MISFILED_SAMPLE = 5
+
     private object TrainerReloadListener : SimpleSynchronousResourceReloadListener {
-        override fun getFabricId(): ResourceLocation = id(TrainerRegistry.DATAPACK_DIRECTORY)
+        override fun getFabricId(): ResourceLocation = id(DATAPACK_ROOT)
 
         override fun onResourceManagerReload(manager: ResourceManager) {
             // Intros first: a trainer naming one that does not exist is worth a word, and that
             // word can only be said once the intros are in.
             TrainerIntros.reload(manager)
             TrainerRegistry.reload(manager)
+            warnAboutMisfiledJson(manager)
             // A pack may have changed the image behind a skin name we already resolved.
             TrainerSkins.clearCache()
+        }
+
+        /**
+         * Names the JSON files of a pack that no registry above could have read.
+         *
+         * Trainers live under [TrainerRegistry.DATAPACK_DIRECTORY] and intros under
+         * [TrainerIntros.DATAPACK_DIRECTORY]; a file dropped anywhere else in [DATAPACK_ROOT],
+         * or left in the [old intro folder][TrainerIntros.LEGACY_DIRECTORY], is simply never
+         * listed. Nothing else would say so - the reload logs a count, and a count of zero
+         * looks exactly like a pack that is not installed.
+         *
+         * Only the first few are named. A whole league filed the old way is hundreds of
+         * files, and a warning that long buries the sentence explaining it: the count says
+         * how big the problem is, the samples say which pack to go and move.
+         */
+        private fun warnAboutMisfiledJson(manager: ResourceManager) {
+            val json = { location: ResourceLocation -> location.path.endsWith(".json") }
+
+            val misfiled = manager.listResources(DATAPACK_ROOT, json).keys
+                .filterNot { it.path.startsWith("${TrainerRegistry.DATAPACK_DIRECTORY}/") }
+                .filterNot { it.path.startsWith("${TrainerIntros.DATAPACK_DIRECTORY}/") } +
+                manager.listResources(TrainerIntros.LEGACY_DIRECTORY, json).keys
+
+            if (misfiled.isEmpty()) return
+
+            val named = misfiled.take(MISFILED_SAMPLE).joinToString(", ")
+            val rest = misfiled.size - MISFILED_SAMPLE
+
+            LOGGER.warn(
+                "Ignoring {} file(s) filed outside {}/ and {}/, which is where trainers and " +
+                    "intros are now read from: {}{}",
+                misfiled.size,
+                TrainerRegistry.DATAPACK_DIRECTORY,
+                TrainerIntros.DATAPACK_DIRECTORY,
+                named,
+                if (rest > 0) " and $rest more" else ""
+            )
         }
     }
 }

@@ -135,7 +135,7 @@ chaque niveau corrige.
 
 | Message | Cause |
 | --- | --- |
-| `Dresseur introuvable` | L'ID ne correspond à aucun dresseur chargé - vérifie le dossier `data/<ns>/cobblemontrainers/` |
+| `Dresseur introuvable` | L'ID ne correspond à aucun dresseur chargé - vérifie le dossier `data/<ns>/cobblemontrainers/trainers/` |
 | `Aucun dresseur chargé` | Aucun pack n'a été lu du tout ; le log dit pourquoi |
 | `Tous les dresseurs chargés sont masqués des listes` | Ils sont tous en `"listed": false` |
 | `Position invalide` | Coordonnées hors des limites du monde |

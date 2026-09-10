@@ -12,7 +12,7 @@ import net.minecraft.resources.ResourceLocation
  * is, and what it may say, is in [IntroLayer].
  *
  * A trainer names one through `battle.intro`, and several trainers may name the same: an intro
- * is a file of its own, in `data/<namespace>/cobblemontrainers_intros/`, so a whole league
+ * is a file of its own, in `data/<namespace>/cobblemontrainers/intro/`, so a whole league
  * shares one rather than copying it into every trainer.
  *
  * Everything is optional, as everywhere else in the mod's JSON: `{}` is a valid - if empty -

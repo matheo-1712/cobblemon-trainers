@@ -35,10 +35,14 @@ est ignoré, quel que soit le format.
 
 ## Les dresseurs
 
-Le dossier d'un dresseur est sa **catégorie**, et fait donc partie de son ID. Le pack en a
-trois - `debutants`, `champions`, `kanto` -, chacune avec son `category.json` qui lui donne un
-nom traduit et une place dans la liste ; les autres dresseurs restent à la racine et forment
-le groupe « Dresseurs ».
+Ils vivent sous `data/cobblemonrlm/cobblemontrainers/trainers/`. Ce `trainers/` ne compte pas
+dans l'ID : c'est le sous-dossier qui range les dresseurs à côté des autres choses que le mod
+lit d'un pack, les [intros](../../docs/INTROS.md) sous `cobblemontrainers/intro/`.
+
+Le dossier d'un dresseur, lui, est sa **catégorie**, et fait donc partie de son ID. Le pack en
+a trois - `debutants`, `champions`, `kanto` -, chacune avec son `category.json` qui lui donne
+un nom traduit et une place dans la liste ; les autres dresseurs restent à la racine de
+`trainers/` et forment le groupe « Dresseurs ».
 
 | ID | Ce qu'il démontre |
 | --- | --- |

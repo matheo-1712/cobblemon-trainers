@@ -1,11 +1,12 @@
 package matheo1712.cobbletrainers.trainers
 
 /**
- * Presentation of one trainer category, loaded from
- * `data/<namespace>/cobblemontrainers/categories/<name>.json`.
+ * Presentation of one trainer category, loaded from the `category.json` of the folder it
+ * describes.
  *
- * A category is a folder: a trainer at `cobblemontrainers/champions/erika.json` belongs to the
- * category `<namespace>:champions`, and nothing has to be declared for that to be true. This
+ * A category is a folder: a trainer at `cobblemontrainers/trainers/champions/erika.json`
+ * belongs to the category `<namespace>:champions`, and nothing has to be declared for that to
+ * be true. This
  * file is what a pack adds when the folder name is not what it wants shown, or when the
  * alphabet is not the order it wants - both optional, both independent.
  *

@@ -11,10 +11,11 @@ import java.io.InputStream
  * In-memory registry of the available trainers and their categories.
  *
  * Trainers come from datapacks only: any pack may provide
- * `data/<namespace>/cobblemontrainers/<path>.json`, including the mod itself. The trainer ID is
- * `<namespace>:<path>`, the path being everything under the directory, subfolders included -
- * so `cobblemontrainers/champions/erika.json` is `<namespace>:champions/erika`. A pack loaded
- * later overrides a trainer with the same ID, following the usual datapack stacking rules.
+ * `data/<namespace>/cobblemontrainers/trainers/<path>.json`, including the mod itself. The
+ * trainer ID is `<namespace>:<path>`, the path being everything under the directory, subfolders
+ * included - so `cobblemontrainers/trainers/champions/erika.json` is
+ * `<namespace>:champions/erika`. A pack loaded later overrides a trainer with the same ID,
+ * following the usual datapack stacking rules.
  *
  * **A folder is a category.** The directory a trainer sits in is its category, which is what
  * the battle phone groups on and what a `victories` requirement may be counted over. A
@@ -27,12 +28,18 @@ import java.io.InputStream
 object TrainerRegistry {
 
     /**
-     * Directory scanned inside datapacks, one level under `data/<namespace>/` - the layout
-     * Cobblemon's own registries use (`data/<namespace>/species/`, `.../npcs/`). It is named
-     * after the mod rather than `trainers/`, so a pack that also declares trainers for another
-     * mod cannot collide with ours.
+     * Directory scanned inside datapacks, under the mod's own
+     * [root][CobblemonTrainers.DATAPACK_ROOT] - itself one level under `data/<namespace>/`,
+     * the layout Cobblemon's own registries use (`data/<namespace>/species/`, `.../npcs/`).
+     *
+     * The root is named after the mod rather than `trainers/`, so a pack that also declares
+     * trainers for another mod cannot collide with ours; the `trainers/` folder inside it is
+     * what leaves room for everything else the mod reads from a pack, the intros first.
+     *
+     * The prefix is stripped from the ID, so moving the files here left every trainer ID
+     * alone - which is what [TrainerProgress] and the advancements of a pack are keyed on.
      */
-    const val DATAPACK_DIRECTORY = "cobblemontrainers"
+    const val DATAPACK_DIRECTORY = "${CobblemonTrainers.DATAPACK_ROOT}/trainers"
 
     /**
      * The one file name that is not a trainer: `champions/category.json` is the presentation of

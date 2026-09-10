@@ -132,7 +132,7 @@ corrects.
 
 | Message | Cause |
 | --- | --- |
-| `Unknown trainer` | The ID matches no loaded trainer - check the `data/<ns>/cobblemontrainers/` folder |
+| `Unknown trainer` | The ID matches no loaded trainer - check the `data/<ns>/cobblemontrainers/trainers/` folder |
 | `No trainer loaded` | No pack was read at all; the log says why |
 | `Every loaded trainer is hidden from listings` | They are all `"listed": false` |
 | `Invalid position` | Coordinates outside the world's bounds |

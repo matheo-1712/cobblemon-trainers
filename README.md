@@ -247,9 +247,9 @@ directions - il s'oriente vers celui qui le pose.
 ## Déclarer un dresseur
 
 Les dresseurs se déclarent dans un datapack, à
-`data/<namespace>/cobblemontrainers/<chemin>.json`. L'ID est `<namespace>:<chemin>`, le
-dossier compris - et ce dossier est aussi la **catégorie** du dresseur. `/reload` recharge le
-tout sans redémarrer.
+`data/<namespace>/cobblemontrainers/trainers/<chemin>.json`. L'ID est `<namespace>:<chemin>`,
+le dossier compris - et ce dossier est aussi la **catégorie** du dresseur. `/reload` recharge
+le tout sans redémarrer.
 
 ```json
 {

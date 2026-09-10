@@ -9,13 +9,14 @@ import net.minecraft.server.packs.resources.ResourceManager
 /**
  * In-memory registry of the intros, filled from datapacks like the trainers are.
  *
- * Any pack may provide `data/<namespace>/cobblemontrainers_intros/<path>.json`, the mod
+ * Any pack may provide `data/<namespace>/cobblemontrainers/intro/<path>.json`, the mod
  * included: `bw`, the screen the mod ships, is one of those files and nothing more. That is
  * deliberate - the default is written in the same format packs get, so what the format cannot
  * say shows up in our own intro first.
  *
- * The folder sits next to the trainers' rather than inside it: everything under
- * `cobblemontrainers/` is a trainer, and an intro filed there would read as one.
+ * The folder is the trainers' neighbour, both under the mod's one
+ * [root][CobblemonTrainers.DATAPACK_ROOT]: an intro is not a trainer, so it cannot be filed
+ * among them, but it is the same pack declaring the same league.
  *
  * Reloading is driven by the same server resource manager listener, so `/reload` picks up an
  * edited intro. A battle already showing one keeps the version it was given: the intro travels
@@ -23,8 +24,15 @@ import net.minecraft.server.packs.resources.ResourceManager
  */
 object TrainerIntros {
 
-    /** Directory scanned inside datapacks, one level under `data/<namespace>/`. */
-    const val DATAPACK_DIRECTORY = "cobblemontrainers_intros"
+    /** Directory scanned inside datapacks, under [CobblemonTrainers.DATAPACK_ROOT]. */
+    const val DATAPACK_DIRECTORY = "${CobblemonTrainers.DATAPACK_ROOT}/intro"
+
+    /**
+     * Where the intros used to sit, kept for one reason: a pack that never moved loads
+     * nothing, and the reload says so rather than leaving the author to guess. See
+     * [matheo1712.cobbletrainers.CobblemonTrainers.onInitialize].
+     */
+    const val LEGACY_DIRECTORY = "cobblemontrainers_intros"
 
     private const val JSON_EXTENSION = ".json"
 
