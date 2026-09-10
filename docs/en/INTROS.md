@@ -267,7 +267,9 @@ corner at any size. `offset` goes from there.
 Everything is counted in ticks, 20 a second, from the moment the screen goes up.
 
 - `at` is when a layer starts coming in, `for` how long that takes.
-- **The exit is shared**: `fadeOut` takes the whole screen away at once.
+- **The exit is shared**: `fadeOut` takes the whole screen away at once. A flat layer fades
+  out with it; a `figure` and a `pokemon` leave **by moving**, back out the way they came in
+  or shrinking on the spot, a model being unable to fade. Nothing to write for that.
 - The player may skip **once the last entrance has landed** - the largest `at + for` of all the
   layers. Before that nothing answers: a held key repeats, and nobody should skip a screen they
   have not seen.

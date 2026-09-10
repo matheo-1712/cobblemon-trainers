@@ -434,9 +434,25 @@ Points à ne pas redécouvrir :
   thème de combat occupe déjà cette catégorie, et un impact qui baisserait avec elle
   disparaîtrait pour qui joue musique au minimum. Il part une fois, au tick `at`, d'où le
   tableau de drapeaux plutôt qu'un test sur le temps.
-- **Le fondu d'une figure passe par `GuiGraphics.setColor`**, pas par `RenderSystem` : il règle
-  le lot en cours avant de changer la couleur du shader, donc la teinte tombe sur la figure
-  seule et pas sur ce qui partageait son batch.
+- **La couleur passe par `GuiGraphics.setColor`**, pas par `RenderSystem` : il règle le lot en
+  cours avant de changer la couleur du shader, donc la teinte tombe sur le calque seul et pas
+  sur ce qui partageait son batch.
+- **Ce qu'un calque est dessiné avec décide si le fondu l'atteint**, et c'est tout le bug #47 :
+  la sortie est commune, mais quatre calques sur sept la manquaient et restaient à pleine force
+  jusqu'à ce que l'écran se coupe. Un `fill` et un `text` se fondent seuls ; une image ne se
+  fond **que si le blending est rallumé autour de son blit** - `GuiGraphics.blit` laisse cet
+  état à son appelant, et le `flush` que `setColor` vient de faire l'a justement éteint, donc
+  l'alpha était écrit et jamais lu (même l'`alpha` d'un calque ne servait à rien, une image à
+  `0.22` s'affichant opaque) ; un objet ne se fond qu'à travers la couleur du shader, `renderItem`
+  n'ayant pas de teinte à lui.
+- **Un modèle posé ne se fond pas du tout, et ne le pourra pas.** Cobblemon dessine ses
+  `PosableModel` sur `RenderType.entityCutout`, dont l'état de transparence est `NO_TRANSPARENCY` :
+  le blending est éteint au moment du dessin, donc l'alpha du shader n'est jamais lu, et le
+  `discard` du fragment porte sur l'alpha de la **texture**, avant modulation - rien à gratter de
+  ce côté non plus. Une figure s'en va donc **en bougeant** : elle ressort par où elle est
+  entrée, ou rétrécit sur place quand son entrée ne bougeait pas. C'est ce que le facteur
+  `leaving` porte, à côté de l'alpha et sur la même courbe, pour que les deux sorties tombent
+  ensemble.
 
 ### Revanches et récompenses
 
