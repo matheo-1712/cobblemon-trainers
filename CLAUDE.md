@@ -20,9 +20,11 @@ de dresseur visible quand on tient son item ; l'entrypoint `CobblemonTrainersCli
 ouvre les deux écrans du mod et reçoit ce qui les alimente ; ces deux écrans eux-mêmes, sous
 `client.gui` (voir « Le bloc de dresseur » et « Le Battle Phone ») ;
 `client.ClientPokemonSelection`, qui annonce au serveur le Pokémon sélectionné parce que
-Cobblemon ne le lui dit jamais (voir « Le Pokémon qui ouvre le combat ») ; et le couple
+Cobblemon ne le lui dit jamais (voir « Le Pokémon qui ouvre le combat ») ; le couple
 `client.ClientBattleMusic` / `client.MusicManagerMixin`, qui joue le thème de combat en boucle
-et garde la musique du monde silencieuse pendant ce temps (voir « Musique de combat »).
+et garde la musique du monde silencieuse pendant ce temps (voir « Musique de combat ») ; et
+`client.gui.BattleIntroScreen`, l'écran de versus qui annonce un combat de champion (voir
+« L'écran de versus »).
 Aucun renderer d'entité n'est enregistré : le Battle Phone dessine les skins à plat depuis
 l'image, et pour les Pokémon d'une équipe il appelle le `drawProfilePokemon` de Cobblemon -
 seul endroit du mod qui touche à du rendu 3D.
@@ -182,6 +184,8 @@ messages, musique et récompenses de combat.
   plus bas).
 - **`battle.TrainerBattleRange`** - la distance au-delà de laquelle un combat de dresseur
   s'arrête, celle d'un combat contre un Pokémon sauvage. Même section.
+- **`battle.TrainerBattleIntro`** - l'écran de versus d'un dresseur qui en déclare un, et
+  l'attente pendant laquelle le combat est retenu. Voir « L'écran de versus ».
 - **`battle.ai.TrainerBattleAI`** - la couche qui refuse les décisions intenables du
   `StrongBattleAI` de Cobblemon, épaulée par `BattleTypeChart` (efficacité des types, talents
   compris), `BattleDamage` (dégâts en points de vie), `BattleGuards` (ce qui encaisse un coup
@@ -224,6 +228,8 @@ messages, musique et récompenses de combat.
 - **`network.BattleLeadNetworking`** - le Pokémon sélectionné, du client vers le serveur.
 - **`network.BattleMusicNetworking`** - l'autre paquet qui n'appartient pas à un écran : le
   thème de combat à jouer, ou son arrêt. Voir « Musique de combat ».
+- **`network.BattleIntroNetworking`** - les deux paquets de l'écran de versus : celui qui le
+  lève, et celui du joueur qui l'a assez vu. Même section.
 - **`trainers.TrainerSkins`** - la résolution d'un `TrainerSkin` en image, hors thread serveur
   et avec cache. Voir « Skins ».
 - **`client.CobblemonTrainersClient`** - l'unique entrypoint client.
@@ -231,6 +237,8 @@ messages, musique et récompenses de combat.
 - **`client.ClientBattleMusic`** - le thème de combat, joué et tenu côté client, que lit aussi
   `client.MusicManagerMixin`.
 - **`client.gui.TrainerSpawnerScreen` / `client.gui.BattlePhoneScreen`** - les deux écrans.
+- **`client.gui.BattleIntroScreen`** - le troisième, celui que personne n'ouvre : l'écran de
+  versus, levé par le serveur avant le combat.
 - **`client.gui.TrainerSkinRenderer` / `client.cache.TrainerSkinCache`** - le dessin d'un skin
   à plat, et les textures que le Battle Phone a reçues.
 - **`client.cache.TrainerTeamCache`** - les équipes que le Battle Phone a reçues, prêtes à
@@ -300,6 +308,58 @@ Points à ne pas redécouvrir :
   que d'être écrits côté client : le réglage reste à côté de la piste par défaut.
 - **`"stream": true` est obligatoire** sur un morceau long, sinon Minecraft charge tout le
   fichier en mémoire - et une piste qui boucle le reste tout le combat.
+- **Une piste déjà jouée n'est pas rejouée.** `ClientBattleMusic.play` rend la main quand
+  `playing.location` est déjà la piste demandée. C'est ce qui permet à l'écran de versus de
+  lancer le thème quelques secondes avant le combat sans que `BATTLE_STARTED_POST`, qui demande
+  la même piste, le fasse repartir de ses premières mesures (voir « L'écran de versus »). Le
+  serveur n'a donc rien à mémoriser : les deux chemins appellent `start` de la même façon.
+
+### L'écran de versus
+
+Un dresseur qui déclare `battle.intro` est annoncé avant son combat : le joueur glisse depuis la
+gauche, le dresseur depuis la droite, un VS tombe entre les deux, et le thème de combat part là.
+C'est l'entrée d'un champion de Noir et Blanc, et c'est **facultatif, dresseur par dresseur** -
+un écran devant chaque dresseur de route serait un écran de trop.
+
+Le partage est celui du reste du mod : `TrainerBattleIntro` tient le séquencement côté serveur,
+`BattleIntroNetworking` les deux paquets, et `client.gui.BattleIntroScreen` le dessin. Le style
+(`bw`, le seul) voyage dans le paquet plutôt que d'être supposé : un second look s'ajoute sans
+second paquet.
+
+Points à ne pas redécouvrir :
+
+- **Le combat est retenu, pas décalé.** `TrainerBattleInteraction.startBattle` s'arrête à
+  l'intro, et c'est le tick de `TrainerBattleIntro` qui appelle `openBattle` quelques secondes
+  plus tard - d'où la découpe en deux fonctions. Rien n'est redemandé de l'autre côté de
+  l'attente : le joueur la passe dans un écran, donc rien de son équipe ne peut changer, et ce
+  qui peut - le dresseur qui meurt, le joueur qui part - est justement ce que le tick surveille.
+- **La musique part avec l'écran**, et c'est tout l'intérêt : `BATTLE_STARTED_POST` redemande la
+  même piste ensuite, et le client laisse tourner celle qu'il tient déjà (voir « Musique de
+  combat »). Rien n'est mémorisé côté serveur pour ça. Une intro annulée, elle, reprend sa
+  musique en partant.
+- **Un client sans le mod n'a pas d'écran, donc pas d'attente.** `begin` rend faux sur
+  `canSend` et le combat s'ouvre comme avant - laisser l'attente sans l'écran ferait trois
+  secondes de monde immobile.
+- **Passer l'écran ne fait qu'avancer l'échéance.** `skip` pose `ticksLeft` à 1 : la décision
+  repasse par les mêmes gardes, donc un client ne peut pas ouvrir un combat qu'ils auraient
+  refusé, ni en ouvrir un dont il n'est pas l'objet - le paquet ne porte rien, l'attente étant
+  retrouvée par joueur.
+- **Le skin du dresseur est poussé, jamais demandé.** `TrainerSkinCache.peek` existe pour ça :
+  la demande normale du Battle Phone est refusée pour un dresseur `listed: false`, et sa réponse
+  vide arriverait *après* la bonne et l'écraserait. Le skin du joueur, lui, ne coûte rien - son
+  client l'a déjà.
+- **`isPauseScreen` doit rester à faux.** Un écran de pause arrête le serveur intégré, c'est-à-
+  dire précisément ce qui compte les ticks jusqu'au combat : en solo, l'écran attendrait un tick
+  qui ne vient pas.
+- **On ne peut passer l'écran qu'une fois les figures posées.** Une touche maintenue se répète,
+  donc un joueur qui aborde un dresseur le doigt sur sa touche d'avance passerait l'écran à la
+  frame où il s'ouvre.
+- **Tout est dessiné en aplats.** Deux skins et des rectangles, donc aucune texture à refaire à
+  chaque taille de fenêtre. Les bandes penchent, elles sont donc posées ligne par ligne :
+  `GuiGraphics.fill` ne connaît que des rectangles.
+- **Le fondu d'une figure passe par `GuiGraphics.setColor`**, pas par `RenderSystem` : il règle
+  le lot en cours avant de changer la couleur du shader, donc la teinte tombe sur la figure
+  seule et pas sur ce qui partageait son batch.
 
 ### Revanches et récompenses
 

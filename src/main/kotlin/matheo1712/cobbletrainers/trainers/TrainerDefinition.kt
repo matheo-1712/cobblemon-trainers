@@ -1,6 +1,7 @@
 package matheo1712.cobbletrainers.trainers
 
 import matheo1712.cobbletrainers.CobblemonTrainers
+import matheo1712.cobbletrainers.battle.TrainerBattleIntro
 import matheo1712.cobbletrainers.battle.TrainerBattleMusic
 import matheo1712.cobbletrainers.battle.ai.TrainerGimmicks
 import net.minecraft.resources.ResourceLocation
@@ -88,6 +89,11 @@ data class TrainerDefinition(
  *   own a declaration that the trainer knows what to do with it. Only `terastal` works on a
  *   plain install; the other three need the mod that teaches the simulator about them, and do
  *   nothing without it. See `docs/GIMMICKS.md`.
+ * @param intro Versus screen shown before the battle opens, `bw` being the one there is. Null -
+ *   the default - is a trainer whose battle simply starts, which is what every trainer written
+ *   before this did. See [matheo1712.cobbletrainers.battle.TrainerBattleIntro].
+ * @param introDuration How long that screen stays up, in ticks - 20 to a second. Clamped to
+ *   what reads as a screen rather than a flash or a wait, and meaningless without [intro].
  */
 data class TrainerBattleSettings(
     val level: Int = 1,
@@ -95,15 +101,23 @@ data class TrainerBattleSettings(
     val difficulty: Int = 5,
     val healParty: Boolean = true,
     val music: String? = TrainerBattleMusic.DEFAULT_TRACK,
-    val gimmicks: List<String> = emptyList()
+    val gimmicks: List<String> = emptyList(),
+    val intro: String? = null,
+    val introDuration: Int = TrainerBattleIntro.DEFAULT_TICKS
 ) {
 
     /**
      * Logs the gimmick names that mean nothing here. A pack writing `ultra` today has asked for
      * something the mod does not do yet, which is worth saying plainly: silence would read as a
      * trainer who simply never gets the chance to use it.
+     *
+     * The intro is checked the same way, and for the same reason: an unknown style still shows
+     * a screen - naming one is asking for one - so nothing but this line would say the name was
+     * not understood.
      */
     fun validate(id: ResourceLocation) {
+        validateIntro(id)
+
         for (name in gimmicks) {
             if (TrainerGimmicks.isSupported(name)) continue
 
@@ -119,6 +133,25 @@ data class TrainerBattleSettings(
                     id, name, TrainerGimmicks.SUPPORTED.joinToString(", ")
                 )
             }
+        }
+    }
+
+    private fun validateIntro(id: ResourceLocation) {
+        val declared = intro?.trim()?.takeIf { it.isNotEmpty() } ?: return
+
+        if (!TrainerBattleIntro.isSupported(declared)) {
+            CobblemonTrainers.LOGGER.warn(
+                "Trainer {}: unknown battle intro '{}', showing '{}' instead. Expected one of: {}",
+                id, declared, TrainerBattleIntro.DEFAULT_STYLE, TrainerBattleIntro.STYLES.joinToString(", ")
+            )
+        }
+
+        val clamped = introDuration.coerceIn(TrainerBattleIntro.MIN_TICKS, TrainerBattleIntro.MAX_TICKS)
+        if (clamped != introDuration) {
+            CobblemonTrainers.LOGGER.warn(
+                "Trainer {}: battle.introDuration is {} ticks, using {}. Expected {} to {}.",
+                id, introDuration, clamped, TrainerBattleIntro.MIN_TICKS, TrainerBattleIntro.MAX_TICKS
+            )
         }
     }
 }

@@ -8,6 +8,7 @@
     "level": 80,
     "difficulty": 5,
     "music": "cobblemon-trainers:battle_music.lysandre",
+    "intro": "bw",
     "gimmicks": [
       "mega"
     ]

@@ -36,9 +36,18 @@ object TrainerSkinCache {
     private val skins = mutableMapOf<String, Skin>()
     private val pending = mutableSetOf<String>()
 
+    /**
+     * The skin of that trainer if it is already here, without asking for it.
+     *
+     * What the battle intro reads: the server pushes its trainer's skin as the screen goes up,
+     * and a request from here would send a second question - one whose answer is empty for a
+     * trainer that is not `listed`, and which would land after the good one and replace it.
+     */
+    fun peek(trainerId: String): Skin? = skins[trainerId]
+
     /** The skin of that trainer, asking the server for it the first time around. */
     fun get(trainerId: String): Skin? {
-        skins[trainerId]?.let { return it }
+        peek(trainerId)?.let { return it }
 
         if (pending.add(trainerId)) {
             ClientPlayNetworking.send(RequestTrainerSkinPayload(trainerId))

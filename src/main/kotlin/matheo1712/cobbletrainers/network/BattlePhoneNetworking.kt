@@ -118,6 +118,21 @@ object BattlePhoneNetworking {
                 return
             }
 
+        pushSkin(player, rawId, definition)
+    }
+
+    /**
+     * Sends a trainer's skin to a client that has not asked for it, for a screen about to need
+     * it - the battle intro, raised on a player already standing in front of the trainer. What
+     * that player is allowed to see is the caller's business: [sendSkin] is the one answering a
+     * client, and the only one that has to doubt the ID it was handed.
+     *
+     * The resolution is the same, so a skin resolved for one screen is served to the other from
+     * the [TrainerSkins] cache, and the client files both under one entry.
+     */
+    fun pushSkin(player: ServerPlayer, rawId: String, definition: TrainerDefinition) {
+        if (!ServerPlayNetworking.canSend(player, TrainerSkinPayload.TYPE)) return
+
         val server = player.server
         TrainerSkins.resolveAsync(server, definition.skin) { texture ->
             server.execute {

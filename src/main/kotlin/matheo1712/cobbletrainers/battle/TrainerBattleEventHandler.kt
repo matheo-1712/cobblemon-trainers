@@ -51,10 +51,18 @@ object TrainerBattleEventHandler {
 
         // Registered here rather than from onInitialize so that everything depending on
         // Cobblemon being installed goes through the one try/catch that guards these hooks.
-        ServerTickEvents.END_SERVER_TICK.register { TrainerBattleRange.tick() }
+        ServerTickEvents.END_SERVER_TICK.register {
+            TrainerBattleRange.tick()
+            // The other half of a trainer battle's edges: the intro one waits on before it
+            // opens, where TrainerBattleRange watches the one already open.
+            TrainerBattleIntro.tick()
+        }
         // A battle left behind by a world that closed mid-fight would otherwise hold on to its
-        // trainer for the lifetime of the game.
-        ServerLifecycleEvents.SERVER_STOPPED.register { TrainerBattleRange.clear() }
+        // trainer for the lifetime of the game, and so would an intro nothing is going to open.
+        ServerLifecycleEvents.SERVER_STOPPED.register {
+            TrainerBattleRange.clear()
+            TrainerBattleIntro.clear()
+        }
     }
 
     private fun handleBattleStart(battle: PokemonBattle) {
@@ -63,6 +71,8 @@ object TrainerBattleEventHandler {
         val players = battle.players
         if (players.isEmpty()) return
 
+        // Asked for again even when a versus screen has already started it: the client lets
+        // the theme it is already playing run on, so this is the one call for both paths.
         TrainerBattleMusic.start(definition.battle.music, players)
         // Cobblemon only measures how far a player has strayed in a battle against a wild
         // Pokémon, so a trainer battle has to be measured here. See TrainerBattleRange.
