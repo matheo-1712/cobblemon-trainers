@@ -1,0 +1,38 @@
+{
+  "duration": 110,
+  "fadeIn": 4,
+  "fadeOut": 9,
+  "layers": [
+    { "type": "fill", "color": "#0A0E14", "alpha": 0.92, "from": "fade", "for": 4 },
+
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/grid.png", "width": 460, "height": 460,
+      "color": "#7FA8C8", "alpha": 0.22, "for": 20, "from": "fade" },
+
+    { "type": "fill", "color": "#2F6FBF", "alpha": 0.42, "width": 124,
+      "offset": [-128, 0], "at": 6, "for": 1, "from": "none" },
+    { "type": "fill", "color": "#C87A2F", "alpha": 0.42, "width": 124,
+      "offset": [128, 0], "at": 10, "for": 1, "from": "none" },
+
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/crest_octavien29.png", "width": 190, "height": 190,
+      "color": "#FFD08A", "alpha": 0.28, "offset": [128, -6], "at": 14, "for": 8, "from": "pop" },
+
+    { "type": "figure", "who": "player", "height": 150, "yaw": 22,
+      "offset": [-128, 0], "at": 16, "for": 10, "from": "pop" },
+    { "type": "figure", "who": "trainer", "height": 150, "yaw": -22,
+      "offset": [128, 0], "at": 20, "for": 10, "from": "pop" },
+
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/banner.png", "width": 130, "height": 22,
+      "color": "#0B1219", "alpha": 0.82, "offset": [-128, -95], "at": 26, "for": 6 },
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/banner.png", "width": 130, "height": 22,
+      "color": "#3A2411", "alpha": 0.85, "offset": [128, -95], "at": 26, "for": 6 },
+    { "type": "text", "value": "%player%", "offset": [-128, -95], "at": 27, "for": 6 },
+    { "type": "text", "value": "%name%", "color": "#FFD08A", "offset": [128, -95], "at": 27, "for": 6 },
+
+    { "type": "team_balls", "who": "player", "size": 1.5, "offset": [-128, 85], "at": 29, "for": 6 },
+    { "type": "team_balls", "who": "trainer", "size": 1.5, "offset": [128, 85], "at": 29, "for": 6 },
+
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/slash.png", "width": 640, "height": 20,
+      "color": "#FFD08A", "alpha": 0.85, "at": 31, "for": 6, "from": "left" },
+    { "type": "vs", "size": 4, "color": "#FFE3B8", "at": 31, "for": 6, "from": "pop" }
+  ]
+}

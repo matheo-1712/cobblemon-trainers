@@ -1,6 +1,7 @@
 package matheo1712.cobbletrainers.trainers
 
 import matheo1712.cobbletrainers.CobblemonTrainers
+import matheo1712.cobbletrainers.intro.TrainerIntros
 import matheo1712.cobbletrainers.battle.TrainerBattleMusic
 import matheo1712.cobbletrainers.battle.ai.TrainerGimmicks
 import net.minecraft.resources.ResourceLocation
@@ -88,6 +89,11 @@ data class TrainerDefinition(
  *   own a declaration that the trainer knows what to do with it. Only `terastal` works on a
  *   plain install; the other three need the mod that teaches the simulator about them, and do
  *   nothing without it. See `docs/GIMMICKS.md`.
+ * @param intro The screen this trainer is announced with, named as `<namespace>:<name>` - or
+ *   bare, which is one of the mod's own, `bw` being the one it ships. Null - the default - is a
+ *   trainer whose battle simply starts, which is what every trainer written before this did.
+ *   How long it lasts is the intro's own business; see
+ *   [matheo1712.cobbletrainers.intro.TrainerIntro].
  */
 data class TrainerBattleSettings(
     val level: Int = 1,
@@ -95,15 +101,22 @@ data class TrainerBattleSettings(
     val difficulty: Int = 5,
     val healParty: Boolean = true,
     val music: String? = TrainerBattleMusic.DEFAULT_TRACK,
-    val gimmicks: List<String> = emptyList()
+    val gimmicks: List<String> = emptyList(),
+    val intro: String? = null
 ) {
 
     /**
      * Logs the gimmick names that mean nothing here. A pack writing `ultra` today has asked for
      * something the mod does not do yet, which is worth saying plainly: silence would read as a
      * trainer who simply never gets the chance to use it.
+     *
+     * The intro is checked the same way, and for the same reason: a trainer naming one nobody
+     * provides simply fights without a screen, which is silence exactly where a pack author
+     * would want a word.
      */
     fun validate(id: ResourceLocation) {
+        validateIntro(id)
+
         for (name in gimmicks) {
             if (TrainerGimmicks.isSupported(name)) continue
 
@@ -119,6 +132,31 @@ data class TrainerBattleSettings(
                     id, name, TrainerGimmicks.SUPPORTED.joinToString(", ")
                 )
             }
+        }
+    }
+
+    /**
+     * Says so when `battle.intro` names an intro no pack loaded. Checked here rather than at the
+     * battle because this is the moment a pack author is reading the log - and because by then
+     * the only honest answer is to open the battle without a screen.
+     */
+    private fun validateIntro(id: ResourceLocation) {
+        val declared = intro?.trim()?.takeIf { it.isNotEmpty() } ?: return
+
+        val introId = TrainerIntros.idOf(declared)
+        if (introId == null) {
+            CobblemonTrainers.LOGGER.warn(
+                "Trainer {}: battle.intro '{}' is not a valid id. Expected <namespace>:<name>.",
+                id, declared
+            )
+            return
+        }
+
+        if (TrainerIntros.get(introId) == null) {
+            CobblemonTrainers.LOGGER.warn(
+                "Trainer {}: battle.intro names {}, which no pack provides. Loaded intros: {}",
+                id, introId, TrainerIntros.ids().joinToString(", ").ifEmpty { "none" }
+            )
         }
     }
 }

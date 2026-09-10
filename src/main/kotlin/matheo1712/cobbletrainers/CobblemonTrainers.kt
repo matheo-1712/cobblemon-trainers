@@ -5,7 +5,9 @@ import matheo1712.cobbletrainers.battle.TrainerBattleEventHandler
 import matheo1712.cobbletrainers.battle.TrainerBattleInteraction
 import matheo1712.cobbletrainers.block.TrainerBlocks
 import matheo1712.cobbletrainers.command.TrainerCommands
+import matheo1712.cobbletrainers.intro.TrainerIntros
 import matheo1712.cobbletrainers.item.TrainerItems
+import matheo1712.cobbletrainers.network.BattleIntroNetworking
 import matheo1712.cobbletrainers.network.BattleLeadNetworking
 import matheo1712.cobbletrainers.network.BattleMusicNetworking
 import matheo1712.cobbletrainers.network.BattlePhoneNetworking
@@ -38,7 +40,7 @@ import org.slf4j.LoggerFactory
  * - Skins: a Minecraft player (by username or UUID), or an image shipped in a pack
  * - Dialogue on right-click, in Cobblemon's own box: a greeting, the choice to battle, and
  *   the trainer's word once it is over
- * - Battle music
+ * - Battle music, and a versus screen before the battle for a trainer that asks for one
  * - Item rewards on victory, and one-shot trainers that turn down a rematch
  * - Requirements to challenge a trainer, and an advancement trigger fired by beating one
  * - `/cobblemontrainers spawn <id>` to summon a trainer
@@ -90,6 +92,7 @@ object CobblemonTrainers : ModInitializer {
         BattlePhoneNetworking.register()
         BattleLeadNetworking.register()
         BattleMusicNetworking.register()
+        BattleIntroNetworking.register()
         TrainerCalls.register()
 
         ResourceManagerHelper.get(PackType.SERVER_DATA).registerReloadListener(TrainerReloadListener)
@@ -116,6 +119,9 @@ object CobblemonTrainers : ModInitializer {
         override fun getFabricId(): ResourceLocation = id(TrainerRegistry.DATAPACK_DIRECTORY)
 
         override fun onResourceManagerReload(manager: ResourceManager) {
+            // Intros first: a trainer naming one that does not exist is worth a word, and that
+            // word can only be said once the intros are in.
+            TrainerIntros.reload(manager)
             TrainerRegistry.reload(manager)
             // A pack may have changed the image behind a skin name we already resolved.
             TrainerSkins.clearCache()

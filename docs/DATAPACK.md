@@ -18,7 +18,8 @@ Pour l'installation du mod et les commandes, voir le [README](../README.md).
 - [Le format d'équipe](#le-format-déquipe) · [La ligne `Aspects:`](#la-ligne-aspects) ·
   [La ligne `Fallback Item:`](#la-ligne-fallback-item)
 - [Skins](#skins) · [Musique de combat](#musique-de-combat) ·
-  [Gimmicks de combat](GIMMICKS.md) · [Traduire les textes](#traduire-les-textes)
+  [Écran de versus](INTROS.md) · [Gimmicks de combat](GIMMICKS.md) ·
+  [Traduire les textes](#traduire-les-textes)
 - [Tester son pack](#tester-son-pack) · [Erreurs fréquentes](#erreurs-fréquentes)
 
 ## Arborescence
@@ -157,6 +158,7 @@ appelable ; ne pas le déclarer fait un dresseur qu'il faut aller trouver.
 | `healParty` | `true` | Soigne l'équipe du dresseur avant et après chaque combat |
 | `music` | piste du mod | ID du son joué pendant le combat, `null` pour le silence |
 | `gimmicks` | `[]` | [Gimmicks de combat](GIMMICKS.md) utilisés : `mega`, `zmove`, `max`, `terastal` |
+| `intro` | - | [Écran de versus](INTROS.md) avant le combat : l'id d'une intro, ou absent pour aucun |
 
 Le suffixe `_50` (`singles_50`, `doubles_50`, `triples_50`) met **les deux équipes** au
 niveau 50 le temps du combat. `level` n'a donc plus d'effet visible sur un dresseur en `_50`.
@@ -608,6 +610,26 @@ Le dresseur référence la **clé** de `sounds.json`, jamais le chemin du fichie
   Choisis donc un morceau dont la fin enchaîne sur le début.
 - **La piste est jouée sur le joueur**, sans atténuation : un fichier mono n'est pas spatialisé.
   Le stéréo reste préférable pour une musique.
+
+## Écran de versus
+
+Un dresseur qui déclare `battle.intro` est annoncé avant son combat : les deux combattants
+entrent, un VS tombe entre eux, et **la musique de combat démarre là** plutôt qu'au premier
+tour. C'est l'entrée d'un champion de Noir et Blanc.
+
+```json
+"battle": {
+  "music": "mon_pack:battle_music.champion",
+  "intro": "mon_pack:arene"
+}
+```
+
+L'écran lui-même est un fichier du pack, écrit calque par calque : les figures sont les
+**modèles 3D** du dresseur et du joueur, et le reste - fonds, bandes, textes, images, Poké
+Balls, sons - est au choix de l'auteur. `"intro": "bw"` prend celle du mod, sans rien écrire.
+
+**➜ Tout est dans [INTROS.md](INTROS.md)** : le catalogue des calques, le placement, les temps
+et l'exemple complet.
 
 ## Traduire les textes
 

@@ -5,7 +5,8 @@
     "format": "singles",
     "difficulty": 5,
     "healParty": true,
-    "music": "cobblemonrlm:battle_music.jacinthe"
+    "music": "cobblemonrlm:battle_music.jacinthe",
+    "intro": "bw"
   },
   "messages": {
     "greeting": "trainer.cobblemonrlm.jacinthe.greeting",

@@ -1,0 +1,50 @@
+{
+  "duration": 115,
+  "fadeIn": 6,
+  "fadeOut": 11,
+  "layers": [
+    { "type": "fill", "color": "#06060F", "alpha": 0.93, "from": "fade", "for": 6 },
+
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/stars.png", "width": 660, "height": 380,
+      "color": "#C9C4FF", "alpha": 0.3, "for": 20, "from": "fade" },
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/moon.png", "width": 112, "height": 112,
+      "color": "#EDEAFF", "alpha": 0.5, "offset": [0, -116], "at": 3, "for": 20, "from": "fade" },
+
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/scene_manor.png", "width": 570, "height": 238,
+      "color": "#171334", "alpha": 0.94, "offset": [0, 98], "at": 4, "for": 22, "from": "bottom" },
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/scene_manor_lights.png", "width": 570, "height": 238,
+      "color": "#FFCF8A", "alpha": 0.85, "offset": [0, 98], "at": 4, "for": 22, "from": "bottom" },
+
+    { "type": "fill", "color": "#2F6FBF", "alpha": 0.3, "width": 118,
+      "offset": [-128, 0], "at": 8, "for": 18, "from": "left" },
+    { "type": "fill", "color": "#4A3FA8", "alpha": 0.3, "width": 118,
+      "offset": [128, 0], "at": 8, "for": 18, "from": "right" },
+    { "type": "fill", "color": "#8E1F3A", "alpha": 0.34, "slant": 0.75, "width": 30,
+      "offset": [180, 0], "at": 16, "for": 16, "from": "right" },
+
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/crest_rerebleue.png", "width": 172, "height": 172,
+      "color": "#C9C4FF", "alpha": 0.22, "offset": [128, -10], "at": 10, "for": 20, "from": "fade" },
+
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/slash.png", "width": 610, "height": 22,
+      "color": "#E9E4FF", "alpha": 0.7, "at": 22, "for": 8, "from": "left" },
+
+    { "type": "figure", "who": "player", "height": 150, "yaw": 22,
+      "offset": [-128, 0], "at": 8, "for": 18, "from": "left" },
+    { "type": "figure", "who": "trainer", "height": 150, "yaw": -22,
+      "offset": [128, 0], "at": 8, "for": 18, "from": "right" },
+
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/banner.png", "width": 130, "height": 22,
+      "color": "#0B0A1C", "alpha": 0.82, "offset": [-128, -95], "at": 24, "for": 6 },
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/banner.png", "width": 130, "height": 22,
+      "color": "#221B4A", "alpha": 0.86, "offset": [128, -95], "at": 24, "for": 6 },
+    { "type": "text", "value": "%player%", "offset": [-128, -95], "at": 25, "for": 6 },
+    { "type": "text", "value": "%name%", "color": "#D9D4FF", "offset": [128, -95], "at": 25, "for": 6 },
+
+    { "type": "team_balls", "who": "player", "size": 1.5, "offset": [-128, 85], "at": 27, "for": 6 },
+    { "type": "team_balls", "who": "trainer", "size": 1.5, "offset": [128, 85], "at": 27, "for": 6 },
+
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/burst.png", "width": 150, "height": 150,
+      "color": "#E9E4FF", "alpha": 0.38, "at": 24, "for": 8, "from": "pop" },
+    { "type": "vs", "size": 4, "color": "#F0EDFF", "at": 24, "for": 6, "from": "pop" }
+  ]
+}

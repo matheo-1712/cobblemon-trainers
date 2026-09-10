@@ -1,0 +1,51 @@
+{
+  "duration": 135,
+  "fadeIn": 6,
+  "fadeOut": 12,
+  "layers": [
+    { "type": "fill", "color": "#04010A", "alpha": 0.96, "from": "fade", "for": 6 },
+
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/ultra_rift.png", "width": 470, "height": 470,
+      "color": "#C46BFF", "alpha": 0.3, "offset": [128, -4], "for": 30, "from": "fade" },
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/rays.png", "width": 430, "height": 430,
+      "color": "#FFE9A8", "alpha": 0.17, "offset": [128, -4], "at": 6, "for": 28, "from": "fade" },
+
+    { "type": "fill", "color": "#2F6FBF", "alpha": 0.35, "slant": 0.35,
+      "width": 110, "offset": [-128, 0], "from": "left", "for": 20 },
+    { "type": "fill", "color": "#7A2FD6", "alpha": 0.45, "slant": 0.5,
+      "width": 150, "offset": [128, 0], "from": "fade", "for": 24 },
+    { "type": "fill", "color": "#2FD6C4", "alpha": 0.22, "slant": -0.5,
+      "width": 88, "offset": [150, 0], "at": 8, "for": 20, "from": "fade" },
+
+    { "type": "figure", "who": "player", "height": 150, "yaw": 22,
+      "offset": [-128, 0], "at": 4, "for": 20, "from": "left" },
+    { "type": "figure", "who": "trainer", "height": 158, "yaw": -18,
+      "offset": [128, 0], "at": 10, "for": 14, "from": "pop" },
+
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/ultra_shard.png", "width": 88, "height": 88,
+      "color": "#2FD6C4", "alpha": 0.55, "offset": [-38, -74], "at": 20, "for": 6, "from": "top" },
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/ultra_shard.png", "width": 66, "height": 66,
+      "color": "#FF5FD0", "alpha": 0.5, "offset": [52, 84], "at": 23, "for": 6, "from": "bottom" },
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/ultra_shard.png", "width": 120, "height": 120,
+      "color": "#FFE9A8", "alpha": 0.38, "offset": [-98, 92], "at": 26, "for": 7, "from": "left" },
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/ultra_shard.png", "width": 58, "height": 58,
+      "color": "#C46BFF", "alpha": 0.5, "offset": [86, -104], "at": 29, "for": 5, "from": "right" },
+
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/slash.png", "width": 690, "height": 24,
+      "color": "#FFE9A8", "alpha": 0.85, "at": 34, "for": 9, "from": "right" },
+
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/banner.png", "width": 134, "height": 22,
+      "color": "#080412", "alpha": 0.8, "offset": [-128, -95], "at": 35, "for": 10 },
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/banner.png", "width": 134, "height": 22,
+      "color": "#2B0B4A", "alpha": 0.85, "offset": [128, -95], "at": 35, "for": 10 },
+    { "type": "text", "value": "%player%", "offset": [-128, -95], "at": 36, "for": 10 },
+    { "type": "text", "value": "%name%", "color": "#FFE9A8", "offset": [128, -95], "at": 36, "for": 10 },
+
+    { "type": "team_balls", "who": "player", "size": 1.5, "offset": [-128, 85], "at": 38, "for": 10 },
+    { "type": "team_balls", "who": "trainer", "size": 1.5, "offset": [128, 85], "at": 38, "for": 10 },
+
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/burst.png", "width": 250, "height": 250,
+      "color": "#FFF3C4", "alpha": 0.55, "at": 37, "for": 12, "from": "pop" },
+    { "type": "vs", "size": 5, "color": "#FFF3C4", "at": 37, "for": 12, "from": "pop" }
+  ]
+}

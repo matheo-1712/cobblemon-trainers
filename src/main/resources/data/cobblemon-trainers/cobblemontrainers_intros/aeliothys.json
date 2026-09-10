@@ -1,0 +1,42 @@
+{
+  "duration": 115,
+  "fadeIn": 6,
+  "fadeOut": 12,
+  "layers": [
+    { "type": "fill", "color": "#120A10", "alpha": 0.9, "from": "fade", "for": 6 },
+
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/rays.png", "width": 400, "height": 400,
+      "color": "#FFB8DC", "alpha": 0.14, "offset": [128, -10], "for": 34, "from": "fade" },
+
+    { "type": "fill", "color": "#2F6FBF", "alpha": 0.4, "slant": 0.15,
+      "width": 126, "offset": [-128, 0], "from": "fade", "for": 22 },
+    { "type": "fill", "color": "#EFA0C8", "alpha": 0.42, "slant": 0.15,
+      "width": 126, "offset": [128, 0], "from": "fade", "for": 22 },
+
+    { "type": "fill", "color": "#FFC9E2", "alpha": 0.12, "height": 104,
+      "offset": [0, 34], "for": 20, "from": "fade" },
+
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/crest_aeliothys.png", "width": 215, "height": 215,
+      "color": "#FFE9F4", "alpha": 0.34, "offset": [128, -8], "at": 8, "for": 24, "from": "fade" },
+
+    { "type": "figure", "who": "player", "height": 150, "yaw": 22,
+      "offset": [-128, 0], "at": 4, "for": 26, "from": "bottom" },
+    { "type": "figure", "who": "trainer", "height": 152, "yaw": -22,
+      "offset": [128, 0], "at": 4, "for": 26, "from": "bottom" },
+
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/slash.png", "width": 640, "height": 18,
+      "color": "#FFF0F7", "alpha": 0.75, "at": 30, "for": 12, "from": "fade" },
+
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/banner.png", "width": 132, "height": 22,
+      "color": "#1A0E16", "alpha": 0.78, "offset": [-128, -95], "at": 30, "for": 10 },
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/banner.png", "width": 132, "height": 22,
+      "color": "#43172F", "alpha": 0.82, "offset": [128, -95], "at": 30, "for": 10 },
+    { "type": "text", "value": "%player%", "offset": [-128, -95], "at": 31, "for": 10 },
+    { "type": "text", "value": "%name%", "color": "#FFE3F1", "offset": [128, -95], "at": 31, "for": 10 },
+
+    { "type": "team_balls", "who": "player", "size": 1.5, "offset": [-128, 85], "at": 33, "for": 10 },
+    { "type": "team_balls", "who": "trainer", "size": 1.5, "offset": [128, 85], "at": 33, "for": 10 },
+
+    { "type": "vs", "size": 4, "color": "#FFF0F7", "at": 30, "for": 14, "from": "fade" }
+  ]
+}

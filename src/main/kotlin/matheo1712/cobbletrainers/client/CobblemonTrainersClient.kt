@@ -1,9 +1,11 @@
 package matheo1712.cobbletrainers.client
 
+import matheo1712.cobbletrainers.client.gui.BattleIntroScreen
 import matheo1712.cobbletrainers.client.gui.BattlePhoneScreen
 import matheo1712.cobbletrainers.client.cache.TrainerSkinCache
 import matheo1712.cobbletrainers.client.cache.TrainerTeamCache
 import matheo1712.cobbletrainers.client.gui.TrainerSpawnerScreen
+import matheo1712.cobbletrainers.network.BattleIntroPayload
 import matheo1712.cobbletrainers.network.BattleMusicPayload
 import matheo1712.cobbletrainers.network.OpenBattlePhonePayload
 import matheo1712.cobbletrainers.network.OpenTrainerSpawnerPayload
@@ -41,6 +43,12 @@ object CobblemonTrainersClient : ClientModInitializer {
 
         ClientPlayNetworking.registerGlobalReceiver(TrainerTeamPayload.TYPE) { payload, _ ->
             TrainerTeamCache.accept(payload)
+        }
+
+        // A screen too, but one nobody opened: the trainer's versus screen, raised by the
+        // server a few seconds before the battle it announces.
+        ClientPlayNetworking.registerGlobalReceiver(BattleIntroPayload.TYPE) { payload, context ->
+            context.client().setScreen(BattleIntroScreen(payload))
         }
 
         // Not a screen either: the battle theme, which the client plays itself so that it can

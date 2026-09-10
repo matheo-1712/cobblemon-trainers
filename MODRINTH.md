@@ -46,7 +46,8 @@ page and travelling to the right spot - and the world stays empty until you do.
 
 ## What you get
 
-- **Real trainer battles** - right-click, singles, doubles or triples, with battle music.
+- **Real trainer battles** - right-click, singles, doubles or triples, with battle music, and
+  a Black-and-White style versus screen for the trainers that ask for one.
 - **Trainers who come when called** - from the Battle Phone, wherever they said they would be.
 - **Trainers that stay put** - an invisible block holds one in place for good.
 - **Showdown teams, pasted in** - copy an export, paste it, done.

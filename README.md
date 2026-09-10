@@ -2,8 +2,8 @@
 
 Mod Fabric qui ajoute des dresseurs Pokémon configurables à Cobblemon. Chaque dresseur est
 un fichier JSON : une équipe au format Showdown, un skin - celui d'un compte Minecraft ou une
-image livrée par le pack -, des dialogues dans la boîte de Cobblemon, une musique de combat,
-et de quoi monter une progression - catégories, conditions à remplir pour être défié,
+image livrée par le pack -, des dialogues dans la boîte de Cobblemon, une musique de combat -
+et, pour un champion, un écran de versus avant le combat -, et de quoi monter une progression - catégories, conditions à remplir pour être défié,
 advancements à la victoire.
 Les dresseurs se déclarent dans un datapack, donc sans toucher au code.
 
@@ -103,8 +103,11 @@ remet **pas** les récompenses, pour qu'on puisse le relancer autant qu'on veut.
 l'inverse et oublie la victoire - mais ne retire pas un advancement déjà obtenu, ce qui reste
 l'affaire de `/advancement revoke`.
 
-Un clic droit sur le dresseur lance le combat, sur fond de musique de combat. Si le combat
-ne peut pas démarrer (pas de Pokémon dans ton équipe, combat déjà en cours, dresseur sans
+Un clic droit sur le dresseur lance le combat, sur fond de musique de combat. Un dresseur qui
+déclare `battle.intro` est annoncé avant, par un écran de versus façon Noir et Blanc : les deux
+modèles entrent chacun d'un côté, la musique part là, et une touche passe l'écran. Cet écran
+s'écrit en datapack, calque par calque - voir [docs/INTROS.md](docs/INTROS.md). Si le
+combat ne peut pas démarrer (pas de Pokémon dans ton équipe, combat déjà en cours, dresseur sans
 équipe, dresseur qui ne prend pas de revanche, ou conditions non remplies), la raison
 s'affiche dans le chat.
 

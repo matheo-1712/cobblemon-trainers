@@ -118,6 +118,21 @@ object BattlePhoneNetworking {
                 return
             }
 
+        pushSkin(player, rawId, definition)
+    }
+
+    /**
+     * Sends a trainer's skin to a client that has not asked for it, for a screen about to need
+     * it - the battle intro, raised on a player already standing in front of the trainer. What
+     * that player is allowed to see is the caller's business: [sendSkin] is the one answering a
+     * client, and the only one that has to doubt the ID it was handed.
+     *
+     * The resolution is the same, so a skin resolved for one screen is served to the other from
+     * the [TrainerSkins] cache, and the client files both under one entry.
+     */
+    fun pushSkin(player: ServerPlayer, rawId: String, definition: TrainerDefinition) {
+        if (!ServerPlayNetworking.canSend(player, TrainerSkinPayload.TYPE)) return
+
         val server = player.server
         TrainerSkins.resolveAsync(server, definition.skin) { texture ->
             server.execute {
@@ -148,7 +163,7 @@ object BattlePhoneNetworking {
         val members = if (id != null && definition != null &&
             TrainerProgress.of(player.server).hasDefeated(id, player.uuid)
         ) {
-            buildTeam(definition, id)
+            teamOf(definition, id)
         } else {
             emptyList()
         }
@@ -157,12 +172,14 @@ object BattlePhoneNetworking {
     }
 
     /**
-     * Builds the team the way [matheo1712.cobbletrainers.trainers.TrainerSpawner] does, because that is the only way to know the
+     * Builds the team the way [matheo1712.cobbletrainers.trainers.TrainerSpawner] does - shared
+     * with the battle intro, whose `pokemon` layers need exactly this. That detour is the only
+     * way to know the
      * aspects a Pokémon ends up with: the parser puts a form in the property string, and only
      * `create()` turns it into the aspect set the client needs to draw the right model. One
      * bad entry costs its slot, not the whole team.
      */
-    private fun buildTeam(definition: TrainerDefinition, trainerId: ResourceLocation): List<TrainerTeamMember> =
+    fun teamOf(definition: TrainerDefinition, trainerId: ResourceLocation): List<TrainerTeamMember> =
         ShowdownTeamParser.parse(definition.team).mapNotNull { properties ->
             if (properties.level == null) properties.level = definition.battle.level
             try {

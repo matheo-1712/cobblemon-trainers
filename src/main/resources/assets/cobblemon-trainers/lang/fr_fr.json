@@ -72,6 +72,8 @@
   "cobblemon-trainers.dialogue.option.battle": "Combattre",
   "cobblemon-trainers.dialogue.option.cancel": "Annuler",
 
+  "cobblemon-trainers.screen.battle_intro.skip": "Appuie sur une touche pour passer",
+  "cobblemon-trainers.chat.intro.trainer_gone": "Le dresseur n'est plus là. Le combat n'a pas commencé.",
   "cobblemon-trainers.chat.trainer_gone": "Le dresseur a quitté le combat. La rencontre s'arrête.",
   "cobblemon-trainers.chat.too_far": "Tu t'es trop éloigné du dresseur. La rencontre s'arrête.",
 

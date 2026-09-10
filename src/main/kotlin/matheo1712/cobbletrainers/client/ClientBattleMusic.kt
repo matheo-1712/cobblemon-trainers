@@ -16,6 +16,10 @@ import net.minecraft.sounds.SoundSource
  * ogg with no gap at all: a streamed sound asked to loop is served by a
  * `LoopingAudioStream`, which re-opens the file at end of stream.
  *
+ * The theme also outlives the moment it started on: a trainer showing a versus screen starts it
+ * there rather than at the battle, and [play] lets a track already playing under the same name
+ * run on - see [matheo1712.cobbletrainers.battle.TrainerBattleIntro].
+ *
  * Also read by `mixin.client.MusicManagerMixin`, which holds the world's own music back for as
  * long as a theme is loaded here. See [matheo1712.cobbletrainers.network.BattleMusicNetworking]
  * for why the client has to be told at all.
@@ -42,6 +46,12 @@ object ClientBattleMusic {
      * on the listener, so nothing here depends on where the player is standing.
      */
     fun play(track: ResourceLocation, volume: Float, pitch: Float) {
+        // The one track twice: a trainer with a versus screen starts their theme on it, and the
+        // battle it announces asks for the same one a few seconds later. Starting it again there
+        // would drop the track back to its opening bars just as the fight begins, so whatever is
+        // already playing under that name is left to run.
+        if (playing?.location == track) return
+
         val client = Minecraft.getInstance()
 
         silence()

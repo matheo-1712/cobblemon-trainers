@@ -192,12 +192,18 @@ class TrainerBattleInteraction : NPCInteractConfiguration {
         }
 
         /**
-         * Opens the battle itself, once the player has said yes in the dialogue box.
+         * Starts the battle, once the player has said yes in the dialogue box.
          *
          * The refusals of [refusal] are not re-run here - the box was built from them a moment
          * ago - with the one exception of [partyRefusal], which also guards the two paths that
          * reach this without a box at all. Everything else that can still go wrong, an empty
          * party or a trainer with no team, is Cobblemon's own answer to give.
+         *
+         * A trainer who declares one shows their versus screen first, and the battle opens on
+         * its way out - which is why [openBattle] is a step of its own. Nothing is asked again
+         * on the other side of that wait: the player spends it in a screen, so nothing of
+         * theirs can change, and what can - the trainer leaving, the player with it - is what
+         * [TrainerBattleIntro] watches for.
          */
         fun startBattle(npc: NPCEntity, player: ServerPlayer, definition: TrainerDefinition?) {
             val format = battleFormatOf(definition?.battle?.format)
@@ -206,6 +212,20 @@ class TrainerBattleInteraction : NPCInteractConfiguration {
                 player.sendSystemMessage(refused.withStyle(ChatFormatting.GRAY))
                 return
             }
+
+            val trainerId = TrainerRegistry.idFromAspects(npc.aspects)
+            if (definition != null && trainerId != null &&
+                TrainerBattleIntro.begin(npc, player, trainerId, definition)
+            ) {
+                return
+            }
+
+            openBattle(npc, player, definition)
+        }
+
+        /** The battle itself, with nothing left to decide. Also what an intro ends on. */
+        fun openBattle(npc: NPCEntity, player: ServerPlayer, definition: TrainerDefinition?) {
+            val format = battleFormatOf(definition?.battle?.format)
 
             BattleBuilder.pvn(
                 player = player,
