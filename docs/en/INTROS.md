@@ -11,7 +11,8 @@ one layer at a time, and needs no code at all.
 - [Where it lives](#where-it-lives) · [The file](#the-file) · [A layer](#a-layer)
 - [The catalogue](#the-catalogue): [figure](#figure) · [text](#text) · [image](#image) ·
   [fill](#fill) · [vs](#vs) · [team_balls](#team_balls) · [pokemon](#pokemon)
-- [The intros that ship](#the-intros-that-ship) · [Placing a layer](#placing-a-layer) ·
+- [The intros that ship](#the-intros-that-ship) · [The textures that ship](#the-textures-that-ship) ·
+  [Placing a layer](#placing-a-layer) ·
   [Timing](#timing) · [Sounds](#sounds)
 - [The full example](#the-full-example) · [Common mistakes](#common-mistakes)
 
@@ -173,30 +174,51 @@ and shiny included.
 
 ## The intros that ship
 
-Seven come with the mod, and any pack may name them: `"intro": "bw"`, or any of the others by
-name, with no namespace. Six of them dress one of the mod's own iconic trainers, and take the
-colours of the biome that trainer answers from.
+Seven come with the mod. Six are **one iconic trainer's own screen** - their emblem, their
+colours, the way they walk on - and the seventh, `bw`, is the plain one, for when nothing in
+particular needs saying. Any pack may name them: `"intro": "kagumi"` is enough, no namespace.
 
-| Intro | What it does | Worn by |
+| Intro | Trainer | What it says |
 | --- | --- | --- |
-| `bw` | The plain one: blue and red bands, both sides sliding in, a VS that drops | anything |
-| `plains` | The same in meadow green, a little more direct | RereBleue |
-| `cherry` | Pink, leaning the other way, slow throughout | Kagumi |
-| `desert` | Straight columns, no easing, the shortest of the seven | TheAzertor |
-| `beach` | A turquoise horizon behind the two, bands cut hard across | Octavien29 |
-| `hills` | Everything falls in from the top rather than the sides | Griff501 |
-| `jungle` | Nothing slides: the two simply appear, near-black ground, gold | Aeliothys |
+| `bw` | anything | Blue and red bands, both sides sliding in, a VS that drops |
+| `rerebleue` | RereBleue | The pact: straight columns, a diamond crest, a blade of light across |
+| `kagumi` | Kagumi | The blade: pink, leaning the other way, a crescent sweeps in and cuts |
+| `griff501` | Griff501 | The haunting: nothing slides, he fades in through a violet halo, a grin in a ring, an acid streak |
+| `octavien29` | Octavien29 | The sun: a disc of rays rises behind the two, heat and glare |
+| `theazertor` | TheAzertor | The forge: steel columns, no easing, the star falls like a hammer |
+| `aeliothys` | Aeliothys | The prism: near-black, the two materialise, gold and magenta |
 
-Two conventions hold them together, and are worth copying:
+Three conventions hold them together, and are worth copying:
 
-- **The left band is always the same blue.** Left is you, in all seven; it is the colour on the
-  right that changes from trainer to trainer.
+- **The left band is always the same blue.** Left is you, in all seven; it is the right that
+  changes from trainer to trainer.
 - **The geometry never moves**: figures at ±128, names above the heads, Poké Balls under the
-  feet. What varies is colour, slant, which way things come in and how long they take - enough
+  feet. What varies is colour, texture, which way things come in and how long they take - enough
   that two gym leaders do not look alike, not so much that the screen has to be read afresh.
+- **The textures are white, and tinted by the layer.** One image therefore dresses six screens
+  in six colours.
 
-Copying them is the best way in: `plains` is `bw` recoloured, and the other five are each one
-idea further.
+## The textures that ship
+
+They live in the jar, under `cobblemon-trainers:textures/gui/intro/`, and any pack may name
+them. All are **white on transparent**: the layer's `color` is what gives them their hue.
+
+| Texture | Size | What it is |
+| --- | --- | --- |
+| `rays.png` | 256 | A disc of rays, hollow at the centre so a figure is not washed out |
+| `burst.png` | 128 | The impact flash, eight points, made to sit under the VS |
+| `slash.png` | 256 × 32 | One tapered stroke, for the screens that cut rather than slide |
+| `banner.png` | 192 × 32 | A plate with bevelled ends, to slide under a name |
+| `crest_<trainer>.png` | 128 | One of the six emblems: crest, crescent, grin, sun, steel star, prism |
+
+An emblem belongs behind its trainer as a watermark - `alpha` around `0.3`, sized 180 to 230 -
+rather than in full light: what has to read is the figure.
+
+```json
+{ "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/crest_kagumi.png",
+  "width": 200, "height": 200, "color": "#FFC2DC", "alpha": 0.26,
+  "offset": [128, -8], "at": 4, "for": 24, "from": "right" }
+```
 
 ## Placing a layer
 

@@ -1,0 +1,39 @@
+{
+  "duration": 90,
+  "fadeIn": 2,
+  "fadeOut": 6,
+  "layers": [
+    { "type": "fill", "color": "#060A0C", "alpha": 0.92, "from": "fade", "for": 2 },
+
+    { "type": "fill", "color": "#2F6FBF", "alpha": 0.45, "width": 120,
+      "offset": [-128, 0], "from": "left", "for": 10, "ease": "linear" },
+    { "type": "fill", "color": "#4A5A66", "alpha": 0.5, "width": 120,
+      "offset": [128, 0], "from": "right", "for": 10, "ease": "linear" },
+
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/crest_theazertor.png", "width": 200, "height": 200,
+      "color": "#7FE3FF", "alpha": 0.26, "offset": [128, -6],
+      "at": 10, "for": 6, "from": "top", "ease": "linear" },
+
+    { "type": "figure", "who": "player", "height": 150, "yaw": 22,
+      "offset": [-128, 0], "from": "left", "for": 10, "ease": "linear" },
+    { "type": "figure", "who": "trainer", "height": 150, "yaw": -22,
+      "offset": [128, 0], "from": "right", "for": 10, "ease": "linear" },
+
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/slash.png", "width": 640, "height": 24,
+      "color": "#7FE3FF", "alpha": 0.9, "at": 12, "for": 3, "from": "pop" },
+
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/banner.png", "width": 130, "height": 22,
+      "color": "#0A1418", "alpha": 0.8, "offset": [-128, -95], "at": 13, "for": 4 },
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/banner.png", "width": 130, "height": 22,
+      "color": "#16323C", "alpha": 0.85, "offset": [128, -95], "at": 13, "for": 4 },
+    { "type": "text", "value": "%player%", "offset": [-128, -95], "at": 14, "for": 4 },
+    { "type": "text", "value": "%name%", "color": "#CFF6FF", "offset": [128, -95], "at": 14, "for": 4 },
+
+    { "type": "team_balls", "who": "player", "size": 1.5, "offset": [-128, 85], "at": 15, "for": 4 },
+    { "type": "team_balls", "who": "trainer", "size": 1.5, "offset": [128, 85], "at": 15, "for": 4 },
+
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/burst.png", "width": 170, "height": 170,
+      "color": "#7FE3FF", "alpha": 0.55, "at": 12, "for": 4, "from": "pop" },
+    { "type": "vs", "size": 5, "color": "#CFF6FF", "at": 12, "for": 4, "from": "pop" }
+  ]
+}

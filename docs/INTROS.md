@@ -11,7 +11,8 @@ combattants entrent, un VS tombe entre eux, la musique de combat démarre là. C
 - [Où ça vit](#où-ça-vit) · [Le fichier](#le-fichier) · [Un calque](#un-calque)
 - [Le catalogue](#le-catalogue) : [figure](#figure) · [text](#text) · [image](#image) ·
   [fill](#fill) · [vs](#vs) · [team_balls](#team_balls) · [pokemon](#pokemon)
-- [Les intros livrées](#les-intros-livrées) · [Placer un calque](#placer-un-calque) ·
+- [Les intros livrées](#les-intros-livrées) · [Les textures livrées](#les-textures-livrées) ·
+  [Placer un calque](#placer-un-calque) ·
   [Le temps](#le-temps) · [Les sons](#les-sons)
 - [L'exemple complet](#lexemple-complet) · [Erreurs fréquentes](#erreurs-fréquentes)
 
@@ -174,30 +175,53 @@ régionale et chromatique comprises.
 
 ## Les intros livrées
 
-Le mod en fournit sept, utilisables par n'importe quel pack : `"intro": "bw"`, ou son nom sans
-namespace, suffit. Six d'entre elles habillent un dresseur iconique du mod, et prennent les
-couleurs du biome où il répond.
+Le mod en fournit sept. Six sont **l'écran d'un dresseur iconique** - son emblème, ses
+couleurs, sa façon d'entrer - et la septième, `bw`, est la neutre, celle qu'on prend quand on
+ne veut rien dire de particulier. Toutes sont nommables par un pack : `"intro": "kagumi"`
+suffit, sans namespace.
 
-| Intro | Ce qu'elle fait | Portée par |
+| Intro | Dresseur | Ce qu'elle raconte |
 | --- | --- | --- |
-| `bw` | La neutre : bandes bleue et rouge, glissement des deux côtés, VS qui tombe | à tout faire |
-| `plains` | La même en vert de prairie, un peu plus franche | RereBleue |
-| `cherry` | Rose, penchée dans l'autre sens, tout en lenteur | Kagumi |
-| `desert` | Colonnes droites, sans amorti, la plus courte des sept | TheAzertor |
-| `beach` | Un horizon turquoise derrière les deux, bandes très obliques | Octavien29 |
-| `hills` | Tout tombe du haut de l'écran plutôt que des côtés | Griff501 |
-| `jungle` | Rien ne glisse : les deux apparaissent, fond presque noir, or | Aeliothys |
+| `bw` | à tout faire | Bandes bleue et rouge, glissement des deux côtés, VS qui tombe |
+| `rerebleue` | RereBleue | Le pacte : colonnes droites, blason en losange, une lame de lumière en travers |
+| `kagumi` | Kagumi | La lame : rose, penchée à l'envers, un croissant balaie l'écran et le coupe |
+| `griff501` | Griff501 | La hantise : rien ne glisse, il apparaît dans un halo violet, sourire en anneau, éclair acide |
+| `octavien29` | Octavien29 | Le soleil : un disque de rayons se lève derrière les deux, chaleur et éclat |
+| `theazertor` | TheAzertor | La forge : colonnes d'acier, aucun amorti, l'étoile tombe comme un marteau |
+| `aeliothys` | Aeliothys | Le prisme : presque noir, les deux se matérialisent, or et magenta |
 
-Deux conventions les tiennent ensemble, et valent d'être copiées :
+Trois conventions les tiennent ensemble, et valent d'être copiées :
 
-- **La bande de gauche est toujours du même bleu.** La gauche, c'est toi, dans les sept ; c'est
-  la couleur de droite qui change de dresseur en dresseur.
+- **La bande de gauche est du même bleu partout.** La gauche, c'est toi, dans les sept ; c'est
+  la droite qui change de dresseur en dresseur.
 - **La géométrie ne bouge pas** : figures à ±128, noms au-dessus des têtes, Poké Balls sous les
-  pieds. Ce qui varie est la couleur, la pente, le sens d'entrée et le temps - assez pour que
+  pieds. Ce qui varie est la couleur, la texture, le sens d'entrée et le temps - assez pour que
   deux champions ne se ressemblent pas, pas assez pour qu'on ait à réapprendre à lire l'écran.
+- **Les textures sont blanches et teintées par le calque.** Une seule image sert donc à six
+  écrans de six couleurs.
 
-Les copier est le meilleur point de départ : `plains` est `bw` recolorée, et les cinq autres
-sont chacune une seule idée de plus.
+## Les textures livrées
+
+Elles vivent dans le jar, sous `cobblemon-trainers:textures/gui/intro/`, et n'importe quel pack
+peut les nommer. Toutes sont **blanches sur fond transparent** : c'est le `color` du calque qui
+leur donne leur teinte.
+
+| Texture | Taille | Ce que c'est |
+| --- | --- | --- |
+| `rays.png` | 256 | Un disque de rayons, creux au centre pour ne pas noyer une figure |
+| `burst.png` | 128 | L'éclat d'impact, huit branches, à poser sous le VS |
+| `slash.png` | 256 × 32 | Un trait effilé, pour les écrans qui tranchent au lieu de glisser |
+| `banner.png` | 192 × 32 | Une plaque à bouts biseautés, à glisser sous un nom |
+| `crest_<dresseur>.png` | 128 | L'emblème d'un des six : blason, croissant, sourire, soleil, étoile d'acier, prisme |
+
+Un emblème se pose en filigrane derrière son dresseur - `alpha` autour de `0.3`, taille de 180
+à 230 - plutôt qu'en pleine lumière : ce qui doit se lire, c'est la figure.
+
+```json
+{ "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/crest_kagumi.png",
+  "width": 200, "height": 200, "color": "#FFC2DC", "alpha": 0.26,
+  "offset": [128, -8], "at": 4, "for": 24, "from": "right" }
+```
 
 ## Placer un calque
 

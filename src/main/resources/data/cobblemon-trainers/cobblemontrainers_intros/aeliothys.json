@@ -1,0 +1,34 @@
+{
+  "duration": 115,
+  "fadeIn": 5,
+  "fadeOut": 11,
+  "layers": [
+    { "type": "fill", "color": "#02030A", "alpha": 0.95, "from": "fade", "for": 5 },
+
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/rays.png", "width": 420, "height": 420,
+      "color": "#FF5FD0", "alpha": 0.16, "for": 34, "from": "fade" },
+
+    { "type": "fill", "color": "#2F6FBF", "alpha": 0.4, "slant": 0.45,
+      "width": 118, "offset": [-128, 0], "from": "fade", "for": 18 },
+    { "type": "fill", "color": "#7A4BD6", "alpha": 0.4, "slant": 0.45,
+      "width": 118, "offset": [128, 0], "from": "fade", "for": 18 },
+
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/crest_aeliothys.png", "width": 230, "height": 230,
+      "color": "#FFE07A", "alpha": 0.3, "offset": [128, -6], "at": 8, "for": 20, "from": "pop" },
+
+    { "type": "figure", "who": "player", "height": 150, "yaw": 22,
+      "offset": [-128, 0], "at": 6, "for": 18, "from": "pop" },
+    { "type": "figure", "who": "trainer", "height": 154, "yaw": -22,
+      "offset": [128, 0], "at": 6, "for": 18, "from": "pop" },
+
+    { "type": "text", "value": "%player%", "offset": [-128, -95], "at": 24, "for": 9 },
+    { "type": "text", "value": "%name%", "color": "#FFE07A", "offset": [128, -95], "at": 24, "for": 9 },
+
+    { "type": "team_balls", "who": "player", "size": 1.5, "offset": [-128, 85], "at": 27, "for": 9 },
+    { "type": "team_balls", "who": "trainer", "size": 1.5, "offset": [128, 85], "at": 27, "for": 9 },
+
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/burst.png", "width": 240, "height": 240,
+      "color": "#FFF3C4", "alpha": 0.5, "at": 22, "for": 11, "from": "pop" },
+    { "type": "vs", "size": 5, "color": "#FFE07A", "at": 22, "for": 10, "from": "pop" }
+  ]
+}

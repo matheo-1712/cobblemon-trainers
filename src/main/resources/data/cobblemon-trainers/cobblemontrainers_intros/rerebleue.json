@@ -1,0 +1,38 @@
+{
+  "duration": 105,
+  "fadeIn": 4,
+  "fadeOut": 9,
+  "layers": [
+    { "type": "fill", "color": "#05070F", "alpha": 0.9, "from": "fade", "for": 4 },
+
+    { "type": "fill", "color": "#2F6FBF", "alpha": 0.45, "width": 132,
+      "offset": [-128, 0], "from": "left", "for": 18 },
+    { "type": "fill", "color": "#4A46B8", "alpha": 0.45, "width": 132,
+      "offset": [128, 0], "from": "right", "for": 18 },
+
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/crest_rerebleue.png", "width": 200, "height": 200,
+      "color": "#7FA8FF", "alpha": 0.22, "offset": [128, -6], "at": 6, "for": 22, "from": "fade" },
+
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/slash.png", "width": 600, "height": 26,
+      "color": "#DCE7FF", "alpha": 0.85, "at": 18, "for": 8, "from": "left" },
+
+    { "type": "figure", "who": "player", "height": 150, "yaw": 22,
+      "offset": [-128, 0], "from": "left", "for": 18 },
+    { "type": "figure", "who": "trainer", "height": 150, "yaw": -22,
+      "offset": [128, 0], "from": "right", "for": 18 },
+
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/banner.png", "width": 130, "height": 22,
+      "color": "#0A0E1E", "alpha": 0.8, "offset": [-128, -95], "at": 18, "for": 6 },
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/banner.png", "width": 130, "height": 22,
+      "color": "#141046", "alpha": 0.85, "offset": [128, -95], "at": 18, "for": 6 },
+    { "type": "text", "value": "%player%", "offset": [-128, -95], "at": 19, "for": 6 },
+    { "type": "text", "value": "%name%", "color": "#CFDBFF", "offset": [128, -95], "at": 19, "for": 6 },
+
+    { "type": "team_balls", "who": "player", "size": 1.5, "offset": [-128, 85], "at": 20, "for": 6 },
+    { "type": "team_balls", "who": "trainer", "size": 1.5, "offset": [128, 85], "at": 20, "for": 6 },
+
+    { "type": "image", "texture": "cobblemon-trainers:textures/gui/intro/burst.png", "width": 150, "height": 150,
+      "color": "#DCE7FF", "alpha": 0.4, "at": 18, "for": 8, "from": "pop" },
+    { "type": "vs", "size": 4, "color": "#EAF0FF", "at": 18, "for": 6, "from": "pop" }
+  ]
+}

@@ -341,14 +341,24 @@ Points à ne pas redécouvrir :
   Ce que nos propres intros ne sauraient pas dire est un trou du format, et il se voit tout de
   suite. Ne pas les réécrire en Kotlin « pour les sécuriser » : ça ferait deux moteurs de rendu
   dont un seul serait testé.
-- **Il y en a sept, et six habillent un dresseur iconique** (`plains`, `cherry`, `desert`,
-  `beach`, `hills`, `jungle`), `bw` restant la neutre. Chacune prend les couleurs du biome où son
-  dresseur répond - le seul trait qui lui appartienne déjà, donc le seul qui ne puisse pas
-  contredire le reste du fichier. Deux règles les tiennent ensemble : **la bande de gauche est du
-  même bleu partout** (la gauche, c'est le joueur, et une couleur qui change de camp d'un écran à
-  l'autre est un écran qu'il faut relire), et **la géométrie ne bouge pas** d'une intro à l'autre
-  - seuls la couleur, la pente, le sens d'entrée et le temps varient. Ajouter une intro maison,
-  c'est ajouter un fichier et une ligne au tableau de `docs/INTROS.md`.
+- **Il y en a sept, et six portent le nom d'un dresseur iconique** (`rerebleue`, `kagumi`,
+  `griff501`, `octavien29`, `theazertor`, `aeliothys`), `bw` restant la neutre. Chacune est
+  l'écran **de ce personnage** : son emblème, ses couleurs, sa façon d'entrer - tirés de son
+  équipe et de sa musique, pas de son biome. Une première version les avait construites sur le
+  biome ; c'était plus facile à justifier et plus fade, et six dresseurs qui partagent une
+  plaine se seraient partagé un écran.
+- **Trois règles les tiennent ensemble.** **La bande de gauche est du même bleu partout** - la
+  gauche, c'est le joueur, et une couleur qui change de camp d'un écran à l'autre est un écran
+  qu'il faut relire. **La géométrie ne bouge pas** d'une intro à l'autre : seuls la couleur, la
+  texture, le sens d'entrée et le temps varient. Et **les textures sont blanches**, teintées par
+  le `color` du calque, donc une seule image habille six écrans de six couleurs - c'est aussi ce
+  qui fait que `crest_*`, `rays`, `burst`, `slash` et `banner` sont utilisables tels quels par un
+  pack. Ajouter une intro maison, c'est ajouter un fichier et une ligne au tableau de
+  `docs/INTROS.md`.
+- **Les textures d'intro sont dessinées, pas peintes** : le script qui les produit est jetable,
+  ce sont les PNG qui comptent. Elles vivent sous
+  `assets/cobblemon-trainers/textures/gui/intro/`, donc dans le jar, donc lisibles par tous les
+  clients sans qu'un pack ait à les livrer.
 - **La scène voyage dans le paquet, en JSON.** Pas de registre synchronisé à la connexion, donc
   rien à invalider, et ce que le client dessine est ce que le serveur vient de lire - un
   `/reload` s'applique au combat suivant. Le JSON plutôt qu'un codec explicite parce qu'un
