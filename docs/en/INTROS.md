@@ -39,7 +39,7 @@ The trainer names it in their `battle` block:
 ```
 
 Without a namespace it is one of the mod's: `"intro": "bw"` means `cobblemon-trainers:bw`, one
-of the [seven that ship](#the-intros-that-ship). No `intro` field at all, and the battle simply opens - which is the
+of the [eight that ship](#the-intros-that-ship). No `intro` field at all, and the battle simply opens - which is the
 default, and what every route trainer wants.
 
 ## The file
@@ -174,9 +174,9 @@ and shiny included.
 
 ## The intros that ship
 
-Seven come with the mod. Six are **one iconic trainer's own screen** - their emblem, their
-colours, the way they walk on - and the seventh, `bw`, is the plain one, for when nothing in
-particular needs saying. Any pack may name them: `"intro": "kagumi"` is enough, no namespace.
+Eight come with the mod. Seven are **one trainer's own screen** - their emblem, their colours,
+the way they walk on - and the eighth, `bw`, is the plain one, for when nothing in particular
+needs saying. Any pack may name them: `"intro": "kagumi"` is enough, no namespace.
 
 | Intro | Trainer | What it says |
 | --- | --- | --- |
@@ -186,11 +186,12 @@ particular needs saying. Any pack may name them: `"intro": "kagumi"` is enough, 
 | `griff501` | Griff501 | The haunting: nothing slides, he fades in through a violet halo, a grin in a ring, an acid streak |
 | `octavien29` | Octavien29 | The sun: a disc of rays rises behind the two, heat and glare |
 | `theazertor` | TheAzertor | The forge: steel columns, no easing, the star falls like a hammer |
-| `aeliothys` | Aeliothys | The prism: near-black, the two materialise, gold and magenta |
+| `aeliothys` | Aeliothys | The stage: the two rise from below, a rabbit and its gem, all in pink |
+| `ultra_rerebleue` | Ultra-RereBleue | The seal: her own crest inverted, she is already standing there, and her legendary appears between you |
 
 Three conventions hold them together, and are worth copying:
 
-- **The left band is always the same blue.** Left is you, in all seven; it is the right that
+- **The left band is always the same blue.** Left is you, in all eight; it is the right that
   changes from trainer to trainer.
 - **The geometry never moves**: figures at ±128, names above the heads, Poké Balls under the
   feet. What varies is colour, texture, which way things come in and how long they take - enough
@@ -209,7 +210,12 @@ them. All are **white on transparent**: the layer's `color` is what gives them t
 | `burst.png` | 128 | The impact flash, eight points, made to sit under the VS |
 | `slash.png` | 256 × 32 | One tapered stroke, for the screens that cut rather than slide |
 | `banner.png` | 192 × 32 | A plate with bevelled ends, to slide under a name |
-| `crest_<trainer>.png` | 128 | One of the six emblems: crest, crescent, grin, sun, steel star, prism |
+| `crest_<trainer>.png` | 128 | A trainer's emblem: crest, crescent, grin, sun, steel star, rabbit |
+
+`ultra_rerebleue` wears **`rerebleue`'s crest**, in magenta and gold, once behind her and once
+as a seal over the whole screen: it is the same person, and her screen should be recognisable
+before her name is read. It is also the only one of the eight with a `pokemon` layer - a boss
+whose legendary *is* the point, and who is only met once earned.
 
 An emblem belongs behind its trainer as a watermark - `alpha` around `0.3`, sized 180 to 230 -
 rather than in full light: what has to read is the figure.

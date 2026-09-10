@@ -341,8 +341,13 @@ Points à ne pas redécouvrir :
   Ce que nos propres intros ne sauraient pas dire est un trou du format, et il se voit tout de
   suite. Ne pas les réécrire en Kotlin « pour les sécuriser » : ça ferait deux moteurs de rendu
   dont un seul serait testé.
-- **Il y en a sept, et six portent le nom d'un dresseur iconique** (`rerebleue`, `kagumi`,
-  `griff501`, `octavien29`, `theazertor`, `aeliothys`), `bw` restant la neutre. Chacune est
+- **Il y en a huit, et sept portent le nom d'un dresseur** (`rerebleue`, `kagumi`, `griff501`,
+  `octavien29`, `theazertor`, `aeliothys`, plus `ultra_rerebleue` pour la boss), `bw` restant la
+  neutre. `ultra_rerebleue` reprend volontairement le blason de `rerebleue` : c'est la même
+  personne, et son écran doit se reconnaître avant qu'on lise son nom. Elle est aussi la seule à
+  poser un calque `pokemon` - le seul cas où montrer l'équipe avant le combat se défend, un boss
+  caché derrière une victoire dont le légendaire est l'argument - et la seule dont la figure
+  entre en `none` : elle est déjà là quand l'écran s'ouvre, c'est le joueur qui arrive. Chacune est
   l'écran **de ce personnage** : son emblème, ses couleurs, sa façon d'entrer - tirés de son
   équipe et de sa musique, pas de son biome. Une première version les avait construites sur le
   biome ; c'était plus facile à justifier et plus fade, et six dresseurs qui partagent une

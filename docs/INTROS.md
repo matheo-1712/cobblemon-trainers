@@ -39,7 +39,7 @@ Le dresseur la nomme dans son bloc `battle` :
 ```
 
 Sans namespace, c'est une intro du mod : `"intro": "bw"` donne
-`cobblemon-trainers:bw`, l'une des [sept livrées](#les-intros-livrées). Pas de champ `intro` du tout, et le combat
+`cobblemon-trainers:bw`, l'une des [huit livrées](#les-intros-livrées). Pas de champ `intro` du tout, et le combat
 s'ouvre directement - c'est le cas par défaut, et celui de tous les dresseurs de route.
 
 ## Le fichier
@@ -175,9 +175,9 @@ régionale et chromatique comprises.
 
 ## Les intros livrées
 
-Le mod en fournit sept. Six sont **l'écran d'un dresseur iconique** - son emblème, ses
-couleurs, sa façon d'entrer - et la septième, `bw`, est la neutre, celle qu'on prend quand on
-ne veut rien dire de particulier. Toutes sont nommables par un pack : `"intro": "kagumi"`
+Le mod en fournit huit. Sept sont **l'écran d'un dresseur** - son emblème, ses couleurs, sa
+façon d'entrer - et la huitième, `bw`, est la neutre, celle qu'on prend quand on ne veut rien
+dire de particulier. Toutes sont nommables par un pack : `"intro": "kagumi"`
 suffit, sans namespace.
 
 | Intro | Dresseur | Ce qu'elle raconte |
@@ -188,11 +188,12 @@ suffit, sans namespace.
 | `griff501` | Griff501 | La hantise : rien ne glisse, il apparaît dans un halo violet, sourire en anneau, éclair acide |
 | `octavien29` | Octavien29 | Le soleil : un disque de rayons se lève derrière les deux, chaleur et éclat |
 | `theazertor` | TheAzertor | La forge : colonnes d'acier, aucun amorti, l'étoile tombe comme un marteau |
-| `aeliothys` | Aeliothys | Le prisme : presque noir, les deux se matérialisent, or et magenta |
+| `aeliothys` | Aeliothys | La scène : les deux montent par le bas, un lapin et sa gemme, tout en rose |
+| `ultra_rerebleue` | Ultra-RereBleue | Le sceau : son blason en négatif, elle est déjà là, et son légendaire apparaît entre vous |
 
 Trois conventions les tiennent ensemble, et valent d'être copiées :
 
-- **La bande de gauche est du même bleu partout.** La gauche, c'est toi, dans les sept ; c'est
+- **La bande de gauche est du même bleu partout.** La gauche, c'est toi, dans les huit ; c'est
   la droite qui change de dresseur en dresseur.
 - **La géométrie ne bouge pas** : figures à ±128, noms au-dessus des têtes, Poké Balls sous les
   pieds. Ce qui varie est la couleur, la texture, le sens d'entrée et le temps - assez pour que
@@ -212,7 +213,13 @@ leur donne leur teinte.
 | `burst.png` | 128 | L'éclat d'impact, huit branches, à poser sous le VS |
 | `slash.png` | 256 × 32 | Un trait effilé, pour les écrans qui tranchent au lieu de glisser |
 | `banner.png` | 192 × 32 | Une plaque à bouts biseautés, à glisser sous un nom |
-| `crest_<dresseur>.png` | 128 | L'emblème d'un des six : blason, croissant, sourire, soleil, étoile d'acier, prisme |
+| `crest_<dresseur>.png` | 128 | L'emblème d'un dresseur : blason, croissant, sourire, soleil, étoile d'acier, lapin |
+
+`ultra_rerebleue` reprend **le blason de `rerebleue`**, en magenta et en or, une fois derrière
+elle et une fois en sceau sur tout l'écran : c'est la même personne, et son écran doit se
+reconnaître avant qu'on lise son nom. C'est aussi la seule des huit qui pose un calque
+`pokemon` - un boss dont le légendaire *est* l'argument, et qu'on n'affronte qu'après l'avoir
+mérité.
 
 Un emblème se pose en filigrane derrière son dresseur - `alpha` autour de `0.3`, taille de 180
 à 230 - plutôt qu'en pleine lumière : ce qui doit se lire, c'est la figure.
