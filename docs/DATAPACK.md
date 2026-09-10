@@ -29,10 +29,13 @@ mon_pack/
 ├── pack.mcmeta
 └── data/mon_pack/                      ← ton namespace
     └── cobblemontrainers/
-        ├── red.json                    → mon_pack:red
-        └── champions/                  ← un dossier = une catégorie
-            ├── category.json           ← présentation de la catégorie (facultatif)
-            └── erika.json              → mon_pack:champions/erika
+        ├── trainers/                   ← les dresseurs
+        │   ├── red.json                → mon_pack:red
+        │   └── champions/              ← un dossier = une catégorie
+        │       ├── category.json       ← présentation de la catégorie (facultatif)
+        │       └── erika.json          → mon_pack:champions/erika
+        └── intro/                      ← les écrans de versus (voir INTROS.md)
+            └── arene.json              → mon_pack:arene
 ```
 
 ```json
@@ -43,9 +46,11 @@ mon_pack/
 
 - Le dossier lu est `cobblemontrainers/`, directement sous ton namespace - au même niveau que
   les `species/` et `npcs/` de Cobblemon. Il porte le nom du mod plutôt qu'un `trainers/`
-  générique, ce qui évite les collisions avec d'autres mods.
-- **L'ID est `<namespace>:<chemin>`, sous-dossiers compris** : `champions/erika.json` donne
-  `mon_pack:champions/erika`. Le dossier est aussi la [catégorie](#catégories) du dresseur.
+  générique, ce qui évite les collisions avec d'autres mods. Tout ce que le mod lit y est
+  rangé, un sous-dossier par type : `trainers/` et [`intro/`](INTROS.md).
+- **L'ID est `<namespace>:<chemin>`, sous-dossiers compris**, `trainers/` non compté :
+  `trainers/champions/erika.json` donne `mon_pack:champions/erika`. Le dossier est aussi la
+  [catégorie](#catégories) du dresseur.
 - `category.json` est le **seul nom de fichier réservé** : il décrit le dossier où il se
   trouve, il n'est jamais lu comme un dresseur.
 - Un pack chargé plus tard écrase un dresseur de même ID, comme n'importe quelle ressource
@@ -97,7 +102,7 @@ Enfin, `datapacks/` est déclaré en données et rien d'autre : un `assets/` pos
 
 ## Le premier dresseur
 
-`data/mon_pack/cobblemontrainers/red.json` :
+`data/mon_pack/cobblemontrainers/trainers/red.json` :
 
 ```json
 {
@@ -236,7 +241,7 @@ et de `/cobblemontrainers list`, et servent de cible aux
 Un `category.json` **dans le dossier** lui donne un nom et une place, les deux facultatifs :
 
 ```json
-// cobblemontrainers/champions/category.json
+// cobblemontrainers/trainers/champions/category.json
 { "name": "category.mon_pack.champions", "order": 1 }
 ```
 
@@ -693,11 +698,11 @@ Voir [le README](../README.md#le-bloc-de-dresseur).
 
 | Symptôme | Cause probable |
 | --- | --- |
-| Le dresseur n'apparaît pas dans l'autocomplétion | Mauvais dossier : il faut `data/<ns>/cobblemontrainers/`, `<ns>` étant ton namespace |
+| Le dresseur n'apparaît pas dans l'autocomplétion | Mauvais dossier : il faut `data/<ns>/cobblemontrainers/trainers/`, `<ns>` étant ton namespace |
 | `Loaded 0 trainer(s)` depuis `datapacks/` | `pack.mcmeta` absent ou `pack_format` incorrect - Minecraft ignore le pack entier |
 | Un pack dans `mods/` n'a aucun effet | `pack.mcmeta` absent de la **racine** de l'archive, ou dossier zippé au lieu de son contenu |
 | Les dresseurs se chargent, pas la musique ni les traductions | L'archive est dans `datapacks/`, lu **uniquement** comme données. Pose-la dans `mods/` |
-| Un fichier `category.json` ne fait rien | Il est à la racine de `cobblemontrainers/` : il décrit le dossier où il se trouve, il lui en faut un |
+| Un fichier `category.json` ne fait rien | Il est à la racine de `cobblemontrainers/trainers/` : il décrit le dossier où il se trouve, il lui en faut un |
 | Deux dresseurs de même nom s'écrasent | Ils étaient dans le même dossier : l'ID inclut le chemin, pas seulement le nom |
 | Le clic droit répond « ne veut pas encore te combattre » | Un `requires` non rempli. `/cobblemontrainers list <joueur>` dit combien de conditions restent |
 | Un dresseur `requires` n'apparaît pas dans le Battle Phone | C'est le comportement par défaut (`hidden: true`). Mets `"hidden": false` |

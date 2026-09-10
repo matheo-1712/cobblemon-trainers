@@ -25,9 +25,13 @@ walk on the same way without copying it six times.
 my_pack/
 ├── pack.mcmeta
 └── data/my_pack/
-    ├── cobblemontrainers/champions/erika.json   ← "intro": "my_pack:gym"
-    └── cobblemontrainers_intros/gym.json        ← the intro itself
+    └── cobblemontrainers/
+        ├── trainers/champions/erika.json   ← "intro": "my_pack:gym"
+        └── intro/gym.json                  ← the intro itself
 ```
+
+An intro's ID is `<namespace>:<path under intro/>`, like a trainer's:
+`intro/kanto/gym.json` gives `my_pack:kanto/gym`.
 
 The trainer names it in their `battle` block:
 

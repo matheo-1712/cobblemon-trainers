@@ -25,9 +25,13 @@ une ligue entière peut avoir la même entrée sans la recopier six fois.
 mon_pack/
 ├── pack.mcmeta
 └── data/mon_pack/
-    ├── cobblemontrainers/champions/jacinthe.json   ← "intro": "mon_pack:arene"
-    └── cobblemontrainers_intros/arene.json         ← l'intro elle-même
+    └── cobblemontrainers/
+        ├── trainers/champions/jacinthe.json   ← "intro": "mon_pack:arene"
+        └── intro/arene.json                   ← l'intro elle-même
 ```
+
+L'ID de l'intro est `<namespace>:<chemin sous intro/>`, comme celui d'un dresseur :
+`intro/kanto/arene.json` donne `mon_pack:kanto/arene`.
 
 Le dresseur la nomme dans son bloc `battle` :
 

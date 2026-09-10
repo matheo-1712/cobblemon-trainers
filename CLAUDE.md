@@ -143,13 +143,15 @@ messages, musique et récompenses de combat.
   dans un `try/catch` car ils dépendent de la présence de Cobblemon.
 - **`TrainerRegistry`** - deux maps en mémoire, `ResourceLocation -> TrainerDefinition` et
   `-> TrainerCategory`, alimentées uniquement par les datapacks
-  (`data/<namespace>/cobblemontrainers/<chemin>.json`, y compris ceux du mod). Le dossier est
-  à un seul niveau sous le namespace, comme les `species/` et `npcs/` de Cobblemon, mais nommé
-  d'après le mod plutôt que `trainers/` : un `trainers/` générique entrerait en collision avec
-  un autre mod qui lirait le même dossier. Il n'y a volontairement pas de couche de config sur
-  disque. **Contrairement aux registres de Cobblemon, le chemin complet fait l'ID** :
-  `champions/erika.json` donne `<ns>:champions/erika`, et ce dossier est la catégorie du
-  dresseur (voir « Catégories »). Une erreur de parsing est loguée et le fichier ignoré, sans
+  (`data/<namespace>/cobblemontrainers/trainers/<chemin>.json`, y compris ceux du mod). La
+  racine `cobblemontrainers/` est à un seul niveau sous le namespace, comme les `species/` et
+  `npcs/` de Cobblemon, mais nommée d'après le mod plutôt que `trainers/` : un `trainers/`
+  générique entrerait en collision avec un autre mod qui lirait le même dossier. Tout ce que
+  le mod lit d'un pack y est rangé, un sous-dossier par type - `trainers/` et `intro/` -, d'où
+  `CobblemonTrainers.DATAPACK_ROOT`, que les deux registres composent. Il n'y a volontairement
+  pas de couche de config sur disque. **Contrairement aux registres de Cobblemon, le chemin
+  complet fait l'ID**, le `trainers/` non compté : `trainers/champions/erika.json` donne
+  `<ns>:champions/erika`, et ce dossier est la catégorie du dresseur (voir « Catégories »). Une erreur de parsing est loguée et le fichier ignoré, sans
   faire échouer les autres.
 - **`TrainerDefinition` / `TrainerSkin` / `TrainerRequirements`** - data classes Gson,
   regroupées en blocs (`battle`, `messages`, `progress`, `requires`). Tous les champs ont une
@@ -190,7 +192,7 @@ messages, musique et récompenses de combat.
 - **`intro.TrainerIntro` / `intro.IntroLayer`** - le format d'une intro : la scène et ses
   calques, tels qu'un pack les écrit. Même section.
 - **`intro.TrainerIntros`** - le registre qui les charge, depuis
-  `data/<ns>/cobblemontrainers_intros/`. Même section.
+  `data/<ns>/cobblemontrainers/intro/`. Même section.
 - **`battle.ai.TrainerBattleAI`** - la couche qui refuse les décisions intenables du
   `StrongBattleAI` de Cobblemon, épaulée par `BattleTypeChart` (efficacité des types, talents
   compris), `BattleDamage` (dégâts en points de vie), `BattleGuards` (ce qui encaisse un coup
@@ -329,7 +331,7 @@ chaque dresseur de route serait un écran de trop.
 
 **L'écran est écrit en datapack**, pas en Kotlin. Une intro est une **scène en calques**
 (`intro.TrainerIntro` / `intro.IntroLayer`), chargée par `intro.TrainerIntros` depuis
-`data/<ns>/cobblemontrainers_intros/`, et `bw` - celle du mod - est un de ces fichiers et rien
+`data/<ns>/cobblemontrainers/intro/`, et `bw` - celle du mod - est un de ces fichiers et rien
 d'autre. Le partage habituel : `TrainerBattleIntro` tient le séquencement serveur,
 `BattleIntroNetworking` les deux paquets, `client.gui.BattleIntroScreen` le dessin. Toute la
 doc du format est dans `docs/INTROS.md`, jamais dans `docs/DATAPACK.md`, qui n'en garde qu'une
@@ -599,8 +601,9 @@ Ces points ne se devinent pas depuis notre code seul et ont chacun causé un bug
 
 `data/cobblemon-trainers/npcs/` contient les classes NPC du mod, un détail
 d'implémentation : les datapacks n'en déclarent jamais et `TrainerDefinition` n'a plus de
-champ `npcClass`. Ces fichiers restent hors de `cobblemontrainers/` contrairement aux dresseurs :
-le dossier est imposé par le `resourcePath` de `NPCClasses`, le registre de Cobblemon. Leur interaction est `cobblemon-trainers:battle`, implémentée par
+champ `npcClass`. Ces fichiers restent hors de `cobblemontrainers/` contrairement aux dresseurs
+et aux intros : le dossier est imposé par le `resourcePath` de `NPCClasses`, le registre de
+Cobblemon. Leur interaction est `cobblemon-trainers:battle`, implémentée par
 `TrainerBattleInteraction` : un clic droit ouvre la boîte de dialogue du dresseur (voir « Les
 dialogues »), et le combat qui s'ensuit renvoie au joueur les erreurs de `BattleBuilder`. Le
 MoLang `q.npc.start_battle` faisait la même chose mais avalait les erreurs, d'où un clic droit
@@ -1019,6 +1022,27 @@ Points à ne pas redécouvrir :
   l'interface sur `NPCEntity`, puisque le mixin ne la pose qu'à l'exécution, et refuse le cast
   direct. Ce n'est pas une maladresse à nettoyer.
 
+### L'arborescence d'un pack
+
+Un pack n'a qu'un dossier à nous, `data/<ns>/cobblemontrainers/`, et un sous-dossier par type
+de fichier : `trainers/` et `intro/`. Les deux registres composent le même
+`CobblemonTrainers.DATAPACK_ROOT`, qui est aussi l'ID du listener de reload.
+
+Points à ne pas redécouvrir :
+
+- **Le `trainers/` ne compte pas dans l'ID d'un dresseur**, ni le `intro/` dans celui d'une
+  intro. C'est ce qui a permis de déplacer les fichiers sans toucher à une seule identité :
+  `TrainerProgress` est clé sur l'ID, les advancements d'un pack le nomment, et l'aspect
+  `trainer_id:` d'une entité déjà posée le porte en NBT.
+- **Un pack resté à l'ancien emplacement ne charge rien, et le log le dit.**
+  `TrainerReloadListener.warnAboutMisfiledJson` nomme les JSON trouvés ailleurs dans la racine
+  et ceux de l'ancien `cobblemontrainers_intros/` - d'où `TrainerIntros.LEGACY_DIRECTORY`, qui
+  n'existe que pour ça. Sans ce mot, la seule trace serait un compte de zéro dresseur, qui
+  ressemble exactement à un pack non installé. Aucune compatibilité n'est offerte au-delà : le
+  mod est en bêta, et lire les deux emplacements ferait deux vérités sur où vit un dresseur.
+- **`intro/` est au singulier et `trainers/` au pluriel**, comme demandé à l'issue #46. Ce sont
+  des noms de format, donc lus par des packs déjà écrits : ne pas les uniformiser après coup.
+
 ### Catégories
 
 Le dossier d'un dresseur **est** sa catégorie : `champions/erika.json` porte l'ID
@@ -1030,8 +1054,8 @@ Points à ne pas redécouvrir :
 - **Un seul nom de fichier est réservé, `category.json`**, et il décrit le dossier où il se
   trouve. Un dossier `categories/` à la racine a été essayé puis retiré : il apparaissait dans
   l'arborescence au milieu des vraies catégories, et décrivait de loin ce qu'il ne contenait
-  pas. Un `category.json` posé à la racine du dossier des dresseurs ne décrit rien et est
-  ignoré avec un avertissement.
+  pas. Un `category.json` posé à la racine de `trainers/` ne décrit rien et est ignoré avec un
+  avertissement.
 - **`TrainerCategory.order` vaut `Int.MAX_VALUE` par défaut**, ce qui range les catégories
   sans fichier après les autres sans que le tri ait un cas particulier ; leur égalité est
   départagée par le nom.

@@ -29,10 +29,13 @@ my_pack/
 ├── pack.mcmeta
 └── data/my_pack/                       ← your namespace
     └── cobblemontrainers/
-        ├── red.json                    → my_pack:red
-        └── champions/                  ← a folder is a category
-            ├── category.json           ← how the category shows up (optional)
-            └── erika.json              → my_pack:champions/erika
+        ├── trainers/                   ← the trainers
+        │   ├── red.json                → my_pack:red
+        │   └── champions/              ← a folder is a category
+        │       ├── category.json       ← how the category shows up (optional)
+        │       └── erika.json          → my_pack:champions/erika
+        └── intro/                      ← the versus screens (see INTROS.md)
+            └── gym.json                → my_pack:gym
 ```
 
 ```json
@@ -43,9 +46,11 @@ my_pack/
 
 - The folder being read is `cobblemontrainers/`, straight under your namespace - the same
   level as Cobblemon's own `species/` and `npcs/`. It is named after the mod rather than a
-  generic `trainers/`, which keeps it from colliding with other mods.
-- **The ID is `<namespace>:<path>`, subfolders included**: `champions/erika.json` gives
-  `my_pack:champions/erika`. That folder is also the trainer's [category](#categories).
+  generic `trainers/`, which keeps it from colliding with other mods. Everything the mod reads
+  sits in it, one sub-folder per kind: `trainers/` and [`intro/`](INTROS.md).
+- **The ID is `<namespace>:<path>`, subfolders included**, `trainers/` left out:
+  `trainers/champions/erika.json` gives `my_pack:champions/erika`. That folder is also the
+  trainer's [category](#categories).
 - `category.json` is the **only reserved filename**: it describes the folder it sits in, and
   is never read as a trainer.
 - A pack loaded later overrides a trainer with the same ID, like any other datapack resource.
@@ -97,7 +102,7 @@ around.
 
 ## Your first trainer
 
-`data/my_pack/cobblemontrainers/red.json`:
+`data/my_pack/cobblemontrainers/trainers/red.json`:
 
 ```json
 {
@@ -216,7 +221,7 @@ in the dialogue box, before the battle, rather than let it lock up.
 A `category.json` **inside the folder** gives it a name and a place, both optional:
 
 ```json
-// cobblemontrainers/champions/category.json
+// cobblemontrainers/trainers/champions/category.json
 { "name": "category.my_pack.champions", "order": 1 }
 ```
 
@@ -666,11 +671,11 @@ game, by right-clicking it. See [the README](../../README.md#le-bloc-de-dresseur
 
 | Symptom | Likely cause |
 | --- | --- |
-| The trainer is not in the autocompletion | Wrong folder: it has to be `data/<ns>/cobblemontrainers/`, `<ns>` being your namespace |
+| The trainer is not in the autocompletion | Wrong folder: it has to be `data/<ns>/cobblemontrainers/trainers/`, `<ns>` being your namespace |
 | `Loaded 0 trainer(s)` from `datapacks/` | `pack.mcmeta` missing or the wrong `pack_format` - Minecraft skips the whole pack |
 | A pack in `mods/` does nothing | `pack.mcmeta` is not at the **root** of the archive, or you zipped the folder instead of its contents |
 | Trainers load, music and translations do not | The archive is in `datapacks/`, which is read **only** as data. Put it in `mods/` |
-| A `category.json` does nothing | It is at the root of `cobblemontrainers/`: it describes the folder it sits in, so it needs one |
+| A `category.json` does nothing | It is at the root of `cobblemontrainers/trainers/`: it describes the folder it sits in, so it needs one |
 | Two trainers with the same name override each other | They were in the same folder: the ID includes the path, not just the name |
 | Right-clicking answers "does not want to battle you yet" | An unmet `requires`. `/cobblemontrainers list <player>` says how many conditions are left |
 | A `requires` trainer is missing from the Battle Phone | That is the default (`hidden: true`). Set `"hidden": false` |
