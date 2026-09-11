@@ -68,7 +68,7 @@ Lists trainers by category and ticks the ones the player has beaten. With no arg
 your own progress.
 
 ```
-Trainers of Steve - 1 / 3 defeated
+Trainers of RereBleue - 1 / 3 defeated
 Champions - 1 / 2
 ✔ my_pack:champions/jasmine - Jasmine (no rematch)
 ✘ my_pack:champions/champion - The Champion (locked, 1 requirement(s) left)

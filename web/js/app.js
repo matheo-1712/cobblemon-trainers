@@ -11,7 +11,7 @@ const App = (() => {
   const T = (key, ...args) => I18N.t(key, ...args);
 
   let tab = { trainer: 'form', intro: 'layers', category: 'form', advancement: 'form' };
-  let preview = { tick: 0, playing: false, raf: null, hidden: new Set(), skin: '', player: 'Steve', slim: false };
+  let preview = { tick: 0, playing: false, raf: null, hidden: new Set(), skin: '', player: 'RereBleue', slim: false };
   let templates = null;
 
   const $ = (id) => document.getElementById(id);
@@ -362,6 +362,7 @@ const App = (() => {
 
   const about = () => {
     const trainer = Pack.state.files.find((file) => file.kind === 'trainer');
+    const skin = (trainer && trainer.doc.skin) || {};
     return {
       name: trainer ? trainer.doc.name || 'Trainer' : 'Trainer',
       category: trainer && trainer.path.includes('/') ? trainer.path.split('/')[0] : '',
@@ -369,8 +370,8 @@ const App = (() => {
       team: trainer && trainer.doc.team ? trainer.doc.team.length : 6,
       player: preview.player,
       playerSlim: false,
-      trainerSkin: preview.skin || (trainer && trainer.doc.skin ? trainer.doc.skin.value : ''),
-      trainerSlim: preview.slim
+      trainerSkin: preview.skin || skin.value || '',
+      trainerSlim: skin.model === 'slim'
     };
   };
 
@@ -439,7 +440,7 @@ const App = (() => {
       cell.appendChild(el('span', 'mini-label', T(label)));
       const input = el('input', 'input');
       input.type = 'text';
-      input.placeholder = key === 'player' ? 'Steve' : 'Notch';
+      input.placeholder = 'RereBleue';
       input.value = preview[key] || '';
       input.addEventListener('change', () => {
         preview[key] = input.value.trim();

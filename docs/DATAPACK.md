@@ -437,7 +437,7 @@ Deux entrées pour la même donnée.
 joueur a vaincus :
 
 ```
-Dresseurs de Steve - 1 / 3 vaincus
+Dresseurs de RereBleue - 1 / 3 vaincus
 Champions - 1 / 2
 ✔ mon_pack:champions/jacinthe - Jacinthe (plus de revanche)
 ✘ mon_pack:champions/maitre - Le Maître (verrouillé, 1 condition(s) restante(s))
@@ -554,8 +554,8 @@ mod qui le fournit n'est pas installé.
 ## Skins
 
 ```json
-"skin": { "type": "player_username", "value": "Notch" }
-"skin": { "type": "player_uuid",     "value": "069a79f4-44e9-4726-a5be-fca90e38aaf5" }
+"skin": { "type": "player_username", "value": "RereBleue" }
+"skin": { "type": "player_uuid",     "value": "4199c666-1193-49b6-8986-099d872d5adf" }
 "skin": { "type": "texture",         "value": "mon_pack:textures/trainers/red.png", "model": "slim" }
 ```
 

@@ -71,7 +71,7 @@ Liste les dresseurs par catégorie et coche ceux que le joueur a battus. Sans ar
 votre propre progression.
 
 ```
-Dresseurs de Steve - 1 / 3 vaincus
+Dresseurs de RereBleue - 1 / 3 vaincus
 Champions - 1 / 2
 ✔ mon_pack:champions/jacinthe - Jacinthe (plus de revanche)
 ✘ mon_pack:champions/maitre - Le Maître (verrouillé, 1 condition(s) restante(s))
