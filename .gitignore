@@ -39,3 +39,10 @@ hs_err_*.log
 replay_*.log
 *.hprof
 *.jfr
+
+# web editor - filled from the mod by web/sync-assets.sh, never committed
+
+web/assets/intro/
+web/assets/intros/
+web/assets/examples/
+web/assets/manifest.json

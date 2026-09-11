@@ -6,6 +6,11 @@ one layer at a time, and needs no code at all.
 
 *Cette page existe aussi [en français](../INTROS.md).*
 
+**The [online editor](https://matheo-1712.github.io/cobblemon-trainers/) replays the scene as
+you write it**: the same curves, the same entrances, the same 640 x 360 screen - and the eight
+shipped intros open in it as templates. A figure is drawn flat there, a browser having no 3D
+model to pose; everything else is what the game will show.
+
 ## Contents
 
 - [Where it lives](#where-it-lives) · [The file](#the-file) · [A layer](#a-layer)

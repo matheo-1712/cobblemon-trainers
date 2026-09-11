@@ -6,6 +6,11 @@ combattants entrent, un VS tombe entre eux, la musique de combat démarre là. C
 
 *This page is also available [in English](en/INTROS.md).*
 
+**L'[éditeur en ligne](https://matheo-1712.github.io/cobblemon-trainers/) rejoue la scène
+pendant qu'on l'écrit** : mêmes courbes, mêmes entrées, même écran de 640 × 360 - et les huit
+intros livrées s'y ouvrent comme modèles. Une figure y est dessinée à plat, faute de modèle 3D
+dans un navigateur ; tout le reste est ce que le jeu montrera.
+
 ## Sommaire
 
 - [Où ça vit](#où-ça-vit) · [Le fichier](#le-fichier) · [Un calque](#un-calque)

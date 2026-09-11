@@ -156,6 +156,11 @@ stores nothing - it reads the server - so losing it loses nothing. Find it in th
 
 ## How to make my own trainer pack
 
+**The easiest way is the [online editor](https://matheo-1712.github.io/cobblemon-trainers/):**
+every field of a trainer in a form with its documentation beside it, the versus screen with a
+live preview of the scene, and the whole pack downloaded as a `.zip` ready for `mods/`. It runs
+entirely in your browser - no account, nothing uploaded.
+
 You can see all details in [DATAPACK DOCS](https://github.com/matheo-1712/cobblemon-trainers/blob/master/docs/en/DATAPACK.md)
 
 ---

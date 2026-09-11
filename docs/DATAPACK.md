@@ -7,6 +7,11 @@ Pour l'installation du mod et les commandes, voir le [README](../README.md).
 
 *This page is also available [in English](en/DATAPACK.md).*
 
+**Pas envie d'écrire le JSON à la main ?** L'[éditeur en
+ligne](https://matheo-1712.github.io/cobblemon-trainers/) pose les champs de cette page dans un
+formulaire, signale les pièges au passage, et rend le **pack entier** en `.zip` - les musiques,
+les skins et les fichiers de langue compris, avec le `sounds.json` écrit pour toi.
+
 ## Sommaire
 
 - [Arborescence](#arborescence) · [Où poser le pack](#où-poser-le-pack)
