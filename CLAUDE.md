@@ -1246,6 +1246,16 @@ Points à ne pas redécouvrir :
 - **Les sept couvrent exactement les sept renderers de Mega Showdown** (`Head`, `Chest`, `Belt`,
   `LowOffHand`, `HighOffHand`, `Hand`, `RightLeg`), et aucun ne partage sa place avec un autre -
   c'est ce qui permet de tout porter en même temps.
+- **Un endroit ne suffit pas : l'objet doit avoir un modèle pour le contexte de rendu qui va
+  avec.** Mega Showdown remplace le modèle d'un objet par perspective, via son
+  `ItemRendererMixin` et ses `assets/mega_showdown/item_rendering/*.json` : le charme de Diantha
+  ne déclare son modèle en volume que pour `headLoc`, ses `hand`/`hand3rd` renvoyant à l'icône
+  plate. Nos trois ancres de bras dessinent en `THIRD_PERSON_*_HAND` - comme son propre
+  `LowOffHandRenderer` -, donc un objet de torse posé en `wrist` sort à plat et flottant. Rien
+  à corriger côté mod, le modèle n'existe pas : c'est le tableau de `docs/COSMETIQUES.md` qui
+  répond, et il est tiré de `AccessoriesRegisterRenderer`. Ne pas essayer de tout dessiner en
+  `HEAD` pour forcer le volume - les décalages de bras sont écrits pour la transformation de
+  main, et le bracelet, lui, serait cassé.
 - **Les transformations sont copiées de Mega Showdown**, pour qu'un dresseur et un joueur portent
   la même chose de la même façon. Deux exceptions assumées : son `HandRenderer` passe
   `mainHandArm == RIGHT` comme drapeau `leftHand` à `renderStatic`, ce qui est inversé, et on

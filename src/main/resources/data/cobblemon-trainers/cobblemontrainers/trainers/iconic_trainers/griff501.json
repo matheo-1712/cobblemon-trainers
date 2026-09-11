@@ -18,6 +18,11 @@
     "win": "trainer.cobblemon-trainers.griff501.win",
     "lose": "trainer.cobblemon-trainers.griff501.lose"
   },
+  "cosmetics": {
+    "trinkets": {
+      "wrist": "mega_showdown:mega_bracelet_red"
+    }
+  },
 
   "location": {
     "biome": "minecraft:windswept_hills"

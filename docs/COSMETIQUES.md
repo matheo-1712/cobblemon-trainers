@@ -82,6 +82,29 @@ le bracelet, mais se portent à cinq endroits différents. Rien dans les donnée
 Conséquence : **n'importe quel objet va n'importe où**. Rien n'oblige à mettre un vrai objet
 clé, et un pack peut accrocher son propre bijou à la ceinture de son champion.
 
+### Mais l'objet doit avoir un modèle pour cet endroit
+
+Le mod dit **où** poser l'objet ; c'est le mod qui fournit l'objet qui décide de quoi il a
+l'air une fois là. Et Mega Showdown ne livre le modèle en volume de chacun de ses objets clés
+que pour les endroits où lui-même le dessine : le charme de Diantha a un modèle pour le torse,
+pas pour un poignet. Posé au poignet, il retombe sur son icône d'inventaire et flotte à plat à
+côté du bras.
+
+Ce n'est pas rattrapable de notre côté - le modèle n'existe pas - donc **chaque objet de Mega
+Showdown a son endroit, et c'est celui-ci** :
+
+| Endroit | Objets de Mega Showdown |
+| --- | --- |
+| `face` | Lunettes de Max, tiare de Lisia |
+| `chest` | Charme de Diantha, ancre de Arthur, pendentif de Liko |
+| `wrist` | Bracelets méga (toutes couleurs), bracelet de Flora, bague méga, bague de Lysandre, brassard de Timmy, gant de Korrina |
+| `forearm` | Z-Rings et Z-Power Rings (toutes variantes) |
+| `hand` | Dynamax Band, Omni Ring |
+| `belt` | Orbe Tera |
+| `ankle` | Chevillère de Zinnia |
+
+Un objet d'un autre mod, ou de vanilla, se dessine partout : il n'a qu'un seul modèle.
+
 > **Ça ne donne aucun gimmick.** Un dresseur méga-évolue parce que son
 > [`battle.gimmicks`](GIMMICKS.md) le dit, jamais parce qu'il porte le bracelet - il n'a
 > d'ailleurs jamais eu besoin de l'objet pour ça. Le bracelet est là pour que ça se voie.

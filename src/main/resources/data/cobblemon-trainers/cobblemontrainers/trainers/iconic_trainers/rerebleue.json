@@ -21,6 +21,12 @@
     "win": "trainer.cobblemon-trainers.rerebleue.win",
     "lose": "trainer.cobblemon-trainers.rerebleue.lose"
   },
+  "cosmetics": {
+    "trinkets": {
+      "wrist": "mega_showdown:mega_bracelet",
+      "belt": "mega_showdown:tera_orb"
+    }
+  },
   "location": {
     "biome": "minecraft:plains"
   },

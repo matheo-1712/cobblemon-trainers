@@ -79,6 +79,28 @@ knows, so the pack is the one who writes it.
 Which means **any item goes anywhere**. Nothing requires a real key item, and a pack is free to
 hang a trinket of its own on its champion's belt.
 
+### But the item needs a model for that place
+
+The mod says **where** to put the item; the mod that provides the item decides what it looks
+like once there. And Mega Showdown only ships the solid model of each of its key items for the
+places it draws them itself: Diantha's Charm has a model for the chest, none for a wrist. Put
+on a wrist, it falls back to its inventory icon and floats flat beside the arm.
+
+Nothing on our side can make up for that - the model does not exist - so **every Mega Showdown
+item has its place, and this is it**:
+
+| Place | Mega Showdown items |
+| --- | --- |
+| `face` | Maxie's Glasses, Lisia's Tiara |
+| `chest` | Diantha's Charm, Archie's Anchor, Liko's Pendant |
+| `wrist` | Mega Bracelets (every colour), May's Bracelet, Mega Ring, Lysandre's Ring, Brendan's Mega Cuff, Korrina's Glove |
+| `forearm` | Z-Rings and Z-Power Rings (every variant) |
+| `hand` | Dynamax Band, Omni Ring |
+| `belt` | Tera Orb |
+| `ankle` | Zinnia's Anklet |
+
+An item from another mod, or from vanilla, draws anywhere: it only has the one model.
+
 > **It grants no gimmick.** A trainer Mega Evolves because its
 > [`battle.gimmicks`](GIMMICKS.md) says so, never because it wears the bracelet - it never
 > needed the item for that anyway. The bracelet is there so that it shows.
