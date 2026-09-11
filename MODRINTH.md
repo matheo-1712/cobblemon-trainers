@@ -52,6 +52,8 @@ page and travelling to the right spot - and the world stays empty until you do.
 - **Trainers that stay put** - an invisible block holds one in place for good.
 - **Showdown teams, pasted in** - copy an export, paste it, done.
 - **Any skin you like** - a Minecraft account's, or your own PNG.
+- **Armour, a Poké Ball, a Mega Bracelet** - a trainer wears what its pack says, key items
+  included, at seven places on the body: face, chest, wrist, forearm, hand, belt and ankle.
 - **Rewards** - items on victory, once or every time.
 - **Progress tracking in game** - the Battle Phone, one board per player.
 - **Leagues, not just trainers** - categories, locks, advancements.

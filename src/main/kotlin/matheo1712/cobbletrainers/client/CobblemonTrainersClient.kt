@@ -5,15 +5,22 @@ import matheo1712.cobbletrainers.client.gui.BattlePhoneScreen
 import matheo1712.cobbletrainers.client.cache.TrainerSkinCache
 import matheo1712.cobbletrainers.client.cache.TrainerTeamCache
 import matheo1712.cobbletrainers.client.gui.TrainerSpawnerScreen
+import matheo1712.cobbletrainers.client.render.TrainerOutfitRenderer
 import matheo1712.cobbletrainers.network.BattleIntroPayload
 import matheo1712.cobbletrainers.network.BattleMusicPayload
 import matheo1712.cobbletrainers.network.OpenBattlePhonePayload
 import matheo1712.cobbletrainers.network.OpenTrainerSpawnerPayload
 import matheo1712.cobbletrainers.network.TrainerSkinPayload
 import matheo1712.cobbletrainers.network.TrainerTeamPayload
+import matheo1712.cobbletrainers.CobblemonTrainers
 import net.fabricmc.api.ClientModInitializer
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
+import net.fabricmc.fabric.api.resource.ResourceManagerHelper
+import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener
+import net.minecraft.resources.ResourceLocation
+import net.minecraft.server.packs.PackType
+import net.minecraft.server.packs.resources.ResourceManager
 
 /**
  * Client entrypoint.
@@ -23,6 +30,11 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
  * battle phone; a screen only exists on a client. This registers the packets that open them,
  * the two that feed the phone its skins and its teams, and the one thing here that is not a
  * screen: the party slot the player has selected, which Cobblemon keeps client-side.
+ *
+ * Drawing is the other thing only a client can do: a trainer's clothes are hung on Cobblemon's
+ * model by [matheo1712.cobbletrainers.client.render.TrainerOutfitRenderer], out of a mixin
+ * rather than from here - all this owes it is a chance to drop what it baked when the resource
+ * packs change.
  */
 object CobblemonTrainersClient : ClientModInitializer {
 
@@ -65,6 +77,21 @@ object CobblemonTrainersClient : ClientModInitializer {
             TrainerSkinCache.clear()
             TrainerTeamCache.clear()
             ClientBattleMusic.clear()
+        }
+
+        ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(OutfitReloadListener)
+    }
+
+    /**
+     * Drops the vanilla armour models the outfit renderer baked. They come out of the resource
+     * packs like any other model, so the ones baked from the old packs are stale the moment the
+     * new ones are in.
+     */
+    private object OutfitReloadListener : SimpleSynchronousResourceReloadListener {
+        override fun getFabricId(): ResourceLocation = CobblemonTrainers.id("outfits")
+
+        override fun onResourceManagerReload(manager: ResourceManager) {
+            TrainerOutfitRenderer.clear()
         }
     }
 }

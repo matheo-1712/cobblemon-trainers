@@ -24,10 +24,11 @@ Cobblemon ne le lui dit jamais (voir « Le Pokémon qui ouvre le combat ») ; le
 `client.ClientBattleMusic` / `client.MusicManagerMixin`, qui joue le thème de combat en boucle
 et garde la musique du monde silencieuse pendant ce temps (voir « Musique de combat ») ; et
 `client.gui.BattleIntroScreen`, l'écran de versus qui annonce un combat de champion (voir
-« L'écran de versus »).
+« L'écran de versus ») ; et `client.render`, qui dessine ce qu'un dresseur porte et tient,
+puisque Cobblemon n'en dessine rien (voir « La tenue d'un dresseur »).
 Aucun renderer d'entité n'est enregistré : le Battle Phone dessine les skins à plat depuis
-l'image, et pour les Pokémon d'une équipe il appelle le `drawProfilePokemon` de Cobblemon -
-seul endroit du mod qui touche à du rendu 3D.
+l'image, et pour les Pokémon d'une équipe il appelle le `drawProfilePokemon` de Cobblemon.
+La tenue, elle, est dessinée dans le monde, mais depuis un mixin plutôt qu'un renderer à nous.
 
 Le code, les commentaires et les logs sont en **anglais**. Tout texte affiché au joueur
 passe par `assets/cobblemon-trainers/lang/` - jamais de littéral en dur.
@@ -35,12 +36,14 @@ passe par `assets/cobblemon-trainers/lang/` - jamais de littéral en dur.
 La doc utilisateur est en français : `README.md` (installation, commandes),
 `docs/DATAPACK.md` (guide complet de création de datapack), `docs/DIFFICULTE.md` (ce que fait
 chaque niveau de `battle.difficulty`), `docs/SPAWNING.md` (le bloc `location` et l'appel
-depuis le Battle Phone) et `docs/INTROS.md` (le format des écrans de versus). Ce qui touche au format des dresseurs - nouveau champ,
+depuis le Battle Phone), `docs/INTROS.md` (le format des écrans de versus) et
+`docs/COSMETIQUES.md` (ce qu'un dresseur porte et tient). Ce qui touche au format des dresseurs - nouveau champ,
 nouvelle règle de parsing - se répercute dans `docs/DATAPACK.md`, qui est la référence ; le
 README n'en garde qu'un résumé. **Toute règle de l'IA va dans `docs/DIFFICULTE.md`**, **tout
 ce qui touche aux gimmicks de combat dans `docs/GIMMICKS.md`**, **tout
-ce qui touche à l'appel d'un dresseur dans `docs/SPAWNING.md`** et **tout ce qui touche à
-l'écran de versus dans `docs/INTROS.md`**, jamais
+ce qui touche à l'appel d'un dresseur dans `docs/SPAWNING.md`**, **tout ce qui touche à
+l'écran de versus dans `docs/INTROS.md`** et **tout ce qui touche à la tenue d'un dresseur dans
+`docs/COSMETIQUES.md`**, jamais
 dans `docs/DATAPACK.md`, qui n'en garde qu'un renvoi : une règle décrite à deux endroits est une
 règle qui finit fausse à l'un des deux. `docs/DATAPACK.md` est tenu **aussi
 concis que possible** : une idée par phrase, un tableau plutôt qu'un paragraphe, et rien qui
@@ -48,8 +51,8 @@ soit déjà dit ailleurs dans le fichier. Ajouter un champ, c'est ajouter une li
 pas une section.
 
 `docs/en/` est la **traduction anglaise** de ces pages plus leur index
-(`DATAPACK.md`, `SPAWNING.md`, `DIFFICULTY.md`, `GIMMICKS.md` et `INTROS.md` - aux noms
-anglais -, `README.md`), destinée aux
+(`DATAPACK.md`, `SPAWNING.md`, `DIFFICULTY.md`, `GIMMICKS.md`, `INTROS.md` et `COSMETICS.md`
+- aux noms anglais -, `README.md`), destinée aux
 joueurs qui arrivent par Modrinth. Le français reste la version de référence : **une règle se
 change d'abord dans `docs/`, puis dans `docs/en/` dans le même commit**. Deux pages qui
 divergent sont pires qu'une page absente, la seconde ayant l'air à jour. `MODRINTH.md`, à la
@@ -239,6 +242,8 @@ messages, musique et récompenses de combat.
   lève, et celui du joueur qui l'a assez vu. Même section.
 - **`trainers.TrainerSkins`** - la résolution d'un `TrainerSkin` en image, hors thread serveur
   et avec cache. Voir « Skins ».
+- **`trainers.TrainerOutfit`** - le bloc `cosmetics` d'un dresseur posé dans les six
+  emplacements d'équipement de son entité. Voir « La tenue d'un dresseur ».
 - **`client.CobblemonTrainersClient`** - l'unique entrypoint client.
 - **`client.ClientPokemonSelection`** - la sélection de l'overlay, poussée vers le serveur.
 - **`client.ClientBattleMusic`** - le thème de combat, joué et tenu côté client, que lit aussi
@@ -249,6 +254,8 @@ messages, musique et récompenses de combat.
   seul endroit du mod qui pose un modèle d'entité dans un écran.
 - **`client.gui.TrainerSkinRenderer` / `client.cache.TrainerSkinCache`** - le dessin d'un skin
   à plat, et les textures que le Battle Phone a reçues.
+- **`client.render.TrainerRig` / `client.render.TrainerOutfitRenderer`** - le mannequin humanoïde
+  calé sur les os de Cobblemon, et ce qu'on y accroche. Même section.
 - **`client.cache.TrainerTeamCache`** - les équipes que le Battle Phone a reçues, prêtes à
   dessiner.
 
@@ -1184,6 +1191,129 @@ Points à ne pas redécouvrir sur `texture` :
 - Le mod livre `assets/cobblemon-trainers/textures/trainers/example.png` pour que la voie soit
   testable sans fabriquer un skin.
 
+### La tenue d'un dresseur
+
+Le bloc `cosmetics` habille un dresseur : une armure, une Poké Ball en main, et un bloc
+`trinkets` de sept endroits du corps - visage, torse, poignet, avant-bras, main, ceinture,
+cheville. C'est de l'apparence et rien d'autre - aucun point d'armure, aucun drop, aucun
+effet en combat. Toute la doc joueur est dans `docs/COSMETIQUES.md`, jamais dans
+`docs/DATAPACK.md`, qui n'en garde qu'une ligne de tableau et un renvoi.
+
+Le partage : `TrainerOutfit` pose les six objets d'équipement et les aspects de trinket côté
+serveur, `client.render.TrainerRig` cale un mannequin vanilla sur les os de Cobblemon,
+`client.render.TrainerOutfitRenderer` décide quoi accrocher où, et `client.PosableModelMixin`
+est le seul endroit d'où tout ça peut être dessiné.
+
+**Cobblemon ne dessine rien de tout ça, et ça a été vérifié dans son jar.** `NPCRenderer`
+n'enregistre aucun `RenderLayer` : son modèle est un `PosableEntityModel`, pas le
+`HumanoidModel` contre lequel `HumanoidArmorLayer` et `ItemInHandLayer` sont écrits. Le seul
+geste qu'il fait est un `HeldItemRenderer.renderOnModel` dont le locator par défaut s'appelle
+`item` - or `steve.geo.json`, `alex.geo.json` et `trainer.geo.json` n'ont que `item_right`,
+`item_left`, `beam` et `ball`, donc l'appel ne trouve rien et ne dessine rien.
+
+**Accessories ne le dessine pas non plus.** Sa couche de rendu est accrochée par
+`LivingEntityFeatureRendererRegistrationCallback`, sous la condition
+`entityRenderer.getModel() instanceof HumanoidModel` - qu'un renderer Cobblemon ne remplit
+jamais -, et son `entities.json` ne donne ses emplacements qu'à `minecraft:player`. Poser un
+bracelet dans le vrai slot Accessories d'un PNJ ne l'afficherait donc sur personne, et ne
+servirait à rien d'autre : `ShowdownActionRequest.sanitize` ne coupe un gimmick que pour un
+acteur dont l'UUID est celui d'un **joueur** du combat (voir « Les gimmicks de combat »), donc
+un dresseur n'a jamais eu besoin de l'objet clé. Le mod en garde le **vocabulaire** - les tags
+`accessories:*_slot` - et dessine lui-même.
+
+Points à ne pas redécouvrir :
+
+- **Les six emplacements d'équipement sont ceux de vanilla, et c'est tout le gain.** `Mob` les
+  synchronise déjà vers chaque client qui voit l'entité, les sauvegarde en NBT et les renvoie à
+  un joueur qui arrive plus tard.
+- **Les trinkets voyagent en aspects**, pour la même raison : un aspect est synchronisé et écrit
+  en NBT tout seul. Vanilla n'a que six emplacements, donc il fallait un second chemin, et
+  `trainer_trinket:<endroit>:<id d'objet>` en est un qui ne coûte ni paquet, ni
+  `EntityTrackingEvents.START_TRACKING`, ni mémoire d'aucun côté - c'est le même choix que
+  `trainer_id:` (voir « Liaison NPC → dresseur »), et c'est aussi la seule façon pour le client
+  de savoir : il n'a pas de `TrainerRegistry` à interroger.
+- **Les sept champs nomment un endroit du corps, pas un usage, et c'est la leçon centrale.**
+  Un objet clé n'est pas toujours un bracelet : chez Mega Showdown, `maxie_glasses`,
+  `lisia_mega_tiara`, `diantha_mega_charm`, `archie_anchor` et `zinnia_mega_anklet` sont tous
+  dans le **même** `accessories:mega_slot` que `mega_bracelet`, et pourtant ce mod les dessine
+  à cinq endroits différents. Une première version nommait les quatre emplacements d'après les
+  gimmicks (`mega`, `zmove`, `max`, `terastal`) : ça voulait dire qu'un `mega` était forcément
+  un poignet, ce qui est faux pour cinq de ses propres objets.
+- **Et ça ne peut pas venir de l'objet.** Mega Showdown choisit l'endroit dans
+  `AccessoriesRegisterRenderer`, en Java, objet par objet : aucun tag, aucun registre, aucune
+  propriété d'objet ne le dit. Le seul qui sache est l'auteur du pack. C'est pour ça que
+  `TrainerTrinketSlot` est un endroit et que n'importe quel objet peut y aller.
+- **Les sept couvrent exactement les sept renderers de Mega Showdown** (`Head`, `Chest`, `Belt`,
+  `LowOffHand`, `HighOffHand`, `Hand`, `RightLeg`), et aucun ne partage sa place avec un autre -
+  c'est ce qui permet de tout porter en même temps.
+- **Les transformations sont copiées de Mega Showdown**, pour qu'un dresseur et un joueur portent
+  la même chose de la même façon. Deux exceptions assumées : son `HandRenderer` passe
+  `mainHandArm == RIGHT` comme drapeau `leftHand` à `renderStatic`, ce qui est inversé, et on
+  passe le bon ; et la branche `isCrouching` de ses ancres de torse est laissée de côté, un
+  dresseur ne s'accroupissant pas.
+- **`chest` et `belt` sont posés en coordonnées de corps, pas sur un os**, comme chez lui : ils
+  ne suivent donc pas une animation qui fait pivoter le torse. Les cinq autres suivent leur
+  membre parce qu'ils partent d'un `translateAndRotate` du mannequin.
+- **Rien ne lit les tags `accessories:*_slot`, et ça a été écrit puis retiré.** Faire dire à
+  l'objet où il se porte marchait pour le bracelet et pour rien d'autre : le tag dit dans quel
+  emplacement l'objet rentre, jamais où il se dessine. Ne pas rebrancher les tags.
+- **Le dessin part d'un mixin sur `PosableModel.render`, et il ne peut pas partir d'ailleurs.**
+  `PosableEntityModel.renderToBuffer` appelle `PosableModel.setDefault()` juste après avoir
+  dessiné, ce qui remet **tous** les os à leur pose de repos - or un `RenderLayer` tourne après
+  ça. Une armure accrochée à ces os-là serait au garde-à-vous pendant que le dresseur salue. La
+  queue de `PosableModel.render` est le dernier instant où les os portent encore la pose
+  dessinée.
+- **Ce mixin vise une méthode de Cobblemon, mais son descripteur est quand même remappé.**
+  `PoseStack` et `VertexConsumer` *sont* obfusqués (`class_4587`, `class_4588`), contrairement à
+  `RenderSystem` et compagnie. Vérifié dans `build/libs/*.jar` : le descripteur du `@Inject` y
+  est exactement celui de la méthode du jar de Cobblemon.
+- **Le `MultiBufferSource` est celui du jeu**, faute d'en avoir un à cet endroit : Cobblemon ne
+  reçoit qu'un `VertexConsumer`, et une armure en demande un par texture. C'est le même
+  `bufferSource` que celui dans lequel l'entité était dessinée, donc le batch ne change pas ; ce
+  qui est perdu, c'est la passe de contour d'un dresseur `glowing`.
+- **La pile de matrices est déjà dans l'espace du modèle, et il y a 24 pixels d'écart avec
+  vanilla.** `renderToBuffer` fait un `translate(0, 1.5, 0)` **qu'il ne dépile jamais** ; c'est
+  ce qui met l'origine aux pieds au lieu du cou. Tout est calculé et dessiné dans cet espace-là,
+  sauf l'ancre de ceinture, écrite en absolu chez Mega Showdown, qui remonte de 1.5 avant de
+  s'appliquer.
+- **Le mannequin est posé depuis les os, jamais depuis l'entité.** Un `HumanoidModel.setupAnim`
+  ferait marcher l'armure sur son propre rythme à côté de l'animation bedrock, qui est ce qui
+  bouge réellement. Lire les os suit l'idle, le `win`, le `send_out` et tout ce qu'un pack
+  ajoute.
+- **Les deux rigs sont le même corps**, et c'est la seule raison pour laquelle ça marche :
+  `steve.geo.json` est le modèle de joueur vanilla ré-exporté, cube pour cube et pivot pour
+  pivot. Six os tombent sur les sept parties de vanilla, et un seul demande une correction :
+  `torso` pivote à la taille là où le `body` de vanilla pivote au cou, d'où les 12 pixels de
+  `TrainerRig.BODY_OFFSET_Y`.
+- **Les transformations d'os sont lues sur une pile à nous**, pas sur celle qu'on dessine :
+  la position d'une partie est relative au modèle, pas à la caméra. C'est ce que fait
+  `LocatorAccess.update` de Cobblemon, pour la même raison.
+- **Une rotation est rendue en angles d'Euler ZYX**, ce qu'un `ModelPart` sait exprimer et rien
+  de plus - `normalize3x3` avant, sans quoi un os qu'une animation a mis à l'échelle ferait
+  basculer la pièce d'armure. L'échelle, elle, est perdue : l'armure suit un membre étiré, elle
+  ne s'étire pas avec.
+- **C'est `HumanoidArmorLayer` de vanilla qui dessine**, pas du code à nous : teintures,
+  ornements, scintillement et les `ArmorRenderer` de Fabric API viennent avec. Il ne lui manque
+  qu'un `RenderLayerParent`, que `TrainerRig.parent` lui fournit.
+- **Le gabarit fin a sa propre armure.** `PLAYER_SLIM_*_ARMOR` quand le dresseur porte l'aspect
+  `model-slim`, comme vanilla pour un joueur Alex - les bras d'`alex.geo.json` font bien trois
+  pixels de large.
+- **Ce qui est baké est jeté au rechargement des ressources.** Les couches de modèles viennent
+  des resource packs ; celles bakées avant un F3+T sont périmées après.
+- **Le filtre est l'aspect `trainer_id:`.** Un PNJ Cobblemon habillé autrement n'est pas repris,
+  et le test passe avant tout le reste parce que ce mixin voit passer tous les Pokémon du jeu.
+- **Un modèle dont les os ne portent pas ces noms n'est pas habillé du tout.** Une armure posée
+  à des coordonnées devinées serait pire que pas d'armure.
+- **La tenue est posée à l'apparition et nulle part ailleurs.** Un `/reload` change la
+  définition, pas les entités déjà faites avec - comme le nom et le skin, et pour la même
+  raison. Le retour d'un dresseur par son bloc ne la repose pas non plus : c'est un
+  téléport, pas une naissance.
+- **La chance de drop de chaque emplacement est mise à zéro.** Un mob laisse son équipement à la
+  mort avec 8,5 % de chance par emplacement ; un cosmétique n'est pas du butin.
+- **Un ID d'objet introuvable est signalé au chargement, pas à l'apparition.** C'est le moment
+  où l'auteur du pack lit son log, et à l'apparition la seule réponse honnête est déjà de
+  laisser l'emplacement vide.
+
 ### L'IA de combat
 
 `battle.ai.TrainerBattleAI` enveloppe le `StrongBattleAI` de Cobblemon et refuse celles de ses
@@ -1707,6 +1837,10 @@ jeu pendant un combat ; il est décrit sous « Musique de combat », n'a aucun `
 en un `@Inject(HEAD, cancellable)`. Comme `client.MinecraftMixin` les deux sont déclarés dans
 le tableau `client` du mixins.json : une classe client dans `mixins` ferait échouer le
 chargement sur un serveur dédié.
+
+`client.PosableModelMixin` dessine la tenue d'un dresseur à la queue de `PosableModel.render`,
+seul instant où les os portent encore la pose dessinée ; il est décrit sous « La tenue d'un
+dresseur ». Comme les trois ci-dessus il est déclaré dans le tableau `client` du mixins.json.
 
 `AIBattleActorMixin` remplace l'IA de combat des dresseurs du mod par `TrainerBattleAI` (voir
 « L'IA de combat »). Le constructeur de `NPCBattleActor` prend pourtant l'IA en paramètre -

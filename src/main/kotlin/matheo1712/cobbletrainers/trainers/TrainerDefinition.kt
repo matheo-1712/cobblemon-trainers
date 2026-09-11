@@ -33,6 +33,7 @@ import net.minecraft.resources.ResourceLocation
  * @param location Where the trainer is to be found. Its presence is what makes the trainer
  *   callable from the battle phone; null - the default - is a trainer who only ever stands
  *   where an operator put them.
+ * @param cosmetics What the trainer wears and holds. Appearance only - see [TrainerCosmetics].
  */
 data class TrainerDefinition(
     val name: String = "Trainer",
@@ -43,7 +44,8 @@ data class TrainerDefinition(
     val progress: TrainerProgressRules = TrainerProgressRules(),
     val rewards: List<TrainerReward> = emptyList(),
     val requires: TrainerRequirements? = null,
-    val location: TrainerLocation? = null
+    val location: TrainerLocation? = null,
+    val cosmetics: TrainerCosmetics = TrainerCosmetics()
 ) {
 
     /** The requirements to challenge this trainer, or null when it declares none that matter. */
@@ -70,6 +72,7 @@ data class TrainerDefinition(
         battle.validate(id)
         progress.validate(id)
         location?.validate(id)
+        cosmetics.validate(id)
     }
 }
 
@@ -357,6 +360,94 @@ data class TrainerSkin(
     val value: String = "Steve",
     val model: String = "default"
 )
+
+/**
+ * What a trainer wears and holds. Appearance only: nothing here is armour a trainer fights
+ * with, nothing is ever dropped, and no field changes a battle in any way.
+ *
+ * The six fields are the six equipment slots of a Minecraft mob, and that is deliberate:
+ * vanilla already sends those to every client that can see the trainer, so a trainer dressed
+ * here needs no packet of its own and looks the same to a player who walks up ten minutes
+ * later. The mod never gives a trainer anything it was not asked to.
+ *
+ * Every field is a full item ID, namespace included, and every one is optional. An ID nothing
+ * provides is logged once at load and left off the trainer - a pack that dresses its champion
+ * in an item from a mod the server does not have still loads.
+ *
+ * **[trinkets] is everything that is worn rather than held or equipped** - a bracelet, a pair
+ * of glasses, a pendant, an anklet. Those have no vanilla slot, so they get one of their own,
+ * named after the place on the body rather than after what the item is for. See
+ * `docs/COSMETICS.md`.
+ *
+ * @param head Worn on the head.
+ * @param chest Worn on the body.
+ * @param legs Worn on the legs.
+ * @param feet Worn on the feet.
+ * @param mainHand Held in the main hand - a Poké Ball, most of the time.
+ * @param offHand Held in the off hand.
+ * @param trinkets What hangs on the body, place by place.
+ */
+data class TrainerCosmetics(
+    val head: String? = null,
+    val chest: String? = null,
+    val legs: String? = null,
+    val feet: String? = null,
+    val mainHand: String? = null,
+    val offHand: String? = null,
+    val trinkets: TrainerTrinkets = TrainerTrinkets()
+) {
+
+    /** True for a block that dresses nothing at all, which is the default. */
+    val isEmpty: Boolean
+        get() = listOf(head, chest, legs, feet, mainHand, offHand).all { it.isNullOrBlank() } &&
+            trinkets.isEmpty
+
+    /**
+     * Names the item IDs that resolve to nothing, once, at load.
+     *
+     * Said here rather than at the spawn for the same reason as everywhere else in this file:
+     * this is the moment a pack author is reading the log, and by the time a trainer is being
+     * dressed the only honest answer is to leave the slot empty.
+     */
+    fun validate(id: ResourceLocation) {
+        TrainerOutfit.validate(id, this)
+    }
+}
+
+/**
+ * What a trainer wears that is neither armour nor held: **one field per place on the body**,
+ * each a full item ID.
+ *
+ * Named after the place rather than after the item, because the two do not line up. Mega
+ * Showdown's Mega Bracelet goes on a wrist, but so does Korrina's Glove; Maxie's Glasses go on
+ * the face, Zinnia's Anklet on an ankle, Diantha's Charm on the chest - and all five are the
+ * same "mega" key item as far as that mod's own slots are concerned. Nothing in the game's data
+ * distinguishes them: the spot is chosen in that mod's code, item by item. So the pack says
+ * where, and any item may go anywhere.
+ *
+ * No two places overlap, so a trainer may wear the lot.
+ *
+ * @param face On the head: glasses, a tiara, a visor.
+ * @param chest Hung on the chest: a pendant, a charm, an anchor.
+ * @param wrist The wrist of the free arm: a bracelet, a glove.
+ * @param forearm The same arm, a little higher: a ring.
+ * @param hand Across the back of the main hand: a band.
+ * @param belt Hooked on the belt: an orb, a pouch.
+ * @param ankle The right ankle: an anklet.
+ */
+data class TrainerTrinkets(
+    val face: String? = null,
+    val chest: String? = null,
+    val wrist: String? = null,
+    val forearm: String? = null,
+    val hand: String? = null,
+    val belt: String? = null,
+    val ankle: String? = null
+) {
+
+    val isEmpty: Boolean
+        get() = listOf(face, chest, wrist, forearm, hand, belt, ankle).all { it.isNullOrBlank() }
+}
 
 /**
  * Where a trainer is to be found, and what the battle phone tells the player about it.

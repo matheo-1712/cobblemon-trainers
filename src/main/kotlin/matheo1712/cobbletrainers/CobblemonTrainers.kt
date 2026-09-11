@@ -78,6 +78,17 @@ object CobblemonTrainers : ModInitializer {
     const val SPAWNER_ASPECT_PREFIX = "trainer_spawner:"
 
     /**
+     * Prefix of the aspect carrying one of the trinkets a trainer wears, followed by the place
+     * it hangs and the item ID (`trainer_trinket:wrist:mega_showdown:mega_bracelet`).
+     *
+     * These have no vanilla equipment slot to sit in, and an aspect buys what one would have
+     * had to be written by hand: it is synced to every client that can see the trainer, and
+     * saved to NBT like the two above. See
+     * [matheo1712.cobbletrainers.trainers.TrainerOutfit].
+     */
+    const val TRINKET_ASPECT_PREFIX = "trainer_trinket:"
+
+    /**
      * Prefix of the aspect naming the player who called a trainer from their battle phone,
      * followed by their UUID. Saved to NBT like the two above, which is what lets
      * [matheo1712.cobbletrainers.trainers.TrainerCalls] recognise a called trainer whose call

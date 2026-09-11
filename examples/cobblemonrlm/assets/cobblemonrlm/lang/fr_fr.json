@@ -73,5 +73,10 @@
   "advancement.cobblemonrlm.badge_jacinthe.title": "Dans le tempo",
   "advancement.cobblemonrlm.badge_jacinthe.description": "Battre Jacinthe.",
   "advancement.cobblemonrlm.ligue.title": "Ligue terminée",
-  "advancement.cobblemonrlm.ligue.description": "Battre les trois champions du pack."
+  "advancement.cobblemonrlm.ligue.description": "Battre les trois champions du pack.",
+  "trainer.cobblemonrlm.cosmetiques.name": "Randonneuse équipée",
+  "trainer.cobblemonrlm.cosmetiques.greeting": "Cuir intégral, Poké Ball en main et un bracelet au poignet. Ça t'inspire ?",
+  "trainer.cobblemonrlm.cosmetiques.battle_start": "Rien de tout ça ne me rend plus forte. C'est juste plus élégant.",
+  "trainer.cobblemonrlm.cosmetiques.win": "Bien joué. L'équipement, ça ne remplace pas l'entraînement.",
+  "trainer.cobblemonrlm.cosmetiques.lose": "L'habit ne fait pas le moine, mais il aide au moral."
 }
