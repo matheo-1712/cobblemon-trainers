@@ -9,7 +9,8 @@ For installing the mod and for the commands, see the [README](../../README.md).
 
 **Would rather not write the JSON by hand?** The [online
 editor](https://matheo-1712.github.io/cobblemon-trainers/) lays out the fields of this page as a
-form, names the traps as you go, and hands you the pack as a `.zip`.
+form, names the traps as you go, and hands you the **whole pack** as a `.zip` - music, skins and
+language files included, with the `sounds.json` written for you.
 
 ## Contents
 
@@ -408,7 +409,7 @@ Two ways into the same data.
 has beaten:
 
 ```
-Trainers of Steve - 1 / 3 defeated
+Trainers of RereBleue - 1 / 3 defeated
 Champions - 1 / 2
 ✔ my_pack:champions/jasmine - Jasmine (no rematch)
 ✘ my_pack:champions/champion - The Champion (locked, 1 requirement(s) left)
@@ -525,8 +526,8 @@ Level: 80
 ## Skins
 
 ```json
-"skin": { "type": "player_username", "value": "Notch" }
-"skin": { "type": "player_uuid",     "value": "069a79f4-44e9-4726-a5be-fca90e38aaf5" }
+"skin": { "type": "player_username", "value": "RereBleue" }
+"skin": { "type": "player_uuid",     "value": "4199c666-1193-49b6-8986-099d872d5adf" }
 "skin": { "type": "texture",         "value": "my_pack:textures/trainers/red.png", "model": "slim" }
 ```
 

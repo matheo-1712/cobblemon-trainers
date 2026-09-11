@@ -319,8 +319,9 @@ soient posés par un bloc, invoqués en commande ou appelés depuis le Battle Ph
 
 **➜ L'[éditeur en ligne](https://matheo-1712.github.io/cobblemon-trainers/) écrit ces JSON à
 ta place** : les champs d'un dresseur avec leur documentation à côté, l'écran de versus avec
-son aperçu animé, et le pack entier qui se télécharge en `.zip`. Rien à installer, rien qui
-sorte du navigateur.
+son aperçu animé, les musiques et les skins déposés dans le pack, les textes traduits, et le
+pack entier qui se télécharge en `.zip` - `sounds.json` et fichiers de langue écrits pour toi.
+Rien à installer, rien qui sorte du navigateur.
 
 **➜ Toute la documentation est indexée dans [docs/README.md](docs/README.md)**, qui dit
 quelle page répond à quelle question - et sa traduction anglaise dans

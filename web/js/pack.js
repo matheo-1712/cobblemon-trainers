@@ -70,7 +70,7 @@ const Pack = (() => {
   const blank = {
     trainer: () => ({
       name: 'Nouveau dresseur',
-      skin: { type: 'player_username', value: 'Steve' },
+      skin: { type: 'player_username', value: 'RereBleue' },
       battle: { level: 25 },
       messages: { greeting: '' },
       team: ['Pikachu\nAbility: Static\nLevel: 25\n- Thunderbolt\n- Quick Attack']

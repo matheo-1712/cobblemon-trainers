@@ -162,7 +162,7 @@ const Preview = (() => {
     .replace(/%category%/g, about.category || '')
     .replace(/%level%/g, about.level ?? 1)
     .replace(/%team%/g, about.team ?? 0)
-    .replace(/%player%/g, about.player || 'Steve');
+    .replace(/%player%/g, about.player || 'RereBleue');
 
   const rgb = (color, fallback) => {
     const text = String(color ?? '').trim().replace('#', '');
@@ -259,7 +259,9 @@ const Preview = (() => {
     figure(ctx, layer, x, y, scale, alpha, about) {
       const tall = (layer.height ?? 96) * scale;
       const who = layer.who === 'player' ? about.player : about.trainerSkin;
-      const image = skin(who);
+      // A trainer wearing a skin the pack ships names it the way a texture is named; anything
+      // else is an account, and goes through the skin service.
+      const image = String(who || '').includes(':') ? texture(who) : skin(who);
       ctx.save();
       ctx.globalAlpha = alpha;
       if (image && image !== 'missing') {
