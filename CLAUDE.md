@@ -1933,6 +1933,8 @@ Points à ne pas redécouvrir :
   deux. Ce qui ne peut pas suivre est le modèle 3D : une `figure` y est le skin à plat, comme
   le repli du mod lui-même, et un calque `pokemon` une case marquée.
 - **Rien de `web/assets/` n'est commité.** `web/sync-assets.sh` va chercher dans le dépôt les
+  logo et l'icône du mod (`assets/logo.png` et l'icône de `fabric.mod.json`, donc la page ne
+  peut pas porter un logo périmé), les
   textures d'intro, les huit intros livrées et les dresseurs d'exemple ; le workflow rejoue le
   script à la publication. C'est ce qui fait qu'un modèle de l'éditeur ne peut pas décrire une
   version du mod qui n'existe plus, et pourquoi le menu des modèles est la seule chose qui ne

@@ -52,14 +52,16 @@ a:hover { text-decoration: underline; }
   position: sticky; top: 0; z-index: 20;
 }
 
-.brand { display: flex; align-items: center; gap: 12px; }
+.brand { display: flex; align-items: center; gap: 14px; }
 
-.brand-mark {
-  display: grid; place-items: center;
-  width: 38px; height: 38px; border-radius: 9px;
-  background: linear-gradient(140deg, var(--blue), var(--red));
-  font-family: "Jersey 10", monospace; font-size: 24px; color: #fff;
+/* The mod's own logo, drawn pixel for pixel - it is pixel art, and smoothing muddies it. */
+.brand-logo { display: block; line-height: 0; }
+.brand-logo img {
+  width: auto; height: 64px;
+  image-rendering: pixelated;
+  border-radius: 4px;
 }
+.brand-logo:hover img { filter: brightness(1.12); }
 
 .top-links { display: flex; align-items: center; gap: 16px; font-size: 13px; }
 
@@ -80,7 +82,7 @@ a:hover { text-decoration: underline; }
   align-items: start;
 }
 
-.side { display: flex; flex-direction: column; gap: 14px; position: sticky; top: 76px; }
+.side { display: flex; flex-direction: column; gap: 14px; position: sticky; top: 102px; }
 
 .side-block {
   background: var(--panel);
@@ -177,7 +179,7 @@ a:hover { text-decoration: underline; }
 .columns { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 18px; }
 .columns-intro { grid-template-columns: minmax(0, 1fr) minmax(360px, 46%); }
 .column { min-width: 0; }
-.column-preview, .column-side { position: sticky; top: 88px; align-self: start; }
+.column-preview, .column-side { position: sticky; top: 112px; align-self: start; }
 
 /* ---- fields ------------------------------------------------------------- */
 

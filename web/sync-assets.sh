@@ -20,6 +20,10 @@ examples="$root/examples/cobblemonrlm/data/cobblemonrlm/cobblemontrainers/traine
 rm -rf "$assets/intro" "$assets/intros" "$assets/examples"
 mkdir -p "$assets/intro" "$assets/intros" "$assets/examples"
 
+# The mod's own identity, taken where it already lives rather than copied into the site.
+cp "$root/assets/logo.png" "$assets/logo.png"
+cp "$root/src/main/resources/assets/cobblemon-trainers/icon.png" "$assets/icon.png"
+
 cp "$textures"/*.png "$assets/intro/"
 cp "$intros"/*.json "$assets/intros/"
 find "$examples" -name '*.json' ! -name 'category.json' -exec cp {} "$assets/examples/" \;

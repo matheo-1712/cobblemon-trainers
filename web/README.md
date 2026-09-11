@@ -33,8 +33,8 @@ bash web/sync-assets.sh          # remplit web/assets/ depuis le mod
 python -m http.server 8765 -d web
 ```
 
-`sync-assets.sh` **copie depuis le dépôt** les textures d'intro, les huit intros livrées et les
-dresseurs d'exemple. Rien de tout ça n'est commité : c'est le workflow `pages.yml` qui rejoue le
+`sync-assets.sh` **copie depuis le dépôt** le logo et l'icône du mod, les textures d'intro, les
+huit intros livrées et les dresseurs d'exemple. Rien de tout ça n'est commité : c'est le workflow `pages.yml` qui rejoue le
 script à la publication, donc une intro qui change dans le mod change dans l'éditeur, et
 l'éditeur ne peut pas décrire une version du mod qui n'existe plus.
 
