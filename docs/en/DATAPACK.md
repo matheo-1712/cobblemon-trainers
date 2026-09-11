@@ -7,6 +7,10 @@ For installing the mod and for the commands, see the [README](../../README.md).
 
 *Cette page existe aussi [en français](../DATAPACK.md).*
 
+**Would rather not write the JSON by hand?** The [online
+editor](https://matheo-1712.github.io/cobblemon-trainers/) lays out the fields of this page as a
+form, names the traps as you go, and hands you the pack as a `.zip`.
+
 ## Contents
 
 - [Layout](#layout) · [Where to put the pack](#where-to-put-the-pack)

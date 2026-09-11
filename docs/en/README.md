@@ -6,6 +6,11 @@ covers installing it; the pages below are the **reference** - this is where the 
 *Cette documentation existe aussi [en français](../README.md), avec le
 [README](../../README.md) du dépôt.*
 
+**The [online editor](https://matheo-1712.github.io/cobblemon-trainers/) writes these files for
+you** - a trainer, an intro with its animated preview, a category, an advancement, then the
+whole pack as a `.zip`. These pages stay the reference: this is where you come to find out
+*why*.
+
 ## The pages
 
 | Page | What is in it |

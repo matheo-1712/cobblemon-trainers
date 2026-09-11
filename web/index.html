@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Éditeur de dresseurs · Cobblemon Trainers</title>
+<meta name="description" content="Écrire un dresseur, une intro, une catégorie et un advancement pour Cobblemon Trainers, puis télécharger le datapack. Tout se passe dans le navigateur.">
+<link rel="icon" href="assets/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jersey+10&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <span class="brand-mark">CT</span>
+    <div>
+      <h1 data-i18n="app.title">Éditeur de dresseurs</h1>
+      <p class="muted small" data-i18n="app.offline">Tout se passe dans ton navigateur.</p>
+    </div>
+  </div>
+  <nav class="top-links">
+    <a href="https://github.com/matheo-1712/cobblemon-trainers/blob/master/docs/DATAPACK.md" target="_blank" rel="noreferrer" data-i18n="app.docs">Documentation</a>
+    <a href="https://github.com/matheo-1712/cobblemon-trainers" target="_blank" rel="noreferrer" data-i18n="app.source">Le mod</a>
+    <span class="lang">
+      <button id="lang-fr" type="button" class="lang-btn on">FR</button>
+      <button id="lang-en" type="button" class="lang-btn">EN</button>
+    </span>
+  </nav>
+</header>
+
+<main class="shell">
+
+  <aside class="side">
+    <section class="side-block">
+      <h2 data-i18n="pack.title">Le pack</h2>
+      <label class="field">
+        <span class="field-label" data-i18n="pack.namespace">Namespace</span>
+        <input id="namespace" class="input mono" type="text" spellcheck="false" autocomplete="off">
+        <span class="field-hint" data-i18n="pack.namespace.hint"></span>
+      </label>
+      <label class="field">
+        <span class="field-label" data-i18n="pack.description">Description</span>
+        <input id="description" class="input" type="text" autocomplete="off">
+      </label>
+    </section>
+
+    <section class="side-block">
+      <h2 data-i18n="pack.files">Fichiers</h2>
+      <div class="row row-wrap add-row">
+        <button id="add-trainer" type="button" class="btn btn-small">+ <span data-i18n="pack.add.trainer">Dresseur</span></button>
+        <button id="add-intro" type="button" class="btn btn-small">+ <span data-i18n="pack.add.intro">Intro</span></button>
+        <button id="add-category" type="button" class="btn btn-small">+ <span data-i18n="pack.add.category">Catégorie</span></button>
+        <button id="add-advancement" type="button" class="btn btn-small">+ <span data-i18n="pack.add.advancement">Advancement</span></button>
+      </div>
+      <select id="templates" class="input" hidden>
+        <option value="" data-i18n="pack.template.pick">Partir d’un modèle…</option>
+      </select>
+      <div id="views" class="files"></div>
+      <div id="files" class="files"></div>
+    </section>
+
+    <section class="side-block">
+      <label class="field">
+        <span class="field-label" data-i18n="pack.archive">Format de l’archive</span>
+        <select id="archive" class="input">
+          <option value="zip" data-i18n="pack.archive.zip">.zip — mods/, datapacks/ ou resourcepacks/</option>
+          <option value="jar" data-i18n="pack.archive.jar">.jar — mods/ seul, dépendance déclarée</option>
+        </select>
+        <span class="field-hint" data-i18n="pack.archive.hint"></span>
+      </label>
+      <button id="export" type="button" class="btn btn-primary btn-wide" data-i18n="pack.export">Télécharger le pack (.zip)</button>
+      <button id="import" type="button" class="btn btn-wide" data-i18n="pack.import">Importer</button>
+      <p class="muted small" data-i18n="pack.import.hint"></p>
+      <input id="import-file" type="file" accept=".json,.zip,.jar" multiple hidden>
+      <button id="reset" type="button" class="btn btn-ghost btn-wide btn-danger" data-i18n="pack.reset">Tout effacer</button>
+      <p class="muted small" data-i18n="pack.saved"></p>
+    </section>
+  </aside>
+
+  <section class="work">
+    <div id="editor" class="editor"></div>
+    <div id="checks" class="checks"></div>
+  </section>
+
+</main>
+
+<datalist id="intro-ids"></datalist>
+<datalist id="music-ids"></datalist>
+<datalist id="sound-ids"></datalist>
+<datalist id="skin-ids"></datalist>
+<datalist id="texture-ids"></datalist>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" integrity="sha512-XMVd28F1oH/O71fzwBnV7HucLxVwtxf26XV8P4wPk26EDxuGZ91N8bsOttmnomcCD3CS5ZMRL50H0GgOHvegtg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="js/i18n.js"></script>
+<script src="js/schema.js"></script>
+<script src="js/assets.js"></script>
+<script src="js/form.js"></script>
+<script src="js/validate.js"></script>
+<script src="js/preview.js"></script>
+<script src="js/pack.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

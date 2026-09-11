@@ -59,6 +59,10 @@ divergent sont pires qu'une page absente, la seconde ayant l'air à jour. `MODRI
 racine, est la présentation publiée sur la boutique et n'a pas d'équivalent français - c'est
 une page de vente, pas une page du wiki.
 
+`web/` est l'**éditeur en ligne** de ces mêmes fichiers, publié sur GitHub Pages (voir
+« L'éditeur web »). Ce n'est pas de la doc : un champ ajouté au mod se décrit dans `docs/`
+**et** s'ajoute à `web/js/schema.js`, qui est la seule description de champs que le site ait.
+
 ## Commandes
 
 ```bash
@@ -1906,6 +1910,67 @@ Points à ne pas redécouvrir :
   fournisseur qui est un `CustomPokemonPropertyType` - donc peuplée par les datapacks, et
   seulement consultable une fois le serveur chargé (l'équipe est construite à l'apparition
   du dresseur, c'est bon).
+
+## L'éditeur web
+
+`web/` est un **site statique** publié sur GitHub Pages par `.github/workflows/pages.yml` :
+on y écrit un dresseur, une intro, un `category.json` et un advancement, on y dépose les
+musiques, les skins et les images d'intro, on y traduit les textes, et on télécharge le pack
+entier. Aucun build, aucun `package.json` - des `<script>` dans l'ordre, ce qui rend
+`web/index.html` ouvrable directement depuis le disque. Sa propre doc est dans
+`web/README.md` ; celle destinée aux joueurs reste `docs/`, que l'éditeur ne remplace pas.
+
+Points à ne pas redécouvrir :
+
+- **`web/js/schema.js` est la seule description des champs**, labels FR et EN compris.
+  Ajouter un champ au mod, c'est ajouter une ligne au tableau de `docs/DATAPACK.md` et une
+  entrée ici - jamais un formulaire écrit à la main quelque part. Les libellés vivent à côté
+  du champ qu'ils décrivent pour la même raison que le `Check` de `TrainerPlace` : un nom
+  affiché rangé ailleurs finit par désigner autre chose.
+- **`web/js/preview.js` est `BattleIntroScreen.kt` transcrit**, courbes et entrées comprises,
+  et dessine sur un canvas de 640 × 360 - la taille de référence, donc `uiScale` vaut 1 et les
+  ancres tombent où le jeu les met. Toucher au séquencement de l'écran, c'est toucher aux
+  deux. Ce qui ne peut pas suivre est le modèle 3D : une `figure` y est le skin à plat, comme
+  le repli du mod lui-même, et un calque `pokemon` une case marquée.
+- **Rien de `web/assets/` n'est commité.** `web/sync-assets.sh` va chercher dans le dépôt les
+  textures d'intro, les huit intros livrées et les dresseurs d'exemple ; le workflow rejoue le
+  script à la publication. C'est ce qui fait qu'un modèle de l'éditeur ne peut pas décrire une
+  version du mod qui n'existe plus, et pourquoi le menu des modèles est la seule chose qui ne
+  marche pas en `file://` - un `fetch` y est refusé.
+- **L'éditeur n'écrit que ce qui diffère du défaut.** Le mod remplit les siens ; les réécrire
+  ferait du bruit dans le fichier d'un auteur et un second endroit où le défaut vit. `null`
+  est l'exception, c'est un choix (`battle.music` muet), pas une absence.
+- **Une ressource n'est jamais nommée à la main.** `web/js/assets.js` tient les quatre types de
+  fichiers d'un pack (musique, son d'intro, skin, texture d'intro) et, pour chacun, **sa place
+  dans l'archive et la référence qu'un dresseur écrit sortent du même endroit** - c'est la seule
+  façon qu'ils ne se contredisent pas, comme le `Check` de `TrainerPlace`. Le `sounds.json` est
+  donc **écrit**, jamais saisi, avec `stream` vrai pour une musique et faux pour un impact.
+- **Les octets vivent dans IndexedDB, les métadonnées dans le `localStorage`.** Une piste de
+  trois mégaoctets ne tient pas dans le second, et le pack a besoin de savoir ce qu'il porte
+  sans ouvrir le premier. Un `Pack.clear()` vide bien les deux.
+- **`.zip` et `.jar` ne sont pas deux emballages du même pack.** Le `.jar` porte un
+  `fabric.mod.json`, donc Fabric le charge lui-même et refuse de démarrer sans le mod - et il ne
+  va que dans `mods/`. Le `.zip` n'en porte pas, donc `ModsFolderPackSource` le ramasse et il se
+  charge aussi depuis `datapacks/` et `resourcepacks/`. Les mélanger - un `.zip` avec un
+  `fabric.mod.json` - fait un pack que **personne** ne charge (voir « Livrer un pack »), d'où un
+  seul réglage qui décide des deux.
+- **Les traductions sont une table, pas un fichier.** L'éditeur relève les clés que les fichiers
+  du pack nomment vraiment, et « Clés de traduction » fait le mouvement inverse : les phrases
+  d'un dresseur deviennent des clés `trainer.<ns>.<chemin>.<champ>` et les phrases partent dans
+  la première langue. Une clé sans texte est signalée, parce que Minecraft l'affiche telle
+  quelle.
+- **Il ne valide ni espèce, ni capacité, ni objet** : ces registres sont dans le jeu, pas dans
+  un navigateur. `web/js/validate.js` ne dit que ce qui se vérifie sans eux - et surtout ce
+  que Gson laisse tomber en silence, d'où son existence : un `dynamax` écrit à la place de
+  `max`, une récompense sans namespace, un `arrival` sans condition de lieu.
+- **Deux services extérieurs, et un seul compte** : `crafthead.net` pour l'image d'un skin -
+  l'API Mojang refuse le navigateur (CORS) - et `cdnjs` pour JSZip. Les deux sont des aperçus
+  ou de l'emballage : l'éditeur reste utilisable sans, le skin devenant une silhouette.
+- **Pages doit être réglé sur « GitHub Actions »** dans les paramètres du dépôt, sinon le
+  workflow se termine vert sans rien publier.
+- **L'URL du site est écrite dans six pages** - `README.md`, `MODRINTH.md`, `docs/README.md`,
+  `docs/DATAPACK.md`, `docs/INTROS.md` et leurs versions anglaises. La déplacer, c'est les
+  reprendre toutes.
 
 ## Publication
 

@@ -5,6 +5,11 @@ ses commandes ; les pages ci-dessous sont la **référence** - c'est là que vit
 
 *This documentation is also available [in English](en/README.md).*
 
+**L'[éditeur en ligne](https://matheo-1712.github.io/cobblemon-trainers/) écrit ces fichiers à
+ta place** - un dresseur, une intro et son aperçu animé, une catégorie, un advancement, puis le
+pack en `.zip`. Ces pages restent la référence : c'est ici qu'on vient quand on veut savoir
+*pourquoi*.
+
 ## Les pages
 
 | Page | Ce qu'on y trouve |

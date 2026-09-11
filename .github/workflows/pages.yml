@@ -1,0 +1,56 @@
+# Publishes web/ - the trainer editor - on GitHub Pages.
+#
+# The site is static: there is nothing to build, only assets to fetch from the mod itself.
+# web/sync-assets.sh copies the intro textures, the eight shipped intros and the example
+# trainers out of the repository, so the editor's templates and preview can never describe a
+# version of the mod that no longer exists.
+#
+# The repository has to be set to deploy Pages from GitHub Actions (Settings > Pages > Source).
+
+name: pages
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'web/**'
+      - 'src/main/resources/assets/cobblemon-trainers/textures/gui/intro/**'
+      - 'src/main/resources/data/cobblemon-trainers/cobblemontrainers/intro/**'
+      - 'examples/cobblemonrlm/data/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time, and the newest push wins.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v6
+
+      - name: fill web/assets from the mod
+        run: bash web/sync-assets.sh
+
+      - name: configure pages
+        uses: actions/configure-pages@v5
+
+      - name: upload the site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: web
+
+      - name: deploy
+        id: deploy
+        uses: actions/deploy-pages@v4

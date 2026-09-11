@@ -317,6 +317,11 @@ Un dresseur ne se promène jamais, mais il **tourne la tête vers le joueur qui 
 à huit blocs, comme un villageois. Rien à régler : c'est le cas de tous les dresseurs, qu'ils
 soient posés par un bloc, invoqués en commande ou appelés depuis le Battle Phone.
 
+**➜ L'[éditeur en ligne](https://matheo-1712.github.io/cobblemon-trainers/) écrit ces JSON à
+ta place** : les champs d'un dresseur avec leur documentation à côté, l'écran de versus avec
+son aperçu animé, et le pack entier qui se télécharge en `.zip`. Rien à installer, rien qui
+sorte du navigateur.
+
 **➜ Toute la documentation est indexée dans [docs/README.md](docs/README.md)**, qui dit
 quelle page répond à quelle question - et sa traduction anglaise dans
 [docs/en/](docs/en/README.md).
