@@ -6,6 +6,7 @@ import com.cobblemon.mod.common.api.pokemon.stats.Stat
 import com.cobblemon.mod.common.api.pokemon.stats.Stats
 import com.cobblemon.mod.common.api.types.ElementalType
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon
+import java.util.Locale
 import java.util.UUID
 
 /**
@@ -17,10 +18,15 @@ import java.util.UUID
  * `activeTracker`, which has no getter, so it cannot be called from outside.
  *
  * This is the mainline formula for a single target, with stat stages and burn. Weather, screens,
- * held items, abilities beyond immunity and the damage roll spread are all left out: they would
- * each need battle state this layer does not read, and the two questions above tolerate being
- * a little wrong. Where it matters the error is towards *under*-estimating - the average roll is
- * used rather than the highest - so a KO it announces is one it really has.
+ * held items and the damage roll spread are all left out: they would each need battle state this
+ * layer does not read, and the two questions above tolerate being a little wrong. Where it
+ * matters the error is towards *under*-estimating - the average roll is used rather than the
+ * highest - so a KO it announces is one it really has.
+ *
+ * Abilities are left out too, with two exceptions, and both are exceptions for the same reason -
+ * they read nothing but the Pokémon in hand: the immunities of [BattleTypeChart], which reach
+ * this through the multiplier handed in, and the [conversionBoost] that comes with a changed
+ * move type.
  */
 object BattleDamage {
 
@@ -30,6 +36,15 @@ object BattleDamage {
     private const val STAB = 1.5
     private const val BURN_PENALTY = 0.5
     private const val BURN = "brn"
+
+    /**
+     * Abilities that change the type a move comes out as and are paid 1.2x for doing it: the four
+     * -ate abilities and Normalize. See [conversionBoost].
+     */
+    private val CONVERSION_ABILITIES =
+        setOf("pixilate", "refrigerate", "aerilate", "galvanize", "normalize")
+
+    private const val CONVERSION_BOOST = 1.2
 
     /** Stands in for the variable power of Seismic Toss, Return, Gyro Ball and the like. */
     private const val FALLBACK_POWER = 60.0
@@ -70,9 +85,32 @@ object BattleDamage {
 
         val type = move.getEffectiveElementalType(attacker.effectedPokemon)
         val sameType = stab ?: stabFor(type, attacker)
+        val converted = conversionBoost(move, attacker, type)
         val burn = if (physical && isBurned(attacker)) BURN_PENALTY else 1.0
 
-        return base * sameType * multiplier * burn * AVERAGE_ROLL
+        return base * sameType * converted * multiplier * burn * AVERAGE_ROLL
+    }
+
+    /**
+     * The 1.2x an -ate ability or Normalize adds on top of the type it just changed.
+     *
+     * The second of the two ability readings the header allows, and it is free: the conversion it
+     * rides on has been resolved a line above, and nothing else is needed. Left out, every
+     * judgement on a converted move - the knockout tests below most of all - reads a fifth short
+     * of what the move really does.
+     *
+     * Keyed on the conversion having happened rather than on the ability alone. Normalize pays
+     * nothing on a move that was already Normal, since it changed nothing; Hidden Power changes
+     * type with no ability behind it, so the ability is still what has to be there.
+     */
+    private fun conversionBoost(
+        move: MoveTemplate,
+        attacker: BattlePokemon,
+        type: ElementalType
+    ): Double {
+        if (type.name.equals(move.elementalType.name, ignoreCase = true)) return 1.0
+        val ability = attacker.effectedPokemon.ability.name.lowercase(Locale.ROOT)
+        return if (ability in CONVERSION_ABILITIES) CONVERSION_BOOST else 1.0
     }
 
     /** The same-type bonus [attacker] gets on a [moveType] hit as things stand. */

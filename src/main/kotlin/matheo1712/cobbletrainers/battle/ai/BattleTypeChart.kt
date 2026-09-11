@@ -114,9 +114,17 @@ object BattleTypeChart {
      *
      * Type chart only. This ranks switch candidates, and an ability immunity read into it would
      * make the ranking swing on a single move rather than on the matchup as a whole.
+     *
+     * The type read is the one the move actually comes out as - Pixilate, Refrigerate, Aerilate,
+     * Galvanize, Normalize and Hidden Power all make it differ from the one printed on the move.
+     * Reading `Move.type` here, which is the template's own type and nothing else, had a Pixilate
+     * Sylveon score its Hyper Voice as Normal against a Dragon: a matchup it wins outright read
+     * as neutral, and the trainer switched out of it.
      */
     fun offence(attacker: Pokemon, defenders: List<Pokemon>): Double {
-        val types = attacker.moveSet.getMoves().map { it.type }.ifEmpty { attacker.types.toList() }
+        val types = attacker.moveSet.getMoves()
+            .map { it.template.getEffectiveElementalType(attacker) }
+            .ifEmpty { attacker.types.toList() }
         return types.maxOfOrNull { type ->
             defenders.maxOfOrNull { typeMultiplier(type, it) } ?: 0.0
         } ?: 1.0

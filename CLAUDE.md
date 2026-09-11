@@ -1236,6 +1236,18 @@ Points à ne pas redécouvrir :
   `immunity` est retiré (Vaccin bloque l'empoisonnement, pas les dégâts Poison, et l'honorer
   ferait refuser une attaque parfaitement valable), `lightningrod` est ajouté (Cobblemon écrit
   `lightingrod`, qui ne correspond à aucun talent), `dryskin` et `wellbakedbody` manquaient.
+- **Le type d'une capacité se lit avec `MoveTemplate.getEffectiveElementalType(pokemon)`, jamais
+  avec `Move.type` ni `MoveTemplate.elementalType`.** Ces deux-là rendent le type imprimé sur la
+  capacité ; le premier applique Peau Féerique et ses trois sœurs, Normalisation et Puissance
+  Cachée. Cobblemon lui-même s'en sert dans `moveDamageMultiplier`, donc une lecture brute d'un
+  seul côté du mod suffit à ce que les deux ne parlent plus de la même capacité : c'était
+  l'issue #50, où `BattleTypeChart.offence` notait le Mégaphone d'un Nymphali à Peau Féerique en
+  Normal et faisait fuir un match-up gagné. Le corollaire est dans `BattleDamage.conversionBoost`
+  - les cinq talents qui convertissent paient 20 % de puissance en plus, et c'est la seule lecture
+  de talent au-delà des immunités que l'estimation de dégâts s'autorise, parce que c'est la seule
+  qui ne demande aucun état de combat. Il est conditionné au type qui a **réellement** changé :
+  Normalisation ne paie rien sur une capacité déjà Normal, et Puissance Cachée change de type sans
+  talent derrière.
 - **Un coup « intentionnel » n'est jamais échangé contre des dégâts.** Sans ça la correction
   aplatirait le jeu de Cobblemon en « tape toujours le plus fort » et ferait disparaître boosts,
   statuts, pièges et soins. C'est le seul rôle de `purposefulMoves`.
