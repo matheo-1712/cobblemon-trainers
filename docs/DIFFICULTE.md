@@ -55,14 +55,34 @@ jeu, et une IA qui ne se trompe jamais ne l'est pas.
 
 La couche du mod s'allume et refuse ce qui ne peut pas fonctionner.
 
+### Le type qu'une capacité prend vraiment
+
+Certains talents changent le type des capacités de leur porteur : **Peau Féerique**, **Peau
+Gelée**, **Peau Céleste** et **Peau Électrique** transforment les capacités Normal, et
+**Normalisation** transforme tout en Normal. **Puissance Cachée** change de type elle aussi,
+d'après ses IV.
+
+Partout où le dresseur lit le type d'une capacité, c'est ce type-là qu'il lit, jamais celui
+imprimé dessus. Pour un Nymphali à Peau Féerique, Mégaphone est une capacité **Fée** : elle touche
+un Spectre, elle compte double contre un Dragon, et le rapport de force qui décide des changements
+la compte comme du Fée — un dresseur ne quitte donc plus un match-up que sa capacité transformée
+lui fait gagner.
+
+Ces talents ajoutent **20 % de puissance** à la capacité qu'ils ont transformée. C'est compté dans
+tous les chiffres de dégâts du dresseur, KO annoncé compris.
+
+Cela vaut aussi pour le Pokémon du joueur : un dresseur qui mesure ce qu'il va prendre lit les
+talents d'en face de la même façon.
+
 ### Plus d'attaque sur une cible immunisée
 
 Une capacité offensive dont l'efficacité vaut ×0 contre toutes les cibles n'est plus jouée : le
 dresseur joue à la place sa meilleure capacité restante. Sol sur un Vol, Normal sur un Spectre,
 Poison sur un Acier, Électrik sur un Sol, Psy sur un Ténèbres, Dragon sur un Fée.
 
-Seule la table des types est lue à ce niveau. Un talent qui immunise (Lévitation, Absorb-Volt)
-n'est **pas** vu — ça vient au niveau 5.
+Seule la table des types est lue à ce niveau. Un talent qui immunise **la cible** (Lévitation,
+Absorb-Volt) n'est **pas** vu — ça vient au niveau 5. Le talent de l'attaquant, lui, est déjà lu :
+c'est lui qui dit de quel type est la capacité, voir juste au-dessus.
 
 Cette règle rattrape aussi le tirage au hasard : une capacité tirée au sort qui se trouve être
 immunisée est refusée comme les autres.

@@ -54,14 +54,32 @@ and an AI that never makes a mistake is not.
 
 The mod's layer switches on and turns down what cannot work.
 
+### The type a move really comes out as
+
+Some abilities change the type of their holder's moves: **Pixilate**, **Refrigerate**,
+**Aerilate** and **Galvanize** turn Normal moves into Fairy, Ice, Flying and Electric, and
+**Normalize** turns everything into Normal. **Hidden Power** changes type too, from its IVs.
+
+Wherever the trainer reads a move's type, that is the type it reads - never the one printed on
+the move. For a Pixilate Sylveon, Hyper Voice is a **Fairy** move: it lands on a Ghost, it counts
+double against a Dragon, and the matchup reading that decides switches counts it as Fairy - so a
+trainer no longer walks away from a matchup its converted move wins.
+
+These abilities add **20% power** to the move they converted. That is counted in every damage
+figure the trainer works with, announced knockouts included.
+
+The same goes for the player's Pokémon: a trainer measuring what it is about to take reads the
+abilities across from it the same way.
+
 ### No more attacking an immune target
 
 An offensive move whose effectiveness is ×0 against every target is no longer played: the trainer
 plays their best remaining move instead. Ground on a Flying, Normal on a Ghost, Poison on a
 Steel, Electric on a Ground, Psychic on a Dark, Dragon on a Fairy.
 
-Only the type chart is read at this level. An ability granting immunity (Levitate, Volt Absorb)
-is **not** seen — that comes at level 5.
+Only the type chart is read at this level. An ability granting **the target** immunity (Levitate,
+Volt Absorb) is **not** seen — that comes at level 5. The attacker's ability is already read: it
+is what says which type the move is, see just above.
 
 This rule also catches the random roll: a move picked at random that happens to be immune is
 turned down like any other.
