@@ -57,7 +57,7 @@ a:hover { text-decoration: underline; }
 /* The mod's own logo, drawn pixel for pixel - it is pixel art, and smoothing muddies it. */
 .brand-logo { display: block; line-height: 0; }
 .brand-logo img {
-  width: auto; height: 64px;
+  width: auto; height: 40px;
   image-rendering: pixelated;
   border-radius: 4px;
 }
@@ -82,7 +82,7 @@ a:hover { text-decoration: underline; }
   align-items: start;
 }
 
-.side { display: flex; flex-direction: column; gap: 14px; position: sticky; top: 102px; }
+.side { display: flex; flex-direction: column; gap: 14px; position: sticky; top: 90px; }
 
 .side-block {
   background: var(--panel);
@@ -179,7 +179,7 @@ a:hover { text-decoration: underline; }
 .columns { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 18px; }
 .columns-intro { grid-template-columns: minmax(0, 1fr) minmax(360px, 46%); }
 .column { min-width: 0; }
-.column-preview, .column-side { position: sticky; top: 112px; align-self: start; }
+.column-preview, .column-side { position: sticky; top: 102px; align-self: start; }
 
 /* ---- fields ------------------------------------------------------------- */
 
