@@ -17,7 +17,8 @@ Pour l'installation du mod et les commandes, voir le [README](../README.md).
   [Farmable ou pas](#farmable-ou-pas) · [Le suivi de progression](#le-suivi-de-progression)
 - [Le format d'équipe](#le-format-déquipe) · [La ligne `Aspects:`](#la-ligne-aspects) ·
   [La ligne `Fallback Item:`](#la-ligne-fallback-item)
-- [Skins](#skins) · [Musique de combat](#musique-de-combat) ·
+- [Skins](#skins) · [Habiller un dresseur](COSMETIQUES.md) ·
+  [Musique de combat](#musique-de-combat) ·
   [Écran de versus](INTROS.md) · [Gimmicks de combat](GIMMICKS.md) ·
   [Traduire les textes](#traduire-les-textes)
 - [Tester son pack](#tester-son-pack) · [Erreurs fréquentes](#erreurs-fréquentes)
@@ -148,6 +149,7 @@ Tout est facultatif : `{}` donne un dresseur valide, quoique peu intéressant.
 | `rewards` | `[]` | Objets remis au vainqueur |
 | `requires` | - | [Conditions pour le combattre](#conditions-pour-combattre) |
 | `location` | - | [Où le trouver, et l'appeler depuis le Battle Phone](SPAWNING.md) |
+| `cosmetics` | - | [Ce qu'il porte et ce qu'il tient](COSMETIQUES.md) |
 
 **➜ Le bloc `location` est décrit dans [SPAWNING.md](SPAWNING.md)**, avec ses conditions, ses
 textes et tout ce que le mod fait autour d'un appel. Le déclarer suffit à rendre le dresseur

@@ -88,6 +88,7 @@ object TrainerSpawner {
         npc.initialize(definition.battle.level)
 
         applyTeam(npc, definition, trainerId)
+        TrainerOutfit.dress(npc, definition.cosmetics)
         npc.updateAspects()
 
         // 7. The skin arrives asynchronously, after the entity is spawned.

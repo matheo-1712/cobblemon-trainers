@@ -18,6 +18,11 @@
     "win": "trainer.cobblemon-trainers.kagumi.win",
     "lose": "trainer.cobblemon-trainers.kagumi.lose"
   },
+  "cosmetics": {
+    "trinkets": {
+      "wrist": "mega_showdown:mega_bracelet_pink"
+    }
+  },
   "location": {
     "biome": "minecraft:cherry_grove"
   },

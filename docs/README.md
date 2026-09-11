@@ -15,6 +15,7 @@ ses commandes ; les pages ci-dessous sont la **référence** - c'est là que vit
 | [DIFFICULTE.md](DIFFICULTE.md) | Ce que fait exactement `battle.difficulty`, de `0` à `5` |
 | [GIMMICKS.md](GIMMICKS.md) | Méga-évolution, Z-Move, dynamax, téracristal : `battle.gimmicks`, la gemme, le cristal Z, le type Tera |
 | [INTROS.md](INTROS.md) | Écrire l'écran de versus d'un dresseur : les calques, leur place, leurs temps et leurs sons |
+| [COSMETIQUES.md](COSMETIQUES.md) | Habiller un dresseur : armure, objet en main, bracelet méga |
 
 Un pack d'exemple couvrant chaque option vit dans
 [`examples/cobblemonrlm/`](../examples/cobblemonrlm) : un seul dossier qui fait à la fois
@@ -38,6 +39,7 @@ Phone sous leur propre onglet, à côté de ceux de tes packs.
 | Coller une équipe Showdown | [Le format d'équipe](DATAPACK.md#le-format-déquipe) |
 | Une forme régionale, un fakemon | [La ligne `Aspects:`](DATAPACK.md#la-ligne-aspects) |
 | Donner un skin à un dresseur | [Skins](DATAPACK.md#skins) |
+| Lui mettre une armure ou une Poké Ball en main | [Habiller un dresseur](COSMETIQUES.md) |
 | Ranger mes dresseurs en ligue | [Catégories](DATAPACK.md#catégories) |
 | Verrouiller un dresseur derrière un autre | [Conditions pour combattre](DATAPACK.md#conditions-pour-combattre) |
 | Donner des objets à la victoire | [Revanches et récompenses](DATAPACK.md#revanches-et-récompenses) |
@@ -59,7 +61,8 @@ Chaque sujet n'est décrit qu'à un seul endroit, et les autres pages y renvoien
 - tout ce qui touche à **l'appel d'un dresseur** est dans `SPAWNING.md` ;
 - tout ce que fait **l'IA** est dans `DIFFICULTE.md` ;
 - tout ce qui touche aux **gimmicks de combat** est dans `GIMMICKS.md` ;
-- tout ce qui touche à **l'écran de versus** est dans `INTROS.md`.
+- tout ce qui touche à **l'écran de versus** est dans `INTROS.md` ;
+- tout ce qui touche à **la tenue d'un dresseur** est dans `COSMETIQUES.md`.
 
 Une règle écrite à deux endroits est une règle qui finit fausse à l'un des deux. Ajouter un
 champ, c'est ajouter une ligne au tableau de `DATAPACK.md`, pas une section.

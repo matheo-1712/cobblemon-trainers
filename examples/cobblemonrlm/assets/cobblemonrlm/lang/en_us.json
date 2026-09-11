@@ -73,5 +73,10 @@
   "advancement.cobblemonrlm.badge_jacinthe.title": "Right on the beat",
   "advancement.cobblemonrlm.badge_jacinthe.description": "Defeat Jacinthe.",
   "advancement.cobblemonrlm.ligue.title": "League cleared",
-  "advancement.cobblemonrlm.ligue.description": "Defeat the three champions of the pack."
+  "advancement.cobblemonrlm.ligue.description": "Defeat the three champions of the pack.",
+  "trainer.cobblemonrlm.cosmetiques.name": "Kitted-Out Hiker",
+  "trainer.cobblemonrlm.cosmetiques.greeting": "Full leather, a Poké Ball in hand and a band on my wrist. Tempted?",
+  "trainer.cobblemonrlm.cosmetiques.battle_start": "None of this makes me any stronger. It just looks better.",
+  "trainer.cobblemonrlm.cosmetiques.win": "Well fought. Gear is no substitute for training.",
+  "trainer.cobblemonrlm.cosmetiques.lose": "Clothes do not make the trainer, but they help morale."
 }

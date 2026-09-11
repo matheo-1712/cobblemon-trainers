@@ -16,6 +16,7 @@ covers installing it; the pages below are the **reference** - this is where the 
 | [DIFFICULTY.md](DIFFICULTY.md) | Exactly what `battle.difficulty` does, from `0` to `5` |
 | [GIMMICKS.md](GIMMICKS.md) | Mega Evolution, Z-Moves, Dynamax, Terastallization: `battle.gimmicks`, the stone, the Z-Crystal, the Tera type |
 | [INTROS.md](INTROS.md) | Writing a trainer's versus screen: the layers, where they sit, when they arrive and what they sound like |
+| [COSMETICS.md](COSMETICS.md) | Dressing a trainer: armour, an item in hand, a Mega Bracelet |
 
 An example pack covering every option lives in
 [`examples/cobblemonrlm/`](../../examples/cobblemonrlm): one folder that works as a datapack
@@ -39,6 +40,7 @@ ones from your packs.
 | Paste in a Showdown team | [The team format](DATAPACK.md#the-team-format) |
 | Use a regional form or a fakemon | [The `Aspects:` line](DATAPACK.md#the-aspects-line) |
 | Give a trainer a skin | [Skins](DATAPACK.md#skins) |
+| Put armour or a Poké Ball on one | [Dressing a trainer](COSMETICS.md) |
 | Sort my trainers into a league | [Categories](DATAPACK.md#categories) |
 | Lock a trainer behind another | [Locking a trainer](DATAPACK.md#locking-a-trainer) |
 | Hand out items on a win | [Rematches and rewards](DATAPACK.md#rematches-and-rewards) |
@@ -60,7 +62,8 @@ Each subject is described in exactly one place, and the other pages link to it:
 - anything about **calling a trainer over** is in `SPAWNING.md`;
 - anything the **AI** does is in `DIFFICULTY.md`;
 - anything about **battle gimmicks** is in `GIMMICKS.md`;
-- anything about the **versus screen** is in `INTROS.md`.
+- anything about the **versus screen** is in `INTROS.md`;
+- anything about **what a trainer wears** is in `COSMETICS.md`.
 
 A rule written in two places is a rule that ends up wrong in one of them. Adding a field means
 adding a row to the `DATAPACK.md` table, not a section.

@@ -19,6 +19,11 @@
     "win": "trainer.cobblemon-trainers.aeliothys.win",
     "lose": "trainer.cobblemon-trainers.aeliothys.lose"
   },
+  "cosmetics": {
+    "trinkets": {
+      "chest": "mega_showdown:diantha_mega_charm"
+    }
+  },
 
   "location": {
     "biome": "minecraft:jungle"

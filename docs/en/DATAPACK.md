@@ -17,7 +17,8 @@ For installing the mod and for the commands, see the [README](../../README.md).
   [Farmable or not](#farmable-or-not) · [Progress tracking](#progress-tracking)
 - [The team format](#the-team-format) · [The `Aspects:` line](#the-aspects-line) ·
   [The `Fallback Item:` line](#the-fallback-item-line)
-- [Skins](#skins) · [Battle music](#battle-music) ·
+- [Skins](#skins) · [Dressing a trainer](COSMETICS.md) ·
+  [Battle music](#battle-music) ·
   [Versus screen](INTROS.md) · [Battle gimmicks](GIMMICKS.md) ·
   [Translating your text](#translating-your-text)
 - [Testing your pack](#testing-your-pack) · [Common mistakes](#common-mistakes)
@@ -146,6 +147,7 @@ Everything is optional: `{}` is a valid trainer, if not a very interesting one.
 | `rewards` | `[]` | Items handed to the winner |
 | `requires` | - | [What it takes to battle them](#locking-a-trainer) |
 | `location` | - | [Where to find them, and calling them from the Battle Phone](SPAWNING.md) |
+| `cosmetics` | - | [What they wear and what they hold](COSMETICS.md) |
 
 **➜ The `location` block is covered in [SPAWNING.md](SPAWNING.md)**, with its conditions, its
 text and everything the mod does around a call. Declaring it is what makes a trainer callable;

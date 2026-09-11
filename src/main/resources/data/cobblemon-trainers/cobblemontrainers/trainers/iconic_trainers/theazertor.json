@@ -18,6 +18,11 @@
     "win": "trainer.cobblemon-trainers.theazertor.win",
     "lose": "trainer.cobblemon-trainers.theazertor.lose"
   },
+  "cosmetics": {
+    "trinkets": {
+      "ankle": "mega_showdown:zinnia_mega_anklet"
+    }
+  },
   "location": {
     "biome": "minecraft:desert"
   },

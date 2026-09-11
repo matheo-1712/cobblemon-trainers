@@ -1,0 +1,33 @@
+{
+  "name": "trainer.cobblemonrlm.cosmetiques.name",
+  "skin": {
+    "type": "player_username",
+    "value": "Steve"
+  },
+  "battle": {
+    "level": 40,
+    "difficulty": 3
+  },
+  "messages": {
+    "greeting": "trainer.cobblemonrlm.cosmetiques.greeting",
+    "start": "trainer.cobblemonrlm.cosmetiques.battle_start",
+    "win": "trainer.cobblemonrlm.cosmetiques.win",
+    "lose": "trainer.cobblemonrlm.cosmetiques.lose"
+  },
+  "cosmetics": {
+    "trinkets": {
+      "face": "mega_showdown:maxie_glasses",
+      "chest": "mega_showdown:diantha_mega_charm",
+      "wrist": "mega_showdown:mega_bracelet",
+      "forearm": "mega_showdown:z_ring",
+      "hand": "mega_showdown:dynamax_band",
+      "belt": "mega_showdown:tera_orb",
+      "ankle": "mega_showdown:zinnia_mega_anklet"
+    }
+  },
+  "team": [
+    "Pidgeotto @ Eviolite\nAbility: Keen Eye\nLevel: 40\nEVs: 252 HP / 252 Def / 4 SpD\nBold Nature\n- Roost\n- Air Slash\n- U-turn\n- Tailwind",
+    "Sandslash @ Leftovers\nAbility: Sand Rush\nLevel: 40\nEVs: 252 HP / 252 Atk / 4 SpD\nAdamant Nature\n- Earthquake\n- Rapid Spin\n- Knock Off\n- Swords Dance",
+    "Quagsire @ Rocky Helmet\nAbility: Unaware\nLevel: 40\nEVs: 252 HP / 252 Def / 4 SpA\nRelaxed Nature\n- Recover\n- Earthquake\n- Scald\n- Toxic"
+  ]
+}

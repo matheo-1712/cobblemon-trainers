@@ -271,7 +271,16 @@ Timid Nature
 
 Tous les champs sont facultatifs, et chacun vit dans le bloc qui le concerne : `battle` pour
 le combat (format, difficulté, soin de l'équipe, musique), `messages` pour ce que le dresseur
-dit, `progress` pour ce que le battre change, `rewards` pour ce qu'on y gagne.
+dit, `progress` pour ce que le battre change, `rewards` pour ce qu'on y gagne, `cosmetics`
+pour ce qu'il porte.
+
+Un dresseur peut **porter une armure, tenir une Poké Ball et avoir ses objets clés sur lui** :
+c'est le bloc `cosmetics`. Les six emplacements d'équipement d'un mob vanilla, plus un bloc
+`trinkets` qui nomme **sept endroits du corps** - visage, torse, poignet, avant-bras, main,
+ceinture, cheville -, portables tous en même temps. Les noms disent l'endroit et pas l'usage,
+parce qu'un objet clé n'est pas toujours un bracelet : les lunettes de Max et la chevillère de
+Zinnia sont des objets méga eux aussi. C'est de l'apparence et rien d'autre - aucun effet en
+combat. Voir [docs/COSMETIQUES.md](docs/COSMETIQUES.md).
 
 Un clic droit sur un dresseur ouvre la boîte de dialogue de Cobblemon - la même que celle de
 leurs NPC : le dresseur salue, propose Combattre ou Annuler, et dit son mot une fois le combat
