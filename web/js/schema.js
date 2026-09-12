@@ -248,7 +248,12 @@ const SCHEMA = (() => {
     { k: 'fadeOut', t: 'num', def: 8, min: 0, l: t('Fondu de sortie', 'Fade out') }
   ];
 
-  const LAYER_COMMON = [
+  /*
+   * The fields every layer carries, in three groups: where it sits, when it arrives, what it
+   * sounds like. One list would be the same fields - the split is so a layer card can read
+   * where / what / when instead of putting nine unrelated rows under the type's own.
+   */
+  const LAYER_PLACE = [
     { k: 'anchor', t: 'sel', def: 'center', l: t('Ancre', 'Anchor'),
       options: [
         ['top-left', t('Haut gauche', 'Top left')], ['top', t('Haut', 'Top')], ['top-right', t('Haut droite', 'Top right')],
@@ -257,6 +262,9 @@ const SCHEMA = (() => {
       ] },
     { k: 'offset', t: 'offset', l: t('Décalage', 'Offset'),
       h: t('En pixels de 640 x 360.', 'In pixels of 640 x 360.') },
+  ];
+
+  const LAYER_TIME = [
     { k: 'at', t: 'num', def: 0, min: 0, l: t('Entre au tick', 'Enters at tick') },
     { k: 'for', t: 'num', def: 12, min: 1, l: t('Pendant', 'Over') },
     { k: 'from', t: 'sel', def: 'fade', l: t('Entrée', 'Entrance'),
@@ -268,11 +276,16 @@ const SCHEMA = (() => {
     { k: 'ease', t: 'sel', def: 'out', l: t('Courbe', 'Easing'),
       options: [['out', t('Ralentit en arrivant', 'Slows on arrival')], ['in', t('Accélère', 'Speeds up')], ['linear', t('Linéaire', 'Linear')]] },
     { k: 'alpha', t: 'num', def: 1, min: 0, max: 1, step: 0.01, l: t('Opacité', 'Opacity') },
+  ];
+
+  const LAYER_SOUND = [
     { k: 'sound', t: 'str', def: '', l: t('Son', 'Sound'),
       h: t('Clé de sounds.json, joué une fois au tick d’entrée.', 'A sounds.json key, played once on the entrance tick.') },
     { k: 'volume', t: 'num', def: 1, min: 0, step: 0.1, l: t('Volume', 'Volume') },
     { k: 'pitch', t: 'num', def: 1, min: 0.5, max: 2, step: 0.1, l: t('Hauteur', 'Pitch') }
   ];
+
+  const LAYER_COMMON = [...LAYER_PLACE, ...LAYER_TIME, ...LAYER_SOUND];
 
   const WHO = { k: 'who', t: 'sel', def: 'trainer', l: t('Qui', 'Who'),
     options: [['trainer', t('Le dresseur', 'The trainer')], ['player', t('Le joueur', 'The player')]] };
@@ -325,5 +338,6 @@ const SCHEMA = (() => {
     ] }
   };
 
-  return { TRAINER, CATEGORY, INTRO_FILE, LAYER_COMMON, LAYERS, TRINKET_SLOTS };
+  return { TRAINER, CATEGORY, INTRO_FILE, LAYER_PLACE, LAYER_TIME, LAYER_SOUND,
+           LAYER_COMMON, LAYERS, TRINKET_SLOTS };
 })();

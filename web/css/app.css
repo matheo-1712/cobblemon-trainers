@@ -21,6 +21,8 @@
 }
 
 * { box-sizing: border-box; }
+/* A row the stage hides is `display: flex` from .row, which outranks the default. */
+[hidden] { display: none !important; }
 
 body {
   margin: 0;
@@ -338,7 +340,140 @@ summary { list-style: none; }
 
 .preview-bar { display: flex; align-items: center; gap: 8px; }
 .preview-skins { gap: 12px; }
+.preview-skins .input { min-width: 0; }
 .slider { flex: 1; accent-color: var(--blue-bright); }
+
+/* ---- the stage ---------------------------------------------------------- */
+
+/*
+ * Two canvases, stacked. The scene keeps `image-rendering: pixelated` because it is the game's
+ * own 640 x 360 blown up; the overlay on top is drawn at twice that and smoothed, so a
+ * selection box is a hairline rather than four fat pixels.
+ */
+/*
+ * The frame is on the holder, not on the scene canvas. `inset: 0` puts the overlay on the
+ * padding box, and so does a canvas at `width: 100%`: the two agree to the pixel only if
+ * neither carries a border of its own - one pixel of disagreement is one pixel of drift
+ * between what is drawn and what is grabbed.
+ */
+.stage {
+  position: relative; line-height: 0;
+  border: 1px solid var(--line); border-radius: 9px; overflow: hidden;
+}
+.stage .preview-canvas { display: block; border: none; border-radius: 0; }
+
+.stage-overlay {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  touch-action: none;
+}
+.stage-overlay:focus-visible { outline: 2px solid var(--blue-bright); outline-offset: 2px; }
+/* The animation is watched, not edited: nothing under the pointer pretends otherwise. */
+.stage-play .stage-overlay { cursor: default; }
+
+.stage-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.stage-toggles { gap: 12px; }
+.stage-toggles .check { border: none; padding: 0; font-size: 12px; color: var(--muted); }
+.stage-hint { margin: 0; }
+.stage-clock { min-width: 26px; text-align: right; }
+.stage-skins { display: flex; flex-direction: column; gap: 4px; }
+.stage-skins p { margin: 0; }
+
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg-btn {
+  background: transparent; border: none; border-right: 1px solid var(--line);
+  color: var(--muted); font: inherit; font-size: 12.5px;
+  padding: 5px 12px; cursor: pointer;
+}
+.seg-btn:last-child { border-right: none; }
+.seg-btn:hover { color: var(--text); }
+.seg-on { background: var(--panel-2); color: var(--text); }
+
+/* The nine anchors as they sit on the screen, so the pad is a picture of the answer. */
+.pad { display: grid; grid-template-columns: repeat(3, 22px); gap: 3px; }
+.pad-dot {
+  height: 22px; border: 1px solid var(--line); border-radius: 5px;
+  background: #0f1422; cursor: pointer; padding: 0;
+}
+.pad-dot::after {
+  content: ''; display: block; width: 4px; height: 4px; margin: auto;
+  border-radius: 50%; background: var(--muted);
+}
+.pad-dot:hover { border-color: var(--blue); }
+.pad-on { border-color: var(--blue-bright); background: #16233c; }
+.pad-on::after { background: var(--blue-bright); }
+
+/* ---- layer cards -------------------------------------------------------- */
+
+/*
+ * The cards scroll here, not on the page: the stage and the timeline are sticky beside them,
+ * and the point of that is defeated the moment choosing a layer scrolls the document.
+ * `overscroll-behavior` stops a flick at either end from carrying on into the page.
+ */
+.layer-list {
+  max-height: calc(100vh - 300px); min-height: 220px;
+  overflow-y: auto; overscroll-behavior: contain;
+  padding-right: 4px;
+}
+
+.layer-on { border-color: var(--blue); box-shadow: 0 0 0 1px rgba(76, 139, 245, 0.35); }
+.layer-at { font-size: 11.5px; margin-left: auto; }
+.layer > .card-head .row { flex: none; }
+.layer-body { display: flex; flex-direction: column; gap: 10px; }
+.layer-part {
+  margin: 4px 0 0; font-size: 11px; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .07em;
+  border-top: 1px solid var(--line-soft); padding-top: 8px;
+}
+.layer-body > .layer-part:first-child { border-top: none; padding-top: 0; }
+
+/* ---- the timeline ------------------------------------------------------- */
+
+.timeline {
+  border: 1px solid var(--line-soft); border-radius: 9px; background: #111624;
+  padding: 10px 12px; margin-top: 12px;
+}
+.timeline-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+.timeline-head h4 { margin: 0; font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
+.timeline-body { display: flex; flex-direction: column; gap: 3px; max-height: 200px; overflow-y: auto; }
+
+.timeline-row { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 8px; align-items: center; }
+.timeline-name {
+  background: transparent; border: none; padding: 2px 0; text-align: left;
+  color: var(--muted); font: inherit; font-size: 11.5px; cursor: pointer;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.timeline-name:hover { color: var(--text); }
+.timeline-on .timeline-name { color: var(--text); }
+.timeline-off { opacity: .45; }
+
+.timeline-track {
+  position: relative; height: 16px;
+  background: #0f1422; border: 1px solid var(--line); border-radius: 5px;
+  touch-action: none;
+}
+.timeline-ruler .timeline-track { height: 12px; cursor: pointer; background: #0c1120; }
+.timeline-mark { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--line); }
+
+.timeline-bar {
+  position: absolute; top: 1px; bottom: 1px; min-width: 6px;
+  background: rgba(47, 111, 191, 0.55); border: 1px solid var(--blue);
+  border-radius: 4px; cursor: grab; touch-action: none;
+}
+.timeline-bar:active { cursor: grabbing; }
+.timeline-on .timeline-bar { background: rgba(76, 139, 245, 0.7); border-color: var(--blue-bright); }
+.timeline-grip {
+  position: absolute; top: -1px; bottom: -1px; right: -3px; width: 7px;
+  cursor: ew-resize; border-radius: 0 4px 4px 0;
+}
+.timeline-grip:hover { background: var(--blue-bright); }
+
+.timeline-body { position: relative; }
+.timeline-sweep { position: absolute; left: 128px; right: 0; top: 0; bottom: 0; pointer-events: none; }
+.timeline-playhead {
+  position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px;
+  background: var(--amber); opacity: .8;
+}
 
 /* ---- assets and translations -------------------------------------------- */
 

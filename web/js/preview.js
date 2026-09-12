@@ -156,6 +156,68 @@ const Preview = (() => {
     }
   };
 
+  /**
+   * What a layer covers at rest, in the 640 x 360 the screen is written on.
+   *
+   * `span` above answers a different question - how far off screen an entrance starts - and
+   * the two must not be merged: that one is a half-width with slack in it, this one is the
+   * real box the stage lets an author grab.
+   */
+  const extent = (ctx, layer, about) => {
+    switch (layer.type) {
+      case 'fill': {
+        // A slant leans every row of the band sideways, up to half its height times the slant
+        // on each side: the nominal width alone would leave the top and bottom of a band like
+        // the mod's own ungrabbable.
+        const w = layer.width ?? WIDTH;
+        const h = layer.height ?? HEIGHT;
+        return [w + h * Math.abs(layer.slant ?? 0), h];
+      }
+      case 'figure': {
+        const pixels = Math.max(1, Math.round((layer.height ?? 96) / FIGURE_H));
+        return [FIGURE_W * pixels, FIGURE_H * pixels];
+      }
+      case 'text': {
+        const size = layer.size ?? 1;
+        const value = resolve(layer.value, about || {});
+        return [Math.max(textWidth(ctx, value, size), 6), Math.max(10 * size, 6)];
+      }
+      case 'vs': {
+        const size = layer.size ?? 1;
+        return [Math.max(textWidth(ctx, 'VS', size), 6), Math.max(10 * size, 6)];
+      }
+      case 'image': {
+        const image = texture(layer.texture);
+        const known = image && image !== 'missing' ? image : null;
+        return [layer.width ?? (known ? known.width : 64), layer.height ?? (known ? known.height : 64)];
+      }
+      case 'team_balls': {
+        const slots = Math.min(Math.max(layer.slots ?? 6, 1), 6);
+        const size = BALL_SIZE * (layer.size ?? 1);
+        const gap = layer.gap ?? 3;
+        return [slots * (size + gap) - gap, size];
+      }
+      case 'pokemon': {
+        const tall = layer.height ?? 64;
+        return [tall, tall];
+      }
+      default: return [16, 16];
+    }
+  };
+
+  /** Where a layer comes to rest: its anchor plus its offset. */
+  const rest = (layer) => [
+    anchorX(layer.anchor ?? 'center') + (layer.offset ? layer.offset[0] : 0),
+    anchorY(layer.anchor ?? 'center') + (layer.offset ? layer.offset[1] : 0)
+  ];
+
+  /** The same, as a box - what the stage drags, resizes and snaps to. */
+  const restBox = (canvas, layer, about) => {
+    const [x, y] = rest(layer);
+    const [w, h] = extent(canvas.getContext('2d'), layer, about);
+    return { x, y, w, h, left: x - w / 2, top: y - h / 2 };
+  };
+
   /** The five marks a `text` layer may carry, filled in the way the screen fills them. */
   const resolve = (value, about) => String(value ?? '')
     .replace(/%name%/g, about.name || 'Trainer')
@@ -384,8 +446,13 @@ const Preview = (() => {
    *
    * @param about name, category, level, team size, the two skins - what the server sends along
    *   with the scene, and what the marks of a `text` layer are filled from.
+   * @param options `layout: true` draws every layer where it comes to rest, at full strength
+   *   and whatever the tick - the arrangement an author is placing rather than one moment of
+   *   the animation. That is the editor's own view; the mod never draws it.
+   * @return the box each layer was drawn in, by index, for a stage to hit-test against.
    */
-  const frame = (canvas, scene, elapsed, about, hidden) => {
+  const frame = (canvas, scene, elapsed, about, hidden, options) => {
+    const layout = Boolean(options && options.layout);
     const ctx = canvas.getContext('2d');
     ctx.imageSmoothingEnabled = false;
     ctx.clearRect(0, 0, WIDTH, HEIGHT);
@@ -393,18 +460,19 @@ const Preview = (() => {
     const ticks = Math.max(scene.duration ?? 100, 1);
     const fadeIn = Math.max(scene.fadeIn ?? 4, 1);
     const fadeOut = Math.max(scene.fadeOut ?? 8, 1);
-    const leaving = 1 - eased((elapsed - (ticks - fadeOut)) / fadeOut);
-    const screenAlpha = eased(elapsed / fadeIn) * leaving;
-    if (screenAlpha <= 0) return;
+    const leaving = layout ? 1 : 1 - eased((elapsed - (ticks - fadeOut)) / fadeOut);
+    const screenAlpha = layout ? 1 : eased(elapsed / fadeIn) * leaving;
+    const boxes = [];
+    if (screenAlpha <= 0) return boxes;
 
     (scene.layers || []).forEach((layer, index) => {
       if (hidden && hidden.has(index)) return;
-      if (elapsed < (layer.at ?? 0)) return;
+      if (!layout && elapsed < (layer.at ?? 0)) return;
       if (!draw[layer.type]) return;
 
       const since = elapsed - (layer.at ?? 0);
       const over = Math.max(layer.for ?? 12, 1);
-      const entrance = ease(layer.ease ?? 'out', Math.min(Math.max(since / over, 0), 1));
+      const entrance = layout ? 1 : ease(layer.ease ?? 'out', Math.min(Math.max(since / over, 0), 1));
 
       const restX = anchorX(layer.anchor ?? 'center') + (layer.offset ? layer.offset[0] : 0);
       const restY = anchorY(layer.anchor ?? 'center') + (layer.offset ? layer.offset[1] : 0);
@@ -415,7 +483,7 @@ const Preview = (() => {
       let alpha = screenAlpha * (layer.alpha ?? 1);
       let scale = 1;
 
-      switch (layer.from ?? 'fade') {
+      switch (layout ? 'none' : (layer.from ?? 'fade')) {
         case 'left': x = lerp(-reach, restX, entrance); break;
         case 'right': x = lerp(WIDTH + reach, restX, entrance); break;
         case 'top': y = lerp(-reach, restY, entrance); break;
@@ -431,7 +499,7 @@ const Preview = (() => {
       if (alpha <= 0) return;
 
       // A model blends nothing in game, so a figure leaves by going rather than by fading.
-      if (layer.type === 'figure' || layer.type === 'pokemon') {
+      if (!layout && (layer.type === 'figure' || layer.type === 'pokemon')) {
         switch (layer.from) {
           case 'left': x = lerp(-reach, x, leaving); break;
           case 'right': x = lerp(WIDTH + reach, x, leaving); break;
@@ -442,9 +510,14 @@ const Preview = (() => {
         if (scale <= 0) return;
       }
 
+      const [w, h] = extent(ctx, layer, about);
+      boxes[index] = { index, x, y, w: w * scale, h: h * scale };
       draw[layer.type](ctx, layer, x, y, scale, Math.min(alpha, 1), about);
     });
+
+    return boxes;
   };
 
-  return { frame, give, texture, skin, WIDTH, HEIGHT, onRepaint: null, drawFlatSkin: figure };
+  return { frame, give, texture, skin, extent, rest, restBox, anchorX, anchorY,
+           WIDTH, HEIGHT, onRepaint: null, drawFlatSkin: figure };
 })();

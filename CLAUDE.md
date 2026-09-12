@@ -1923,6 +1923,9 @@ entier. Aucun build, aucun `package.json` - des `<script>` dans l'ordre, ce qui 
 Points à ne pas redécouvrir :
 
 - **`web/js/schema.js` est la seule description des champs**, labels FR et EN compris.
+  `LAYER_COMMON` y est la concaténation de `LAYER_PLACE`, `LAYER_TIME` et `LAYER_SOUND` : les
+  mêmes champs, découpés pour qu'une carte de calque se lise où / quoi / quand plutôt que de
+  poser neuf lignes sans rapport à la suite.
   Ajouter un champ au mod, c'est ajouter une ligne au tableau de `docs/DATAPACK.md` et une
   entrée ici - jamais un formulaire écrit à la main quelque part. Les libellés vivent à côté
   du champ qu'ils décrivent pour la même raison que le `Check` de `TrainerPlace` : un nom
@@ -1932,6 +1935,27 @@ Points à ne pas redécouvrir :
   ancres tombent où le jeu les met. Toucher au séquencement de l'écran, c'est toucher aux
   deux. Ce qui ne peut pas suivre est le modèle 3D : une `figure` y est le skin à plat, comme
   le repli du mod lui-même, et un calque `pokemon` une case marquée.
+- **`web/js/stage.js` rend cet aperçu manipulable** - on clique un calque, on le glisse, on
+  tire un coin - et c'est la seule chose de l'éditeur que le mod n'a pas. Trois points s'y
+  décident :
+  - **On ne place que dans la vue « mise en page »**, qui dessine chaque calque là où il se
+    pose, à pleine force, quel que soit le tick (`Preview.frame`, option `layout`). L'autre vue
+    est l'animation, et elle est en lecture seule : une entrée **interpole** la position d'un
+    calque, donc un pixel de souris n'y serait pas un pixel de décalage, mais un pixel
+    multiplié par l'avancement de l'entrée.
+  - **Ce qu'on saisit vient de `Preview.extent`**, qui répond la vraie boîte d'un calque et
+    n'est pas `span`, lequel répond à une autre question - de combien un calque part hors de
+    l'écran. Les fusionner ferait manquer les poignées d'un calque sur deux.
+  - **Changer d'ancre ne déplace pas le calque** : `reanchor` re-base le décalage sur le
+    nouveau coin, et le trait pointillé de l'ancre au calque est ce qui rend la notion visible.
+    Une ancre qui téléporterait serait un piège plutôt qu'un réglage.
+  - **Rien de la sélection ne fait bouger la page.** Les cartes de calque défilent dans leur
+    propre panneau (`.layer-list`), et c'est ce qui permet d'amener la carte choisie sous les
+    yeux sans emporter le reste : `scrollIntoView` fait défiler **tous** les ancêtres
+    scrollables, document compris, donc choisir un calque sur le canvas envoyait la page vers
+    sa carte et sortait le canvas de l'écran - au moment précis où on le regarde. Même piège
+    avec `focus()`, qui fait défiler jusqu'à l'élément visé si on ne lui passe pas
+    `preventScroll`. L'aperçu et la chronologie sont `sticky` à côté, et c'est tout l'intérêt.
 - **Rien de `web/assets/` n'est commité.** `web/sync-assets.sh` va chercher dans le dépôt les
   logo et l'icône du mod (`assets/logo.png` et l'icône de `fabric.mod.json`, donc la page ne
   peut pas porter un logo périmé), les

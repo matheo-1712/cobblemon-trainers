@@ -49,10 +49,44 @@ Ouvrir `index.html` directement marche aussi, sauf le menu des modèles : un `fe
 | `js/form.js` | Le moteur de formulaire : un schéma entre, du DOM sort, et l'objet édité **est** le fichier |
 | `js/validate.js` | Les pièges du mod dits à voix haute - un champ que Gson ignore en silence, un `dynamax` qui s'écrit `max` |
 | `js/preview.js` | `BattleIntroScreen.kt` transcrit : mêmes courbes, mêmes entrées, même 640 × 360 |
+| `js/stage.js` | L'aperçu d'intro rendu manipulable : la sélection, le glisser-déposer, les poignées, l'aimantation et la chronologie |
 | `js/assets.js` | Ce qui vit sous `assets/` : les quatre types de fichiers, leur place dans l'archive, la référence qu'ils portent, et le `sounds.json` qui en sort. Les octets vont dans IndexedDB - une piste de trois mégaoctets ne tient pas dans le `localStorage` |
 | `js/pack.js` | Le pack, son arborescence, les deux moitiés de l'archive et la relecture d'un pack existant |
 | `js/app.js` | La mise en page et le câblage |
 | `js/i18n.js` | Le reste de l'interface, en deux langues |
+
+## Écrire une intro
+
+L'aperçu d'une intro se manipule : on clique un calque pour le prendre, on le glisse pour le
+placer, on tire un coin pour le redimensionner. Les flèches déplacent d'un pixel, `Maj` de dix,
+`Suppr` retire le calque et `Ctrl+D` le duplique. Un calque déplacé écrit son `offset` ; un
+calque redimensionné écrit ce que son type a - la `width` et la `height` d'un aplat ou d'une
+image, la `height` d'une figure, la `size` d'un texte.
+
+Deux vues, et le partage est toute l'idée :
+
+| Vue | Ce qu'elle montre | Ce qu'on y fait |
+| --- | --- | --- |
+| **Mise en page** | Chaque calque là où il se pose, à pleine force, quel que soit le tick | On place, on redimensionne, on aimante |
+| **Animation** | La vraie image, celle que le mod dessine à ce tick | On regarde |
+
+On ne déplace pas un calque dans l'animation, et ce n'est pas un oubli : une entrée interpole
+la position d'un calque, donc un pixel de souris n'y serait pas un pixel de décalage - il
+serait un pixel multiplié par l'avancement de l'entrée.
+
+**L'ancre se choisit sur un pavé de neuf**, et en changer ne déplace pas le calque : le
+décalage est re-calculé sur le nouveau coin. Le trait pointillé tracé de l'ancre au calque dit
+d'où part ce décalage. C'est ce à quoi le calque se tient quand la fenêtre change de forme, pas
+un moyen de l'envoyer à l'autre bout de l'écran.
+
+**Rien de tout ça ne fait descendre la page.** Les cartes de calque défilent dans leur propre
+panneau, et l'aperçu comme la chronologie restent à côté : choisir un calque, en ouvrir la
+carte ou en glisser un ne sort jamais le canvas de l'écran.
+
+**La chronologie** donne une ligne par calque, de son tick d'entrée à la fin de son entrée :
+glisser la barre change le `at`, son bord droit le `for`, et cliquer la règle amène l'aperçu à
+ce tick - ce qui bascule en Animation, puisque demander à voir le tick 40 est demander à voir
+l'animation.
 
 ## Ce qu'un aperçu ne peut pas montrer
 

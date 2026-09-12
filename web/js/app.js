@@ -11,7 +11,16 @@ const App = (() => {
   const T = (key, ...args) => I18N.t(key, ...args);
 
   let tab = { trainer: 'form', intro: 'layers', category: 'form', advancement: 'form' };
-  let preview = { tick: 0, playing: false, raf: null, hidden: new Set(), skin: '', player: 'RereBleue', slim: false };
+  /*
+   * What the intro editor holds between renders: where the playhead is, which view is up,
+   * which layer is selected, and the two aids. It outlives every render, so a drag that ends
+   * in a rebuild comes back to the same selection under the same pointer.
+   */
+  let preview = {
+    tick: 0, playing: false, raf: null, mode: 'layout',
+    hidden: new Set(), selected: null, snap: true, grid: true,
+    skin: '', player: 'RereBleue', slim: false
+  };
   let templates = null;
 
   const $ = (id) => document.getElementById(id);
@@ -375,32 +384,198 @@ const App = (() => {
     };
   };
 
-  const paintIntro = (entry, canvas) => {
-    Preview.frame(canvas, entry.doc, preview.tick, about(), preview.hidden);
+  /*
+   * What the stage, the timeline and the layer cards have to say to each other lives here
+   * rather than being passed down: all three are rebuilt by the same render, and all three
+   * have to answer the same selection. They are cleared at the top of renderIntro, so a stale
+   * canvas from a file that is no longer open can never be painted into.
+   */
+  let stage = null;
+  let clock = null;       // the timeline, once it exists
+  let cards = [];         // one <details> per layer, so selecting can open one without a render
+
+  const layerName = (layer, index) => {
+    const known = SCHEMA.LAYERS[layer.type];
+    const title = known ? I18N.of(known.l) : layer.type;
+    const said = layer.type === 'text' ? layer.value
+      : layer.type === 'image' ? String(layer.texture || '').split('/').pop()
+      : layer.type === 'figure' || layer.type === 'team_balls'
+        ? T('preview.' + (layer.who === 'player' ? 'player' : 'trainer')) : '';
+    return (index + 1) + ' · ' + title + (said ? ' · ' + said : '');
   };
 
-  const renderIntroPreview = (entry) => {
+  /**
+   * Brings a card into view inside the layers panel, and moves nothing else.
+   *
+   * `scrollIntoView` scrolls every ancestor that can scroll, the document included: choosing a
+   * layer on the canvas would send the page down to its card and take the canvas off screen -
+   * which is exactly the moment one is looking at it.
+   */
+  const reveal = (card) => {
+    const panel = card && card.parentElement;
+    if (!panel) return;
+    const box = card.getBoundingClientRect();
+    const view = panel.getBoundingClientRect();
+    if (box.top < view.top) panel.scrollTop += box.top - view.top;
+    else if (box.bottom > view.bottom) {
+      panel.scrollTop += Math.min(box.top - view.top, box.bottom - view.bottom);
+    }
+  };
+
+  /** Lights the card of the selected layer and opens it, without rebuilding the editor. */
+  const paintSelection = (open, bring) => {
+    cards.forEach((card, index) => {
+      const on = index === preview.selected;
+      card.classList.toggle('layer-on', on);
+      if (on && open) {
+        card.open = true;
+        if (bring) reveal(card);
+      }
+    });
+  };
+
+  /**
+   * Only a selection that actually changed opens a card: a click on the summary of the card
+   * that is already chosen is a click to fold it away, and forcing it back open would leave
+   * one card in the list that cannot be closed.
+   */
+  const select = (index, reveal) => {
+    const moved = preview.selected !== index;
+    preview.selected = index;
+    paintSelection(moved, moved && reveal);
+    if (stage) stage.paintOverlay();
+    if (clock) clock.update();
+  };
+
+  /** A drag writes into the very object the file is made of; only the repaint is ours. */
+  const touched = () => {
+    Pack.save();
+    if (clock) clock.update();
+  };
+
+  const renderStage = (entry) => {
     const card = el('div', 'preview');
+    transport = {};
+
+    // Switching view never rebuilds the editor, it only repaints: a scrub of the timeline
+    // ruler switches to the animation mid-drag, and a rebuild there would tear the node the
+    // pointer is captured on out from under it.
+    const seg = [];
+    const modes = el('div', 'seg');
+    [['layout', 'stage.layout'], ['play', 'stage.play']].forEach(([mode, key]) => {
+      const button = el('button', 'seg-btn', T(key));
+      button.type = 'button';
+      button.addEventListener('click', () => {
+        if (preview.mode === mode) return;
+        preview.mode = mode;
+        if (mode === 'layout') stop();
+        paintMode();
+        if (stage) stage.paint();
+      });
+      seg.push([mode, button]);
+      modes.appendChild(button);
+    });
+
+    const toggles = el('div', 'row row-end stage-toggles');
+    [['snap', 'stage.snap'], ['grid', 'stage.grid']].forEach(([key, label]) => {
+      const tag = el('label', 'check');
+      const box = el('input');
+      box.type = 'checkbox';
+      box.checked = Boolean(preview[key]);
+      box.addEventListener('change', () => {
+        preview[key] = box.checked;
+        if (stage) stage.paintOverlay();
+      });
+      tag.appendChild(box);
+      tag.appendChild(el('span', null, T(label)));
+      toggles.appendChild(tag);
+    });
+
+    const bar = el('div', 'stage-bar');
+    bar.appendChild(modes);
+    bar.appendChild(toggles);
+    card.appendChild(bar);
+
+    const holder = el('div', 'stage');
     const canvas = document.createElement('canvas');
     canvas.width = Preview.WIDTH;
     canvas.height = Preview.HEIGHT;
     canvas.className = 'preview-canvas';
-    card.appendChild(canvas);
+    holder.appendChild(canvas);
 
-    const duration = entry.doc.duration ?? 100;
+    // The overlay takes the pointer and the keyboard, so it is focusable: arrows nudge the
+    // selected layer, and a focus ring says the canvas is listening.
+    const overlay = document.createElement('canvas');
+    overlay.className = 'stage-overlay';
+    overlay.tabIndex = 0;
+    holder.appendChild(overlay);
+    card.appendChild(holder);
+
+    stage = Stage.create({
+      canvas,
+      overlay,
+      state: preview,
+      scene: () => entry.doc,
+      layers: () => entry.doc.layers,
+      about,
+      onSelect: (index) => select(index, true),
+      onEdit: touched,
+      onCommit: () => Pack.changed(),
+      onRemove: (index) => removeLayer(entry, index),
+      onDuplicate: (index) => duplicateLayer(entry, index),
+      onPaint: () => { if (clock) clock.update(); }
+    });
+
+    card.appendChild(renderTransport(entry, canvas));
+
+    const said = el('p', 'muted small stage-hint');
+    const keys = el('p', 'muted small', T('stage.keys'));
+    card.appendChild(said);
+    card.appendChild(keys);
+
+    card.appendChild(renderStageSkins(entry));
+    card.appendChild(el('p', 'muted small', T('preview.note')));
+
+    Object.assign(transport, { seg, toggles, holder, said, keys });
+    paintMode();
+    Preview.onRepaint = () => { if (stage) stage.paint(); };
+    stage.paint();
+    if (preview.playing && preview.mode === 'play') loop(entry);
+    return card;
+  };
+
+  /** Everything on the stage panel that says which of the two views is up. */
+  const paintMode = () => {
+    if (!transport || !transport.seg) return;
+    const playing = preview.mode === 'play';
+    transport.seg.forEach(([mode, button]) =>
+      button.classList.toggle('seg-on', preview.mode === mode));
+    transport.toggles.hidden = playing;
+    transport.keys.hidden = playing;
+    transport.holder.classList.toggle('stage-play', playing);
+    transport.said.textContent = T(playing ? 'stage.hint.play' : 'stage.hint');
+  };
+
+  /** Play, pause, restart and the scrub - all four only mean anything in the animation. */
+  const renderTransport = (entry, canvas) => {
     const bar = el('div', 'preview-bar');
+    const duration = () => Math.max(entry.doc.duration ?? 100, 1);
 
-    const play = el('button', 'btn btn-small btn-primary', T(preview.playing ? 'preview.pause' : 'preview.play'));
+    const play = el('button', 'btn btn-small btn-primary',
+                    T(preview.playing ? 'preview.pause' : 'preview.play'));
     play.type = 'button';
     play.addEventListener('click', () => {
       preview.playing = !preview.playing;
-      play.textContent = T(preview.playing ? 'preview.pause' : 'preview.play');
       if (preview.playing) {
-        if (preview.tick >= duration - 0.01) preview.tick = 0;
-        loop(entry, canvas, slider, clock);
-      } else if (preview.raf) {
-        cancelAnimationFrame(preview.raf);
+        preview.mode = 'play';
+        if (preview.tick >= duration() - 0.01) preview.tick = 0;
+        paintMode();
+        loop(entry);
+      } else {
+        stop();
+        if (stage) stage.paint();
       }
+      paintTransport();
     });
     bar.appendChild(play);
 
@@ -409,31 +584,34 @@ const App = (() => {
     again.addEventListener('click', () => {
       preview.tick = 0;
       preview.playing = true;
-      play.textContent = T('preview.pause');
-      loop(entry, canvas, slider, clock);
+      preview.mode = 'play';
+      paintMode();
+      loop(entry);
+      paintTransport();
     });
     bar.appendChild(again);
 
     const slider = el('input', 'slider');
     slider.type = 'range';
     slider.min = 0;
-    slider.max = duration;
+    slider.max = duration();
     slider.step = 0.5;
     slider.value = preview.tick;
     slider.addEventListener('input', () => {
-      preview.playing = false;
-      play.textContent = T('preview.play');
-      if (preview.raf) cancelAnimationFrame(preview.raf);
-      preview.tick = Number(slider.value);
-      clock.textContent = preview.tick.toFixed(0);
-      paintIntro(entry, canvas);
+      scrubTo(Number(slider.value));
     });
     bar.appendChild(slider);
 
-    const clock = el('span', 'mono muted', String(Math.round(preview.tick)));
-    bar.appendChild(clock);
-    card.appendChild(bar);
+    const count = el('span', 'mono muted stage-clock', String(Math.round(preview.tick)));
+    bar.appendChild(count);
 
+    // The transport is redrawn by the animation loop rather than by a render: sixty renders a
+    // second would rebuild the layer cards under the author's pointer.
+    Object.assign(transport, { play, slider, count, canvas });
+    return bar;
+  };
+
+  const renderStageSkins = (entry) => {
     const skins = el('div', 'row preview-skins');
     [['preview.trainer', 'skin'], ['preview.player', 'player']].forEach(([label, key]) => {
       const cell = el('label', 'mini');
@@ -444,38 +622,204 @@ const App = (() => {
       input.value = preview[key] || '';
       input.addEventListener('change', () => {
         preview[key] = input.value.trim();
-        paintIntro(entry, canvas);
+        if (stage) stage.paint();
       });
       cell.appendChild(input);
       skins.appendChild(cell);
     });
-    card.appendChild(skins);
-    card.appendChild(el('p', 'muted small', T('preview.skin.hint')));
-    card.appendChild(el('p', 'muted small', T('preview.note')));
-
-    Preview.onRepaint = () => paintIntro(entry, canvas);
-    paintIntro(entry, canvas);
-    if (preview.playing) loop(entry, canvas, slider, clock);
-    return card;
+    const hint = el('div', 'preview-skins-hint');
+    hint.appendChild(el('p', 'muted small', T('preview.skin.hint')));
+    const wrap = el('div', 'stage-skins');
+    wrap.appendChild(skins);
+    wrap.appendChild(hint);
+    return wrap;
   };
 
-  const loop = (entry, canvas, slider, clock) => {
+  /* -- the animation -- */
+
+  let transport = null;
+
+  const stop = () => {
+    preview.playing = false;
+    if (preview.raf) cancelAnimationFrame(preview.raf);
+    preview.raf = null;
+  };
+
+  /** Scrubbing is a question about the animation, so it answers in the animation. */
+  const scrubTo = (tick) => {
+    stop();
+    preview.tick = tick;
+    preview.mode = 'play';
+    paintMode();
+    if (stage) stage.paint();
+    paintTransport();
+  };
+
+  const paintTransport = () => {
+    if (!transport) return;
+    transport.slider.value = preview.tick;
+    transport.count.textContent = preview.tick.toFixed(0);
+    transport.play.textContent = T(preview.playing ? 'preview.pause' : 'preview.play');
+  };
+
+  const loop = (entry) => {
     if (preview.raf) cancelAnimationFrame(preview.raf);
     let last = performance.now();
     const step = (now) => {
-      const duration = entry.doc.duration ?? 100;
+      const duration = Math.max(entry.doc.duration ?? 100, 1);
       preview.tick += (now - last) / 50;
       last = now;
       if (preview.tick >= duration) {
         preview.tick = duration;
         preview.playing = false;
       }
-      slider.value = preview.tick;
-      clock.textContent = preview.tick.toFixed(0);
-      paintIntro(entry, canvas);
+      if (stage) stage.paint();
+      paintTransport();
       if (preview.playing) preview.raf = requestAnimationFrame(step);
     };
     preview.raf = requestAnimationFrame(step);
+  };
+
+  /* -- the layers -- */
+
+  const removeLayer = (entry, index) => {
+    entry.doc.layers.splice(index, 1);
+    preview.hidden.clear();
+    preview.selected = entry.doc.layers.length ? Math.min(index, entry.doc.layers.length - 1) : null;
+    Pack.changed();
+  };
+
+  const duplicateLayer = (entry, index) => {
+    const copy = JSON.parse(JSON.stringify(entry.doc.layers[index]));
+    entry.doc.layers.splice(index + 1, 0, copy);
+    preview.hidden.clear();
+    preview.selected = index + 1;
+    Pack.changed();
+  };
+
+  /** Moves a layer in the drawing order, and the selection with it. */
+  const moveLayer = (entry, index, to) => {
+    const layers = entry.doc.layers;
+    if (to < 0 || to >= layers.length) return;
+    [layers[to], layers[index]] = [layers[index], layers[to]];
+    const held = preview.hidden.has(index);
+    const there = preview.hidden.has(to);
+    preview.hidden.delete(index);
+    preview.hidden.delete(to);
+    if (held) preview.hidden.add(to);
+    if (there) preview.hidden.add(index);
+    if (preview.selected === index) preview.selected = to;
+    else if (preview.selected === to) preview.selected = index;
+    Pack.changed();
+  };
+
+  /**
+   * The nine anchors as a pad rather than a menu.
+   *
+   * Picking one re-bases the offset, so the layer does not move: what changes is the corner it
+   * holds on to. A menu could not say that, and a pad next to the tether drawn on the canvas
+   * says it without a sentence.
+   */
+  const renderAnchorPad = (entry, layer, index) => {
+    const wrap = el('div', 'field');
+    const head = el('span', 'field-label', T('stage.anchor'));
+    wrap.appendChild(head);
+    const pad = el('div', 'pad');
+    ['top-left', 'top', 'top-right', 'left', 'center', 'right',
+     'bottom-left', 'bottom', 'bottom-right'].forEach((anchor) => {
+      const dot = el('button', 'pad-dot' + ((layer.anchor ?? 'center') === anchor ? ' pad-on' : ''));
+      dot.type = 'button';
+      dot.title = anchor;
+      dot.addEventListener('click', () => {
+        if (!stage) return;
+        stage.reanchor(index, anchor);
+        Pack.changed();
+      });
+      pad.appendChild(dot);
+    });
+    wrap.appendChild(pad);
+    wrap.appendChild(el('p', 'field-hint', T('stage.anchor.hint')));
+    return wrap;
+  };
+
+  const renderLayerCard = (entry, layer, index) => {
+    const layers = entry.doc.layers;
+    const box = el('details', 'card layer' + (index === preview.selected ? ' layer-on' : ''));
+    box.open = index === preview.selected;
+
+    const head = el('summary', 'card-head');
+    head.appendChild(el('span', 'card-title', layerName(layer, index)));
+    head.appendChild(el('span', 'layer-at mono muted', '@' + (layer.at ?? 0)));
+
+    const actions = el('div', 'row');
+    const act = (glyph, key, run, cls) => {
+      const button = el('button', 'btn btn-ghost btn-mini' + (cls || ''), glyph);
+      button.type = 'button';
+      button.title = T(key);
+      button.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        run();
+      });
+      actions.appendChild(button);
+    };
+
+    act(preview.hidden.has(index) ? '◌' : '◉', 'layers.hide', () => {
+      if (preview.hidden.has(index)) preview.hidden.delete(index);
+      else preview.hidden.add(index);
+      render();
+    });
+    act('⧉', 'layers.duplicate', () => duplicateLayer(entry, index));
+    act('↑', 'layers.up', () => moveLayer(entry, index, index - 1));
+    act('↓', 'layers.down', () => moveLayer(entry, index, index + 1));
+    act('×', 'layers.remove', () => removeLayer(entry, index), ' btn-danger');
+    head.appendChild(actions);
+    head.addEventListener('click', () => select(index, false));
+    box.appendChild(head);
+
+    const changed = () => {
+      Pack.save();
+      renderChecks(entry);
+      if (stage) stage.paint();
+      if (clock) clock.update();
+    };
+
+    const body = el('div', 'layer-body');
+    const own = SCHEMA.LAYERS[layer.type];
+    if (own) {
+      body.appendChild(el('h5', 'layer-part', I18N.of(own.l)));
+      body.appendChild(Form.render(own.fields, layer, changed, { texture: { list: 'texture-ids' } }));
+    }
+
+    body.appendChild(el('h5', 'layer-part', T('layers.part.place')));
+    body.appendChild(renderAnchorPad(entry, layer, index));
+    body.appendChild(Form.render(SCHEMA.LAYER_PLACE, layer, changed));
+
+    body.appendChild(el('h5', 'layer-part', T('layers.part.time')));
+    body.appendChild(Form.render(SCHEMA.LAYER_TIME, layer, changed));
+
+    body.appendChild(el('h5', 'layer-part', T('layers.part.sound')));
+    body.appendChild(Form.render(SCHEMA.LAYER_SOUND, layer, changed, { sound: { list: 'sound-ids' } }));
+
+    if (layer.type === 'image') {
+      const drop = el('div', 'drop-zone', T('assets.drop.texture'));
+      drop.addEventListener('dragover', (event) => { event.preventDefault(); drop.classList.add('drop'); });
+      drop.addEventListener('dragleave', () => drop.classList.remove('drop'));
+      drop.addEventListener('drop', async (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        drop.classList.remove('drop');
+        const asset = await take(event.dataTransfer.files[0], 'intro_texture');
+        if (asset) {
+          layer.texture = Assets.reference(asset, Pack.state.namespace);
+          Pack.changed();
+        }
+      });
+      body.appendChild(drop);
+    }
+
+    box.appendChild(body);
+    return box;
   };
 
   const renderLayers = (entry) => {
@@ -488,117 +832,78 @@ const App = (() => {
       render();
     }));
 
-    wrap.appendChild(el('p', 'field-hint', T('layers.order')));
-    if (layers.length === 0) wrap.appendChild(el('p', 'muted', T('layers.empty')));
-
-    layers.forEach((layer, index) => {
-      const box = el('details', 'card layer');
-      const head = el('summary', 'card-head');
-      const title = SCHEMA.LAYERS[layer.type] ? I18N.of(SCHEMA.LAYERS[layer.type].l) : layer.type;
-      head.appendChild(el('span', 'card-title', (index + 1) + ' · ' + title
-        + (layer.value ? ' · ' + layer.value : '') + '  @' + (layer.at ?? 0)));
-
-      const actions = el('div', 'row');
-      const eye = el('button', 'btn btn-ghost btn-mini', preview.hidden.has(index) ? '◌' : '◉');
-      eye.type = 'button';
-      eye.title = T('layers.hide');
-      eye.addEventListener('click', (event) => {
-        event.preventDefault();
-        if (preview.hidden.has(index)) preview.hidden.delete(index); else preview.hidden.add(index);
-        render();
-      });
-      actions.appendChild(eye);
-
-      const up = el('button', 'btn btn-ghost btn-mini', '↑');
-      up.type = 'button';
-      up.addEventListener('click', (event) => {
-        event.preventDefault();
-        if (index === 0) return;
-        [layers[index - 1], layers[index]] = [layers[index], layers[index - 1]];
-        Pack.changed();
-      });
-      actions.appendChild(up);
-
-      const down = el('button', 'btn btn-ghost btn-mini', '↓');
-      down.type = 'button';
-      down.addEventListener('click', (event) => {
-        event.preventDefault();
-        if (index === layers.length - 1) return;
-        [layers[index + 1], layers[index]] = [layers[index], layers[index + 1]];
-        Pack.changed();
-      });
-      actions.appendChild(down);
-
-      const kill = el('button', 'btn btn-ghost btn-mini btn-danger', '×');
-      kill.type = 'button';
-      kill.addEventListener('click', (event) => {
-        event.preventDefault();
-        layers.splice(index, 1);
-        preview.hidden.clear();
-        Pack.changed();
-      });
-      actions.appendChild(kill);
-      head.appendChild(actions);
-      box.appendChild(head);
-
-      const changed = () => {
-        Pack.save();
-        renderChecks(entry);
-        const canvas = document.querySelector('.preview-canvas');
-        if (canvas) paintIntro(entry, canvas);
-      };
-
-      const own = SCHEMA.LAYERS[layer.type];
-      if (own) box.appendChild(Form.render(own.fields, layer, changed, { texture: { list: 'texture-ids' } }));
-      box.appendChild(Form.render(SCHEMA.LAYER_COMMON, layer, changed, { sound: { list: 'sound-ids' } }));
-
-      if (layer.type === 'image') {
-        const drop = el('div', 'drop-zone', T('assets.drop.texture'));
-        drop.addEventListener('dragover', (event) => { event.preventDefault(); drop.classList.add('drop'); });
-        drop.addEventListener('dragleave', () => drop.classList.remove('drop'));
-        drop.addEventListener('drop', async (event) => {
-          event.preventDefault();
-          event.stopPropagation();
-          drop.classList.remove('drop');
-          const asset = await take(event.dataTransfer.files[0], 'intro_texture');
-          if (asset) {
-            layer.texture = Assets.reference(asset, Pack.state.namespace);
-            Pack.changed();
-          }
-        });
-        box.appendChild(drop);
-      }
-      wrap.appendChild(box);
-    });
-
-    const bar = el('div', 'row row-wrap');
+    // A new layer arrives where the playhead is and where the eye is: writing it at tick 0
+    // meant every added layer had to be dragged out of the first frame before it could be
+    // seen at all.
+    const bar = el('div', 'row row-wrap add-row');
+    bar.appendChild(el('span', 'field-label', T('layers.add')));
     Object.entries(SCHEMA.LAYERS).forEach(([type, definition]) => {
       const add = el('button', 'btn btn-small btn-ghost', '+ ' + I18N.of(definition.l));
       add.type = 'button';
       add.addEventListener('click', () => {
-        layers.push({ type, at: layers.length ? (layers[layers.length - 1].at ?? 0) : 0 });
+        const at = Math.round(preview.mode === 'play' ? preview.tick : 0);
+        layers.push(at ? { type, at } : { type });
+        preview.selected = layers.length - 1;
         Pack.changed();
       });
       bar.appendChild(add);
     });
     wrap.appendChild(bar);
+
+    wrap.appendChild(el('p', 'field-hint', T('layers.order')));
+    if (layers.length === 0) wrap.appendChild(el('p', 'muted', T('layers.empty')));
+
+    // The cards scroll in a panel of their own rather than down the page. Opening one, or
+    // bringing the chosen one into view, then cannot take the stage off screen, and the page
+    // keeps the height it had - twenty layers do not push the timeline out of reach.
+    const list = el('div', 'layer-list');
+    cards = layers.map((layer, index) => {
+      const card = renderLayerCard(entry, layer, index);
+      list.appendChild(card);
+      return card;
+    });
+    wrap.appendChild(list);
+    // Nothing is laid out until the caller has put all this in the document.
+    if (cards[preview.selected]) setTimeout(() => reveal(cards[preview.selected]), 0);
     return wrap;
   };
 
   const renderIntro = (entry) => {
+    if (preview.selected !== null && preview.selected !== undefined
+        && !(entry.doc.layers || [])[preview.selected]) preview.selected = null;
+
     const wrap = el('div', 'editor-body');
     wrap.appendChild(renderTabs(entry, ['layers', 'json']));
 
     if (tab.intro === 'json') {
+      stop();
       wrap.appendChild(renderJson(entry));
       return wrap;
     }
 
     const columns = el('div', 'columns columns-intro');
     const left = el('div', 'column');
-    left.appendChild(renderLayers(entry));
     const right = el('aside', 'column column-preview');
-    right.appendChild(renderIntroPreview(entry));
+
+    // The stage is built first: the layer cards ask it to re-anchor, and the timeline paints
+    // the playhead it moves.
+    right.appendChild(renderStage(entry));
+    clock = Stage.timeline({
+      state: preview,
+      scene: () => entry.doc,
+      layers: () => entry.doc.layers,
+      label: layerName,
+      title: T('timeline.title'),
+      hint: T('timeline.hint'),
+      barHint: T('timeline.bar'),
+      onSelect: (index) => select(index, true),
+      onScrub: () => scrubTo(preview.tick),
+      onEdit: () => { Pack.save(); if (stage) stage.paint(); },
+      onCommit: () => Pack.changed()
+    });
+    right.appendChild(clock.node);
+
+    left.appendChild(renderLayers(entry));
     columns.appendChild(left);
     columns.appendChild(right);
     wrap.appendChild(columns);
@@ -986,6 +1291,13 @@ const App = (() => {
 
   const render = () => {
     if (preview.raf) cancelAnimationFrame(preview.raf);
+    // Everything the intro editor holds points at DOM that is about to be thrown away. An
+    // image finishing its download asks the stage to repaint itself, and it must not find one
+    // belonging to a file nobody has open any more.
+    stage = null;
+    clock = null;
+    cards = [];
+    transport = null;
     renderSidebar();
 
     const main = $('editor');
