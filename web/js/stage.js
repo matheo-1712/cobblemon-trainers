@@ -458,7 +458,8 @@ const Stage = (() => {
     };
 
     const ruler = el('div', 'timeline-row timeline-ruler');
-    ruler.appendChild(el('span', 'timeline-name muted small', '0 – ' + duration()));
+    const range = el('span', 'timeline-name muted small', '0 – ' + duration());
+    ruler.appendChild(range);
     const rulerTrack = el('div', 'timeline-track');
     const marks = Math.min(10, duration());
     for (let mark = 0; mark <= marks; mark += 1) {
@@ -548,6 +549,7 @@ const Stage = (() => {
 
     const update = () => {
       const total = duration();
+      range.textContent = '0 – ' + total;
       playhead.style.left = ((clamp(state.tick, 0, total) / total) * 100) + '%';
       rows.forEach(({ row, bar, index }) => {
         const layer = (opts.layers() || [])[index];

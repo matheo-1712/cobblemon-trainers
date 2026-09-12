@@ -162,6 +162,8 @@ a:hover { text-decoration: underline; }
 .badge-advancement { border-color: #5a8f63; color: #a5d8ad; }
 
 .input-path { max-width: 320px; font-family: ui-monospace, Menlo, Consolas, monospace; }
+/* The category menu sits in the header beside the path, and must not crowd it out. */
+.editor-id .input-menu { flex: 0 1 auto; width: auto; max-width: 200px; }
 
 /* ---- tabs --------------------------------------------------------------- */
 
@@ -505,11 +507,23 @@ summary { list-style: none; }
   background: #0f1422; border: 1px solid var(--line); border-radius: 6px;
 }
 
+/* The menu of what the pack holds, the field, and the button that fills it - one line. */
+.row-pick { gap: 6px; }
+.row-pick .input { flex: 1; min-width: 0; }
+.row-pick .btn { flex: none; }
+.row-pick .input-menu { flex: 0 1 auto; width: auto; max-width: 45%; }
+.row-pick .input-menu:disabled { opacity: .5; }
+
+/* It is a button, so it answers a click as well as a drag - and looks the same either way. */
 .drop-zone {
+  display: block; width: 100%;
   margin-top: 10px; padding: 12px; text-align: center;
+  background: transparent;
   border: 1px dashed var(--line); border-radius: 8px;
-  color: var(--muted); font-size: 12px;
+  color: var(--muted); font: inherit; font-size: 12px;
+  cursor: pointer;
 }
+.drop-zone:hover { border-color: var(--blue); color: var(--blue-bright); }
 .drop-zone.drop { border-color: var(--blue); color: var(--blue-bright); }
 
 .dot-quiet { background: var(--panel-2); color: var(--muted); border: 1px solid var(--line); }

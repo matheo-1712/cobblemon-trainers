@@ -351,8 +351,8 @@ const Validate = (() => {
 
     if ((assets.length || translated) && state.archive !== 'jar') {
       say(found, 'info',
-        'Ce pack porte des assets (musique, skin, traduction) : seul mods/ charge les deux moitiés en un fichier.',
-        'This pack carries assets (music, skin, translation): only mods/ loads both halves from one file.');
+        'Ce pack porte des assets (musique, skin, traduction) : un asset ne se charge que depuis resourcepacks/ ou mods/, jamais depuis datapacks/.',
+        'This pack carries assets (music, skin, translation): an asset only loads from resourcepacks/ or mods/, never from datapacks/.');
     }
     if (assets.length && state.archive === 'jar') {
       say(found, 'info',

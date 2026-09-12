@@ -1963,14 +1963,53 @@ Points à ne pas redécouvrir :
   script à la publication. C'est ce qui fait qu'un modèle de l'éditeur ne peut pas décrire une
   version du mod qui n'existe plus, et pourquoi le menu des modèles est la seule chose qui ne
   marche pas en `file://` - un `fetch` y est refusé.
+- **Les musiques proposées sortent du `sounds.json` du mod**, jamais d'une liste écrite dans
+  `app.js` : une seule des cinq pistes livrées était offerte, précisément parce qu'une telle
+  liste existait et n'avait pas suivi. Le même script en écrit `web/js/shipped.js`, et **ce
+  fichier-là est commité**, contrairement à tout `web/assets/` : un `<script>` se charge depuis
+  le disque, là où un `fetch` est refusé, et une première version passée par `fetch` laissait
+  le menu vide chez qui ouvre `index.html` sans serveur - c'est-à-dire le montage qu'un auteur
+  essaie en premier. Le script échoue bruyamment s'il ne lit aucune clé, plutôt que d'écrire
+  une liste vide.
 - **L'éditeur n'écrit que ce qui diffère du défaut.** Le mod remplit les siens ; les réécrire
   ferait du bruit dans le fichier d'un auteur et un second endroit où le défaut vit. `null`
   est l'exception, c'est un choix (`battle.music` muet), pas une absence.
+- **La catégorie d'un dresseur est un menu sur son chemin, pas un champ à lui.** Le dossier
+  *est* la catégorie (voir « Catégories »), donc le menu et le champ de chemin éditent une
+  seule chaîne et restent d'accord : un second champ `category` dans le fichier serait une
+  deuxième vérité sur où vit un dresseur, exactement ce que le format évite. La liste vient de
+  l'arborescence - les `category.json` du pack et les dossiers que ses dresseurs occupent -,
+  jamais d'une déclaration, et on n'y crée pas de catégorie : un dossier vide n'en est pas une
+  tant que rien n'y est rangé.
+- **Un champ qui nomme une ressource en propose un menu, alimenté par `SOURCES`.** Une seule
+  liste par type d'ID, lue par les deux consommateurs - la datalist derrière le champ et le
+  menu devant lui : un menu qui connaîtrait une musique dont les suggestions n'ont jamais
+  entendu parler ferait deux réponses à une question, et c'est comme ça que l'une des deux
+  finit fausse. Le menu et le champ éditent la même valeur ; un ID que le menu ne connaît pas
+  sélectionne « saisi à la main » au lieu d'être réécrit. Un menu vide n'est pas dessiné - la
+  `value` d'un skin ne propose les images du pack que si le `type` à côté dit `texture`, et
+  changer ce type redessine le champ.
 - **Une ressource n'est jamais nommée à la main.** `web/js/assets.js` tient les quatre types de
   fichiers d'un pack (musique, son d'intro, skin, texture d'intro) et, pour chacun, **sa place
   dans l'archive et la référence qu'un dresseur écrit sortent du même endroit** - c'est la seule
   façon qu'ils ne se contredisent pas, comme le `Check` de `TrainerPlace`. Le `sounds.json` est
   donc **écrit**, jamais saisi, avec `stream` vrai pour une musique et faux pour un impact.
+- **Importer une archive remplace le pack en cours, importer un `.json` ne le remplace pas.**
+  Un `.zip` ou un `.jar` est un pack entier : fondu dans celui qui est ouvert, les deux
+  partageraient un namespace et leurs fichiers répondraient à des ID qu'aucun des deux auteurs
+  n'a écrits. Un `.json` seul est un fichier, donc il entre dans le pack ouvert. Le
+  remplacement est confirmé avant que quoi que ce soit soit effacé, et la question dit ce qui
+  est en jeu - les octets ne vivent que dans ce navigateur. Une sélection multiple n'est
+  demandée qu'**une fois** : vider entre deux archives d'un même import ferait manger la
+  première par la seconde.
+- **L'éditeur ne crée rien à l'arrivée, et ne perd rien à un rafraîchissement.** Un pack neuf
+  est vide - un dresseur d'exemple posé d'office est un fichier à supprimer avant de
+  commencer, et il apprend le contraire de ce qu'un pack neuf contient. Ce qui est gardé l'est
+  sous **deux clés** : `ct-pack` pour le document, `ct-view` pour l'endroit où on en était -
+  fichier ouvert, onglet, calque sélectionné, vue de l'aperçu. Une vue n'appartient pas à un
+  pack et ne doit jamais voyager dedans, d'où la seconde clé. Seul `hidden` n'est pas gardé :
+  un calque invisible pour une raison que personne ne se rappelle est un piège, pas une
+  session restaurée.
 - **Les octets vivent dans IndexedDB, les métadonnées dans le `localStorage`.** Une piste de
   trois mégaoctets ne tient pas dans le second, et le pack a besoin de savoir ce qu'il porte
   sans ouvrir le premier. Un `Pack.clear()` vide bien les deux.

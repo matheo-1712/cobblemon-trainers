@@ -92,17 +92,115 @@ const Form = (() => {
 
   /* ---- the controls ---------------------------------------------------- */
 
+  /** The bare text control, without whatever the field type puts around it. */
+  const textInput = (field, doc, changed, ctx) => {
+    const input = el('input', 'input');
+    input.type = 'text';
+    input.value = getValue(doc, field) ?? '';
+    if (field.placeholder) input.placeholder = field.placeholder;
+    if (ctx && ctx.list) input.setAttribute('list', ctx.list);
+    input.addEventListener('input', () => { setValue(doc, field, input.value); changed(); });
+    return input;
+  };
+
+  /**
+   * A menu of the resources the pack actually holds, tied to the text field beside it.
+   *
+   * A datalist was already there and was not enough: it is a suggestion one has to know to ask
+   * for, so a music the author uploaded five minutes ago still had to be typed out by hand,
+   * character for character, into a field where a typo is silent.
+   *
+   * The two controls edit one value and stay in step - the menu is not a button that inserts,
+   * it shows what the field says. A value it has no row for (another pack's id, a name half
+   * typed) selects "typed by hand" rather than being quietly rewritten into something else.
+   */
+  const refMenu = (ctx, input, onPick) => {
+    const select = el('select', 'input input-menu');
+    const known = new Set();
+
+    const option = (value, label) => {
+      const node = el('option', null, label);
+      node.value = value;
+      return node;
+    };
+
+    select.appendChild(option('', I18N.t('ref.empty')));
+    (ctx.menu() || []).forEach((group) => {
+      const items = (group.items || []).filter(Boolean);
+      if (!items.length) return;
+      const box = el('optgroup');
+      box.label = group.label;
+      items.forEach((value) => {
+        if (known.has(value)) return;
+        known.add(value);
+        box.appendChild(option(value, value));
+      });
+      select.appendChild(box);
+    });
+    // A menu with nothing in it is worse than none: it takes half the row to offer "empty" and
+    // "typed by hand", which is the field itself. This is also how a field whose meaning
+    // changes with a neighbour - a skin value is a username or a texture - stops offering
+    // textures to someone naming an account.
+    if (!known.size) return null;
+    const typed = option('__typed__', I18N.t('ref.typed'));
+    select.appendChild(typed);
+
+    const sync = () => {
+      const value = input.value;
+      const listed = value === '' || known.has(value);
+      typed.hidden = listed;
+      select.value = listed ? value : '__typed__';
+    };
+
+    select.addEventListener('change', () => {
+      if (select.value === '__typed__') { sync(); input.focus(); return; }
+      input.value = select.value;
+      onPick(select.value);
+      sync();
+    });
+    input.addEventListener('input', sync);
+    sync();
+    return select;
+  };
+
   const controls = {
     str(field, doc, changed, ctx) {
-      const input = el('input', 'input');
-      input.type = 'text';
-      input.value = getValue(doc, field) ?? '';
-      if (field.placeholder) input.placeholder = field.placeholder;
-      if (ctx && ctx.list) {
-        input.setAttribute('list', ctx.list);
+      const input = textInput(field, doc, changed, ctx);
+      const menu = ctx && ctx.menu
+        && refMenu(ctx, input, (value) => { setValue(doc, field, value); changed(); });
+      if (!menu) return input;
+      const wrap = el('div', 'row row-pick');
+      wrap.appendChild(menu);
+      wrap.appendChild(input);
+      return wrap;
+    },
+
+    /*
+     * A texture is a name, and next to it the file that name reaches.
+     *
+     * The button is handed in by the caller (`ctx.pick`): this file does not know what an
+     * asset is, and must not - it renders fields. What it does know is that typing an id by
+     * hand and putting the image in the pack are one question, so they get one row.
+     */
+    texture(field, doc, changed, ctx) {
+      const wrap = el('div', 'row row-pick');
+      const input = textInput(field, doc, changed, ctx);
+      const menu = ctx && ctx.menu
+        && refMenu(ctx, input, (value) => { setValue(doc, field, value); changed(); });
+      if (menu) wrap.appendChild(menu);
+      wrap.appendChild(input);
+      if (ctx && ctx.pick) {
+        const button = el('button', 'btn btn-small', I18N.t('assets.pick'));
+        button.type = 'button';
+        button.title = I18N.t('assets.pick.hint');
+        button.addEventListener('click', () => ctx.pick((reference) => {
+          setValue(doc, field, reference);
+          input.value = reference;
+          changed();
+        }));
+        wrap.appendChild(button);
       }
-      input.addEventListener('input', () => { setValue(doc, field, input.value); changed(); });
-      return input;
+      return wrap;
     },
 
     text(field, doc, changed) {
@@ -161,7 +259,7 @@ const Form = (() => {
     },
 
     strnull(field, doc, changed, ctx) {
-      const wrap = el('div', 'row');
+      const wrap = el('div', 'row row-pick');
       const input = el('input', 'input');
       input.type = 'text';
       if (ctx && ctx.list) input.setAttribute('list', ctx.list);
@@ -185,6 +283,15 @@ const Form = (() => {
         changed();
       });
 
+      const menu = ctx && ctx.menu
+        && refMenu(ctx, input, (value) => { setValue(doc, field, value); changed(); });
+      if (menu) {
+        // Silence is not a track, so the menu has nothing to say while the switch is on.
+        const follow = () => { menu.disabled = box.checked; };
+        box.addEventListener('change', follow);
+        follow();
+        wrap.appendChild(menu);
+      }
       wrap.appendChild(input);
       wrap.appendChild(silence);
       return wrap;

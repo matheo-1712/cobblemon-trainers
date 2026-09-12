@@ -22,8 +22,91 @@ const App = (() => {
     skin: '', player: 'RereBleue', slim: false
   };
   let templates = null;
+  /*
+   * The tracks the mod itself ships, taken from its own sounds.json rather than listed here.
+   *
+   * A copy of that list in this file is a list that goes stale the day a track is added: only
+   * one of the five shipped tracks used to be offered, for exactly that reason. `sync-assets.sh`
+   * writes `js/shipped.js` from the mod's file and the publish workflow replays it, so the ids
+   * are always the mod's own.
+   *
+   * A key beginning `battle_music.` is a battle theme; every key at all, that one included, is
+   * something a layer of an intro may play - the same rule the pack's own sounds follow, where
+   * `SOURCES.sound` also offers the music.
+   */
+  const shippedKeys = (typeof SHIPPED !== 'undefined' && SHIPPED.sounds) || [];
+  const shipped = {
+    music: shippedKeys.filter((key) => key.startsWith('battle_music.'))
+      .map((key) => 'cobblemon-trainers:' + key),
+    sound: shippedKeys.map((key) => 'cobblemon-trainers:' + key)
+  };
 
   const $ = (id) => document.getElementById(id);
+
+  /*
+   * Where the author was, as opposed to what they wrote.
+   *
+   * The pack is the document and lives under its own key; this is the view on it - which tab,
+   * which layer, which of the two stage views - and a refresh that lost it would put someone
+   * back at the top of a file they were half way down. It is deliberately a second key: a view
+   * is not part of a pack, and must never travel in one.
+   *
+   * `hidden` is the one thing not kept. A layer invisible for a reason nobody remembers is a
+   * trap rather than a restored session, and the eye that did it scrolled away days ago.
+   */
+  const VIEW_KEY = 'ct-view';
+  const VIEW_KEPT = ['mode', 'tick', 'selected', 'snap', 'grid', 'skin', 'player'];
+
+  const saveView = () => {
+    try {
+      const kept = { tab };
+      VIEW_KEPT.forEach((key) => { kept[key] = preview[key]; });
+      localStorage.setItem(VIEW_KEY, JSON.stringify(kept));
+    } catch (e) { /* a private window, same as the pack */ }
+  };
+
+  const restoreView = () => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(VIEW_KEY) || 'null');
+      if (!saved) return;
+      if (saved.tab) Object.assign(tab, saved.tab);
+      VIEW_KEPT.forEach((key) => { if (saved[key] !== undefined) preview[key] = saved[key]; });
+    } catch (e) { /* nothing worth restoring */ }
+    // A page that comes back does not start playing on its own.
+    preview.playing = false;
+  };
+
+  const isArchive = (name) => /\.(zip|jar)$/i.test(name);
+
+  /**
+   * An archive is a whole pack, so importing one *replaces* what is loaded rather than
+   * pouring into it: two packs merged share a namespace, and their files would answer to ids
+   * neither author wrote. A single `.json` keeps merging - that one is a file, not a pack.
+   *
+   * Nothing is erased before the question is answered, and the question says what is at
+   * stake, since the bytes live only in this browser.
+   *
+   * @return false if the author said no, in which case nothing has been touched.
+   */
+  const makeRoomForImport = async () => {
+    const files = Pack.state.files.length;
+    const assets = Pack.state.assets.length;
+    if (!files && !assets) return true;
+    if (!window.confirm(T('pack.import.replace',
+        I18N.plural(files, 'count.file', 'count.files'),
+        I18N.plural(assets, 'count.asset', 'count.assets')))) return false;
+    resetView();
+    await Pack.clear();
+    return true;
+  };
+
+  /** Back to a first visit, without touching what is a preference rather than a place. */
+  const resetView = () => {
+    Object.assign(tab, { trainer: 'form', intro: 'layers', category: 'form', advancement: 'form' });
+    Object.assign(preview, { tick: 0, playing: false, mode: 'layout', selected: null });
+    preview.hidden.clear();
+    try { localStorage.removeItem(VIEW_KEY); } catch (e) { /* never mind */ }
+  };
 
   /** The pack as the checks want to read it: its state, plus the two questions they ask of it. */
   const packView = () => ({ ...Pack.state, references: Pack.references, usedKeys: Pack.usedKeys });
@@ -85,8 +168,83 @@ const App = (() => {
 
   /* ---- the header of a file --------------------------------------------- */
 
+  /**
+   * The folders a trainer may be filed under: the categories the pack declares, plus the ones
+   * its trainers already sit in.
+   *
+   * A `category.json` describes the folder it sits in, so its own path *is* a folder. A folder
+   * a trainer uses without one is a category all the same - the mod reads the tree, not a
+   * declaration - so both belong in the list.
+   */
+  const folders = () => {
+    const found = new Set();
+    Pack.state.files.forEach((file) => {
+      if (file.kind === 'category') found.add(file.path);
+      else if (file.kind === 'trainer' && file.path.includes('/')) {
+        found.add(file.path.slice(0, file.path.lastIndexOf('/')));
+      }
+    });
+    return [...found].sort();
+  };
+
+  /**
+   * The category a trainer is filed under, as a menu over the first half of its path.
+   *
+   * There is no field to edit: in the mod the folder *is* the category, so the menu and the
+   * path field are two views of one string and stay in step. Choosing moves the trainer, it
+   * does not add anything to the file - which is why a category cannot be invented here, only
+   * chosen: an empty folder is not a category until something sits in it.
+   */
+  const renderCategoryMenu = (entry, path) => {
+    const known = folders();
+    if (!known.length) return null;
+
+    const select = el('select', 'input input-menu');
+    select.title = T('category.pick');
+
+    const named = (folder) => {
+      const file = Pack.state.files.find((one) => one.kind === 'category' && one.path === folder);
+      const name = file && file.doc && file.doc.name;
+      return name ? folder + ' — ' + name : folder;
+    };
+
+    const option = (value, label) => {
+      const node = el('option', null, label);
+      node.value = value;
+      return node;
+    };
+
+    select.appendChild(option('', T('category.root')));
+    known.forEach((folder) => select.appendChild(option(folder, named(folder))));
+
+    const folderOf = () => (entry.path.includes('/')
+      ? entry.path.slice(0, entry.path.lastIndexOf('/')) : '');
+
+    const sync = () => {
+      const folder = folderOf();
+      // A folder being typed is not in the list yet; showing the root would be a lie about
+      // where the trainer is, so it gets a row of its own until the list catches up.
+      if (folder && !known.includes(folder)) {
+        known.push(folder);
+        select.appendChild(option(folder, folder));
+      }
+      select.value = folder;
+    };
+
+    select.addEventListener('change', () => {
+      const leaf = entry.path.split('/').pop();
+      entry.path = select.value ? select.value + '/' + leaf : leaf;
+      path.value = entry.path;
+      Pack.changed();
+    });
+    path.addEventListener('input', sync);
+    sync();
+    return select;
+  };
+
   const renderHeader = (entry) => {
     const head = el('div', 'editor-head');
+    const ref = el('span', 'muted mono editor-ref', Pack.idOf(entry));
 
     const left = el('div', 'editor-id');
     left.appendChild(el('span', 'badge badge-' + entry.kind, kindLabel(entry.kind)));
@@ -95,10 +253,27 @@ const App = (() => {
     path.type = 'text';
     path.value = entry.path;
     path.spellcheck = false;
+    /*
+     * Typing a name must not rebuild the editor.
+     *
+     * `Pack.changed()` ends in `render()`, which empties `#editor` - this very input included,
+     * and the caret with it. A name could then only be typed one letter per click. So each
+     * keystroke refreshes by hand the four things a new name changes, and the rebuild waits
+     * for the field to be left. It is the pattern the team textarea already uses.
+     */
     path.addEventListener('input', () => {
       entry.path = path.value.trim().toLowerCase();
-      Pack.changed();
+      Pack.save();
+      renderSidebar();
+      ref.textContent = Pack.idOf(entry);
+      fillLists();
+      renderChecks(entry);
     });
+    path.addEventListener('change', () => Pack.changed());
+
+    // Before the path, because that is the order the two read in: the folder, then the name.
+    const category = entry.kind === 'trainer' ? renderCategoryMenu(entry, path) : null;
+    if (category) left.appendChild(category);
     left.appendChild(path);
 
     const suffix = entry.kind === 'category' ? '/category.json' : '.json';
@@ -106,7 +281,7 @@ const App = (() => {
     head.appendChild(left);
 
     const right = el('div', 'editor-actions');
-    right.appendChild(el('span', 'muted mono editor-ref', Pack.idOf(entry)));
+    right.appendChild(ref);
 
     if (entry.kind === 'trainer') {
       const keys = el('button', 'btn btn-ghost btn-small', T('lang.keyify'));
@@ -219,6 +394,25 @@ const App = (() => {
     if (skin.type === 'texture') {
       // Dropping a skin puts it *in the pack*: the file is what the archive will carry, and the
       // field is filled from it, so the image and the id it is reached by cannot disagree.
+      const wear = (asset) => {
+        if (!asset) return;
+        entry.doc.skin = { ...skin, type: 'texture', value: Assets.reference(asset, Pack.state.namespace) };
+        Pack.changed();
+      };
+
+      const pick = el('button', 'btn btn-small', T('assets.pick'));
+      pick.type = 'button';
+      pick.addEventListener('click', () => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/png,.png';
+        input.addEventListener('change', async () => {
+          if (input.files[0]) wear(await take(input.files[0], 'skin'));
+        });
+        input.click();
+      });
+      card.appendChild(pick);
+
       note.textContent = T('assets.drop.skin');
       card.addEventListener('dragover', (event) => { event.preventDefault(); card.classList.add('drop'); });
       card.addEventListener('dragleave', () => card.classList.remove('drop'));
@@ -227,11 +421,7 @@ const App = (() => {
         event.stopPropagation();
         card.classList.remove('drop');
         const file = event.dataTransfer.files[0];
-        if (!file) return;
-        const asset = await take(file, 'skin');
-        if (!asset) return;
-        entry.doc.skin = { ...skin, type: 'texture', value: Assets.reference(asset, Pack.state.namespace) };
-        Pack.changed();
+        if (file) wear(await take(file, 'skin'));
       });
     } else {
       note.textContent = 'crafthead.net';
@@ -329,15 +519,30 @@ const App = (() => {
 
     const columns = el('div', 'columns');
     const left = el('div', 'column');
+    // The skin value is a username, a uuid or a texture depending on the type beside it, so
+    // the pack's images are only offered for the one it names. An empty list draws no menu.
     const ctx = {
-      skin: { value: { list: 'skin-ids' } },
-      battle: { intro: { list: 'intro-ids' }, music: { list: 'music-ids' } }
+      skin: {
+        value: {
+          list: 'skin-ids',
+          menu: () => ((entry.doc.skin || {}).type === 'texture' ? menuFor('skin')() : [])
+        }
+      },
+      battle: {
+        intro: { list: 'intro-ids', menu: menuFor('intro') },
+        music: { list: 'music-ids', menu: menuFor('music') }
+      }
     };
+    let skinType = (entry.doc.skin || {}).type;
     left.appendChild(Form.render(SCHEMA.TRAINER, entry.doc, () => {
       Form.prune(entry.doc);
       Pack.save();
       renderSidebar();
       renderChecks(entry);
+      // Changing the type changes what the value means, so the menu beside it is rebuilt. It
+      // is a menu, not a text field, so no caret is lost doing it.
+      const now = (entry.doc.skin || {}).type;
+      if (now !== skinType) { skinType = now; render(); return; }
       right.replaceChildren(skinCanvas(entry), teamSummary(entry));
     }, ctx));
 
@@ -445,6 +650,7 @@ const App = (() => {
     paintSelection(moved, moved && reveal);
     if (stage) stage.paintOverlay();
     if (clock) clock.update();
+    saveView();
   };
 
   /** A drag writes into the very object the file is made of; only the repaint is ours. */
@@ -485,6 +691,7 @@ const App = (() => {
       box.addEventListener('change', () => {
         preview[key] = box.checked;
         if (stage) stage.paintOverlay();
+        saveView();
       });
       tag.appendChild(box);
       tag.appendChild(el('span', null, T(label)));
@@ -554,6 +761,7 @@ const App = (() => {
     transport.keys.hidden = playing;
     transport.holder.classList.toggle('stage-play', playing);
     transport.said.textContent = T(playing ? 'stage.hint.play' : 'stage.hint');
+    saveView();
   };
 
   /** Play, pause, restart and the scrub - all four only mean anything in the animation. */
@@ -623,6 +831,7 @@ const App = (() => {
       input.addEventListener('change', () => {
         preview[key] = input.value.trim();
         if (stage) stage.paint();
+        saveView();
       });
       cell.appendChild(input);
       skins.appendChild(cell);
@@ -721,9 +930,12 @@ const App = (() => {
    * says it without a sentence.
    */
   const renderAnchorPad = (entry, layer, index) => {
+    // The pad *is* the anchor field's control, so its name comes from the schema like every
+    // other label. Writing "Anchor" here as well would be the field described twice, and the
+    // two would drift.
+    const field = SCHEMA.LAYER_PLACE.find((one) => one.k === 'anchor');
     const wrap = el('div', 'field');
-    const head = el('span', 'field-label', T('stage.anchor'));
-    wrap.appendChild(head);
+    wrap.appendChild(el('span', 'field-label', I18N.of(field.l)));
     const pad = el('div', 'pad');
     ['top-left', 'top', 'top-right', 'left', 'center', 'right',
      'bottom-left', 'bottom', 'bottom-right'].forEach((anchor) => {
@@ -788,21 +1000,34 @@ const App = (() => {
     const own = SCHEMA.LAYERS[layer.type];
     if (own) {
       body.appendChild(el('h5', 'layer-part', I18N.of(own.l)));
-      body.appendChild(Form.render(own.fields, layer, changed, { texture: { list: 'texture-ids' } }));
+      body.appendChild(Form.render(own.fields, layer, changed, {
+        texture: {
+          list: 'texture-ids',
+          menu: menuFor('texture'),
+          pick: (put) => pickAsset('intro_texture', (reference) => { put(reference); Pack.changed(); })
+        }
+      }));
     }
 
     body.appendChild(el('h5', 'layer-part', T('layers.part.place')));
     body.appendChild(renderAnchorPad(entry, layer, index));
-    body.appendChild(Form.render(SCHEMA.LAYER_PLACE, layer, changed));
+    body.appendChild(Form.render(SCHEMA.LAYER_PLACE.filter((one) => one.k !== 'anchor'),
+                                 layer, changed));
 
     body.appendChild(el('h5', 'layer-part', T('layers.part.time')));
     body.appendChild(Form.render(SCHEMA.LAYER_TIME, layer, changed));
 
     body.appendChild(el('h5', 'layer-part', T('layers.part.sound')));
-    body.appendChild(Form.render(SCHEMA.LAYER_SOUND, layer, changed, { sound: { list: 'sound-ids' } }));
+    body.appendChild(Form.render(SCHEMA.LAYER_SOUND, layer, changed,
+      { sound: { list: 'sound-ids', menu: menuFor('sound') } }));
 
     if (layer.type === 'image') {
-      const drop = el('div', 'drop-zone', T('assets.drop.texture'));
+      const drop = el('button', 'drop-zone', T('assets.drop.texture'));
+      drop.type = 'button';
+      drop.addEventListener('click', () => pickAsset('intro_texture', (reference) => {
+        layer.texture = reference;
+        Pack.changed();
+      }));
       drop.addEventListener('dragover', (event) => { event.preventDefault(); drop.classList.add('drop'); });
       drop.addEventListener('dragleave', () => drop.classList.remove('drop'));
       drop.addEventListener('drop', async (event) => {
@@ -829,7 +1054,18 @@ const App = (() => {
 
     wrap.appendChild(Form.render(SCHEMA.INTRO_FILE, entry.doc, () => {
       Pack.save();
-      render();
+      // Same reason as renaming: the duration is the timeline's scale and the scrub's range,
+      // and none of that needs the editor rebuilt - rebuilding it would carry off the field
+      // being typed in.
+      const total = Math.max(entry.doc.duration ?? 100, 1);
+      if (preview.tick > total) preview.tick = total;
+      if (transport && transport.slider) {
+        transport.slider.max = total;
+        transport.slider.value = preview.tick;
+      }
+      if (stage) stage.paint();
+      if (clock) clock.update();
+      renderChecks(entry);
     }));
 
     // A new layer arrives where the playhead is and where the eye is: writing it at tick 0
@@ -1032,6 +1268,27 @@ const App = (() => {
   };
 
   const feedAll = () => Pack.state.assets.forEach(feedPreview);
+
+  /**
+   * Asks for a file, puts it in the pack, and hands back the id it is reached by.
+   *
+   * One gesture for both halves: the bytes the archive will carry and the field that names
+   * them are written together, so they cannot disagree - the same reason `Assets` keeps a
+   * file's place in the archive and its reference in one entry.
+   */
+  const pickAsset = (kind, put) => {
+    const definition = Assets.KINDS[kind];
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = definition.accept + ',.' + definition.ext;
+    input.addEventListener('change', async () => {
+      const file = input.files[0];
+      if (!file) return;
+      const asset = await take(file, kind);
+      if (asset) put(Assets.reference(asset, Pack.state.namespace));
+    });
+    input.click();
+  };
 
   const take = async (file, kind) => {
     try {
@@ -1339,6 +1596,7 @@ const App = (() => {
       advancement: renderAdvancement
     }[entry.kind](entry));
     renderChecks(entry);
+    saveView();
   };
 
   /* ---- chrome --------------------------------------------------------------- */
@@ -1360,26 +1618,48 @@ const App = (() => {
     'crest_rerebleue', 'crest_kagumi', 'crest_griff501', 'crest_octavien29', 'crest_theazertor',
     'crest_aeliothys'];
 
-  /** What every field that names something may be offered: the mod's, then the pack's own. */
+  /*
+   * What every field that names something may be offered, in one place.
+   *
+   * Two things read this - the datalist behind a field and the menu in front of it - and they
+   * must offer the same ids: a menu that knows about a music the suggestions have never heard
+   * of is two answers to one question, which is how one of them ends up wrong.
+   */
+  const SOURCES = {
+    intro: () => ({
+      pack: Pack.state.files.filter((file) => file.kind === 'intro')
+        .map((file) => Pack.state.namespace + ':' + file.path),
+      mod: [...Validate.SHIPPED_INTROS]
+    }),
+    music: () => ({ pack: Pack.references('music'), mod: shipped.music }),
+    sound: () => ({
+      pack: [...Pack.references('sound'), ...Pack.references('music')],
+      mod: shipped.sound
+    }),
+    skin: () => ({ pack: Pack.references('skin'), mod: [] }),
+    texture: () => ({
+      pack: Pack.references('intro_texture'),
+      mod: SHIPPED_TEXTURES.map((name) => `cobblemon-trainers:textures/gui/intro/${name}.png`)
+    })
+  };
+
+  /** The same ids, shaped for the menu: what this pack holds first, the mod's after. */
+  const menuFor = (kind) => () => {
+    const { pack, mod } = SOURCES[kind]();
+    return [{ label: T('ref.pack'), items: pack }, { label: T('ref.mod'), items: mod }];
+  };
+
   const fillLists = () => {
-    const fill = (id, values) => {
-      const list = $(id);
+    Object.keys(SOURCES).forEach((kind) => {
+      const { pack, mod } = SOURCES[kind]();
+      const list = $(kind + '-ids');
       list.innerHTML = '';
-      values.forEach((value) => {
+      [...pack, ...mod].forEach((value) => {
         const option = document.createElement('option');
         option.value = value;
         list.appendChild(option);
       });
-    };
-
-    fill('intro-ids', [...Validate.SHIPPED_INTROS,
-      ...Pack.state.files.filter((file) => file.kind === 'intro')
-        .map((file) => Pack.state.namespace + ':' + file.path)]);
-    fill('music-ids', [...Pack.references('music'), 'cobblemon-trainers:battle_music.b2w2_tournament']);
-    fill('sound-ids', [...Pack.references('sound'), ...Pack.references('music')]);
-    fill('skin-ids', Pack.references('skin'));
-    fill('texture-ids', [...Pack.references('intro_texture'),
-      ...SHIPPED_TEXTURES.map((name) => `cobblemon-trainers:textures/gui/intro/${name}.png`)]);
+    });
   };
 
   const loadTemplates = async () => {
@@ -1435,17 +1715,23 @@ const App = (() => {
 
     $('export').addEventListener('click', () => Pack.zip());
     $('reset').addEventListener('click', () => {
-      if (window.confirm(T('pack.reset.confirm'))) Pack.clear();
+      if (!window.confirm(T('pack.reset.confirm'))) return;
+      resetView();
+      Pack.clear();
     });
 
     const file = $('import-file');
     $('import').addEventListener('click', () => file.click());
     file.addEventListener('change', async () => {
-      for (const one of file.files) {
-        if (one.name.endsWith('.zip') || one.name.endsWith('.jar')) await Pack.readZip(one);
+      const chosen = [...file.files];
+      file.value = '';
+      // Asked once for the whole selection: clearing between two archives of one import would
+      // let the second quietly eat the first.
+      if (chosen.some((one) => isArchive(one.name)) && !(await makeRoomForImport())) return;
+      for (const one of chosen) {
+        if (isArchive(one.name)) await Pack.readZip(one);
         else Pack.readJson(await one.text(), one.name);
       }
-      file.value = '';
     });
 
     document.body.addEventListener('dragover', (event) => event.preventDefault());
@@ -1453,8 +1739,9 @@ const App = (() => {
       if (!event.dataTransfer.files.length) return;
       const one = event.dataTransfer.files[0];
       const name = one.name.toLowerCase();
-      if (name.endsWith('.zip') || name.endsWith('.jar')) {
+      if (isArchive(name)) {
         event.preventDefault();
+        if (!(await makeRoomForImport())) return;
         await Pack.readZip(one);
       } else if (name.endsWith('.json')) {
         event.preventDefault();
@@ -1478,7 +1765,8 @@ const App = (() => {
 
   const start = () => {
     I18N.restore();
-    const had = Pack.restore();
+    Pack.restore();
+    restoreView();
     wire();
     loadTemplates();
 
@@ -1502,7 +1790,8 @@ const App = (() => {
     $('archive').value = Pack.state.archive;
     // The bytes outlive the page: a skin dropped yesterday has to draw itself again today.
     feedAll();
-    if (!had) Pack.add('trainer', 'champions/erika');
+    // Nothing is created on a first visit. A sample trainer nobody asked for is a file to
+    // delete before starting, and it taught the wrong thing about what a new pack contains.
     paintChrome();
     fillLists();
     render();
