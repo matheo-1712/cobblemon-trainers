@@ -31,7 +31,15 @@ const I18N = (() => {
     'pack.add.advancement': ['Advancement', 'Advancement'],
     'pack.add': ['Ajouter', 'Add'],
     'pack.import': ['Importer', 'Import'],
-    'pack.import.hint': ['Un .json, ou un pack entier en .zip', 'A .json file, or a whole pack as .zip'],
+    'pack.import.hint': ['Un .json entre dans le pack en cours. Un .zip ou un .jar le remplace.',
+                         'A .json joins the current pack. A .zip or a .jar replaces it.'],
+    'pack.import.replace': [
+      'Importer une archive remplace le pack en cours : ses %s et %s seront effacés, et rien n’en est récupérable si tu ne l’as pas téléchargé. Continuer ?',
+      'Importing an archive replaces the current pack: its %s and %s will be erased, and none of it is recoverable unless you downloaded it. Continue?'],
+    'count.file': ['fichier', 'file'],
+    'count.files': ['fichiers', 'files'],
+    'count.asset': ['ressource', 'asset'],
+    'count.assets': ['ressources', 'assets'],
     'pack.export': ['Télécharger le pack (.zip)', 'Download the pack (.zip)'],
     'pack.export.one': ['Ce fichier seul (.json)', 'This file alone (.json)'],
     'pack.reset': ['Tout effacer', 'Clear everything'],
@@ -78,6 +86,29 @@ const I18N = (() => {
     'layers.up': ['Monter', 'Move up'],
     'layers.down': ['Descendre', 'Move down'],
     'layers.hide': ['Masquer dans l’aperçu', 'Hide in the preview'],
+    'layers.duplicate': ['Dupliquer', 'Duplicate'],
+    'layers.remove': ['Retirer', 'Remove'],
+    'layers.part.place': ['Où', 'Where'],
+    'layers.part.time': ['Quand', 'When'],
+    'layers.part.sound': ['Son', 'Sound'],
+
+    'stage.layout': ['Mise en page', 'Layout'],
+    'stage.play': ['Animation', 'Animation'],
+    'stage.hint': ['Clique un calque pour le prendre, glisse-le pour le placer, tire un coin pour le redimensionner.',
+                   'Click a layer to take it, drag it to place it, pull a corner to resize it.'],
+    'stage.hint.play': ['L’animation telle que le mod la dessine. Repasse en Mise en page pour déplacer un calque.',
+                        'The animation as the mod draws it. Switch back to Layout to move a layer.'],
+    'stage.keys': ['Flèches : 1 px · Maj : 10 px ou tout droit · Alt : sans aimant · Suppr : retirer · Ctrl+D : dupliquer',
+                   'Arrows: 1 px · Shift: 10 px, or straight · Alt: no snapping · Delete: remove · Ctrl+D: duplicate'],
+    'stage.snap': ['Aimanter', 'Snap'],
+    'stage.grid': ['Repères', 'Guides'],
+    'stage.anchor.hint': ['Le point d’où part le décalage. En changer ne déplace pas le calque : c’est ce à quoi il se tient.',
+                          'The point the offset starts from. Changing it does not move the layer: it is what the layer holds on to.'],
+
+    'timeline.title': ['Chronologie', 'Timeline'],
+    'timeline.hint': ['Clique la règle pour voir un tick.', 'Click the ruler to see a tick.'],
+    'timeline.bar': ['Glisser : le tick d’entrée · le bord droit : la durée de l’entrée',
+                     'Drag: the entrance tick · its right edge: how long the entrance takes'],
 
     'preview.play': ['Lire', 'Play'],
     'preview.pause': ['Pause', 'Pause'],
@@ -126,21 +157,33 @@ const I18N = (() => {
     'pack.archive.zip': ['.zip — mods/, datapacks/ ou resourcepacks/', '.zip — mods/, datapacks/ or resourcepacks/'],
     'pack.archive.jar': ['.jar — mods/ seul, dépendance déclarée', '.jar — mods/ only, dependency declared'],
     'pack.archive.hint': [
-      'Le .zip se charge des trois endroits, mais seul mods/ lit aussi les assets. Le .jar porte un fabric.mod.json, donc le jeu refuse de démarrer sans le mod - et il ne va que dans mods/.',
-      'A .zip loads from all three places, but only mods/ reads the assets too. A .jar carries a fabric.mod.json, so the game refuses to start without the mod - and it only goes in mods/.'],
+      'Le .zip se charge des trois endroits, mais chacun ne lit qu’une moitié : datapacks/ les dresseurs, resourcepacks/ les assets, mods/ les deux. Le .jar porte un fabric.mod.json, donc le jeu refuse de démarrer sans le mod - et il ne va que dans mods/.',
+      'A .zip loads from all three places, but each reads one half only: datapacks/ the trainers, resourcepacks/ the assets, mods/ both. A .jar carries a fabric.mod.json, so the game refuses to start without the mod - and it only goes in mods/.'],
 
     'assets.title': ['Ressources', 'Assets'],
     'assets.hint': [
       'Les musiques, les skins et les images d’intro voyagent dans le même fichier que les dresseurs. Le sounds.json est écrit tout seul, à partir de ce qui est ici.',
       'Music, skins and intro images travel in the same file as the trainers. The sounds.json is written on its own, from what sits here.'],
     'assets.add': ['Ajouter un fichier', 'Add a file'],
+    'category.root': ['— Racine —', '— Root —'],
+    'category.pick': ['Le dossier du dresseur, qui est sa catégorie',
+                      'The trainer’s folder, which is its category'],
+    'ref.empty': ['— Vide —', '— Empty —'],
+    'ref.typed': ['— Saisi à la main —', '— Typed by hand —'],
+    'ref.pack': ['Dans ce pack', 'In this pack'],
+    'ref.mod': ['Livré avec le mod', 'Shipped with the mod'],
+    'assets.pick': ['Importer…', 'Import…'],
+    'assets.pick.hint': ['Choisir un fichier : il entre dans le pack et remplit ce champ.',
+                         'Choose a file: it goes into the pack and fills this field.'],
     'assets.copy': ['Copier la référence', 'Copy the reference'],
     'assets.listen': ['Écouter', 'Listen'],
     'assets.subtitle': ['Sous-titre (facultatif)', 'Subtitle (optional)'],
     'assets.delete.confirm': ['Retirer ce fichier du pack ?', 'Remove this file from the pack?'],
     'assets.wrong': ['Ce type de ressource attend un fichier .%s', 'This kind of asset expects a .%s file'],
-    'assets.drop.skin': ['Dépose un PNG : il entre dans le pack', 'Drop a PNG: it goes into the pack'],
-    'assets.drop.texture': ['Dépose un PNG pour ce calque', 'Drop a PNG for this layer'],
+    'assets.drop.skin': ['Ou dépose un PNG ici : il entre dans le pack',
+                        'Or drop a PNG here: it goes into the pack'],
+    'assets.drop.texture': ['Dépose un PNG pour ce calque, ou clique ici',
+                            'Drop a PNG for this layer, or click here'],
     'assets.sounds.hint': [
       'Écrit à la publication. La clé est ce qu’un dresseur nomme ; stream vaut true pour une musique, qui dure et boucle.',
       'Written at export time. The key is what a trainer names; stream is true for music, which runs long and loops.'],
@@ -196,6 +239,17 @@ const I18N = (() => {
       const entry = STRINGS[key];
       if (!entry) return key;
       return args.reduce((text, arg) => text.replace('%s', arg), entry[index()]);
+    },
+    /**
+     * A count and the noun it counts, agreeing with it.
+     *
+     * The threshold is not the same in the two languages: French keeps the singular at zero
+     * ("0 fichier"), English does not ("0 files"). That is why this lives here, where the
+     * language is known, rather than being a ternary at each call site.
+     */
+    plural(count, one, many) {
+      const single = lang === 'fr' ? count < 2 : count === 1;
+      return count + ' ' + this.t(single ? one : many);
     },
     /** A { fr, en } pair from the schema. */
     of(pair) {

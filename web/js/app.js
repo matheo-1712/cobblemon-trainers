@@ -11,10 +11,102 @@ const App = (() => {
   const T = (key, ...args) => I18N.t(key, ...args);
 
   let tab = { trainer: 'form', intro: 'layers', category: 'form', advancement: 'form' };
-  let preview = { tick: 0, playing: false, raf: null, hidden: new Set(), skin: '', player: 'RereBleue', slim: false };
+  /*
+   * What the intro editor holds between renders: where the playhead is, which view is up,
+   * which layer is selected, and the two aids. It outlives every render, so a drag that ends
+   * in a rebuild comes back to the same selection under the same pointer.
+   */
+  let preview = {
+    tick: 0, playing: false, raf: null, mode: 'layout',
+    hidden: new Set(), selected: null, snap: true, grid: true,
+    skin: '', player: 'RereBleue', slim: false
+  };
   let templates = null;
+  /*
+   * The tracks the mod itself ships, taken from its own sounds.json rather than listed here.
+   *
+   * A copy of that list in this file is a list that goes stale the day a track is added: only
+   * one of the five shipped tracks used to be offered, for exactly that reason. `sync-assets.sh`
+   * writes `js/shipped.js` from the mod's file and the publish workflow replays it, so the ids
+   * are always the mod's own.
+   *
+   * A key beginning `battle_music.` is a battle theme; every key at all, that one included, is
+   * something a layer of an intro may play - the same rule the pack's own sounds follow, where
+   * `SOURCES.sound` also offers the music.
+   */
+  const shippedKeys = (typeof SHIPPED !== 'undefined' && SHIPPED.sounds) || [];
+  const shipped = {
+    music: shippedKeys.filter((key) => key.startsWith('battle_music.'))
+      .map((key) => 'cobblemon-trainers:' + key),
+    sound: shippedKeys.map((key) => 'cobblemon-trainers:' + key)
+  };
 
   const $ = (id) => document.getElementById(id);
+
+  /*
+   * Where the author was, as opposed to what they wrote.
+   *
+   * The pack is the document and lives under its own key; this is the view on it - which tab,
+   * which layer, which of the two stage views - and a refresh that lost it would put someone
+   * back at the top of a file they were half way down. It is deliberately a second key: a view
+   * is not part of a pack, and must never travel in one.
+   *
+   * `hidden` is the one thing not kept. A layer invisible for a reason nobody remembers is a
+   * trap rather than a restored session, and the eye that did it scrolled away days ago.
+   */
+  const VIEW_KEY = 'ct-view';
+  const VIEW_KEPT = ['mode', 'tick', 'selected', 'snap', 'grid', 'skin', 'player'];
+
+  const saveView = () => {
+    try {
+      const kept = { tab };
+      VIEW_KEPT.forEach((key) => { kept[key] = preview[key]; });
+      localStorage.setItem(VIEW_KEY, JSON.stringify(kept));
+    } catch (e) { /* a private window, same as the pack */ }
+  };
+
+  const restoreView = () => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(VIEW_KEY) || 'null');
+      if (!saved) return;
+      if (saved.tab) Object.assign(tab, saved.tab);
+      VIEW_KEPT.forEach((key) => { if (saved[key] !== undefined) preview[key] = saved[key]; });
+    } catch (e) { /* nothing worth restoring */ }
+    // A page that comes back does not start playing on its own.
+    preview.playing = false;
+  };
+
+  const isArchive = (name) => /\.(zip|jar)$/i.test(name);
+
+  /**
+   * An archive is a whole pack, so importing one *replaces* what is loaded rather than
+   * pouring into it: two packs merged share a namespace, and their files would answer to ids
+   * neither author wrote. A single `.json` keeps merging - that one is a file, not a pack.
+   *
+   * Nothing is erased before the question is answered, and the question says what is at
+   * stake, since the bytes live only in this browser.
+   *
+   * @return false if the author said no, in which case nothing has been touched.
+   */
+  const makeRoomForImport = async () => {
+    const files = Pack.state.files.length;
+    const assets = Pack.state.assets.length;
+    if (!files && !assets) return true;
+    if (!window.confirm(T('pack.import.replace',
+        I18N.plural(files, 'count.file', 'count.files'),
+        I18N.plural(assets, 'count.asset', 'count.assets')))) return false;
+    resetView();
+    await Pack.clear();
+    return true;
+  };
+
+  /** Back to a first visit, without touching what is a preference rather than a place. */
+  const resetView = () => {
+    Object.assign(tab, { trainer: 'form', intro: 'layers', category: 'form', advancement: 'form' });
+    Object.assign(preview, { tick: 0, playing: false, mode: 'layout', selected: null });
+    preview.hidden.clear();
+    try { localStorage.removeItem(VIEW_KEY); } catch (e) { /* never mind */ }
+  };
 
   /** The pack as the checks want to read it: its state, plus the two questions they ask of it. */
   const packView = () => ({ ...Pack.state, references: Pack.references, usedKeys: Pack.usedKeys });
@@ -76,8 +168,83 @@ const App = (() => {
 
   /* ---- the header of a file --------------------------------------------- */
 
+  /**
+   * The folders a trainer may be filed under: the categories the pack declares, plus the ones
+   * its trainers already sit in.
+   *
+   * A `category.json` describes the folder it sits in, so its own path *is* a folder. A folder
+   * a trainer uses without one is a category all the same - the mod reads the tree, not a
+   * declaration - so both belong in the list.
+   */
+  const folders = () => {
+    const found = new Set();
+    Pack.state.files.forEach((file) => {
+      if (file.kind === 'category') found.add(file.path);
+      else if (file.kind === 'trainer' && file.path.includes('/')) {
+        found.add(file.path.slice(0, file.path.lastIndexOf('/')));
+      }
+    });
+    return [...found].sort();
+  };
+
+  /**
+   * The category a trainer is filed under, as a menu over the first half of its path.
+   *
+   * There is no field to edit: in the mod the folder *is* the category, so the menu and the
+   * path field are two views of one string and stay in step. Choosing moves the trainer, it
+   * does not add anything to the file - which is why a category cannot be invented here, only
+   * chosen: an empty folder is not a category until something sits in it.
+   */
+  const renderCategoryMenu = (entry, path) => {
+    const known = folders();
+    if (!known.length) return null;
+
+    const select = el('select', 'input input-menu');
+    select.title = T('category.pick');
+
+    const named = (folder) => {
+      const file = Pack.state.files.find((one) => one.kind === 'category' && one.path === folder);
+      const name = file && file.doc && file.doc.name;
+      return name ? folder + ' — ' + name : folder;
+    };
+
+    const option = (value, label) => {
+      const node = el('option', null, label);
+      node.value = value;
+      return node;
+    };
+
+    select.appendChild(option('', T('category.root')));
+    known.forEach((folder) => select.appendChild(option(folder, named(folder))));
+
+    const folderOf = () => (entry.path.includes('/')
+      ? entry.path.slice(0, entry.path.lastIndexOf('/')) : '');
+
+    const sync = () => {
+      const folder = folderOf();
+      // A folder being typed is not in the list yet; showing the root would be a lie about
+      // where the trainer is, so it gets a row of its own until the list catches up.
+      if (folder && !known.includes(folder)) {
+        known.push(folder);
+        select.appendChild(option(folder, folder));
+      }
+      select.value = folder;
+    };
+
+    select.addEventListener('change', () => {
+      const leaf = entry.path.split('/').pop();
+      entry.path = select.value ? select.value + '/' + leaf : leaf;
+      path.value = entry.path;
+      Pack.changed();
+    });
+    path.addEventListener('input', sync);
+    sync();
+    return select;
+  };
+
   const renderHeader = (entry) => {
     const head = el('div', 'editor-head');
+    const ref = el('span', 'muted mono editor-ref', Pack.idOf(entry));
 
     const left = el('div', 'editor-id');
     left.appendChild(el('span', 'badge badge-' + entry.kind, kindLabel(entry.kind)));
@@ -86,10 +253,27 @@ const App = (() => {
     path.type = 'text';
     path.value = entry.path;
     path.spellcheck = false;
+    /*
+     * Typing a name must not rebuild the editor.
+     *
+     * `Pack.changed()` ends in `render()`, which empties `#editor` - this very input included,
+     * and the caret with it. A name could then only be typed one letter per click. So each
+     * keystroke refreshes by hand the four things a new name changes, and the rebuild waits
+     * for the field to be left. It is the pattern the team textarea already uses.
+     */
     path.addEventListener('input', () => {
       entry.path = path.value.trim().toLowerCase();
-      Pack.changed();
+      Pack.save();
+      renderSidebar();
+      ref.textContent = Pack.idOf(entry);
+      fillLists();
+      renderChecks(entry);
     });
+    path.addEventListener('change', () => Pack.changed());
+
+    // Before the path, because that is the order the two read in: the folder, then the name.
+    const category = entry.kind === 'trainer' ? renderCategoryMenu(entry, path) : null;
+    if (category) left.appendChild(category);
     left.appendChild(path);
 
     const suffix = entry.kind === 'category' ? '/category.json' : '.json';
@@ -97,7 +281,7 @@ const App = (() => {
     head.appendChild(left);
 
     const right = el('div', 'editor-actions');
-    right.appendChild(el('span', 'muted mono editor-ref', Pack.idOf(entry)));
+    right.appendChild(ref);
 
     if (entry.kind === 'trainer') {
       const keys = el('button', 'btn btn-ghost btn-small', T('lang.keyify'));
@@ -210,6 +394,25 @@ const App = (() => {
     if (skin.type === 'texture') {
       // Dropping a skin puts it *in the pack*: the file is what the archive will carry, and the
       // field is filled from it, so the image and the id it is reached by cannot disagree.
+      const wear = (asset) => {
+        if (!asset) return;
+        entry.doc.skin = { ...skin, type: 'texture', value: Assets.reference(asset, Pack.state.namespace) };
+        Pack.changed();
+      };
+
+      const pick = el('button', 'btn btn-small', T('assets.pick'));
+      pick.type = 'button';
+      pick.addEventListener('click', () => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/png,.png';
+        input.addEventListener('change', async () => {
+          if (input.files[0]) wear(await take(input.files[0], 'skin'));
+        });
+        input.click();
+      });
+      card.appendChild(pick);
+
       note.textContent = T('assets.drop.skin');
       card.addEventListener('dragover', (event) => { event.preventDefault(); card.classList.add('drop'); });
       card.addEventListener('dragleave', () => card.classList.remove('drop'));
@@ -218,11 +421,7 @@ const App = (() => {
         event.stopPropagation();
         card.classList.remove('drop');
         const file = event.dataTransfer.files[0];
-        if (!file) return;
-        const asset = await take(file, 'skin');
-        if (!asset) return;
-        entry.doc.skin = { ...skin, type: 'texture', value: Assets.reference(asset, Pack.state.namespace) };
-        Pack.changed();
+        if (file) wear(await take(file, 'skin'));
       });
     } else {
       note.textContent = 'crafthead.net';
@@ -320,15 +519,30 @@ const App = (() => {
 
     const columns = el('div', 'columns');
     const left = el('div', 'column');
+    // The skin value is a username, a uuid or a texture depending on the type beside it, so
+    // the pack's images are only offered for the one it names. An empty list draws no menu.
     const ctx = {
-      skin: { value: { list: 'skin-ids' } },
-      battle: { intro: { list: 'intro-ids' }, music: { list: 'music-ids' } }
+      skin: {
+        value: {
+          list: 'skin-ids',
+          menu: () => ((entry.doc.skin || {}).type === 'texture' ? menuFor('skin')() : [])
+        }
+      },
+      battle: {
+        intro: { list: 'intro-ids', menu: menuFor('intro') },
+        music: { list: 'music-ids', menu: menuFor('music') }
+      }
     };
+    let skinType = (entry.doc.skin || {}).type;
     left.appendChild(Form.render(SCHEMA.TRAINER, entry.doc, () => {
       Form.prune(entry.doc);
       Pack.save();
       renderSidebar();
       renderChecks(entry);
+      // Changing the type changes what the value means, so the menu beside it is rebuilt. It
+      // is a menu, not a text field, so no caret is lost doing it.
+      const now = (entry.doc.skin || {}).type;
+      if (now !== skinType) { skinType = now; render(); return; }
       right.replaceChildren(skinCanvas(entry), teamSummary(entry));
     }, ctx));
 
@@ -375,32 +589,201 @@ const App = (() => {
     };
   };
 
-  const paintIntro = (entry, canvas) => {
-    Preview.frame(canvas, entry.doc, preview.tick, about(), preview.hidden);
+  /*
+   * What the stage, the timeline and the layer cards have to say to each other lives here
+   * rather than being passed down: all three are rebuilt by the same render, and all three
+   * have to answer the same selection. They are cleared at the top of renderIntro, so a stale
+   * canvas from a file that is no longer open can never be painted into.
+   */
+  let stage = null;
+  let clock = null;       // the timeline, once it exists
+  let cards = [];         // one <details> per layer, so selecting can open one without a render
+
+  const layerName = (layer, index) => {
+    const known = SCHEMA.LAYERS[layer.type];
+    const title = known ? I18N.of(known.l) : layer.type;
+    const said = layer.type === 'text' ? layer.value
+      : layer.type === 'image' ? String(layer.texture || '').split('/').pop()
+      : layer.type === 'figure' || layer.type === 'team_balls'
+        ? T('preview.' + (layer.who === 'player' ? 'player' : 'trainer')) : '';
+    return (index + 1) + ' · ' + title + (said ? ' · ' + said : '');
   };
 
-  const renderIntroPreview = (entry) => {
+  /**
+   * Brings a card into view inside the layers panel, and moves nothing else.
+   *
+   * `scrollIntoView` scrolls every ancestor that can scroll, the document included: choosing a
+   * layer on the canvas would send the page down to its card and take the canvas off screen -
+   * which is exactly the moment one is looking at it.
+   */
+  const reveal = (card) => {
+    const panel = card && card.parentElement;
+    if (!panel) return;
+    const box = card.getBoundingClientRect();
+    const view = panel.getBoundingClientRect();
+    if (box.top < view.top) panel.scrollTop += box.top - view.top;
+    else if (box.bottom > view.bottom) {
+      panel.scrollTop += Math.min(box.top - view.top, box.bottom - view.bottom);
+    }
+  };
+
+  /** Lights the card of the selected layer and opens it, without rebuilding the editor. */
+  const paintSelection = (open, bring) => {
+    cards.forEach((card, index) => {
+      const on = index === preview.selected;
+      card.classList.toggle('layer-on', on);
+      if (on && open) {
+        card.open = true;
+        if (bring) reveal(card);
+      }
+    });
+  };
+
+  /**
+   * Only a selection that actually changed opens a card: a click on the summary of the card
+   * that is already chosen is a click to fold it away, and forcing it back open would leave
+   * one card in the list that cannot be closed.
+   */
+  const select = (index, reveal) => {
+    const moved = preview.selected !== index;
+    preview.selected = index;
+    paintSelection(moved, moved && reveal);
+    if (stage) stage.paintOverlay();
+    if (clock) clock.update();
+    saveView();
+  };
+
+  /** A drag writes into the very object the file is made of; only the repaint is ours. */
+  const touched = () => {
+    Pack.save();
+    if (clock) clock.update();
+  };
+
+  const renderStage = (entry) => {
     const card = el('div', 'preview');
+    transport = {};
+
+    // Switching view never rebuilds the editor, it only repaints: a scrub of the timeline
+    // ruler switches to the animation mid-drag, and a rebuild there would tear the node the
+    // pointer is captured on out from under it.
+    const seg = [];
+    const modes = el('div', 'seg');
+    [['layout', 'stage.layout'], ['play', 'stage.play']].forEach(([mode, key]) => {
+      const button = el('button', 'seg-btn', T(key));
+      button.type = 'button';
+      button.addEventListener('click', () => {
+        if (preview.mode === mode) return;
+        preview.mode = mode;
+        if (mode === 'layout') stop();
+        paintMode();
+        if (stage) stage.paint();
+      });
+      seg.push([mode, button]);
+      modes.appendChild(button);
+    });
+
+    const toggles = el('div', 'row row-end stage-toggles');
+    [['snap', 'stage.snap'], ['grid', 'stage.grid']].forEach(([key, label]) => {
+      const tag = el('label', 'check');
+      const box = el('input');
+      box.type = 'checkbox';
+      box.checked = Boolean(preview[key]);
+      box.addEventListener('change', () => {
+        preview[key] = box.checked;
+        if (stage) stage.paintOverlay();
+        saveView();
+      });
+      tag.appendChild(box);
+      tag.appendChild(el('span', null, T(label)));
+      toggles.appendChild(tag);
+    });
+
+    const bar = el('div', 'stage-bar');
+    bar.appendChild(modes);
+    bar.appendChild(toggles);
+    card.appendChild(bar);
+
+    const holder = el('div', 'stage');
     const canvas = document.createElement('canvas');
     canvas.width = Preview.WIDTH;
     canvas.height = Preview.HEIGHT;
     canvas.className = 'preview-canvas';
-    card.appendChild(canvas);
+    holder.appendChild(canvas);
 
-    const duration = entry.doc.duration ?? 100;
+    // The overlay takes the pointer and the keyboard, so it is focusable: arrows nudge the
+    // selected layer, and a focus ring says the canvas is listening.
+    const overlay = document.createElement('canvas');
+    overlay.className = 'stage-overlay';
+    overlay.tabIndex = 0;
+    holder.appendChild(overlay);
+    card.appendChild(holder);
+
+    stage = Stage.create({
+      canvas,
+      overlay,
+      state: preview,
+      scene: () => entry.doc,
+      layers: () => entry.doc.layers,
+      about,
+      onSelect: (index) => select(index, true),
+      onEdit: touched,
+      onCommit: () => Pack.changed(),
+      onRemove: (index) => removeLayer(entry, index),
+      onDuplicate: (index) => duplicateLayer(entry, index),
+      onPaint: () => { if (clock) clock.update(); }
+    });
+
+    card.appendChild(renderTransport(entry, canvas));
+
+    const said = el('p', 'muted small stage-hint');
+    const keys = el('p', 'muted small', T('stage.keys'));
+    card.appendChild(said);
+    card.appendChild(keys);
+
+    card.appendChild(renderStageSkins(entry));
+    card.appendChild(el('p', 'muted small', T('preview.note')));
+
+    Object.assign(transport, { seg, toggles, holder, said, keys });
+    paintMode();
+    Preview.onRepaint = () => { if (stage) stage.paint(); };
+    stage.paint();
+    if (preview.playing && preview.mode === 'play') loop(entry);
+    return card;
+  };
+
+  /** Everything on the stage panel that says which of the two views is up. */
+  const paintMode = () => {
+    if (!transport || !transport.seg) return;
+    const playing = preview.mode === 'play';
+    transport.seg.forEach(([mode, button]) =>
+      button.classList.toggle('seg-on', preview.mode === mode));
+    transport.toggles.hidden = playing;
+    transport.keys.hidden = playing;
+    transport.holder.classList.toggle('stage-play', playing);
+    transport.said.textContent = T(playing ? 'stage.hint.play' : 'stage.hint');
+    saveView();
+  };
+
+  /** Play, pause, restart and the scrub - all four only mean anything in the animation. */
+  const renderTransport = (entry, canvas) => {
     const bar = el('div', 'preview-bar');
+    const duration = () => Math.max(entry.doc.duration ?? 100, 1);
 
-    const play = el('button', 'btn btn-small btn-primary', T(preview.playing ? 'preview.pause' : 'preview.play'));
+    const play = el('button', 'btn btn-small btn-primary',
+                    T(preview.playing ? 'preview.pause' : 'preview.play'));
     play.type = 'button';
     play.addEventListener('click', () => {
       preview.playing = !preview.playing;
-      play.textContent = T(preview.playing ? 'preview.pause' : 'preview.play');
       if (preview.playing) {
-        if (preview.tick >= duration - 0.01) preview.tick = 0;
-        loop(entry, canvas, slider, clock);
-      } else if (preview.raf) {
-        cancelAnimationFrame(preview.raf);
+        preview.mode = 'play';
+        if (preview.tick >= duration() - 0.01) preview.tick = 0;
+        paintMode();
+        loop(entry);
+      } else {
+        stop();
+        if (stage) stage.paint();
       }
+      paintTransport();
     });
     bar.appendChild(play);
 
@@ -409,31 +792,34 @@ const App = (() => {
     again.addEventListener('click', () => {
       preview.tick = 0;
       preview.playing = true;
-      play.textContent = T('preview.pause');
-      loop(entry, canvas, slider, clock);
+      preview.mode = 'play';
+      paintMode();
+      loop(entry);
+      paintTransport();
     });
     bar.appendChild(again);
 
     const slider = el('input', 'slider');
     slider.type = 'range';
     slider.min = 0;
-    slider.max = duration;
+    slider.max = duration();
     slider.step = 0.5;
     slider.value = preview.tick;
     slider.addEventListener('input', () => {
-      preview.playing = false;
-      play.textContent = T('preview.play');
-      if (preview.raf) cancelAnimationFrame(preview.raf);
-      preview.tick = Number(slider.value);
-      clock.textContent = preview.tick.toFixed(0);
-      paintIntro(entry, canvas);
+      scrubTo(Number(slider.value));
     });
     bar.appendChild(slider);
 
-    const clock = el('span', 'mono muted', String(Math.round(preview.tick)));
-    bar.appendChild(clock);
-    card.appendChild(bar);
+    const count = el('span', 'mono muted stage-clock', String(Math.round(preview.tick)));
+    bar.appendChild(count);
 
+    // The transport is redrawn by the animation loop rather than by a render: sixty renders a
+    // second would rebuild the layer cards under the author's pointer.
+    Object.assign(transport, { play, slider, count, canvas });
+    return bar;
+  };
+
+  const renderStageSkins = (entry) => {
     const skins = el('div', 'row preview-skins');
     [['preview.trainer', 'skin'], ['preview.player', 'player']].forEach(([label, key]) => {
       const cell = el('label', 'mini');
@@ -444,38 +830,221 @@ const App = (() => {
       input.value = preview[key] || '';
       input.addEventListener('change', () => {
         preview[key] = input.value.trim();
-        paintIntro(entry, canvas);
+        if (stage) stage.paint();
+        saveView();
       });
       cell.appendChild(input);
       skins.appendChild(cell);
     });
-    card.appendChild(skins);
-    card.appendChild(el('p', 'muted small', T('preview.skin.hint')));
-    card.appendChild(el('p', 'muted small', T('preview.note')));
-
-    Preview.onRepaint = () => paintIntro(entry, canvas);
-    paintIntro(entry, canvas);
-    if (preview.playing) loop(entry, canvas, slider, clock);
-    return card;
+    const hint = el('div', 'preview-skins-hint');
+    hint.appendChild(el('p', 'muted small', T('preview.skin.hint')));
+    const wrap = el('div', 'stage-skins');
+    wrap.appendChild(skins);
+    wrap.appendChild(hint);
+    return wrap;
   };
 
-  const loop = (entry, canvas, slider, clock) => {
+  /* -- the animation -- */
+
+  let transport = null;
+
+  const stop = () => {
+    preview.playing = false;
+    if (preview.raf) cancelAnimationFrame(preview.raf);
+    preview.raf = null;
+  };
+
+  /** Scrubbing is a question about the animation, so it answers in the animation. */
+  const scrubTo = (tick) => {
+    stop();
+    preview.tick = tick;
+    preview.mode = 'play';
+    paintMode();
+    if (stage) stage.paint();
+    paintTransport();
+  };
+
+  const paintTransport = () => {
+    if (!transport) return;
+    transport.slider.value = preview.tick;
+    transport.count.textContent = preview.tick.toFixed(0);
+    transport.play.textContent = T(preview.playing ? 'preview.pause' : 'preview.play');
+  };
+
+  const loop = (entry) => {
     if (preview.raf) cancelAnimationFrame(preview.raf);
     let last = performance.now();
     const step = (now) => {
-      const duration = entry.doc.duration ?? 100;
+      const duration = Math.max(entry.doc.duration ?? 100, 1);
       preview.tick += (now - last) / 50;
       last = now;
       if (preview.tick >= duration) {
         preview.tick = duration;
         preview.playing = false;
       }
-      slider.value = preview.tick;
-      clock.textContent = preview.tick.toFixed(0);
-      paintIntro(entry, canvas);
+      if (stage) stage.paint();
+      paintTransport();
       if (preview.playing) preview.raf = requestAnimationFrame(step);
     };
     preview.raf = requestAnimationFrame(step);
+  };
+
+  /* -- the layers -- */
+
+  const removeLayer = (entry, index) => {
+    entry.doc.layers.splice(index, 1);
+    preview.hidden.clear();
+    preview.selected = entry.doc.layers.length ? Math.min(index, entry.doc.layers.length - 1) : null;
+    Pack.changed();
+  };
+
+  const duplicateLayer = (entry, index) => {
+    const copy = JSON.parse(JSON.stringify(entry.doc.layers[index]));
+    entry.doc.layers.splice(index + 1, 0, copy);
+    preview.hidden.clear();
+    preview.selected = index + 1;
+    Pack.changed();
+  };
+
+  /** Moves a layer in the drawing order, and the selection with it. */
+  const moveLayer = (entry, index, to) => {
+    const layers = entry.doc.layers;
+    if (to < 0 || to >= layers.length) return;
+    [layers[to], layers[index]] = [layers[index], layers[to]];
+    const held = preview.hidden.has(index);
+    const there = preview.hidden.has(to);
+    preview.hidden.delete(index);
+    preview.hidden.delete(to);
+    if (held) preview.hidden.add(to);
+    if (there) preview.hidden.add(index);
+    if (preview.selected === index) preview.selected = to;
+    else if (preview.selected === to) preview.selected = index;
+    Pack.changed();
+  };
+
+  /**
+   * The nine anchors as a pad rather than a menu.
+   *
+   * Picking one re-bases the offset, so the layer does not move: what changes is the corner it
+   * holds on to. A menu could not say that, and a pad next to the tether drawn on the canvas
+   * says it without a sentence.
+   */
+  const renderAnchorPad = (entry, layer, index) => {
+    // The pad *is* the anchor field's control, so its name comes from the schema like every
+    // other label. Writing "Anchor" here as well would be the field described twice, and the
+    // two would drift.
+    const field = SCHEMA.LAYER_PLACE.find((one) => one.k === 'anchor');
+    const wrap = el('div', 'field');
+    wrap.appendChild(el('span', 'field-label', I18N.of(field.l)));
+    const pad = el('div', 'pad');
+    ['top-left', 'top', 'top-right', 'left', 'center', 'right',
+     'bottom-left', 'bottom', 'bottom-right'].forEach((anchor) => {
+      const dot = el('button', 'pad-dot' + ((layer.anchor ?? 'center') === anchor ? ' pad-on' : ''));
+      dot.type = 'button';
+      dot.title = anchor;
+      dot.addEventListener('click', () => {
+        if (!stage) return;
+        stage.reanchor(index, anchor);
+        Pack.changed();
+      });
+      pad.appendChild(dot);
+    });
+    wrap.appendChild(pad);
+    wrap.appendChild(el('p', 'field-hint', T('stage.anchor.hint')));
+    return wrap;
+  };
+
+  const renderLayerCard = (entry, layer, index) => {
+    const layers = entry.doc.layers;
+    const box = el('details', 'card layer' + (index === preview.selected ? ' layer-on' : ''));
+    box.open = index === preview.selected;
+
+    const head = el('summary', 'card-head');
+    head.appendChild(el('span', 'card-title', layerName(layer, index)));
+    head.appendChild(el('span', 'layer-at mono muted', '@' + (layer.at ?? 0)));
+
+    const actions = el('div', 'row');
+    const act = (glyph, key, run, cls) => {
+      const button = el('button', 'btn btn-ghost btn-mini' + (cls || ''), glyph);
+      button.type = 'button';
+      button.title = T(key);
+      button.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        run();
+      });
+      actions.appendChild(button);
+    };
+
+    act(preview.hidden.has(index) ? '◌' : '◉', 'layers.hide', () => {
+      if (preview.hidden.has(index)) preview.hidden.delete(index);
+      else preview.hidden.add(index);
+      render();
+    });
+    act('⧉', 'layers.duplicate', () => duplicateLayer(entry, index));
+    act('↑', 'layers.up', () => moveLayer(entry, index, index - 1));
+    act('↓', 'layers.down', () => moveLayer(entry, index, index + 1));
+    act('×', 'layers.remove', () => removeLayer(entry, index), ' btn-danger');
+    head.appendChild(actions);
+    head.addEventListener('click', () => select(index, false));
+    box.appendChild(head);
+
+    const changed = () => {
+      Pack.save();
+      renderChecks(entry);
+      if (stage) stage.paint();
+      if (clock) clock.update();
+    };
+
+    const body = el('div', 'layer-body');
+    const own = SCHEMA.LAYERS[layer.type];
+    if (own) {
+      body.appendChild(el('h5', 'layer-part', I18N.of(own.l)));
+      body.appendChild(Form.render(own.fields, layer, changed, {
+        texture: {
+          list: 'texture-ids',
+          menu: menuFor('texture'),
+          pick: (put) => pickAsset('intro_texture', (reference) => { put(reference); Pack.changed(); })
+        }
+      }));
+    }
+
+    body.appendChild(el('h5', 'layer-part', T('layers.part.place')));
+    body.appendChild(renderAnchorPad(entry, layer, index));
+    body.appendChild(Form.render(SCHEMA.LAYER_PLACE.filter((one) => one.k !== 'anchor'),
+                                 layer, changed));
+
+    body.appendChild(el('h5', 'layer-part', T('layers.part.time')));
+    body.appendChild(Form.render(SCHEMA.LAYER_TIME, layer, changed));
+
+    body.appendChild(el('h5', 'layer-part', T('layers.part.sound')));
+    body.appendChild(Form.render(SCHEMA.LAYER_SOUND, layer, changed,
+      { sound: { list: 'sound-ids', menu: menuFor('sound') } }));
+
+    if (layer.type === 'image') {
+      const drop = el('button', 'drop-zone', T('assets.drop.texture'));
+      drop.type = 'button';
+      drop.addEventListener('click', () => pickAsset('intro_texture', (reference) => {
+        layer.texture = reference;
+        Pack.changed();
+      }));
+      drop.addEventListener('dragover', (event) => { event.preventDefault(); drop.classList.add('drop'); });
+      drop.addEventListener('dragleave', () => drop.classList.remove('drop'));
+      drop.addEventListener('drop', async (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        drop.classList.remove('drop');
+        const asset = await take(event.dataTransfer.files[0], 'intro_texture');
+        if (asset) {
+          layer.texture = Assets.reference(asset, Pack.state.namespace);
+          Pack.changed();
+        }
+      });
+      body.appendChild(drop);
+    }
+
+    box.appendChild(body);
+    return box;
   };
 
   const renderLayers = (entry) => {
@@ -485,120 +1054,92 @@ const App = (() => {
 
     wrap.appendChild(Form.render(SCHEMA.INTRO_FILE, entry.doc, () => {
       Pack.save();
-      render();
+      // Same reason as renaming: the duration is the timeline's scale and the scrub's range,
+      // and none of that needs the editor rebuilt - rebuilding it would carry off the field
+      // being typed in.
+      const total = Math.max(entry.doc.duration ?? 100, 1);
+      if (preview.tick > total) preview.tick = total;
+      if (transport && transport.slider) {
+        transport.slider.max = total;
+        transport.slider.value = preview.tick;
+      }
+      if (stage) stage.paint();
+      if (clock) clock.update();
+      renderChecks(entry);
     }));
 
-    wrap.appendChild(el('p', 'field-hint', T('layers.order')));
-    if (layers.length === 0) wrap.appendChild(el('p', 'muted', T('layers.empty')));
-
-    layers.forEach((layer, index) => {
-      const box = el('details', 'card layer');
-      const head = el('summary', 'card-head');
-      const title = SCHEMA.LAYERS[layer.type] ? I18N.of(SCHEMA.LAYERS[layer.type].l) : layer.type;
-      head.appendChild(el('span', 'card-title', (index + 1) + ' · ' + title
-        + (layer.value ? ' · ' + layer.value : '') + '  @' + (layer.at ?? 0)));
-
-      const actions = el('div', 'row');
-      const eye = el('button', 'btn btn-ghost btn-mini', preview.hidden.has(index) ? '◌' : '◉');
-      eye.type = 'button';
-      eye.title = T('layers.hide');
-      eye.addEventListener('click', (event) => {
-        event.preventDefault();
-        if (preview.hidden.has(index)) preview.hidden.delete(index); else preview.hidden.add(index);
-        render();
-      });
-      actions.appendChild(eye);
-
-      const up = el('button', 'btn btn-ghost btn-mini', '↑');
-      up.type = 'button';
-      up.addEventListener('click', (event) => {
-        event.preventDefault();
-        if (index === 0) return;
-        [layers[index - 1], layers[index]] = [layers[index], layers[index - 1]];
-        Pack.changed();
-      });
-      actions.appendChild(up);
-
-      const down = el('button', 'btn btn-ghost btn-mini', '↓');
-      down.type = 'button';
-      down.addEventListener('click', (event) => {
-        event.preventDefault();
-        if (index === layers.length - 1) return;
-        [layers[index + 1], layers[index]] = [layers[index], layers[index + 1]];
-        Pack.changed();
-      });
-      actions.appendChild(down);
-
-      const kill = el('button', 'btn btn-ghost btn-mini btn-danger', '×');
-      kill.type = 'button';
-      kill.addEventListener('click', (event) => {
-        event.preventDefault();
-        layers.splice(index, 1);
-        preview.hidden.clear();
-        Pack.changed();
-      });
-      actions.appendChild(kill);
-      head.appendChild(actions);
-      box.appendChild(head);
-
-      const changed = () => {
-        Pack.save();
-        renderChecks(entry);
-        const canvas = document.querySelector('.preview-canvas');
-        if (canvas) paintIntro(entry, canvas);
-      };
-
-      const own = SCHEMA.LAYERS[layer.type];
-      if (own) box.appendChild(Form.render(own.fields, layer, changed, { texture: { list: 'texture-ids' } }));
-      box.appendChild(Form.render(SCHEMA.LAYER_COMMON, layer, changed, { sound: { list: 'sound-ids' } }));
-
-      if (layer.type === 'image') {
-        const drop = el('div', 'drop-zone', T('assets.drop.texture'));
-        drop.addEventListener('dragover', (event) => { event.preventDefault(); drop.classList.add('drop'); });
-        drop.addEventListener('dragleave', () => drop.classList.remove('drop'));
-        drop.addEventListener('drop', async (event) => {
-          event.preventDefault();
-          event.stopPropagation();
-          drop.classList.remove('drop');
-          const asset = await take(event.dataTransfer.files[0], 'intro_texture');
-          if (asset) {
-            layer.texture = Assets.reference(asset, Pack.state.namespace);
-            Pack.changed();
-          }
-        });
-        box.appendChild(drop);
-      }
-      wrap.appendChild(box);
-    });
-
-    const bar = el('div', 'row row-wrap');
+    // A new layer arrives where the playhead is and where the eye is: writing it at tick 0
+    // meant every added layer had to be dragged out of the first frame before it could be
+    // seen at all.
+    const bar = el('div', 'row row-wrap add-row');
+    bar.appendChild(el('span', 'field-label', T('layers.add')));
     Object.entries(SCHEMA.LAYERS).forEach(([type, definition]) => {
       const add = el('button', 'btn btn-small btn-ghost', '+ ' + I18N.of(definition.l));
       add.type = 'button';
       add.addEventListener('click', () => {
-        layers.push({ type, at: layers.length ? (layers[layers.length - 1].at ?? 0) : 0 });
+        const at = Math.round(preview.mode === 'play' ? preview.tick : 0);
+        layers.push(at ? { type, at } : { type });
+        preview.selected = layers.length - 1;
         Pack.changed();
       });
       bar.appendChild(add);
     });
     wrap.appendChild(bar);
+
+    wrap.appendChild(el('p', 'field-hint', T('layers.order')));
+    if (layers.length === 0) wrap.appendChild(el('p', 'muted', T('layers.empty')));
+
+    // The cards scroll in a panel of their own rather than down the page. Opening one, or
+    // bringing the chosen one into view, then cannot take the stage off screen, and the page
+    // keeps the height it had - twenty layers do not push the timeline out of reach.
+    const list = el('div', 'layer-list');
+    cards = layers.map((layer, index) => {
+      const card = renderLayerCard(entry, layer, index);
+      list.appendChild(card);
+      return card;
+    });
+    wrap.appendChild(list);
+    // Nothing is laid out until the caller has put all this in the document.
+    if (cards[preview.selected]) setTimeout(() => reveal(cards[preview.selected]), 0);
     return wrap;
   };
 
   const renderIntro = (entry) => {
+    if (preview.selected !== null && preview.selected !== undefined
+        && !(entry.doc.layers || [])[preview.selected]) preview.selected = null;
+
     const wrap = el('div', 'editor-body');
     wrap.appendChild(renderTabs(entry, ['layers', 'json']));
 
     if (tab.intro === 'json') {
+      stop();
       wrap.appendChild(renderJson(entry));
       return wrap;
     }
 
     const columns = el('div', 'columns columns-intro');
     const left = el('div', 'column');
-    left.appendChild(renderLayers(entry));
     const right = el('aside', 'column column-preview');
-    right.appendChild(renderIntroPreview(entry));
+
+    // The stage is built first: the layer cards ask it to re-anchor, and the timeline paints
+    // the playhead it moves.
+    right.appendChild(renderStage(entry));
+    clock = Stage.timeline({
+      state: preview,
+      scene: () => entry.doc,
+      layers: () => entry.doc.layers,
+      label: layerName,
+      title: T('timeline.title'),
+      hint: T('timeline.hint'),
+      barHint: T('timeline.bar'),
+      onSelect: (index) => select(index, true),
+      onScrub: () => scrubTo(preview.tick),
+      onEdit: () => { Pack.save(); if (stage) stage.paint(); },
+      onCommit: () => Pack.changed()
+    });
+    right.appendChild(clock.node);
+
+    left.appendChild(renderLayers(entry));
     columns.appendChild(left);
     columns.appendChild(right);
     wrap.appendChild(columns);
@@ -727,6 +1268,27 @@ const App = (() => {
   };
 
   const feedAll = () => Pack.state.assets.forEach(feedPreview);
+
+  /**
+   * Asks for a file, puts it in the pack, and hands back the id it is reached by.
+   *
+   * One gesture for both halves: the bytes the archive will carry and the field that names
+   * them are written together, so they cannot disagree - the same reason `Assets` keeps a
+   * file's place in the archive and its reference in one entry.
+   */
+  const pickAsset = (kind, put) => {
+    const definition = Assets.KINDS[kind];
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = definition.accept + ',.' + definition.ext;
+    input.addEventListener('change', async () => {
+      const file = input.files[0];
+      if (!file) return;
+      const asset = await take(file, kind);
+      if (asset) put(Assets.reference(asset, Pack.state.namespace));
+    });
+    input.click();
+  };
 
   const take = async (file, kind) => {
     try {
@@ -986,6 +1548,13 @@ const App = (() => {
 
   const render = () => {
     if (preview.raf) cancelAnimationFrame(preview.raf);
+    // Everything the intro editor holds points at DOM that is about to be thrown away. An
+    // image finishing its download asks the stage to repaint itself, and it must not find one
+    // belonging to a file nobody has open any more.
+    stage = null;
+    clock = null;
+    cards = [];
+    transport = null;
     renderSidebar();
 
     const main = $('editor');
@@ -1027,6 +1596,7 @@ const App = (() => {
       advancement: renderAdvancement
     }[entry.kind](entry));
     renderChecks(entry);
+    saveView();
   };
 
   /* ---- chrome --------------------------------------------------------------- */
@@ -1048,26 +1618,48 @@ const App = (() => {
     'crest_rerebleue', 'crest_kagumi', 'crest_griff501', 'crest_octavien29', 'crest_theazertor',
     'crest_aeliothys'];
 
-  /** What every field that names something may be offered: the mod's, then the pack's own. */
+  /*
+   * What every field that names something may be offered, in one place.
+   *
+   * Two things read this - the datalist behind a field and the menu in front of it - and they
+   * must offer the same ids: a menu that knows about a music the suggestions have never heard
+   * of is two answers to one question, which is how one of them ends up wrong.
+   */
+  const SOURCES = {
+    intro: () => ({
+      pack: Pack.state.files.filter((file) => file.kind === 'intro')
+        .map((file) => Pack.state.namespace + ':' + file.path),
+      mod: [...Validate.SHIPPED_INTROS]
+    }),
+    music: () => ({ pack: Pack.references('music'), mod: shipped.music }),
+    sound: () => ({
+      pack: [...Pack.references('sound'), ...Pack.references('music')],
+      mod: shipped.sound
+    }),
+    skin: () => ({ pack: Pack.references('skin'), mod: [] }),
+    texture: () => ({
+      pack: Pack.references('intro_texture'),
+      mod: SHIPPED_TEXTURES.map((name) => `cobblemon-trainers:textures/gui/intro/${name}.png`)
+    })
+  };
+
+  /** The same ids, shaped for the menu: what this pack holds first, the mod's after. */
+  const menuFor = (kind) => () => {
+    const { pack, mod } = SOURCES[kind]();
+    return [{ label: T('ref.pack'), items: pack }, { label: T('ref.mod'), items: mod }];
+  };
+
   const fillLists = () => {
-    const fill = (id, values) => {
-      const list = $(id);
+    Object.keys(SOURCES).forEach((kind) => {
+      const { pack, mod } = SOURCES[kind]();
+      const list = $(kind + '-ids');
       list.innerHTML = '';
-      values.forEach((value) => {
+      [...pack, ...mod].forEach((value) => {
         const option = document.createElement('option');
         option.value = value;
         list.appendChild(option);
       });
-    };
-
-    fill('intro-ids', [...Validate.SHIPPED_INTROS,
-      ...Pack.state.files.filter((file) => file.kind === 'intro')
-        .map((file) => Pack.state.namespace + ':' + file.path)]);
-    fill('music-ids', [...Pack.references('music'), 'cobblemon-trainers:battle_music.b2w2_tournament']);
-    fill('sound-ids', [...Pack.references('sound'), ...Pack.references('music')]);
-    fill('skin-ids', Pack.references('skin'));
-    fill('texture-ids', [...Pack.references('intro_texture'),
-      ...SHIPPED_TEXTURES.map((name) => `cobblemon-trainers:textures/gui/intro/${name}.png`)]);
+    });
   };
 
   const loadTemplates = async () => {
@@ -1123,17 +1715,23 @@ const App = (() => {
 
     $('export').addEventListener('click', () => Pack.zip());
     $('reset').addEventListener('click', () => {
-      if (window.confirm(T('pack.reset.confirm'))) Pack.clear();
+      if (!window.confirm(T('pack.reset.confirm'))) return;
+      resetView();
+      Pack.clear();
     });
 
     const file = $('import-file');
     $('import').addEventListener('click', () => file.click());
     file.addEventListener('change', async () => {
-      for (const one of file.files) {
-        if (one.name.endsWith('.zip') || one.name.endsWith('.jar')) await Pack.readZip(one);
+      const chosen = [...file.files];
+      file.value = '';
+      // Asked once for the whole selection: clearing between two archives of one import would
+      // let the second quietly eat the first.
+      if (chosen.some((one) => isArchive(one.name)) && !(await makeRoomForImport())) return;
+      for (const one of chosen) {
+        if (isArchive(one.name)) await Pack.readZip(one);
         else Pack.readJson(await one.text(), one.name);
       }
-      file.value = '';
     });
 
     document.body.addEventListener('dragover', (event) => event.preventDefault());
@@ -1141,8 +1739,9 @@ const App = (() => {
       if (!event.dataTransfer.files.length) return;
       const one = event.dataTransfer.files[0];
       const name = one.name.toLowerCase();
-      if (name.endsWith('.zip') || name.endsWith('.jar')) {
+      if (isArchive(name)) {
         event.preventDefault();
+        if (!(await makeRoomForImport())) return;
         await Pack.readZip(one);
       } else if (name.endsWith('.json')) {
         event.preventDefault();
@@ -1166,7 +1765,8 @@ const App = (() => {
 
   const start = () => {
     I18N.restore();
-    const had = Pack.restore();
+    Pack.restore();
+    restoreView();
     wire();
     loadTemplates();
 
@@ -1190,7 +1790,8 @@ const App = (() => {
     $('archive').value = Pack.state.archive;
     // The bytes outlive the page: a skin dropped yesterday has to draw itself again today.
     feedAll();
-    if (!had) Pack.add('trainer', 'champions/erika');
+    // Nothing is created on a first visit. A sample trainer nobody asked for is a file to
+    // delete before starting, and it taught the wrong thing about what a new pack contains.
     paintChrome();
     fillLists();
     render();

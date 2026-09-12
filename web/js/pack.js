@@ -435,7 +435,9 @@ const Pack = (() => {
       } catch (e) { /* a description is not worth failing an import over */ }
     }
 
-    if (entries.some((item) => item.name.endsWith('fabric.mod.json'))) state.archive = 'jar';
+    // The format describes the archive being read, so it is decided here rather than left
+    // over from whatever was loaded before - an import replaces, it does not inherit.
+    state.archive = entries.some((item) => item.name.endsWith('fabric.mod.json')) ? 'jar' : 'zip';
 
     // The assets half first, so a trainer read afterwards already has its music to point at.
     for (const item of entries) {
