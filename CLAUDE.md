@@ -194,6 +194,8 @@ messages, musique et récompenses de combat.
   plus bas).
 - **`battle.TrainerBattleRange`** - la distance au-delà de laquelle un combat de dresseur
   s'arrête, celle d'un combat contre un Pokémon sauvage. Même section.
+- **`battle.TrainerSendOut`** - l'endroit où le dresseur lance son Pokémon : devant lui. Voir
+  « Le Pokémon lancé devant le dresseur ».
 - **`battle.TrainerBattleIntro`** - l'écran de versus d'un dresseur qui en déclare un, et
   l'attente pendant laquelle le combat est retenu. Voir « L'écran de versus ».
 - **`intro.TrainerIntro` / `intro.IntroLayer`** - le format d'une intro : la scène et ses
@@ -1048,6 +1050,31 @@ Points à ne pas redécouvrir :
   Kotlin, l'appel doit passer par `as Any as MobAccessor` : le compilateur ne voit pas
   l'interface sur `NPCEntity`, puisque le mixin ne la pose qu'à l'exécution, et refuse le cast
   direct. Ce n'est pas une maladresse à nettoyer.
+
+### Le Pokémon lancé devant le dresseur
+
+`ActiveBattlePokemon.getSendOutPosition` moyenne la position de départ de chaque camp et lance le
+Pokémon à 30 % du trajet vers l'autre camp. Quand les deux camps sont à moins de
+`4 + (largeurs des deux hitbox) / 2`, il étire l'écart **en reculant son propre point d'ancrage**.
+Or un joueur parle à un dresseur à deux blocs - la boîte de dialogue s'ouvre au clic droit -, donc
+le Pokémon du dresseur atterrissait loin, voire dans son dos. `TrainerSendOut`, branché par
+`ActiveBattlePokemonMixin` sur le `RETURN` de cette méthode, remplace la composante avant par
+`FRONT_DISTANCE` plus la demi-largeur du Pokémon.
+
+Points à ne pas redécouvrir :
+
+- **Une seule méthode à viser.** Le lancer de début de combat (`Pokemon.sendOut…`), le
+  `SwitchInstruction` des simples et le `SwapInstruction` la lisent tous ; `setPosition`
+  (`PokemonServerDelegate`) ne fait qu'enregistrer où le Pokémon est réellement tombé.
+- **Le décalage latéral de Cobblemon est gardé**, seule la composante avant est remplacée : un
+  double ou un triple s'étale toujours.
+- **La portée est plafonnée pour ne pas tomber sur le joueur** (`PLAYER_CLEARANCE`), mais jamais
+  sous un demi-bloc devant le bord du Pokémon - un joueur collé au dresseur prend un chevauchement
+  plutôt qu'un Pokémon renvoyé en arrière.
+- **Le test de mur est refait** : celui de Cobblemon vise sa position à lui, pas la nôtre.
+- **Seul le camp du dresseur bouge.** Le Pokémon du joueur reste où Cobblemon le pose.
+- **`BattleActor.getSide()` et `BattleSide.getOppositeSide()` sont des fonctions**, pas des
+  propriétés : `side` et `oppositeSide` ne résolvent pas depuis Kotlin, alors que `actors`, oui.
 
 ### L'arborescence d'un pack
 
