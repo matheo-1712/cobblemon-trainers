@@ -1,0 +1,99 @@
+name: "Bug du mod / Mod bug"
+description: "Un problème en jeu : dresseurs, combats, Battle Phone, bloc, datapack… / Something wrong in game."
+title: "[Mod] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Merci de prendre le temps de signaler un bug ! Vous pouvez écrire en français ou en anglais.
+        Thanks for reporting a bug! You can write in French or English.
+
+        Pour un problème de l'**éditeur en ligne**, utilisez plutôt le modèle « Bug de l'éditeur web ».
+        For an issue with the **web editor**, use the "Web editor bug" template instead.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: "Description"
+      description: "Que se passe-t-il ? / What happens?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: "Étapes pour reproduire / Steps to reproduce"
+      placeholder: |
+        1. Poser le dresseur `mon_pack:champions/erika` avec…
+        2. Lancer le combat…
+        3. …
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: "Comportement attendu / Expected behaviour"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: side
+    attributes:
+      label: "Environnement / Environment"
+      options:
+        - "Solo / Singleplayer"
+        - "Serveur dédié / Dedicated server"
+        - "LAN"
+    validations:
+      required: true
+
+  - type: input
+    id: mod_version
+    attributes:
+      label: "Version de Cobblemon Trainers / Cobblemon Trainers version"
+      placeholder: "0.4.0"
+    validations:
+      required: true
+
+  - type: input
+    id: cobblemon_version
+    attributes:
+      label: "Version de Cobblemon / Cobblemon version"
+      placeholder: "1.8.1"
+    validations:
+      required: true
+
+  - type: input
+    id: loader_versions
+    attributes:
+      label: "Fabric Loader / Fabric API"
+      placeholder: "0.16.x / 0.116.x+1.21.1"
+
+  - type: textarea
+    id: other_mods
+    attributes:
+      label: "Autres mods / Other mods"
+      description: "Surtout Mega Showdown, Accessories, et tout mod qui touche aux combats ou aux PNJ. / Especially Mega Showdown, Accessories, and anything touching battles or NPCs."
+
+  - type: textarea
+    id: trainer_json
+    attributes:
+      label: "JSON du dresseur concerné / Trainer JSON"
+      description: "Si le bug touche un dresseur précis, collez son fichier. / If a specific trainer is involved, paste its file."
+      render: json
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: "Logs"
+      description: |
+        `logs/latest.log`, ou le rapport de crash (`crash-reports/`). Un lien vers https://mclo.gs est idéal pour un long log.
+        `logs/latest.log`, or the crash report. A https://mclo.gs link is best for long logs.
+      render: shell
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: "Captures, vidéo, contexte / Screenshots, video, context"

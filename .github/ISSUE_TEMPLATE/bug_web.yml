@@ -1,0 +1,95 @@
+name: "Bug de l'éditeur web / Web editor bug"
+description: "Un problème sur l'éditeur en ligne (matheo-1712.github.io/cobblemon-trainers). / Something wrong with the online editor."
+title: "[Web] "
+labels: ["bug", "web"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Merci de signaler un problème de l'[éditeur en ligne](https://matheo-1712.github.io/cobblemon-trainers/) ! Français ou anglais, au choix.
+        Thanks for reporting an issue with the [web editor](https://matheo-1712.github.io/cobblemon-trainers/)! French or English is fine.
+
+        Si le pack exporté se charge mal **en jeu** alors que l'éditeur n'a rien signalé, ce modèle est le bon : dites-le ci-dessous.
+        If an exported pack misbehaves **in game** while the editor reported nothing, this is the right template: say so below.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: "Partie concernée / Area"
+      options:
+        - "Dresseur / Trainer"
+        - "Intro (aperçu, calques, placement) / Intro (preview, layers, placement)"
+        - "Catégories / Categories"
+        - "Advancement"
+        - "Fichiers : musiques, skins, textures / Assets: music, skins, textures"
+        - "Traductions / Translations"
+        - "Import d'un pack (.zip, .jar, .json) / Pack import"
+        - "Export du pack / Pack export"
+        - "Validation / Validation"
+        - "Autre / Other"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: "Description"
+      description: "Que se passe-t-il ? / What happens?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: "Étapes pour reproduire / Steps to reproduce"
+      placeholder: |
+        1. Ouvrir le modèle « … »
+        2. Glisser le calque …
+        3. …
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: "Comportement attendu / Expected behaviour"
+    validations:
+      required: true
+
+  - type: input
+    id: browser
+    attributes:
+      label: "Navigateur et OS / Browser and OS"
+      placeholder: "Firefox 130, Windows 11"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: hosting
+    attributes:
+      label: "Comment l'éditeur est ouvert / How the editor is opened"
+      options:
+        - "Site en ligne (GitHub Pages) / Online site"
+        - "index.html ouvert depuis le disque (file://) / index.html opened from disk"
+        - "Serveur local / Local server"
+    validations:
+      required: true
+
+  - type: textarea
+    id: console
+    attributes:
+      label: "Erreurs de la console / Console errors"
+      description: "F12 → Console. Copiez les lignes en rouge. / F12 → Console. Copy the red lines."
+      render: shell
+
+  - type: textarea
+    id: file
+    attributes:
+      label: "Fichier concerné / Related file"
+      description: "Le JSON du dresseur ou de l'intro, si le bug en dépend. Un pack entier peut être joint en .zip. / The trainer or intro JSON if relevant. A whole pack can be attached as .zip."
+      render: json
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: "Captures, vidéo, contexte / Screenshots, video, context"
