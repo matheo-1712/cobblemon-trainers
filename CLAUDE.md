@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Projet
 
 Mod Fabric pour Minecraft 1.21.1 qui ajoute des dresseurs Pokémon configurables à
-Cobblemon 1.8.0. Code principal en Kotlin (`matheo1712.cobbletrainers`), les mixins en Java.
+Cobblemon 1.8.1. Code principal en Kotlin (`matheo1712.cobbletrainers`), les mixins en Java.
 L'essentiel du travail se fait côté serveur logique - les dresseurs viennent de datapacks et
 combattent là-bas - mais **le mod a un côté client, requis, et c'est un endroit légitime pour
 ce qui appartient au client** : un écran, un dessin, une instance sonore, un réglage que seul
@@ -99,7 +99,7 @@ hérite du JDK de Gradle et le loader refuse de démarrer. Le CI utilise le mêm
 
 Toutes les versions sont dans `gradle.properties`, jamais en dur dans `build.gradle.kts`.
 Cobblemon et Architectury sont tirés du **Maven Modrinth** et référencés par **ID de
-version Modrinth** (`cobblemon_version=YgmyyFcs`), pas par numéro sémantique : pour
+version Modrinth** (`cobblemon_version=gBW3vLC7`), pas par numéro sémantique : pour
 changer de version, il faut récupérer le nouvel ID sur Modrinth.
 
 Mega Showdown, `accessories`, `owo` et `architectury` sont là aussi, dans la configuration

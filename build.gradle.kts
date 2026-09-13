@@ -54,7 +54,7 @@ dependencies {
 	modImplementation("net.fabricmc.fabric-api:fabric-api:${providers.gradleProperty("fabric_api_version").get()}")
 	modImplementation("net.fabricmc:fabric-language-kotlin:${providers.gradleProperty("fabric_kotlin_version").get()}")
 
-	// Cobblemon 1.8.0 pour Fabric 1.21.1 - API uniquement (les joueurs l'installeront séparément)
+	// Cobblemon 1.8.1 pour Fabric 1.21.1 - API uniquement (les joueurs l'installeront séparément)
 	modImplementation("maven.modrinth:cobblemon:${project.property("cobblemon_version")}")
 
 	// The same archive again, unremapped, for [cobblemonLibs] below.
