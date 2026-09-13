@@ -32,14 +32,7 @@ par le **Battle Phone**, un objet, pas une commande.
 Il se **craft**, à l'établi : quatre lingots de fer aux coins, quatre lingots de cuivre sur
 les côtés, et une **noigrume bleue** au centre.
 
-| | | |
-| --- | --- | --- |
-| Fer | Cuivre | Fer |
-| Cuivre | **Noigrume bleue** | Cuivre |
-| Fer | Cuivre | Fer |
-
-<!-- Remplacer la ligne ci-dessous par l'image : ![Craft du Battle Phone](assets/battle_phone_craft.png) -->
-*(image du craft à ajouter)*
+<p align="center"><img src="https://raw.githubusercontent.com/matheo-1712/cobblemon-trainers/refs/heads/master/assets/battle_phone_craft.png" alt="Battle Phone recipe"></p>
 
 Le joueur ouvre son Battle Phone, choisit un dresseur dans la liste, et l'appelle. Mais un
 dresseur ne vient que **là où il a dit qu'il serait** : dans les mesas la nuit, sous un orage,
