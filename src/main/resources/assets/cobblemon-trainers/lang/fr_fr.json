@@ -93,6 +93,7 @@
   "cobblemon-trainers.chat.call.failed": "%s n'a pas pu être invoqué. Consulte les logs du serveur pour le détail.",
   "cobblemon-trainers.chat.call.unknown": "Dresseur introuvable.",
   "cobblemon-trainers.chat.call.in_battle": "Le dresseur que tu as appelé est en plein combat. Attends la fin.",
+  "cobblemon-trainers.chat.no_pokemon": "Tu as besoin d'au moins un Pokémon pour combattre.",
 
   "cobblemon-trainers.location.separator": ", ",
   "cobblemon-trainers.location.dimension": "%s",
