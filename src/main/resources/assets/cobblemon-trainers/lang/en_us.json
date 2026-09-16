@@ -93,6 +93,7 @@
   "cobblemon-trainers.chat.call.failed": "%s could not be summoned. See the server log for details.",
   "cobblemon-trainers.chat.call.unknown": "No such trainer.",
   "cobblemon-trainers.chat.call.in_battle": "The trainer you called is in a battle. Wait for it to end.",
+  "cobblemon-trainers.chat.no_pokemon": "You need at least one Pokémon to battle.",
 
   "cobblemon-trainers.location.separator": ", ",
   "cobblemon-trainers.location.dimension": "%s",

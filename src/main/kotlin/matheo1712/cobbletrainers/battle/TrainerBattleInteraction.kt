@@ -175,6 +175,10 @@ class TrainerBattleInteraction : NPCInteractConfiguration {
          */
         private fun partyRefusal(player: ServerPlayer, format: BattleFormat): MutableComponent? {
             val party = player.party()
+            if (!party.any()) {
+                return CobblemonTrainers.lang("chat.no_pokemon")
+            }
+
             val standing = party.count { !it.isFainted() }
 
             if (party.any() && standing == 0) {
