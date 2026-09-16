@@ -157,18 +157,21 @@ class TrainerBattleInteraction : NPCInteractConfiguration {
          * still standing in it: `pvn` filters on health for the trainer's side only, so a wiped
          * player would hand Showdown a team nobody can enter from. The rule has no exception -
          * not even a level-adjusting format, which heals the copies it battles with and would
-         * hand a wiped player a full team for free. The empty party is the one case left to
-         * Cobblemon, which refuses it too and says it better than we would.
+         * hand a wiped player a full team for free. An empty party is similarly refused
+         * so the battle intro does not launch before a guaranteed cancellation.
          *
          * A fainted Pokémon among the opening slots is the second, and it only ever shows up in
          * doubles and triples. `leadingPokemon` fills the first slot and no more (see
          * [TrainerLead]), and a player's party is theirs to arrange, so a format that sends two
          * or three out at once is the one case the mod can see coming and not fix. Turning it
          * down says which Pokémon to heal or move; letting it through locks the battle.
-
+         *
          */
         private fun partyRefusal(player: ServerPlayer, format: BattleFormat): MutableComponent? {
             val party = player.party()
+            if (!party.any()) {
+                return CobblemonTrainers.lang("chat.no_pokemon")
+            }
             if (party.any() && party.none { !it.isFainted() }) {
 
 

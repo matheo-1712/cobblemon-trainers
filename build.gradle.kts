@@ -54,15 +54,19 @@ dependencies {
 	modImplementation("net.fabricmc.fabric-api:fabric-api:${providers.gradleProperty("fabric_api_version").get()}")
 	modImplementation("net.fabricmc:fabric-language-kotlin:${providers.gradleProperty("fabric_kotlin_version").get()}")
 
-	// Cobblemon 1.8.1 pour Fabric 1.21.1 - API uniquement (les joueurs l'installeront séparément)
+	// Cobblemon 1.7.3 pour Fabric 1.21.1 - API uniquement (les joueurs l'installeront séparément)
 	modImplementation("maven.modrinth:cobblemon:${project.property("cobblemon_version")}")
 
 	// The same archive again, unremapped, for [cobblemonLibs] below.
 	cobblemonArchive("maven.modrinth:cobblemon:${project.property("cobblemon_version")}")
 
-    // Mega Showdown and what it needs, dropped into `run/mods` for the dev game. See the
-    // `devMods` configuration above. Architectury is one of them rather than a compile
-    // dependency: Cobblemon 1.8 neither compiles nor runs against it - only Mega Showdown does.
+	// Mega Showdown and what it needs, dropped into `run/mods` for the dev game. See the
+	// `devMods` configuration above. Architectury is one of them rather than a compile
+	// dependency: Cobblemon neither compiles nor runs against it - only Mega Showdown does.
+	devMods("maven.modrinth:cobblemon-mega-showdown:${project.property("mega_showdown_version")}")
+	devMods("maven.modrinth:accessories:${project.property("accessories_version")}")
+	devMods("maven.modrinth:owo-lib:${project.property("owo_version")}")
+	devMods("maven.modrinth:architectury-api:${project.property("architectury_version")}")
 }
 
 /**
