@@ -63,10 +63,6 @@ dependencies {
     // Mega Showdown and what it needs, dropped into `run/mods` for the dev game. See the
     // `devMods` configuration above. Architectury is one of them rather than a compile
     // dependency: Cobblemon 1.8 neither compiles nor runs against it - only Mega Showdown does.
-    devMods("maven.modrinth:cobblemon-mega-showdown:${project.property("mega_showdown_version")}")
-    devMods("maven.modrinth:accessories:${project.property("accessories_version")}")
-    devMods("maven.modrinth:owo-lib:${project.property("owo_version")}")
-    devMods("maven.modrinth:architectury-api:${project.property("architectury_version")}")
 }
 
 /**
