@@ -476,25 +476,17 @@ class BattleIntroScreen(private val intro: BattleIntroPayload) :
             pose.pushPose()
             pose.translate(ballX, top, 0f)
             pose.scale(size / ITEM_PIXELS, size / ITEM_PIXELS, 1f)
-            // An item is drawn on the translucent sheet, so the fade does reach it - but only
-            // through the shader colour, `renderItem` taking no tint of its own.
-            guiGraphics.setColor(1f, 1f, 1f, alpha)
+
+            // Une ball vide est la même ball assombrie via le shader, pas un rectangle
+            // par-dessus - un fill carré déborderait du contour rond de l'icône.
+            if (slot >= filled) {
+                guiGraphics.setColor(EMPTY_TINT, EMPTY_TINT, EMPTY_TINT, alpha)
+            } else {
+                guiGraphics.setColor(1f, 1f, 1f, alpha)
+            }
             guiGraphics.renderItem(POKE_BALL, 0, 0)
             guiGraphics.setColor(1f, 1f, 1f, 1f)
             pose.popPose()
-
-            // An empty slot is the same ball under a veil, drawn on the overlay layer - a plain
-            // fill would slide under the item model rather than over it.
-            if (slot >= filled) {
-                guiGraphics.fill(
-                    RenderType.guiOverlay(),
-                    ballX.toInt(),
-                    top.toInt(),
-                    (ballX + size).toInt(),
-                    (top + size).toInt(),
-                    argb(alpha * EMPTY_ALPHA, BLACK)
-                )
-            }
         }
     }
 
@@ -765,7 +757,7 @@ class BattleIntroScreen(private val intro: BattleIntroPayload) :
         const val PARTY_SLOTS = 6
         const val BAND_STEP = 2
         const val ITEM_PIXELS = 16f
-        const val EMPTY_ALPHA = 0.6f
+        const val EMPTY_TINT = 0.4f
         const val SILHOUETTE_ALPHA = 0.8f
         const val HINT_ALPHA = 0.45f
         const val MIN_HEIGHT = 0.1f
