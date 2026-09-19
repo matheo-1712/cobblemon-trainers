@@ -220,12 +220,12 @@ class TrainerBattleAI(
         gimmickChosen = null
 
         for (gimmick in declaredGimmicks) {
-            // A side gets one of each, so the other active Pokémon of a double battle, asked on
-            // the same turn, is turned down. Across turns there is nothing to refuse: a gimmick
-            // that went through stops being offered, and one that somehow did not is worth
-            // another try rather than lost for the whole battle.
+            // A side gets one of each, so once this gimmick has been sent successfully it is never
+            // offered again from this wrapper. This is defensive on purpose: if a simulator keeps
+            // advertising an already-spent gimmick (observed with Mega Evolution), sending it
+            // again can stall the battle.
             val played = gimmickPlayedFor[gimmick]
-            if (played != null && played.turn == request.turn) continue
+            if (played != null) continue
 
             if (!TrainerGimmicks.offered(moveset, gimmick)) continue
             val reason = reasonFor(gimmick, response, active, moveset) ?: continue
