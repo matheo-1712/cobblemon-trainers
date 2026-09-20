@@ -132,8 +132,7 @@ class TrainerBattleAI(
      * [struck] set the first pass had already filled, so an unbroken Disguise would look broken
      * and the trainer would spend its best move on it after all.
      */
-    private var lastRequest: DecisionKey? = null
-    private var lastResponse: ShowdownActionResponse? = null
+    private val responses = mutableMapOf<DecisionKey, ShowdownActionResponse>()
 
     override fun onHealthChange(packet: BattleHealthChangePacket) = delegate.onHealthChange(packet)
 
@@ -144,7 +143,29 @@ class TrainerBattleAI(
         moveset: ShowdownMoveset?,
         forceSwitch: Boolean
     ): ShowdownActionResponse {
-        val request = DecisionKey(battle.turn, activePokemon.battlePokemon?.uuid, forceSwitch)
+        val request = DecisionKey(battle.battleId, battle.turn, activePokemon.battlePokemon?.uuid, forceSwitch)
+
+        if (level != CorrectionLevel.NONE && moveset != null) {
+            responses[request]?.let { cached ->
+                if (cached.isValid(activePokemon, moveset, forceSwitch)) return withGimmick(
+                    cached,
+                    activePokemon,
+                    battle,
+                    moveset,
+                    request
+                )
+
+                LOGGER.debug(
+                    "Trainer AI discarded stale cached response for battle {}, turn {}, Pokemon {}: {}",
+                    request.battle,
+                    request.turn,
+                    request.pokemon,
+                    cached
+                )
+                responses.remove(request)
+            }
+        }
+
         val decision = decide(activePokemon, battle, aiSide, moveset, forceSwitch, request)
         return withGimmick(decision, activePokemon, battle, moveset, request)
     }
@@ -161,19 +182,22 @@ class TrainerBattleAI(
         val choice = delegate.choose(activePokemon, battle, aiSide, moveset, forceSwitch)
         if (level == CorrectionLevel.NONE || moveset == null) return choice
 
-        // The same question asked twice gets the same answer, as long as it still stands - a
-        // response the battle would reject has to be worked out again rather than repeated.
-        lastResponse?.let {
-            if (request == lastRequest && it.isValid(activePokemon, moveset, forceSwitch)) return it
-        }
-
         // A battle waits on this answer: anything thrown here would leave the player stuck in a
         // fight nobody can act in. Cobblemon's own choice is always a valid fallback.
         return try {
             val situation = read(activePokemon, battle, moveset)
             val corrected = if (situation == null) choice else correct(choice, situation, forceSwitch)
-            lastRequest = request
-            lastResponse = corrected
+            if (!corrected.isValid(activePokemon, moveset, forceSwitch)) {
+                LOGGER.warn(
+                    "Trainer AI produced an invalid response for battle {}, turn {}, Pokemon {}; " +
+                        "using Cobblemon's original choice",
+                    request.battle,
+                    request.turn,
+                    request.pokemon
+                )
+                return choice
+            }
+            responses[request] = corrected
             corrected
         } catch (exception: Exception) {
             LOGGER.error("Trainer AI correction failed, keeping Cobblemon's choice", exception)
@@ -815,7 +839,12 @@ class TrainerBattleAI(
     private fun percent(fraction: Double): String = "${(fraction * 100).roundToInt()}%"
 
     /** What a request is, for the purpose of recognising the same one twice. */
-    private data class DecisionKey(val turn: Int, val pokemon: UUID?, val forceSwitch: Boolean)
+    private data class DecisionKey(
+        val battle: UUID,
+        val turn: Int,
+        val pokemon: UUID?,
+        val forceSwitch: Boolean
+    )
 
     /** The battle as this turn's correction needs it. */
     private class Situation(
