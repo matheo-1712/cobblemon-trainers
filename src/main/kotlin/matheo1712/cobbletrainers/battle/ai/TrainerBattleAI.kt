@@ -132,8 +132,7 @@ class TrainerBattleAI(
      * [struck] set the first pass had already filled, so an unbroken Disguise would look broken
      * and the trainer would spend its best move on it after all.
      */
-    private var lastRequest: DecisionKey? = null
-    private var lastResponse: ShowdownActionResponse? = null
+    private val responses = mutableMapOf<DecisionKey, ShowdownActionResponse>()
 
     override fun onHealthChange(packet: BattleHealthChangePacket) = delegate.onHealthChange(packet)
 
@@ -144,7 +143,29 @@ class TrainerBattleAI(
         moveset: ShowdownMoveset?,
         forceSwitch: Boolean
     ): ShowdownActionResponse {
-        val request = DecisionKey(battle.turn, activePokemon.battlePokemon?.uuid, forceSwitch)
+        val request = DecisionKey(battle.battleId, battle.turn, activePokemon.battlePokemon?.uuid, forceSwitch)
+
+        if (level != CorrectionLevel.NONE && moveset != null) {
+            responses[request]?.let { cached ->
+                if (cached.isValid(activePokemon, moveset, forceSwitch)) return withGimmick(
+                    cached,
+                    activePokemon,
+                    battle,
+                    moveset,
+                    request
+                )
+
+                LOGGER.debug(
+                    "Trainer AI discarded stale cached response for battle {}, turn {}, Pokemon {}: {}",
+                    request.battle,
+                    request.turn,
+                    request.pokemon,
+                    cached
+                )
+                responses.remove(request)
+            }
+        }
+
         val decision = decide(activePokemon, battle, aiSide, moveset, forceSwitch, request)
         return withGimmick(decision, activePokemon, battle, moveset, request)
     }
@@ -161,19 +182,22 @@ class TrainerBattleAI(
         val choice = delegate.choose(activePokemon, battle, aiSide, moveset, forceSwitch)
         if (level == CorrectionLevel.NONE || moveset == null) return choice
 
-        // The same question asked twice gets the same answer, as long as it still stands - a
-        // response the battle would reject has to be worked out again rather than repeated.
-        lastResponse?.let {
-            if (request == lastRequest && it.isValid(activePokemon, moveset, forceSwitch)) return it
-        }
-
         // A battle waits on this answer: anything thrown here would leave the player stuck in a
         // fight nobody can act in. Cobblemon's own choice is always a valid fallback.
         return try {
             val situation = read(activePokemon, battle, moveset)
             val corrected = if (situation == null) choice else correct(choice, situation, forceSwitch)
-            lastRequest = request
-            lastResponse = corrected
+            if (!corrected.isValid(activePokemon, moveset, forceSwitch)) {
+                LOGGER.warn(
+                    "Trainer AI produced an invalid response for battle {}, turn {}, Pokemon {}; " +
+                            "using Cobblemon's original choice",
+                    request.battle,
+                    request.turn,
+                    request.pokemon
+                )
+                return choice
+            }
+            responses[request] = corrected
             corrected
         } catch (exception: Exception) {
             LOGGER.error("Trainer AI correction failed, keeping Cobblemon's choice", exception)
@@ -225,7 +249,7 @@ class TrainerBattleAI(
             // that went through stops being offered, and one that somehow did not is worth
             // another try rather than lost for the whole battle.
             val played = gimmickPlayedFor[gimmick]
-            if (played != null && played.turn == request.turn) continue
+            if (played != null) continue
 
             if (!TrainerGimmicks.offered(moveset, gimmick)) continue
             val reason = reasonFor(gimmick, response, active, moveset) ?: continue
@@ -566,8 +590,8 @@ class TrainerBattleAI(
             val resolves = s.moves
                 .filter {
                     it.damaging &&
-                        !it.useless &&
-                        BattleSpeed.movesFirst(s.selfBattle, it.priority, s.opponents)
+                            !it.useless &&
+                            BattleSpeed.movesFirst(s.selfBattle, it.priority, s.opponents)
                 }
                 .maxByOrNull { it.damage }
 
@@ -721,7 +745,7 @@ class TrainerBattleAI(
             // it is a plausible mistake rather than an impossible move.
             val lands = opponents.any {
                 it.effectedPokemon.status == null &&
-                    AIUtility.canAffectWithStatus(status, it.effectedPokemon.types, it.effectedPokemon.ability)
+                        AIUtility.canAffectWithStatus(status, it.effectedPokemon.types, it.effectedPokemon.ability)
             }
             return ScoredMove(
                 move = move,
@@ -757,7 +781,7 @@ class TrainerBattleAI(
             // Sturdy, a Focus Sash and an unbroken Disguise all turn a lethal hit into a free
             // turn for the opponent. Believing in the knockout is worse than not seeing it.
             val blocked = BattleGuards.survivesLethalHit(opponent) ||
-                BattleGuards.guardIntact(opponent, opponent.uuid in struck)
+                    BattleGuards.guardIntact(opponent, opponent.uuid in struck)
             if (!blocked && damage >= opponent.health) kills = true
         }
 
@@ -815,7 +839,12 @@ class TrainerBattleAI(
     private fun percent(fraction: Double): String = "${(fraction * 100).roundToInt()}%"
 
     /** What a request is, for the purpose of recognising the same one twice. */
-    private data class DecisionKey(val turn: Int, val pokemon: UUID?, val forceSwitch: Boolean)
+    private data class DecisionKey(
+        val battle: UUID,
+        val turn: Int,
+        val pokemon: UUID?,
+        val forceSwitch: Boolean
+    )
 
     /** The battle as this turn's correction needs it. */
     private class Situation(
@@ -848,7 +877,7 @@ class TrainerBattleAI(
         /** An opponent can knock this Pokémon out this turn, Sturdy and Focus Sash accounted for. */
         val facingLethal: Boolean =
             !BattleGuards.survivesLethalHit(selfBattle) &&
-                BattleDamage.worstIncoming(selfBattle, opponents) >= selfBattle.health
+                    BattleDamage.worstIncoming(selfBattle, opponents) >= selfBattle.health
     }
 
     /** One usable move, judged. */
