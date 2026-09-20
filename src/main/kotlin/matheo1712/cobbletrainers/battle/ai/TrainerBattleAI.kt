@@ -225,7 +225,7 @@ class TrainerBattleAI(
             // that went through stops being offered, and one that somehow did not is worth
             // another try rather than lost for the whole battle.
             val played = gimmickPlayedFor[gimmick]
-            if (played != null && played.turn == request.turn) continue
+            if (played != null) continue
 
             if (!TrainerGimmicks.offered(moveset, gimmick)) continue
             val reason = reasonFor(gimmick, response, active, moveset) ?: continue
