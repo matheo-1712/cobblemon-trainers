@@ -7,7 +7,6 @@
 		"AIBattleActorMixin",
 		"ExampleMixin",
 		"MobAccessor",
-		"PackDetectorMixin",
 		"PackRepositoryMixin"
 	],
 	"client": [
