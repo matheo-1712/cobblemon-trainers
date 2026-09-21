@@ -94,10 +94,10 @@ class TrainerBattleAI(
      */
     private var openingPlayed = false
 
-    /** Active Pokémon seen during the previous decision turn, used for entry-only moves. */
-    private var activeSnapshotTurn = Int.MIN_VALUE
-    private var activeAtPreviousTurn = emptySet<UUID>()
-    private val activeSeenThisTurn = mutableSetOf<UUID>()
+    /** Active Pokémon currently known to be on the field, used for entry-only moves. */
+    private var activeSnapshotBattle: UUID? = null
+    private var knownActive = emptySet<UUID>()
+    private val entryEligible = mutableSetOf<UUID>()
 
     /**
      * Opponents this trainer has already aimed a damaging move at.
@@ -149,7 +149,7 @@ class TrainerBattleAI(
         forceSwitch: Boolean
     ): ShowdownActionResponse {
         val request = DecisionKey(battle.battleId, battle.turn, activePokemon.battlePokemon?.uuid, forceSwitch)
-        val freshActive = markActiveTurn(battle.turn, activePokemon)
+        val freshActive = markActivePokemon(battle.battleId, battle.turn, activePokemon)
         val opponents = opponentsOf(activePokemon)
         LOGGER.debug(
             "Trainer AI choice request: battle {}, turn {}, Pokemon {}, forceSwitch {}, health {}, active opponents {}",
@@ -184,7 +184,7 @@ class TrainerBattleAI(
             }
         }
 
-        val decision = decide(activePokemon, battle, aiSide, moveset, forceSwitch, request)
+        val decision = decide(activePokemon, battle, aiSide, moveset, forceSwitch, request, freshActive)
         val safeDecision = when {
             forceSwitch && decision !is SwitchActionResponse -> {
                 val replacement = availableSwitch(activePokemon)
@@ -242,7 +242,8 @@ class TrainerBattleAI(
         aiSide: BattleSide,
         moveset: ShowdownMoveset?,
         forceSwitch: Boolean,
-        request: DecisionKey
+        request: DecisionKey,
+        freshActive: Boolean
     ): ShowdownActionResponse {
         val choice = delegate.choose(activePokemon, battle, aiSide, moveset, forceSwitch)
         if (level == CorrectionLevel.NONE || moveset == null) return choice
@@ -423,19 +424,26 @@ class TrainerBattleAI(
         )
     }
 
-    private fun markActiveTurn(turn: Int, active: ActiveBattlePokemon): Boolean {
+    private fun markActivePokemon(battleId: UUID, turn: Int, active: ActiveBattlePokemon): Boolean {
         val current = active.getAllActivePokemon()
             .filterIsInstance<ActiveBattlePokemon>()
             .mapNotNull { it.battlePokemon?.uuid }
             .toSet()
 
-        if (turn != activeSnapshotTurn) {
-            activeSnapshotTurn = turn
-            activeAtPreviousTurn = activeSeenThisTurn.toSet()
-            activeSeenThisTurn.clear()
+        if (battleId != activeSnapshotBattle) {
+            activeSnapshotBattle = battleId
+            knownActive = current
+            entryEligible.clear()
+            if (turn <= 1) entryEligible.addAll(current)
+            return active.battlePokemon?.uuid?.let { entryEligible.remove(it) } ?: false
         }
-        activeSeenThisTurn += current
-        return active.battlePokemon?.uuid?.let { it !in activeAtPreviousTurn } ?: false
+
+        val entered = current - knownActive
+        entryEligible.addAll(entered)
+        knownActive = current
+
+        val uuid = active.battlePokemon?.uuid ?: return false
+        return entryEligible.remove(uuid)
     }
 
     private fun correct(
@@ -947,7 +955,7 @@ class TrainerBattleAI(
         val moveset: ShowdownMoveset,
         val moves: List<ScoredMove>,
         /** At least one target still has an unbroken Disguise or Ice Face. */
-        val guarded: Boolean
+        val guarded: Boolean,
         val freshActive: Boolean
     ) {
         val self: Pokemon = selfBattle.effectedPokemon
