@@ -70,6 +70,13 @@ object TrainerBattleEventHandler {
         val definition = TrainerRegistry.findByAspects(npc.aspects) ?: return
         val players = battle.players
         if (players.isEmpty()) return
+        val trainerId = TrainerRegistry.idFromAspects(npc.aspects)
+        CobblemonTrainers.LOGGER.debug(
+            "Trainer battle started: battle {}, trainer {}, actors {}",
+            battle.battleId,
+            trainerId,
+            battle.actors.count()
+        )
 
         // Asked for again even when a versus screen has already started it: the client lets
         // the theme it is already playing run on, so this is the one call for both paths.
@@ -80,6 +87,13 @@ object TrainerBattleEventHandler {
         // Cobblemon has no "battle over" event - see the class docs - so everything that has to
         // happen whichever way a battle ends hangs off this one handler.
         battle.onEndHandlers.add { ended ->
+            CobblemonTrainers.LOGGER.debug(
+                "Trainer battle ended: battle {}, trainer {}, ended {}, players {}",
+                ended.battleId,
+                trainerId,
+                ended.ended,
+                ended.players.count()
+            )
             TrainerBattleRange.forget(ended)
             TrainerBattleMusic.stop(definition.battle.music, ended.players)
             // A trainer who came when called leaves once they are done, win or lose. The delay
