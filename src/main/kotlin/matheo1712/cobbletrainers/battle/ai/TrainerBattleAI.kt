@@ -94,6 +94,11 @@ class TrainerBattleAI(
      */
     private var openingPlayed = false
 
+    /** Active Pokémon seen during the previous decision turn, used for entry-only moves. */
+    private var activeSnapshotTurn = Int.MIN_VALUE
+    private var activeAtPreviousTurn = emptySet<UUID>()
+    private val activeSeenThisTurn = mutableSetOf<UUID>()
+
     /**
      * Opponents this trainer has already aimed a damaging move at.
      *
@@ -144,10 +149,23 @@ class TrainerBattleAI(
         forceSwitch: Boolean
     ): ShowdownActionResponse {
         val request = DecisionKey(battle.battleId, battle.turn, activePokemon.battlePokemon?.uuid, forceSwitch)
+        val freshActive = markActiveTurn(battle.turn, activePokemon)
+        val opponents = opponentsOf(activePokemon)
+        LOGGER.debug(
+            "Trainer AI choice request: battle {}, turn {}, Pokemon {}, forceSwitch {}, health {}, active opponents {}",
+            battle.battleId,
+            battle.turn,
+            activePokemon.battlePokemon?.uuid,
+            forceSwitch,
+            activePokemon.battlePokemon?.health,
+            opponents.size
+        )
 
         if (level != CorrectionLevel.NONE && moveset != null) {
             responses[request]?.let { cached ->
-                if (cached.isValid(activePokemon, moveset, forceSwitch)) return withGimmick(
+                if (cached.isValid(activePokemon, moveset, forceSwitch) &&
+                    cached.isCompatibleWithBattleState(activePokemon, forceSwitch, opponents)
+                ) return withGimmick(
                     cached,
                     activePokemon,
                     battle,
@@ -167,7 +185,54 @@ class TrainerBattleAI(
         }
 
         val decision = decide(activePokemon, battle, aiSide, moveset, forceSwitch, request)
-        return withGimmick(decision, activePokemon, battle, moveset, request)
+        val safeDecision = when {
+            forceSwitch && decision !is SwitchActionResponse -> {
+                val replacement = availableSwitch(activePokemon)
+                if (replacement != null) {
+                    LOGGER.warn(
+                        "Trainer AI received a forced-switch request but Cobblemon chose {}; " +
+                            "switching to {} instead",
+                        decision,
+                        replacement
+                    )
+                    replacement
+                } else {
+                    LOGGER.warn(
+                        "Trainer AI received a forced-switch request with no valid replacement; " +
+                            "keeping Cobblemon response {}",
+                        decision
+                    )
+                    decision
+                }
+            }
+            !forceSwitch && decision is MoveActionResponse && opponents.isEmpty() -> {
+                LOGGER.warn(
+                    "Trainer AI produced an attack with no active opponent in battle {}, turn {}; " +
+                        "keeping Cobblemon response {}",
+                    battle.battleId,
+                    battle.turn,
+                    decision
+                )
+                decision
+            }
+            else -> decision
+        }
+        return withGimmick(safeDecision, activePokemon, battle, moveset, request)
+    }
+
+    private fun availableSwitch(activePokemon: ActiveBattlePokemon): SwitchActionResponse? =
+        activePokemon.actor.pokemonList
+            .firstOrNull { !it.gone && it.health > 0 && !it.isSentOut() }
+            ?.let { SwitchActionResponse(it.uuid) }
+
+    private fun ShowdownActionResponse.isCompatibleWithBattleState(
+        activePokemon: ActiveBattlePokemon,
+        forceSwitch: Boolean,
+        opponents: List<BattlePokemon>
+    ): Boolean {
+        if (forceSwitch && this !is SwitchActionResponse) return false
+        if (!forceSwitch && this is MoveActionResponse && opponents.isEmpty()) return false
+        return activePokemon.battlePokemon?.health?.let { it > 0 } ?: false
     }
 
     /** The move or the switch, before any gimmick is attached to it. */
@@ -185,7 +250,7 @@ class TrainerBattleAI(
         // A battle waits on this answer: anything thrown here would leave the player stuck in a
         // fight nobody can act in. Cobblemon's own choice is always a valid fallback.
         return try {
-            val situation = read(activePokemon, battle, moveset)
+            val situation = read(activePokemon, battle, moveset, freshActive)
             val corrected = if (situation == null) choice else correct(choice, situation, forceSwitch)
             if (!corrected.isValid(activePokemon, moveset, forceSwitch)) {
                 LOGGER.warn(
@@ -335,7 +400,8 @@ class TrainerBattleAI(
     private fun read(
         active: ActiveBattlePokemon,
         battle: PokemonBattle,
-        moveset: ShowdownMoveset
+        moveset: ShowdownMoveset,
+        freshActive: Boolean
     ): Situation? {
         val selfBattle = active.battlePokemon ?: return null
         val opponents = opponentsOf(active)
@@ -352,8 +418,24 @@ class TrainerBattleAI(
             opponents = opponents,
             moveset = moveset,
             moves = usable.map { score(it, selfBattle, opponents) },
-            guarded = opponents.any { BattleGuards.guardIntact(it, it.uuid in struck) }
+            guarded = opponents.any { BattleGuards.guardIntact(it, it.uuid in struck) },
+            freshActive = freshActive
         )
+    }
+
+    private fun markActiveTurn(turn: Int, active: ActiveBattlePokemon): Boolean {
+        val current = active.getAllActivePokemon()
+            .filterIsInstance<ActiveBattlePokemon>()
+            .mapNotNull { it.battlePokemon?.uuid }
+            .toSet()
+
+        if (turn != activeSnapshotTurn) {
+            activeSnapshotTurn = turn
+            activeAtPreviousTurn = activeSeenThisTurn.toSet()
+            activeSeenThisTurn.clear()
+        }
+        activeSeenThisTurn += current
+        return active.battlePokemon?.uuid?.let { it !in activeAtPreviousTurn } ?: false
     }
 
     private fun correct(
@@ -516,6 +598,16 @@ class TrainerBattleAI(
     private fun correctMove(choice: MoveActionResponse, s: Situation): ShowdownActionResponse {
         // An unknown id means a gimmick move or something we cannot judge: leave it alone.
         val chosen = s.moves.firstOrNull { it.move.id == choice.moveName } ?: return choice
+        val entryMove = s.moves.firstOrNull { it.move.id in ENTRY_ONLY_MOVES }
+
+        if (chosen.move.id in ENTRY_ONLY_MOVES && !s.freshActive) {
+            s.bestAttack
+                ?.takeIf { it.move.id !in ENTRY_ONLY_MOVES }
+                ?.let { return use(it.move, s, "${chosen.move.id} only works on the first turn after entering") }
+        }
+        if (s.freshActive && entryMove != null && chosen.move.id !in ENTRY_ONLY_MOVES) {
+            return use(entryMove.move, s, "using ${entryMove.move.id} on the first turn after entering")
+        }
 
         redundantScreen(chosen, s)?.let { return it }
         putUpScreen(chosen, s)?.let { return it }
@@ -856,6 +948,7 @@ class TrainerBattleAI(
         val moves: List<ScoredMove>,
         /** At least one target still has an unbroken Disguise or Ice Face. */
         val guarded: Boolean
+        val freshActive: Boolean
     ) {
         val self: Pokemon = selfBattle.effectedPokemon
         val opponentPokemon: List<Pokemon> = opponents.map { it.effectedPokemon }
@@ -933,6 +1026,8 @@ class TrainerBattleAI(
         private const val DEFAULT_HEAL_FRACTION = 0.5
 
         private const val REST = "rest"
+
+        private val ENTRY_ONLY_MOVES = setOf("firstimpression", "fakeout")
 
         /** Difficulty from which a lead opens with its entry hazard. */
         private const val LEAD_HAZARD_DIFFICULTY = 4
