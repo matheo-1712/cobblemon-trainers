@@ -170,7 +170,9 @@ class TrainerBattleAI(
                     activePokemon,
                     battle,
                     moveset,
-                    request
+                    request,
+                    forceSwitch,
+                    opponents
                 )
 
                 LOGGER.debug(
@@ -217,7 +219,18 @@ class TrainerBattleAI(
             }
             else -> decision
         }
-        return withGimmick(safeDecision, activePokemon, battle, moveset, request)
+        if (level != CorrectionLevel.NONE && moveset != null) {
+            responses[request] = safeDecision
+        }
+        return withGimmick(
+            safeDecision,
+            activePokemon,
+            battle,
+            moveset,
+            request,
+            forceSwitch,
+            opponents
+        )
     }
 
     private fun availableSwitch(activePokemon: ActiveBattlePokemon): SwitchActionResponse? =
@@ -263,7 +276,6 @@ class TrainerBattleAI(
                 )
                 return choice
             }
-            responses[request] = corrected
             corrected
         } catch (exception: Exception) {
             LOGGER.error("Trainer AI correction failed, keeping Cobblemon's choice", exception)
@@ -297,9 +309,20 @@ class TrainerBattleAI(
         active: ActiveBattlePokemon,
         battle: PokemonBattle,
         moveset: ShowdownMoveset?,
-        request: DecisionKey
+        request: DecisionKey,
+        forceSwitch: Boolean,
+        opponents: List<BattlePokemon>
     ): ShowdownActionResponse {
-        if (declaredGimmicks.isEmpty() || moveset == null || response !is MoveActionResponse) return response
+        if (
+            declaredGimmicks.isEmpty() ||
+            moveset == null ||
+            response !is MoveActionResponse ||
+            forceSwitch ||
+            active.battlePokemon?.health?.let { it <= 0 } != false ||
+            opponents.isEmpty()
+        ) {
+            return response
+        }
 
         // The same question asked twice gets the same answer, gimmick included. See [gimmickRequest].
         if (request == gimmickRequest) {
