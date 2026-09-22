@@ -42,13 +42,14 @@ object TrainerSkins {
     }
 
     private val cache = ConcurrentHashMap<TrainerSkin, Optional<NPCPlayerTexture>>()
+    private val DEFAULT_TEXTURE = ResourceLocation("cobblemon-trainers", "textures/trainers/default.png")
 
     /**
      * Resolves a skin off the server thread and hands the result to [consumer], which runs on
      * the worker thread - anything touching the world has to hop back through
      * [MinecraftServer.execute] itself.
      *
-     * @param consumer called exactly once, with null when the skin could not be resolved.
+     * @param consumer called exactly once, with the configured skin or the bundled Steve fallback.
      */
     fun resolveAsync(server: MinecraftServer, skin: TrainerSkin, consumer: (NPCPlayerTexture?) -> Unit) {
         cache[skin]?.let {
@@ -61,7 +62,7 @@ object TrainerSkins {
                 cache.computeIfAbsent(skin) { Optional.ofNullable(resolve(server, it)) }.orElse(null)
             } catch (e: Exception) {
                 LOGGER.warn("Failed to resolve skin '{}': {}", skin.value, e.message)
-                null
+                defaultTexture()
             }
             consumer(texture)
         }
@@ -73,7 +74,7 @@ object TrainerSkins {
     }
 
     /** Turns a skin declaration into the texture that will be synced to the clients. */
-    private fun resolve(server: MinecraftServer, skin: TrainerSkin): NPCPlayerTexture? =
+    private fun resolve(server: MinecraftServer, skin: TrainerSkin): NPCPlayerTexture =
         when (skin.type.lowercase()) {
             "texture" -> readPackTexture(skin)
 
@@ -87,7 +88,13 @@ object TrainerSkins {
                 )
                 null
             }
-        }
+        } ?: defaultTexture()
+
+    private fun defaultTexture(): NPCPlayerTexture {
+        val bytes = TrainerTextures.read(DEFAULT_TEXTURE)
+            ?: error("Default trainer texture $DEFAULT_TEXTURE is missing from the mod resources")
+        return NPCPlayerTexture(bytes, NPCPlayerModelType.DEFAULT)
+    }
 
     /**
      * Loads a skin image shipped in a pack. The bytes are sent to the clients with the entity,

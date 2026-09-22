@@ -23,9 +23,12 @@
       "wrist": "mega_showdown:mega_bracelet_red"
     }
   },
-
+  "rewards": [
+    { "item": "cobblemon:ultra_ball", "count": 16, "firstWinOnly": true },
+    { "item": "cobblemon:rare_candy", "count": 2, "firstWinOnly": true }
+  ],
   "location": {
-    "biome": "minecraft:windswept_hills"
+    "biome": "minecraft:swamp"
   },
   "team": [
     "Toxic (Gliscor) @ Toxic Orb  \nAbility: Poison Heal  \nEVs: 252 HP / 4 Atk / 252 Spe  \nJolly Nature  \n- Stealth Rock  \n- Earthquake  \n- Knock Off  \n- U-turn",

@@ -26,6 +26,10 @@
   "location": {
     "biome": "minecraft:cherry_grove"
   },
+  "rewards": [
+    { "item": "cobblemon:ultra_ball", "count": 16, "firstWinOnly": true },
+    { "item": "cobblemon:rare_candy", "count": 2, "firstWinOnly": true }
+  ],
   "team": [
     "Sylveon @ Leftovers\nAbility: Pixilate\nShiny: Yes\nTera Type: Fairy\nEVs: 252 HP / 252 Def / 4 SpA\nBold Nature\nIVs: 0 Atk\n- Calm Mind\n- Draining Kiss\n- Hyper Voice\n- Wish",
     "Serperior @ Choice Scarf\nAbility: Contrary\nShiny: Yes\nTera Type: Grass\nEVs: 4 Atk / 252 SpA / 252 Spe\nHasty Nature\n- Knock Off\n- Leaf Storm\n- Giga Drain\n- Dragon Pulse",
