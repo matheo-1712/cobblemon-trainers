@@ -28,7 +28,7 @@ object TrainerBattleMusic {
     // CONFIGURATION
     /////////////////////////////////////
     // TODO : Mettre une musique de combat par défaut (5g probablement)
-    const val DEFAULT_TRACK: String = "cobblemon-trainers:battle_music.corvault"
+    const val DEFAULT_TRACK: String = "cobblemon-trainers:battle_music.default"
     /** Volume 1f is TOO HIIIGGGHH i lost my ear :( **/
     private const val VOLUME = 0.3f
     /** is speed of battle track **/
