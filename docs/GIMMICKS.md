@@ -65,8 +65,8 @@ réponse ne porte qu'un gimmick - et l'ordre est toujours le même :
 | Le même mod côté client | Sinon le joueur ne voit pas la transformation |
 
 Cobblemon Trainers **ne dépend pas** de Mega Showdown : le mod se charge, se lance et se joue
-sans lui. Un dresseur qui déclare `["mega"]` combat alors normalement, sans jamais
-méga-évoluer.
+sans lui. Tous les gimmicks des dresseurs sont alors désactivés, y compris le Téracristal, afin
+qu'aucune action partiellement supportée ne soit envoyée par l'IA.
 
 ## Quand le dresseur méga-évolue
 
@@ -201,8 +201,9 @@ fois, il gonfle les capacités en Capsules Max et il double la barre de vie :
 
 # Le téracristal
 
-Rien à installer : Cobblemon fournit les types Tera, l'Orbe Tera et l'animation. Un dresseur qui
-déclare `["terastal"]` marche sur une installation nue.
+Cobblemon fournit techniquement les types Tera, l'Orbe Tera et l'animation, mais les dresseurs
+désactivent tous leurs gimmicks tant que Mega Showdown n'est pas installé. Avec Mega Showdown,
+un dresseur qui déclare `["terastal"]` peut utiliser le Téracristal.
 
 ## Le type Tera
 

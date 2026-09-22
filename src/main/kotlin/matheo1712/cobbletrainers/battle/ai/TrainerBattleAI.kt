@@ -65,7 +65,10 @@ class TrainerBattleAI(
      * way.
      */
     private val declaredGimmicks =
-        TrainerGimmicks.SUPPORTED.filter { TrainerGimmicks.uses(gimmicks, it) }
+        TrainerGimmicks.SUPPORTED
+            .filter { TrainerGimmicks.uses(gimmicks, it) }
+            .takeIf { TrainerGimmicks.available() }
+            .orEmpty()
 
     /**
      * The request each gimmick was spent on, by gimmick id, empty while they are still to come.
