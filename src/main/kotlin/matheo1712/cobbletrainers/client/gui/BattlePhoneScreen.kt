@@ -16,7 +16,6 @@ import net.minecraft.ChatFormatting
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.screens.Screen
-import net.minecraft.client.renderer.RenderType
 import net.minecraft.client.resources.sounds.SimpleSoundInstance
 import net.minecraft.sounds.SoundEvents
 import net.minecraft.network.chat.Component
@@ -450,9 +449,9 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         renderLocation(guiGraphics, entry)
         val callTooltip = renderCallButton(guiGraphics, entry, mouseX, mouseY)
 
-        // A locked trainer has no team to show - the server does not send one - so the space
-        // the party would take says what it would take to unlock it instead.
-        if (entry.locked) renderRequirements(guiGraphics, entry)
+        // A defeated trainer keeps their team visible even if a new requirement blocks a
+        // rematch. The requirements belong to the next battle and are shown in that case.
+        if (entry.locked && !entry.defeated) renderRequirements(guiGraphics, entry)
 
         // Then the item renderer, which flushes the batch and manages the depth state itself,
         // so it comes after everything drawn with fills and text.
@@ -462,7 +461,11 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         // flight. Drawn whatever the tooltips say - short-circuiting on one would stop the team
         // rendering as soon as the cursor rested elsewhere, which reads as the party blinking
         // out.
-        val teamTooltip = if (entry.locked) null else renderTeam(guiGraphics, entry, mouseX, mouseY, partialTick)
+        val teamTooltip = if (entry.locked && !entry.defeated) {
+            null
+        } else {
+            renderTeam(guiGraphics, entry, mouseX, mouseY, partialTick)
+        }
 
         return when {
             callTooltip != null -> listOf(callTooltip)
@@ -626,19 +629,6 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
             // nothing at all for a single item - which is what a player already reads as one.
             guiGraphics.renderItemDecorations(font, reward.stack, itemX, rowY(index))
 
-            // A claimed reward is dimmed rather than dropped. The wash goes through the overlay
-            // render type, the one vanilla lights its own slots with: an ordinary fill lands
-            // under the model of an item rather than over it, and would do nothing visible.
-            if (!reward.due) {
-                guiGraphics.fill(
-                    RenderType.guiOverlay(),
-                    itemX,
-                    rowY(index),
-                    itemX + ITEM_SIZE,
-                    rowY(index) + ITEM_SIZE,
-                    COLOR_REWARD_SPENT
-                )
-            }
         }
 
         if (overflowing) {

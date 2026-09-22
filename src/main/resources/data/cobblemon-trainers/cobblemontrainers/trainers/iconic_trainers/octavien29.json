@@ -26,6 +26,10 @@
   "location": {
     "biome": "minecraft:beach"
   },
+  "rewards": [
+    { "item": "cobblemon:ultra_ball", "count": 16, "firstWinOnly": true },
+    { "item": "cobblemon:rare_candy", "count": 2, "firstWinOnly": true }
+  ],
   "team": [
     "Arcanine @ Life Orb\nAbility: Rock Head\nAspects: hisuian\nEVs: 252 Atk / 4 SpD / 252 Spe\nJolly Nature\n- Extreme Speed\n- Flare Blitz\n- Head Smash\n- Wild Charge",
     "Serperior @ Leftovers\nAbility: Contrary\nEVs: 4 HP / 252 SpA / 252 Spe\nTimid Nature\n- Leaf Storm\n- Knock Off\n- Glare\n- Synthesis",

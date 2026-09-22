@@ -8,7 +8,7 @@
   "battle": {
     "level": 80,
     "difficulty": 5,
-    "music": "cobblemon-trainers:battle_music.ultra_necrozma",
+    "music": "cobblemon-trainers:battle_music.dianthea",
     "intro": "aeliothys",
     "gimmicks": [
       "mega"
@@ -24,9 +24,12 @@
       "chest": "mega_showdown:diantha_mega_charm"
     }
   },
-
+  "rewards": [
+    { "item": "cobblemon:ultra_ball", "count": 16, "firstWinOnly": true },
+    { "item": "cobblemon:rare_candy", "count": 2, "firstWinOnly": true }
+  ],
   "location": {
-    "biome": "minecraft:jungle"
+    "biome": "minecraft:plains"
   },
   "team": [
     "Poppy (Buneary) @ Focus Sash  \nAbility: Limber  \nShiny: Yes  \nTera Type: Normal  \nEVs: 4 HP / 252 Atk / 252 Spe  \nJolly Nature  \n- Endeavor  \n- Fake Out  \n- Quick Attack  \n- Baton Pass",

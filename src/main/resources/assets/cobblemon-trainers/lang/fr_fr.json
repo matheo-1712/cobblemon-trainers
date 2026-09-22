@@ -166,5 +166,11 @@
   "trainer.cobblemon-trainers.aeliothys.name": "Aeliothys",
   "trainer.cobblemon-trainers.aeliothys.battle_start": "!",
   "trainer.cobblemon-trainers.aeliothys.win": ".....",
-  "trainer.cobblemon-trainers.aeliothys.lose": "WIN !!!!"
+  "trainer.cobblemon-trainers.aeliothys.lose": "WIN !!!!",
+
+  "trainer.cobblemon-trainers.mr-azertor.name": "Mr. Azertor",
+  "trainer.cobblemon-trainers.mr-azertor.battle_start": "!",
+  "trainer.cobblemon-trainers.mr-azertor.win": ".....",
+  "trainer.cobblemon-trainers.mr-azertor.lose": "WIN !!!!"
+
 }
