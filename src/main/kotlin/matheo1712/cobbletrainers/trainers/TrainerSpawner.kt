@@ -78,6 +78,9 @@ object TrainerSpawner {
         //    is how the definition is found again after a restart.
         npc.appliedAspects.add(CobblemonTrainers.TRAINER_ASPECT_PREFIX + trainerId)
         npc.appliedAspects.addAll(extraAspects)
+        // Keep every trainer on the Steve rig until a configured skin successfully replaces it.
+        // This also gives trainers with an unavailable skin a deterministic default appearance.
+        npc.appliedAspects.add("model-default")
 
         // 5. Battle AI difficulty, overridden per entity so every trainer can differ while
         //    sharing one NPC class. Cobblemon clamps it to 0..5 anyway.

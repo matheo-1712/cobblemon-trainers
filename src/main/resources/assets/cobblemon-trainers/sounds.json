@@ -1,4 +1,13 @@
 {
+  "battle_music.default": {
+    "subtitle": "cobblemon-trainers.subtitles.battle_music",
+    "sounds": [
+      {
+        "name": "cobblemon-trainers:battle_music/trainer_battle_hgss",
+        "stream": true
+      }
+    ]
+  },
   "battle_music.corvault": {
     "subtitle": "cobblemon-trainers.subtitles.battle_music",
     "sounds": [
@@ -40,6 +49,24 @@
     "sounds": [
       {
         "name": "cobblemon-trainers:battle_music/ultra_necrozma_battle",
+        "stream": true
+      }
+    ]
+  },
+  "battle_music.dianthea": {
+    "subtitle": "cobblemon-trainers.subtitles.battle_music",
+    "sounds": [
+      {
+        "name": "cobblemon-trainers:battle_music/dianthea_battle",
+        "stream": true
+      }
+    ]
+  },
+  "battle_music.trainer_battle_hgss": {
+    "subtitle": "cobblemon-trainers.subtitles.battle_music",
+    "sounds": [
+      {
+        "name": "cobblemon-trainers:battle_music/trainer_battle_hgss",
         "stream": true
       }
     ]

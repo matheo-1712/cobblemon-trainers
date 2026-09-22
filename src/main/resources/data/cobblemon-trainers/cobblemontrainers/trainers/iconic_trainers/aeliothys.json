@@ -8,7 +8,7 @@
   "battle": {
     "level": 80,
     "difficulty": 5,
-    "music": "cobblemon-trainers:battle_music.ultra_necrozma",
+    "music": "cobblemon-trainers:battle_music.dianthea",
     "intro": "aeliothys",
     "gimmicks": [
       "mega"
