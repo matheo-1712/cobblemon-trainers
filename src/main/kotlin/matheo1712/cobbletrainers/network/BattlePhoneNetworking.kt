@@ -5,6 +5,8 @@ import matheo1712.cobbletrainers.parser.ShowdownTeamParser
 import matheo1712.cobbletrainers.trainers.RewardPreview
 import matheo1712.cobbletrainers.trainers.TrainerRegistry
 import matheo1712.cobbletrainers.trainers.TrainerDefinition
+import matheo1712.cobbletrainers.trainers.TrainerCosmetics
+import matheo1712.cobbletrainers.trainers.TrainerTrinkets
 import matheo1712.cobbletrainers.trainers.TrainerCalls
 import matheo1712.cobbletrainers.trainers.TrainerLock
 import matheo1712.cobbletrainers.trainers.TrainerPlace
@@ -32,8 +34,9 @@ import net.minecraft.world.item.ItemStack
  *
  * Skins are not in that listing. They are images - a few kilobytes each - and a world may hold
  * a hundred trainers, so they are asked for one at a time, as the screen needs them, and
- * answered from the [TrainerSkins] cache. Teams work the same way, and are only ever sent for
- * a trainer the asking player has beaten.
+ * answered from the [TrainerSkins] cache. The listing does carry outfit item IDs so the client
+ * can build a detached model preview without waiting for the trainer entity to spawn. Teams
+ * work the same way, and are only ever sent for a trainer the asking player has beaten.
  */
 object BattlePhoneNetworking {
 
@@ -89,6 +92,8 @@ object BattlePhoneNetworking {
                 category = category?.toString().orEmpty(),
                 categoryName = category?.let { TrainerRegistry.categoryName(it) }.orEmpty(),
                 location = TrainerPlace.describe(definition.location),
+                cosmetics = definition.cosmetics,
+                music = definition.battle.music?.takeIf { defeated && ResourceLocation.tryParse(it) != null },
                 callable = definition.callable(),
                 // Through the same resolution that hands them over, so the fiche can never
                 // advertise a reward the player would not actually receive - which is also why
@@ -217,6 +222,7 @@ object BattlePhoneNetworking {
  * @param location Where the trainer is to be found, already worded server-side where the
  *   registry is - empty for a trainer who names no place. Built like [requirements] and for the
  *   same reason: a translatable component still reads in the player's own language on arrival.
+ * @param cosmetics The clothing and held items needed to build the client-side model preview.
  * @param callable Whether the screen offers a call button. The server decides it, and decides
  *   it again when the button is pressed - this is only what the screen draws.
  * @param rewards What beating the trainer hands over, already resolved by
@@ -237,7 +243,9 @@ data class BattlePhoneEntry(
     val category: String,
     val categoryName: String,
     val location: Component,
+    val cosmetics: TrainerCosmetics = TrainerCosmetics(),
     val callable: Boolean,
+    val music: String? = null,
     val rewards: List<RewardPreview>
 ) {
 
@@ -245,6 +253,48 @@ data class BattlePhoneEntry(
     val locked: Boolean
         get() = requirements.isNotEmpty()
 }
+
+private fun RegistryFriendlyByteBuf.writeCosmetics(cosmetics: TrainerCosmetics) {
+    writeOptionalText(cosmetics.head)
+    writeOptionalText(cosmetics.chest)
+    writeOptionalText(cosmetics.legs)
+    writeOptionalText(cosmetics.feet)
+    writeOptionalText(cosmetics.mainHand)
+    writeOptionalText(cosmetics.offHand)
+    writeOptionalText(cosmetics.trinkets.face)
+    writeOptionalText(cosmetics.trinkets.chest)
+    writeOptionalText(cosmetics.trinkets.wrist)
+    writeOptionalText(cosmetics.trinkets.forearm)
+    writeOptionalText(cosmetics.trinkets.hand)
+    writeOptionalText(cosmetics.trinkets.belt)
+    writeOptionalText(cosmetics.trinkets.ankle)
+}
+
+private fun RegistryFriendlyByteBuf.readCosmetics(): TrainerCosmetics = TrainerCosmetics(
+    head = readOptionalText(),
+    chest = readOptionalText(),
+    legs = readOptionalText(),
+    feet = readOptionalText(),
+    mainHand = readOptionalText(),
+    offHand = readOptionalText(),
+    trinkets = TrainerTrinkets(
+        face = readOptionalText(),
+        chest = readOptionalText(),
+        wrist = readOptionalText(),
+        forearm = readOptionalText(),
+        hand = readOptionalText(),
+        belt = readOptionalText(),
+        ankle = readOptionalText()
+    )
+)
+
+private fun RegistryFriendlyByteBuf.writeOptionalText(value: String?) {
+    writeBoolean(value != null)
+    if (value != null) writeUtf(value)
+}
+
+private fun RegistryFriendlyByteBuf.readOptionalText(): String? =
+    if (readBoolean()) readUtf() else null
 
 /** Server -> client: the listed trainers and what the player has done about them. */
 data class OpenBattlePhonePayload(val entries: List<BattlePhoneEntry>) : CustomPacketPayload {
@@ -271,7 +321,9 @@ data class OpenBattlePhonePayload(val entries: List<BattlePhoneEntry>) : CustomP
                         buf.writeUtf(entry.category)
                         buf.writeUtf(entry.categoryName)
                         ComponentSerialization.STREAM_CODEC.encode(buf, entry.location)
+                        buf.writeCosmetics(entry.cosmetics)
                         buf.writeBoolean(entry.callable)
+                        buf.writeOptionalText(entry.music)
                         buf.writeVarInt(entry.rewards.size)
                         entry.rewards.forEach {
                             ItemStack.OPTIONAL_STREAM_CODEC.encode(buf, it.stack)
@@ -296,7 +348,9 @@ data class OpenBattlePhonePayload(val entries: List<BattlePhoneEntry>) : CustomP
                                 category = buf.readUtf(),
                                 categoryName = buf.readUtf(),
                                 location = ComponentSerialization.STREAM_CODEC.decode(buf),
+                                cosmetics = buf.readCosmetics(),
                                 callable = buf.readBoolean(),
+                                music = buf.readOptionalText(),
                                 rewards = List(buf.readVarInt()) {
                                     RewardPreview(
                                         stack = ItemStack.OPTIONAL_STREAM_CODEC.decode(buf),

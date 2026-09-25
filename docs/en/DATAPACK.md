@@ -434,6 +434,8 @@ thing, in a screen: one tab per datapack, a heading per category, each trainer's
 state. It also shows **a trainer's team once they have been beaten**, models and all - before
 that the six slots stay empty, the server flatly refusing to send the team.
 
+After a victory, the music button plays the trainer's theme if they have one. Clicking again, selecting another trainer or closing the phone stops the preview; battle music takes priority.
+
 Three differences between the two:
 
 - The Battle Phone **hides** trainers locked with `hidden`; `/cobblemontrainers list` always

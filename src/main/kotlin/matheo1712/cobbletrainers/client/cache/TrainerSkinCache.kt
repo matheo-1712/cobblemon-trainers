@@ -31,7 +31,13 @@ object TrainerSkinCache {
      * @param slim Which player rig the image is drawn on, Alex when true.
      * @param width Size of the image, needed to blit out of it: a legacy skin is 64×32.
      */
-    class Skin(val texture: ResourceLocation?, val slim: Boolean, val width: Int, val height: Int)
+    class Skin(
+        val texture: ResourceLocation?,
+        val slim: Boolean,
+        val width: Int,
+        val height: Int,
+        val bytes: ByteArray?
+    )
 
     private val skins = mutableMapOf<String, Skin>()
     private val pending = mutableSetOf<String>()
@@ -71,7 +77,7 @@ object TrainerSkinCache {
 
     private fun build(payload: TrainerSkinPayload): Skin {
         val slim = payload.model.equals("slim", ignoreCase = true)
-        if (payload.texture.isEmpty()) return Skin(null, slim, 64, 64)
+        if (payload.texture.isEmpty()) return Skin(null, slim, 64, 64, null)
 
         return try {
             val image = NativeImage.read(payload.texture)
@@ -79,10 +85,10 @@ object TrainerSkinCache {
             // register() replaces whatever sat under that location, so a reloaded skin simply
             // takes the place of the previous one.
             Minecraft.getInstance().textureManager.register(location, DynamicTexture(image))
-            Skin(location, slim, image.width, image.height)
+            Skin(location, slim, image.width, image.height, payload.texture.copyOf())
         } catch (e: Exception) {
             CobblemonTrainers.LOGGER.warn("Unreadable skin for trainer {}: {}", payload.trainerId, e.message)
-            Skin(null, slim, 64, 64)
+            Skin(null, slim, 64, 64, null)
         }
     }
 
