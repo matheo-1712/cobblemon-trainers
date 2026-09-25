@@ -60,7 +60,19 @@ object TrainerLock {
             val category = victories.category?.let { resolve(it, trainerId) }
             // A champion may ask for every champion: they never count towards themselves.
             val pool = TrainerRegistry.listedIds(victories.pack, category) - trainerId
-            val required = if (victories.count > 0) victories.count else pool.size
+            val count = victories.count?.takeIf { it.isJsonPrimitive }?.asString
+            val required = when {
+                count.equals("all", ignoreCase = true) -> pool.size
+                count == null -> 1
+                count.toIntOrNull() != null && count.toInt() > 0 -> count.toInt()
+                else -> {
+                    CobblemonTrainers.LOGGER.warn(
+                        "Trainer {} has invalid victories count '{}' (use a positive number or 'all')",
+                        trainerId, count
+                    )
+                    Int.MAX_VALUE
+                }
+            }
             val won = pool.count { progress.hasDefeated(it, player.uuid) }
 
             if (won < required) {

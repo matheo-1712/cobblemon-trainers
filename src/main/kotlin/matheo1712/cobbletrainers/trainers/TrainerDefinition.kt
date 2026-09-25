@@ -1,5 +1,6 @@
 package matheo1712.cobbletrainers.trainers
 
+import com.google.gson.JsonElement
 import matheo1712.cobbletrainers.CobblemonTrainers
 import matheo1712.cobbletrainers.intro.TrainerIntros
 import matheo1712.cobbletrainers.battle.TrainerBattleMusic
@@ -285,7 +286,7 @@ data class TrainerRequirements(
 
     /** A block holding only presentation fields locks nothing. */
     val isEmpty: Boolean
-        get() = defeated.isEmpty() && victories == null && items.isEmpty() && party.isEmpty() &&
+        get() = defeated.isEmpty() && victories?.isEmpty != false && items.isEmpty() && party.isEmpty() &&
             advancement.isNullOrBlank()
 }
 
@@ -295,17 +296,21 @@ data class TrainerRequirements(
  * The trainer that requires it never counts towards itself, so "beat every champion" may be
  * asked by a champion. Only [TrainerProgressRules.listed] trainers count.
  *
- * @param count How many. Left out - or zero - it means every trainer of the pool below, which
- *   is how "beat all of them" is written.
+ * @param count How many. The string "all" means every trainer of the pool below; when omitted,
+ *   one victory is required.
  * @param pack Restricts the pool to one datapack namespace. Null counts every trainer.
  * @param category Restricts the pool to one category. A bare name is read in the namespace of
  *   the trainer that requires it - see [matheo1712.cobbletrainers.trainers.TrainerCategory].
  */
 data class TrainerVictoriesRequirement(
-    val count: Int = 0,
+    val count: JsonElement? = null,
     val pack: String? = null,
     val category: String? = null
-)
+) {
+    /** A present but blank JSON object is the same as no victories condition. */
+    val isEmpty: Boolean
+        get() = count == null && pack.isNullOrBlank() && category.isNullOrBlank()
+}
 
 /**
  * An item the player must be carrying, anywhere in their inventory. Never taken from them.

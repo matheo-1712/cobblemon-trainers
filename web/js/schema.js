@@ -143,8 +143,9 @@ const SCHEMA = (() => {
              'With no namespace, the id is read in the pack of the trainer asking for it.') },
       { k: 'victories', t: 'group', l: t('Nombre de victoires', 'Number of victories'),
         fields: [
-          { k: 'count', t: 'num', def: null, min: 0, l: t('Combien', 'How many'),
-            h: t('Vide = tous ceux du groupe.', 'Empty = every trainer of the group.') },
+          { k: 'count', t: 'count_or_all', def: null, l: t('Combien', 'How many'),
+            h: t('Un nombre positif, ou « all » pour tous ceux du groupe. Vide = 1 victoire.',
+                 'A positive number, or “all” for every trainer in the group. Empty = 1 victory.') },
           { k: 'pack', t: 'str', def: '', l: t('Limité au pack', 'Limited to pack') },
           { k: 'category', t: 'str', def: '', l: t('Limité à la catégorie', 'Limited to category') }
         ] },

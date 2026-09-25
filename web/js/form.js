@@ -226,6 +226,23 @@ const Form = (() => {
       return input;
     },
 
+    count_or_all(field, doc, changed) {
+      const input = el('input', 'input');
+      input.type = 'text';
+      input.inputMode = 'numeric';
+      input.placeholder = '1, 2, 3… ou all';
+      input.value = getValue(doc, field) ?? '';
+      input.addEventListener('input', () => {
+        const value = input.value.trim();
+        if (!value) setValue(doc, field, undefined);
+        else if (/^all$/i.test(value)) setValue(doc, field, 'all');
+        else if (/^\d+$/.test(value)) setValue(doc, field, Number(value));
+        else doc[field.k] = value;
+        changed();
+      });
+      return input;
+    },
+
     bool(field, doc, changed) {
       const wrap = el('label', 'switch');
       const input = el('input');
@@ -463,8 +480,14 @@ const Form = (() => {
   /* ---- groups and the whole form --------------------------------------- */
 
   const group = (field, doc, changed, ctx) => {
-    if (!doc[field.k] || typeof doc[field.k] !== 'object') doc[field.k] = {};
-    const inner = doc[field.k];
+    const inner = doc[field.k] && typeof doc[field.k] === 'object' ? doc[field.k] : {};
+    // Rendering a group must not create it in the JSON. Persist it only when one of its
+    // controls changes, and remove it again when its last value is cleared.
+    const groupChanged = () => {
+      if (isEmpty(inner)) delete doc[field.k];
+      else doc[field.k] = inner;
+      changed();
+    };
 
     const box = el('details', 'group');
     box.open = Object.keys(inner).length > 0 || Boolean(field.open);
@@ -483,7 +506,7 @@ const Form = (() => {
 
     box.appendChild(summary);
     if (field.h) box.appendChild(el('p', 'field-hint group-hint', I18N.of(field.h)));
-    box.appendChild(render(field.fields, inner, changed, ctx && ctx[field.k]));
+    box.appendChild(render(field.fields, inner, groupChanged, ctx && ctx[field.k]));
     return box;
   };
 

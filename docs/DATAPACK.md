@@ -287,7 +287,7 @@ le Battle Phone.
 | Champ | Rôle |
 | --- | --- |
 | `defeated` | Dresseurs à avoir battus. Sans namespace, l'ID est lu dans le pack du dresseur qui l'exige - chemin compris (`champions/jacinthe`) |
-| `victories` | Un nombre de dresseurs battus : `count`, restreint par `pack` et/ou `category`. `count` omis veut dire **tous ceux du groupe** |
+| `victories` | Un nombre de dresseurs battus : `count`, restreint par `pack` et/ou `category`. `count: "all"` veut dire **tous ceux du groupe** ; sans `count`, une victoire suffit ; un objet vide ne crée aucune condition |
 | `items` | Objets à avoir sur soi, ID complet. **Jamais consommés** |
 | `party` | Pokémon à avoir dans son équipe : `pokemon` s'écrit comme pour `/pokespawn`, `count` dit combien. **Jamais pris** |
 | `advancement` | Un advancement à avoir obtenu, vanilla ou d'un pack |

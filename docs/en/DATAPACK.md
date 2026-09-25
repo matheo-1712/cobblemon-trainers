@@ -267,7 +267,7 @@ in the Battle Phone.
 | Field | What it does |
 | --- | --- |
 | `defeated` | Trainers that must have been beaten. Without a namespace, the ID is read inside the pack of the trainer requiring it - path included (`champions/jasmine`) |
-| `victories` | A number of trainers beaten: `count`, narrowed by `pack` and/or `category`. Leaving `count` out means **all of that group** |
+| `victories` | A number of trainers beaten: `count`, narrowed by `pack` and/or `category`. `count: "all"` means **every trainer in the group**; leaving `count` out requires one victory; an empty object adds no condition |
 | `items` | Items the player has to be carrying, full ID. **Never consumed** |
 | `party` | Pokémon the player has to have with them: `pokemon` is written the way `/pokespawn` takes it, `count` says how many. **Never taken** |
 | `advancement` | An advancement that must have been earned, vanilla or from a pack |

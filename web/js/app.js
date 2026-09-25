@@ -533,6 +533,8 @@ const App = (() => {
         music: { list: 'music-ids', menu: menuFor('music') }
       }
     };
+    // Imported or previously saved empty groups have no meaning; omit them from the JSON too.
+    Form.prune(entry.doc);
     let skinType = (entry.doc.skin || {}).type;
     left.appendChild(Form.render(SCHEMA.TRAINER, entry.doc, () => {
       Form.prune(entry.doc);

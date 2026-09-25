@@ -25,6 +25,7 @@
   ],
   "requires": {
     "victories": {
+      "count": "all",
       "category": "champions"
     },
     "hidden": true

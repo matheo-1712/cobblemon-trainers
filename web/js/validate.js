@@ -126,6 +126,13 @@ const Validate = (() => {
     }
 
     const requires = doc.requires || {};
+    if (requires.victories && requires.victories.count !== undefined
+        && requires.victories.count !== 'all'
+        && (!Number.isInteger(requires.victories.count) || requires.victories.count < 1)) {
+      say(found, 'error',
+        'Condition victories : count doit être un nombre entier positif ou « all ».',
+        'victories condition: count must be a positive whole number or “all”.');
+    }
     (requires.items || []).forEach((entry) => {
       if (!entry.item || !NAMESPACED.test(entry.item)) {
         say(found, 'error',

@@ -53,7 +53,7 @@ un nom traduit et une place dans la liste ; les autres dresseurs restent à la r
 | `cobblemonrlm:skin_par_uuid` | `skin.type` en `player_uuid` au lieu du pseudo |
 | `cobblemonrlm:skin_texture` | `skin.type` en `texture` : une image livrée par le pack, `assets/cobblemonrlm/textures/trainers/aventurier.png`. Aucun accès réseau, aucun compte Mojang |
 | `cobblemonrlm:champions/champion_unique` | `"rematch": "never"` et une liste de `rewards` - un combat unique par joueur. Et un `requires` **visible** (`"hidden": false`) : il faut avoir battu Jacinthe et porter un diamant, sans quoi il décline en listant ce qui manque |
-| `cobblemonrlm:champions/maitre_cache` | Un `requires` **caché** : absent du Battle Phone tant que les deux autres champions n'ont pas été battus. `victories` sans `count` veut dire « tous ceux de la catégorie », lui-même excepté |
+| `cobblemonrlm:champions/maitre_cache` | Un `requires` **caché** : absent du Battle Phone tant que les deux autres champions n'ont pas été battus. `victories` avec `count: "all"` veut dire « tous ceux de la catégorie », lui-même excepté |
 | `cobblemonrlm:debutants/recompense_unique` | Rejouable autant qu'on veut, et **deux récompenses de régimes différents** : le Câble Liaison en `firstWinOnly` ne tombe qu'une fois, les bonbons Exp tombent à chaque victoire |
 | `cobblemonrlm:formes` | Lignes `Aspects:` : un Raichu d'Alola et un Smogogo de Galar (caractéristiques à drapeau, `alolan` / `galarian`), un Motisma-Lavage (caractéristique à choix, `appliance=wash`) |
 | `cobblemonrlm:terastal` | `battle.gimmicks` en `["terastal"]` et des lignes `Tera Type:` - dont un `Stellar`. Le dresseur garde son téracristal jusqu'au tour où il décide quelque chose, voir [GIMMICKS.md](../../docs/GIMMICKS.md) |
