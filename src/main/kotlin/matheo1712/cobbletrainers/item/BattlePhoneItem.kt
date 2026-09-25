@@ -24,14 +24,14 @@ import net.minecraft.world.level.Level
  *
  * Unlike the trainer spawner, this one is for every player: it holds no power, it only reads.
  */
-class BattlePhoneItem(properties: Properties) : Item(properties) {
+class BattlePhoneItem(properties: Properties, val color: String) : Item(properties) {
 
     override fun use(level: Level, player: Player, hand: InteractionHand): InteractionResultHolder<ItemStack> {
         val stack = player.getItemInHand(hand)
 
         // The screen is opened by the packet the server sends back, never here: the client has
         // no trainer registry and no progress data of its own.
-        if (player is ServerPlayer) BattlePhoneNetworking.openScreen(player)
+        if (player is ServerPlayer) BattlePhoneNetworking.openScreen(player, color)
 
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide)
     }
