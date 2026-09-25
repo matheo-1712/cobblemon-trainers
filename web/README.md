@@ -33,13 +33,20 @@ dedans. Le bouton **Tout effacer** vide les deux.
 | `assets/<ns>/lang/<code>.json` | L'onglet **Traductions** |
 | `fabric.mod.json` | Seulement en `.jar`, pour déclarer la dépendance au mod |
 
+**Catégories et progression**, dans la barre latérale, affiche chaque groupe, ses dresseurs,
+le nombre qui compte pour les victoires et un résumé de leurs conditions. On peut y créer une
+catégorie, modifier son nom et son ordre, ou ajouter un dresseur directement dans son dossier.
+Ouvrir un dresseur affiche ses **Conditions pour le combattre** en premier : le bloc
+**Nombre de victoires** propose les catégories du pack dans un menu, tout en acceptant les
+ID d'autres packs. Ces conditions restent propres à chaque dresseur.
+
 **La catégorie d'un dresseur se choisit dans un menu**, en haut de sa fiche, à gauche de son
 chemin. Dans le mod le dossier **est** la catégorie, donc le menu et le champ de chemin sont
 deux vues d'une même chaîne : choisir range le dresseur, taper `ligue/peter` place le menu sur
 `ligue`. Il propose les dossiers que le pack utilise déjà - ceux qu'un `category.json` décrit,
 avec leur nom affiché, et ceux où un dresseur se trouve déjà. On n'y invente pas une catégorie :
-un dossier vide n'en est pas une tant que rien n'y est rangé, donc une nouvelle se crée en la
-tapant dans le chemin.
+un dossier vide n'en est pas une tant que rien n'y est rangé. Le bouton **+ Catégorie** crée
+son fichier de présentation ; taper un nouveau dossier dans le chemin fonctionne aussi.
 
 **Un champ qui nomme une ressource en propose un menu** : la musique qu'on vient de déposer, le
 skin du pack, une intro livrée avec le mod. Le menu et le champ éditent la même valeur et
