@@ -152,15 +152,19 @@ const Validate = (() => {
     const location = doc.location || {};
     const conditions = ['dimension', 'biome', 'structure', 'area', 'minY', 'maxY', 'time', 'weather']
       .filter((key) => location[key] !== undefined && location[key] !== '');
-    if ((location.arrival || location.busy) && conditions.length === 0) {
+    if (doc.notCallable && (location.arrival || location.busy)) {
       say(found, 'warn',
-        'arrival et busy ne servent qu’à un appel, et sans condition de lieu le bouton Appeler n’apparaît pas.',
-        'arrival and busy only serve a call, and with no location condition the Call button never shows.');
+        'notCallable bloque le Battle Phone : arrival et busy ne seront donc jamais affichés. Les commandes et le bloc de spawn restent utilisables.',
+        'notCallable blocks the Battle Phone: arrival and busy will never be shown. Commands and the trainer spawner block remain available.');
     }
     if (location.label && conditions.length === 0) {
       say(found, 'info',
-        'Un label seul affiche le lieu sans rendre le dresseur appelable : c’est le cas d’un champion qui ne quitte pas son arène.',
-        'A label alone shows the place without making the trainer callable: that is a champion who does not leave their gym.');
+        doc.notCallable
+          ? 'Un label seul affiche le lieu. notCallable bloque son appel depuis le Battle Phone ; la commande et le bloc de spawn restent utilisables.'
+          : 'Un label seul affiche le lieu, mais ne restreint pas l’appel : le dresseur est appelable partout. Active notCallable pour bloquer le Battle Phone.',
+        doc.notCallable
+          ? 'A label alone shows the place. notCallable blocks Battle Phone calls; the command and trainer spawner block remain available.'
+          : 'A label alone shows the place but does not restrict calls: the trainer can be called anywhere. Enable notCallable to block the Battle Phone.');
     }
 
     const cosmetics = doc.cosmetics || {};

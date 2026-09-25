@@ -228,6 +228,9 @@ const SCHEMA = (() => {
     { k: 'name', t: 'str', def: 'Trainer', doc: 'DATAPACK.md#tous-les-champs', l: t('Nom', 'Name'),
       h: t('Affiche au-dessus du dresseur. Une cle de traduction marche aussi.',
            'Shown above the trainer. A translation key works too.') },
+    { k: 'notCallable', t: 'bool', def: false, doc: 'SPAWNING.md', l: t('Pas appelable', 'Cannot be called'),
+      h: t('true bloque uniquement l’appel depuis le Battle Phone. Les commandes et le bloc de spawn restent utilisables.',
+           'true blocks Battle Phone calls only. Commands and the trainer spawner block still work.') },
     SKIN, BATTLE, MESSAGES, PROGRESS, REWARDS, REQUIRES, LOCATION, COSMETICS
   ];
 
