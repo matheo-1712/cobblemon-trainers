@@ -78,6 +78,7 @@ object BattlePhoneNetworking {
 
             val category = TrainerRegistry.categoryOf(id)
             val defeated = progress.hasDefeated(id, player.uuid)
+            if (defeated && definition.progress.hideAfterDefeat) return@mapNotNull null
             BattlePhoneEntry(
                 id = id.toString(),
                 name = definition.name,

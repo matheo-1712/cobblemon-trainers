@@ -239,6 +239,7 @@ remplie, ou équipe du joueur K.O.
 | --- | --- | --- | --- |
 | `rematch` | `unlimited` | `unlimited`, `never` | Peut-on le redéfier une fois battu |
 | `listed` | `true` | booléen | Apparaît dans le Battle Phone et `/cobblemontrainers list` |
+| `hideAfterDefeat` | `false` | booléen | Masque le dresseur dans le Battle Phone du joueur après sa victoire ; conserve les victoires, les règles de revanche et la liste opérateur |
 
 ## Catégories
 

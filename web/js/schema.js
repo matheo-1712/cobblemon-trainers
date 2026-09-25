@@ -113,7 +113,11 @@ const SCHEMA = (() => {
           ['unlimited', t('Autant de fois qu’on veut', 'As many times as you like')],
           ['never', t('Une seule fois', 'Once and never again')]
         ] },
-      { k: 'listed', t: 'bool', def: true, l: t('Visible dans le Battle Phone', 'Listed in the Battle Phone') }
+      { k: 'listed', t: 'bool', def: true, l: t('Visible dans le Battle Phone', 'Listed in the Battle Phone') },
+      { k: 'hideAfterDefeat', t: 'bool', def: false,
+        l: t('Masquer après une victoire', 'Hide after defeat'),
+        h: t('Masque ce dresseur dans le Battle Phone des joueurs qui l’ont vaincu. Les victoires restent enregistrées et les règles de revanche restent applicables.',
+             'Hides this trainer in the Battle Phone for players who defeated them. Victories stay recorded and rematch rules still apply.') }
     ]
   };
 
