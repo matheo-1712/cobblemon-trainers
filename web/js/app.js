@@ -1705,6 +1705,10 @@ const App = (() => {
       Pack.state.description = event.target.value;
       Pack.save();
     });
+    $('pack-order').addEventListener('input', (event) => {
+      Pack.state.packOrder = event.target.value;
+      Pack.changed();
+    });
 
     ['trainer', 'intro', 'category', 'advancement'].forEach((kind) => {
       $('add-' + kind).addEventListener('click', () => Pack.add(kind));
@@ -1777,6 +1781,7 @@ const App = (() => {
     Pack.onChange(() => {
       $('namespace').value = Pack.state.namespace;
       $('description').value = Pack.state.description;
+      $('pack-order').value = Pack.state.packOrder;
       $('archive').value = Pack.state.archive;
       // Every reference holds the namespace, so renaming the pack renames its images too.
       if (Pack.state.namespace !== namespace) {
@@ -1789,6 +1794,7 @@ const App = (() => {
 
     $('namespace').value = Pack.state.namespace;
     $('description').value = Pack.state.description;
+    $('pack-order').value = Pack.state.packOrder;
     $('archive').value = Pack.state.archive;
     // The bytes outlive the page: a skin dropped yesterday has to draw itself again today.
     feedAll();

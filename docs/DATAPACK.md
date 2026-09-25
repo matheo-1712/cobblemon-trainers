@@ -36,6 +36,7 @@ mon_pack/
 └── data/mon_pack/                      ← ton namespace
     └── cobblemontrainers/
         ├── trainers/                   ← les dresseurs
+        │   ├── pack.json               ← ordre du pack dans le Battle Phone (facultatif)
         │   ├── red.json                → mon_pack:red
         │   └── champions/              ← un dossier = une catégorie
         │       ├── category.json       ← présentation de la catégorie (facultatif)
@@ -57,8 +58,8 @@ mon_pack/
 - **L'ID est `<namespace>:<chemin>`, sous-dossiers compris**, `trainers/` non compté :
   `trainers/champions/erika.json` donne `mon_pack:champions/erika`. Le dossier est aussi la
   [catégorie](#catégories) du dresseur.
-- `category.json` est le **seul nom de fichier réservé** : il décrit le dossier où il se
-  trouve, il n'est jamais lu comme un dresseur.
+- `category.json` décrit son dossier et `pack.json`, à la racine de `trainers/`, règle l'ordre
+  du pack ; aucun des deux n'est lu comme un dresseur.
 - Un pack chargé plus tard écrase un dresseur de même ID, comme n'importe quelle ressource
   de datapack. Un fichier invalide est ignoré, l'erreur part dans les logs, et les autres
   dresseurs se chargent quand même.
@@ -265,6 +266,17 @@ Un `category.json` **dans le dossier** lui donne un nom et une place, les deux f
   exactement celle d'avant.
 - Un sous-dossier de sous-dossier est une catégorie à part entière (`champions/kanto`), avec
   son propre `category.json`.
+
+Un `pack.json` **à la racine de `trainers/`** règle l'ordre global du pack dans le Battle Phone
+et `/cobblemontrainers list` :
+
+```json
+{ "order": 1 }
+```
+
+Le plus petit `order` apparaît en premier. Les packs sans `order` viennent après ceux qui en
+ont un, triés par namespace. Ce rang concerne les packs, tandis que `category.json` règle
+l'ordre des catégories à l'intérieur d'un pack.
 
 ## Conditions pour combattre
 
