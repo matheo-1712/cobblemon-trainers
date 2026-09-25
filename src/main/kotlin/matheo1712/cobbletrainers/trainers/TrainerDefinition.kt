@@ -30,9 +30,9 @@ import net.minecraft.resources.ResourceLocation
  * @param rewards Items handed to the player on victory, in order.
  * @param requires What a player must have done before this trainer accepts a battle. Null -
  *   the default - is a trainer anyone may challenge.
- * @param location Where the trainer is to be found. Its presence is what makes the trainer
- *   callable from the battle phone; null - the default - is a trainer who only ever stands
- *   where an operator put them.
+ * @param notCallable Whether this trainer is hidden from Battle Phone calls. False by default.
+ * @param location Optional conditions restricting where the trainer may be called. With no
+ *   location conditions, they may be called anywhere.
  * @param cosmetics What the trainer wears and holds. Appearance only - see [TrainerCosmetics].
  */
 data class TrainerDefinition(
@@ -44,6 +44,7 @@ data class TrainerDefinition(
     val progress: TrainerProgressRules = TrainerProgressRules(),
     val rewards: List<TrainerReward> = emptyList(),
     val requires: TrainerRequirements? = null,
+    val notCallable: Boolean = false,
     val location: TrainerLocation? = null,
     val cosmetics: TrainerCosmetics = TrainerCosmetics()
 ) {
@@ -52,15 +53,10 @@ data class TrainerDefinition(
     fun requirements(): TrainerRequirements? = requires?.takeIf { !it.isEmpty }
 
     /**
-     * Whether a player may summon this trainer from the battle phone.
-     *
-     * There is no separate switch for it: declaring a [location] *is* declaring that the
-     * trainer comes when called, and a champion who waits in their own gym simply declares
-     * none. Two fields saying the same thing could contradict each other, one cannot.
-     *
-     * A block holding only a label is not a place, so it does not make anyone callable.
+     * Whether a player may summon this trainer from the battle phone. [location] only restricts
+     * where they may be called; [notCallable] is the explicit on/off switch.
      */
-    fun callable(): Boolean = location?.let { !it.isEmpty } == true
+    fun callable(): Boolean = !notCallable
 
     /**
      * Logs the values that are words rather than numbers and were not recognised. Gson has no
