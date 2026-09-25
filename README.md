@@ -366,7 +366,7 @@ les pièges sont dans [docs/DATAPACK.md](docs/DATAPACK.md#où-poser-le-pack).
 ./gradlew build
 ```
 
-Le jar remappé sort dans `fabric/build/libs/`. Pour lancer un environnement de test :
+Le jar remappé sort dans `build/libs/`. Pour lancer un environnement de test :
 
 ```bash
 ./gradlew runClient
@@ -374,7 +374,7 @@ Le jar remappé sort dans `fabric/build/libs/`. Pour lancer un environnement de 
 
 Le projet cible Java 21 via un toolchain Gradle, ce qui force aussi `runClient` et
 `runServer` - sans ça, Cobblemon refuse de démarrer sous un JDK plus récent. Ne place pas
-de jar Cobblemon dans `fabric/run/mods/` : il est déjà fourni par les dépendances, et le doublon
+de jar Cobblemon dans `run/mods/` : il est déjà fourni par les dépendances, et le doublon
 fait planter le client.
 
 Les versions de Cobblemon et Architectury sont des **ID de version Modrinth** dans
@@ -388,13 +388,10 @@ curl -s "https://api.modrinth.com/v2/version/<ID>" | python -c "import sys,json;
 Voir aussi la [documentation Fabric](https://docs.fabricmc.net/develop/getting-started/creating-a-project#setting-up)
 pour la configuration de l'IDE.
 
-La [structure de développement](docs/DEVELOPPEMENT.md) décrit le module `common` et
-l'extraction progressive du code partagé en préparation du portage NeoForge.
-
 ### Publier une release
 
 Publier une release GitHub dont le tag est `v<version>`, par exemple `v1.2.3`. Le workflow
-`release.yml` construit, publie sur Modrinth, et attache à la release le jar et
+`release.yml` construit, publie séparément sur Modrinth et CurseForge, et attache à la release le jar et
 `exemple_trainer_datapack.zip` - le pack d'exemple, prêt à poser dans `mods/`, `datapacks/` ou
 `resourcepacks/`.
 
@@ -405,8 +402,12 @@ changelog, et la case *pre-release* publie en beta.
 Le workflow pousse aussi `MODRINTH.md` par-dessus la description du projet Modrinth, à chaque
 release : la page de la boutique ne peut donc pas décrire une version antérieure.
 
-Un seul secret attendu par le dépôt : `MODRINTH_TOKEN`. En local, `./gradlew publishMods` est
-sans risque : sans jeton, il écrit ce qu'il aurait envoyé dans `fabric/build/mod-publish/`.
+Deux secrets attendus par le dépôt : `MODRINTH_TOKEN` et `CURSEFORGE_TOKEN` (jeton d'auteur CurseForge).
+Les deux publications et l'ajout des fichiers GitHub sont trois tâches indépendantes après le build :
+un échec sur une plateforme n'empêche pas les autres. Relancer seulement la tâche échouée évite
+de republier une version déjà créée.
+En local, `./gradlew publishMods` est
+sans risque : sans jeton, il écrit ce qu'il aurait envoyé dans `build/mod-publish/`.
 
 ## Limites connues
 
