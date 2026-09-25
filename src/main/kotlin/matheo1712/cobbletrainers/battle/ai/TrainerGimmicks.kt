@@ -2,6 +2,7 @@ package matheo1712.cobbletrainers.battle.ai
 
 import com.cobblemon.mod.common.battles.InBattleGimmickMove
 import com.cobblemon.mod.common.battles.ShowdownMoveset
+import net.fabricmc.loader.api.FabricLoader
 
 /**
  * What a trainer's `battle.gimmicks` means, and whether the battle is offering one right now.
@@ -31,6 +32,8 @@ import com.cobblemon.mod.common.battles.ShowdownMoveset
  * `dynamax`.
  */
 object TrainerGimmicks {
+
+    private const val MEGA_SHOWDOWN_MOD_ID = "mega_showdown"
 
     /** Cobblemon's id for Mega Evolution, and the word a pack writes: `mega`. */
     val MEGA: String = ShowdownMoveset.Gimmick.MEGA_EVOLUTION.id
@@ -73,6 +76,14 @@ object TrainerGimmicks {
     /** Whether a trainer declaring [declared] uses [gimmick]. */
     fun uses(declared: List<String>, gimmick: String): Boolean =
         declared.any { it.trim().equals(gimmick, ignoreCase = true) }
+
+    /**
+     * Mega Showdown supplies every gimmick implementation used by trainer battles in the
+     * supported setup. Do not send a gimmick action when that optional mod is absent: Cobblemon
+     * may still expose a partial capability, but its simulator cannot resolve the corresponding
+     * action consistently without the integration mod.
+     */
+    fun available(): Boolean = FabricLoader.getInstance().isModLoaded(MEGA_SHOWDOWN_MOD_ID)
 
     /**
      * Whether the battle is offering [gimmick] to the Pokémon this [moveset] belongs to.

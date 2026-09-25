@@ -151,6 +151,7 @@ Everything is optional: `{}` is a valid trainer, if not a very interesting one.
 | `progress` | - | What beating them changes |
 | `rewards` | `[]` | Items handed to the winner |
 | `requires` | - | [What it takes to battle them](#locking-a-trainer) |
+| `notCallable` | `false` | `true` blocks Battle Phone calls ([details](SPAWNING.md)) |
 | `location` | - | [Where to find them, and calling them from the Battle Phone](SPAWNING.md) |
 | `cosmetics` | - | [What they wear and what they hold](COSMETICS.md) |
 

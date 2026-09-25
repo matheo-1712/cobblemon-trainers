@@ -96,6 +96,7 @@
   "cobblemon-trainers.chat.no_pokemon": "Tu as besoin d'au moins un Pokémon pour combattre.",
 
   "cobblemon-trainers.location.separator": ", ",
+  "cobblemon-trainers.location.anywhere": "partout",
   "cobblemon-trainers.location.dimension": "%s",
   "cobblemon-trainers.location.biome": "%s",
   "cobblemon-trainers.location.biome_tag": "biomes %s",

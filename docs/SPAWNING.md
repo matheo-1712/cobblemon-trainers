@@ -26,25 +26,27 @@ Cette page ne traite que de la troisième. Pour le reste du format, voir
 
 ## Le bloc `location`
 
-**Nommer un lieu dans le bloc `location`, c'est rendre le dresseur appelable.** Il n'y a pas
-d'autre interrupteur. Un dresseur qui ne nomme aucun lieu n'a pas de bouton : c'est ainsi qu'on
-écrit un champion qu'il faut aller trouver dans son arène.
+Par défaut, un dresseur est appelable depuis le Battle Phone **partout**. `notCallable: true`
+bloque uniquement cet appel ; la commande `/cobblemontrainers spawn` et le bloc de spawn restent
+utilisables. Les conditions de `location` restreignent l'endroit où le joueur peut l'appeler ;
+sans condition, aucune restriction ne s'applique.
 
 Le bloc sert donc à deux choses distinctes, et on peut n'en vouloir qu'une :
 
 | Ce qu'il y a dans le bloc | Lieu affiché | Bouton Appeler |
 | --- | --- | --- |
-| Rien, ou pas de bloc du tout | non | non |
-| Seulement un `label` | oui | **non** |
-| Au moins une condition | oui | oui |
+| Pas de bloc `location` | `partout` | oui |
+| Seulement un `label` | oui | oui, partout |
+| Au moins une condition | oui | oui, si toutes correspondent |
+| `notCallable: true` | — | **non** |
 
-Un `label` seul est donc parfaitement valide : le champion dit où le trouver, et n'y va pas pour
-autant. C'est le cas normal d'un dresseur posé par un bloc de dresseur quelque part dans le
-monde.
+`label` décrit le lieu affiché ; il ne restreint pas l'appel. Pour un dresseur à trouver sur
+place, définis `"notCallable": true`.
 
 ```json
 {
   "name": "Ace du Solo",
+  "notCallable": false,
   "location": {
     "biome": "#minecraft:is_badlands",
     "time": "night"
