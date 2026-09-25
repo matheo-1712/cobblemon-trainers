@@ -327,10 +327,15 @@ const Validate = (() => {
         'Le chemin ne peut contenir que minuscules, chiffres, _ - . et /.',
         'The path may only hold lowercase letters, digits, _ - . and /.');
     }
+    if (entry.kind === 'trainer' && entry.path === 'pack') {
+      say(found, 'error',
+        'pack est réservé au fichier d’ordre global, jamais à un dresseur.',
+        'pack is reserved for the global order file, never for a trainer.');
+    }
     if (entry.kind === 'trainer' && entry.path.split('/').pop() === 'category') {
       say(found, 'error',
-        'category est le seul nom de fichier réservé : il décrit un dossier, jamais un dresseur.',
-        'category is the one reserved file name: it describes a folder, never a trainer.');
+        'category décrit son dossier et ne peut pas être un dresseur.',
+        'category describes its folder and cannot be a trainer.');
     }
     if (entry.kind === 'trainer') trainer(entry.doc, found, pack);
     if (entry.kind === 'intro') intro(entry.doc, found, pack);
@@ -344,6 +349,12 @@ const Validate = (() => {
       say(found, 'error',
         'Le namespace ne peut contenir que minuscules, chiffres, _ - et .',
         'The namespace may only hold lowercase letters, digits, _ - and .');
+    }
+    const order = Number(state.packOrder);
+    if (state.packOrder !== '' && (!Number.isInteger(order) || order < -2147483648 || order > 2147483647)) {
+      say(found, 'error',
+        'L’ordre du pack doit être un nombre entier, ou rester vide.',
+        'Pack order must be a whole number, or left blank.');
     }
     const seen = new Set();
     state.files.forEach((entry) => {

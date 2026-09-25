@@ -36,6 +36,7 @@ my_pack/
 └── data/my_pack/                       ← your namespace
     └── cobblemontrainers/
         ├── trainers/                   ← the trainers
+        │   ├── pack.json               ← pack order in the Battle Phone (optional)
         │   ├── red.json                → my_pack:red
         │   └── champions/              ← a folder is a category
         │       ├── category.json       ← how the category shows up (optional)
@@ -57,8 +58,8 @@ my_pack/
 - **The ID is `<namespace>:<path>`, subfolders included**, `trainers/` left out:
   `trainers/champions/erika.json` gives `my_pack:champions/erika`. That folder is also the
   trainer's [category](#categories).
-- `category.json` is the **only reserved filename**: it describes the folder it sits in, and
-  is never read as a trainer.
+- `category.json` describes its folder, and `pack.json` at the root of `trainers/` sets the
+  pack's order; neither is read as a trainer.
 - A pack loaded later overrides a trainer with the same ID, like any other datapack resource.
   An invalid file is skipped, the error goes to the log, and the other trainers still load.
 
@@ -245,6 +246,16 @@ A `category.json` **inside the folder** gives it a name and a place, both option
   it used to be.
 - A subfolder of a subfolder is a category in its own right (`champions/kanto`), with its own
   `category.json`.
+
+A `pack.json` **at the root of `trainers/`** sets the pack's global order in the Battle Phone
+and `/cobblemontrainers list`:
+
+```json
+{ "order": 1 }
+```
+
+The smallest `order` comes first. Packs without one follow, sorted by namespace. This ranks
+packs; `category.json` ranks categories within a pack.
 
 ## Locking a trainer
 

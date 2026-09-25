@@ -111,14 +111,14 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
     }
 
     /**
-     * One tab per namespace, in alphabetical order, preceded by an "everything" tab. That
+     * One tab per namespace, in server display order, preceded by an "everything" tab. That
      * first tab is dropped when a single datapack ships trainers: it would be the same list
      * twice, and the selector already names the one datapack there is.
      */
     private fun buildGroups(entries: List<BattlePhoneEntry>): List<Group> {
         // The server sends trainers in reading order - by pack, then by category - so grouping
         // on either keeps every tab sorted without sorting anything again.
-        val byNamespace = entries.groupBy { it.id.substringBefore(TRAINER_ID_SEPARATOR) }.toSortedMap()
+        val byNamespace = entries.groupBy { it.id.substringBefore(TRAINER_ID_SEPARATOR) }
         val groups = byNamespace.map { (namespace, group) -> Group(namespace, group, rowsOf(group)) }
         if (groups.size <= 1) return groups
 
