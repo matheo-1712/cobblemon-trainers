@@ -1,0 +1,15 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_apricorn": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": { "items": [{ "items": ["cobblemon:red_apricorn"] }] }
+    },
+    "has_the_recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": { "recipe": "cobblemon-trainers:battle_phone_red" }
+    }
+  },
+  "requirements": [["has_apricorn", "has_the_recipe"]],
+  "rewards": { "recipes": ["cobblemon-trainers:battle_phone_red"] }
+}

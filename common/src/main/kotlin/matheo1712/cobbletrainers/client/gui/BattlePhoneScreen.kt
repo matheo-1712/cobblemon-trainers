@@ -33,6 +33,7 @@ import net.minecraft.resources.ResourceLocation
 import org.joml.Quaternionf
 import org.joml.Vector3f
 import org.lwjgl.glfw.GLFW
+import java.awt.Color
 
 /**
  * The battle phone screen: the trainers of the world, sorted by the datapack they come from,
@@ -44,8 +45,8 @@ import org.lwjgl.glfw.GLFW
  * `assets/cobblemon-trainers/textures/gui/battle_phone/`. The selected trainer is previewed
  * with Cobblemon's NPC model using the skin the server sent. The frame textures are deliberately plain - a
  * bezel, a slot, a couple of arrows, a status marker - and everything behind them is drawn
- * with flat rectangles, so replacing the set is a matter of redrawing six images at the same
- * sizes. [FRAME] is the one with a constraint: its two transparent holes have to line up with
+ * with flat rectangles. The item color selects matching frame textures and tints those flat
+ * colors. [FRAME] is the one with a constraint: its two transparent holes have to line up with
  * [UPPER_X] and [LOWER_X] and their friends, since those holes are where the screens draw.
  *
  * The listing is whatever the server sent, and nothing is ever sent back beyond two questions:
@@ -54,6 +55,15 @@ import org.lwjgl.glfw.GLFW
  */
 class BattlePhoneScreen(data: OpenBattlePhonePayload) :
     Screen(CobblemonTrainers.lang("screen.battle_phone.title")) {
+
+    private val phoneColor = data.color.takeIf { it in PHONE_COLORS } ?: "blue"
+    private val themedColors = HashMap<Int, Int>()
+    private val FRAME = phoneTexture("frame", phoneColor)
+    private val SLOT = phoneTexture("slot", phoneColor)
+    private val SLOT_SELECT = phoneTexture("slot_selected", phoneColor)
+    private val MARKER = phoneTexture("marker", phoneColor)
+    private val ARROW_LEFT = phoneTexture("arrow_left", phoneColor)
+    private val ARROW_RIGHT = phoneTexture("arrow_right", phoneColor)
 
     /**
      * A line of the roster. A datapack heading only appears in the tab that holds every
@@ -195,10 +205,10 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         val frameMouseX = frameX(mouseX.toDouble()).toInt()
         val frameMouseY = frameY(mouseY.toDouble()).toInt()
 
-        guiGraphics.fill(UPPER_X, UPPER_Y, (UPPER_X + UPPER_WIDTH), (UPPER_Y + UPPER_HEIGHT), COLOR_SCREEN)
-        guiGraphics.fill(LOWER_X, LOWER_Y, (LOWER_X + LOWER_WIDTH), (LOWER_Y + LOWER_HEIGHT), COLOR_SCREEN)
+        guiGraphics.fill(UPPER_X, UPPER_Y, (UPPER_X + UPPER_WIDTH), (UPPER_Y + UPPER_HEIGHT), themed(COLOR_SCREEN))
+        guiGraphics.fill(LOWER_X, LOWER_Y, (LOWER_X + LOWER_WIDTH), (LOWER_Y + LOWER_HEIGHT), themed(COLOR_SCREEN))
 
-        guiGraphics.drawCenteredString(font, title, (UPPER_X + UPPER_WIDTH / 2), TITLE_Y, COLOR_TEXT_DIM)
+        guiGraphics.drawCenteredString(font, title, (UPPER_X + UPPER_WIDTH / 2), TITLE_Y, themed(COLOR_TEXT_DIM))
 
         var tooltip: List<Component> = emptyList()
         if (groups.isEmpty()) {
@@ -207,7 +217,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
                 EMPTY_LABEL,
                 (LOWER_X + LOWER_WIDTH / 2),
                 (LOWER_Y + LOWER_HEIGHT / 2),
-                COLOR_TEXT
+                themed(COLOR_TEXT)
             )
         } else {
             renderSelector(guiGraphics, frameMouseX, frameMouseY)
@@ -244,7 +254,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
             trim(label, 2 * SELECTOR_ARROW_GAP - 8),
             (LIST_X + LIST_WIDTH / 2),
             (SELECTOR_Y + 1),
-            COLOR_TEXT
+            themed(COLOR_TEXT)
         )
 
         val defeated = group.entries.count { it.defeated }
@@ -253,7 +263,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
             CobblemonTrainers.lang("screen.battle_phone.progress", defeated, group.entries.size),
             (LIST_X + LIST_WIDTH - PROGRESS_INSET),
             (SELECTOR_Y + 1),
-            COLOR_TEXT
+            themed(COLOR_TEXT)
         )
     }
 
@@ -308,7 +318,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
     private fun renderRowHeader(guiGraphics: GuiGraphics, header: Row.Header, rowY: Int) {
         val textX = LIST_X + if (header.primary) 0 else HEADER_INDENT
         val textY = rowY + HEADER_HEIGHT - HEADER_PADDING_BOTTOM - font.lineHeight
-        val color = if (header.primary) COLOR_HEADER else COLOR_SUBHEADER
+        val color = if (header.primary) themed(COLOR_HEADER) else themed(COLOR_SUBHEADER)
 
         val score = CobblemonTrainers.lang(
             "screen.battle_phone.progress",
@@ -316,7 +326,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
             header.total
         ).string
         val scoreX = LIST_X + LIST_WIDTH - font.width(score)
-        guiGraphics.drawString(font, score, scoreX, textY, COLOR_TEXT_DIM)
+        guiGraphics.drawString(font, score, scoreX, textY, themed(COLOR_TEXT_DIM))
 
         val label = trim(header.label, scoreX - textX - HEADER_SCORE_GAP)
         guiGraphics.drawString(font, label, textX, textY, color)
@@ -324,7 +334,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         val ruleX = textX + font.width(label) + 4
         val ruleY = textY + font.lineHeight / 2
         if (ruleX < scoreX - HEADER_SCORE_GAP) {
-            guiGraphics.fill(ruleX, ruleY, scoreX - HEADER_SCORE_GAP, ruleY + 1, COLOR_HEADER_RULE)
+            guiGraphics.fill(ruleX, ruleY, scoreX - HEADER_SCORE_GAP, ruleY + 1, themed(COLOR_HEADER_RULE))
         }
     }
 
@@ -345,7 +355,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         if (skin?.texture != null) {
             TrainerSkinRenderer.drawFace(guiGraphics, skin, slotX + 2, rowY + 2, SLOT_SIZE - 4)
         } else {
-            guiGraphics.drawCenteredString(font, UNKNOWN, slotX + SLOT_SIZE / 2, rowY + 6, COLOR_TEXT_DIM)
+            guiGraphics.drawCenteredString(font, UNKNOWN, slotX + SLOT_SIZE / 2, rowY + 6, themed(COLOR_TEXT_DIM))
         }
 
         // The outline goes over the head, the way a Pokédex draws it over the sprite.
@@ -367,9 +377,9 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
             nameX,
             rowY + (SLOT_SIZE - font.lineHeight) / 2,
             when {
-                entry.locked -> COLOR_TEXT_LOCKED
-                entry.defeated -> COLOR_TEXT
-                else -> COLOR_TEXT_DIM
+                entry.locked -> themed(COLOR_TEXT_LOCKED)
+                entry.defeated -> themed(COLOR_TEXT)
+                else -> themed(COLOR_TEXT_DIM)
             }
         )
 
@@ -400,11 +410,11 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
 
         val barX = (LIST_X + LIST_WIDTH + 2)
         val barTop = PANEL_Y
-        guiGraphics.fill(barX, barTop, barX + SCROLL_BAR_WIDTH, (PANEL_Y + PANEL_HEIGHT), COLOR_SCROLL_TRACK)
+        guiGraphics.fill(barX, barTop, barX + SCROLL_BAR_WIDTH, (PANEL_Y + PANEL_HEIGHT), themed(COLOR_SCROLL_TRACK))
 
         val thumbHeight = maxOf(PANEL_HEIGHT / (maxScroll + 1), MIN_THUMB_HEIGHT)
         val thumbTop = barTop + (PANEL_HEIGHT - thumbHeight) * scroll / maxScroll
-        guiGraphics.fill(barX, thumbTop, barX + SCROLL_BAR_WIDTH, thumbTop + thumbHeight, COLOR_SCROLL_THUMB)
+        guiGraphics.fill(barX, thumbTop, barX + SCROLL_BAR_WIDTH, thumbTop + thumbHeight, themed(COLOR_SCROLL_THUMB))
     }
 
     /** @return the tooltip to draw over everything, empty unless the mouse is on something. */
@@ -428,7 +438,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
             trim(Component.translatable(entry.name), UPPER_WIDTH - 8),
             (UPPER_X + UPPER_WIDTH / 2),
             NAME_Y,
-            COLOR_TITLE
+            themed(COLOR_TITLE)
         )
 
         val skin = TrainerSkinCache.get(entry.id)
@@ -441,7 +451,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
                 UNKNOWN,
                 FIGURE_CENTER_X,
                 (PORTRAIT_TOP + FIGURE_MODEL_HEIGHT / 2),
-                COLOR_TEXT_DIM
+                themed(COLOR_TEXT_DIM)
             )
         }
 
@@ -453,7 +463,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
             status,
             statusX + MARKER_WIDTH + MARKER_TEXT_GAP,
             STATUS_Y,
-            COLOR_TEXT
+            themed(COLOR_TEXT)
         )
 
         guiGraphics.drawCenteredString(
@@ -461,7 +471,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
             CobblemonTrainers.lang("screen.battle_phone.team", entry.level, entry.teamSize).string,
             centerX,
             TEAM_LINE_Y,
-            COLOR_TEXT_DIM
+            themed(COLOR_TEXT_DIM)
         )
 
         renderLocation(guiGraphics, entry)
@@ -599,13 +609,13 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
 
         val plateX = TEAM_X + TEAM_SLOT_INSET
         val plateWidth = TEAM_SLOTS_WIDTH
-        plate(guiGraphics, plateX, LOCATION_TOP, plateWidth, LOCATION_HEIGHT, COLOR_PLATE, COLOR_PLATE_EDGE)
+        plate(guiGraphics, plateX, LOCATION_TOP, plateWidth, LOCATION_HEIGHT, themed(COLOR_PLATE), themed(COLOR_PLATE_EDGE))
         guiGraphics.fill(
             plateX + LOCATION_ACCENT_INSET,
             LOCATION_TOP + LOCATION_ACCENT_INSET,
             plateX + LOCATION_ACCENT_INSET + LOCATION_ACCENT_WIDTH,
             LOCATION_TOP + LOCATION_HEIGHT - LOCATION_ACCENT_INSET,
-            COLOR_HEADER
+            themed(COLOR_HEADER)
         )
 
         // Centred on what is left of the plate once the accent has taken its edge, so the text
@@ -620,7 +630,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
             ),
             textLeft + textWidth / 2,
             LOCATION_Y,
-            COLOR_TEXT
+            themed(COLOR_TEXT)
         )
     }
 
@@ -688,7 +698,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
                 mouseY < rowY(index) + ITEM_SIZE + REWARD_ROW_GAP / 2
         }
 
-        plate(guiGraphics, railX, top, width, height, COLOR_PLATE, COLOR_PLATE_EDGE)
+        plate(guiGraphics, railX, top, width, height, themed(COLOR_PLATE), themed(COLOR_PLATE_EDGE))
 
         // The accent that heads the location plate, laid across the top of this one: the two are
         // the same kind of field, and the rail is far too narrow to be titled in words.
@@ -697,7 +707,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
             top + REWARD_ACCENT_INSET,
             railX + width - REWARD_ACCENT_INSET,
             top + REWARD_ACCENT_INSET + REWARD_ACCENT_HEIGHT,
-            COLOR_HEADER
+            themed(COLOR_HEADER)
         )
 
         // The highlight is a flat fill rather than a plate: a plate paints its corners back in
@@ -708,7 +718,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
                 rowY(index) - REWARD_ROW_GAP / 2,
                 railX + width - 1,
                 rowY(index) + ITEM_SIZE + REWARD_ROW_GAP / 2,
-                COLOR_REWARD_HOVER
+                themed(COLOR_REWARD_HOVER)
             )
         }
 
@@ -741,7 +751,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
                 CobblemonTrainers.lang("screen.battle_phone.reward_more", entry.rewards.size - shown),
                 railX + width / 2,
                 rowY(shown) + (ITEM_SIZE - 8) / 2,
-                COLOR_TEXT_DIM
+                themed(COLOR_TEXT_DIM)
             )
         }
 
@@ -817,18 +827,18 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         val hovered = overCallButton(mouseX.toDouble(), mouseY.toDouble())
 
         val border = when {
-            !enabled -> COLOR_PLATE_EDGE
-            hovered -> COLOR_TITLE
-            else -> COLOR_HEADER
+            !enabled -> themed(COLOR_PLATE_EDGE)
+            hovered -> themed(COLOR_TITLE)
+            else -> themed(COLOR_HEADER)
         }
-        plate(guiGraphics, CALL_X, CALL_Y, CALL_WIDTH, CALL_HEIGHT, COLOR_PLATE, border)
+        plate(guiGraphics, CALL_X, CALL_Y, CALL_WIDTH, CALL_HEIGHT, themed(COLOR_PLATE), border)
 
         // A key has a lit face and a shadow under it. Two flat colours would do neither, and a
         // single fill made the button read as a hole in the screen rather than something to
         // press - which matters, since it is the only thing on this screen that is pressed.
         if (enabled) {
-            val top = if (hovered) COLOR_CALL_TOP_HOVER else COLOR_CALL_TOP
-            val bottom = if (hovered) COLOR_CALL_BOTTOM_HOVER else COLOR_CALL_BOTTOM
+            val top = if (hovered) themed(COLOR_CALL_TOP_HOVER) else themed(COLOR_CALL_TOP)
+            val bottom = if (hovered) themed(COLOR_CALL_BOTTOM_HOVER) else themed(COLOR_CALL_BOTTOM)
             guiGraphics.fillGradient(
                 CALL_X + CALL_BORDER,
                 CALL_Y + CALL_BORDER,
@@ -843,7 +853,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
                 CALL_Y + CALL_BORDER,
                 CALL_X + CALL_WIDTH - CALL_BORDER - 1,
                 CALL_Y + CALL_BORDER + 1,
-                COLOR_CALL_HIGHLIGHT
+                themed(COLOR_CALL_HIGHLIGHT)
             )
         }
 
@@ -852,7 +862,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
             CobblemonTrainers.lang("screen.battle_phone.call"),
             CALL_X + CALL_WIDTH / 2,
             CALL_Y + CALL_LABEL_INSET,
-            if (enabled) COLOR_TITLE else COLOR_TEXT_LOCKED
+            if (enabled) themed(COLOR_TITLE) else themed(COLOR_TEXT_LOCKED)
         )
 
         if (!hovered) return null
@@ -911,7 +921,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
                     UNKNOWN,
                     cellX + TEAM_CELL_WIDTH / 2,
                     cellY + (TEAM_CELL_HEIGHT - font.lineHeight) / 2,
-                    COLOR_TEXT_DIM
+                    themed(COLOR_TEXT_DIM)
                 )
                 continue
             }
@@ -948,7 +958,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         var lineY = TEAM_TOP + (areaHeight - total * font.lineHeight) / 2
         val centerX = TEAM_X + TEAM_SLOT_INSET + areaWidth / 2
 
-        (heading.map { it to COLOR_TEXT } + lines.map { it to COLOR_TEXT_DIM }).forEach { (line, color) ->
+        (heading.map { it to themed(COLOR_TEXT) } + lines.map { it to themed(COLOR_TEXT_DIM) }).forEach { (line, color) ->
             guiGraphics.drawString(font, line, centerX - font.width(line) / 2, lineY, color)
             lineY += font.lineHeight
         }
@@ -1015,9 +1025,9 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         val busy = ClientBattleMusic.isPlaying() && !ClientBattleMusic.isPreviewPlaying()
         val hovered = overMusicButton(mouseX.toDouble(), mouseY.toDouble())
         plate(guiGraphics, MUSIC_X, CALL_Y, MUSIC_WIDTH, CALL_HEIGHT,
-            if (busy) COLOR_PLATE else if (hovered || active) COLOR_CALL_TOP_HOVER else COLOR_CALL_BOTTOM,
-            COLOR_PLATE_EDGE)
-        val color = if (busy) COLOR_TEXT_LOCKED else COLOR_TEXT
+            if (busy) themed(COLOR_PLATE) else if (hovered || active) themed(COLOR_CALL_TOP_HOVER) else themed(COLOR_CALL_BOTTOM),
+            themed(COLOR_PLATE_EDGE))
+        val color = if (busy) themed(COLOR_TEXT_LOCKED) else themed(COLOR_TEXT)
         val x = MUSIC_X + 5
         val y = CALL_Y + 3
         guiGraphics.fill(x + 3, y, x + 5, y + 7, color)
@@ -1182,13 +1192,45 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
      */
     override fun isPauseScreen(): Boolean = false
 
+    /** Keeps the blue screen's brightness and contrast while changing its accent hue. */
+    private fun themed(argb: Int): Int {
+        if (phoneColor == "blue") return argb
+        return themedColors.getOrPut(argb) { recolor(argb) }
+    }
+
+    private fun recolor(argb: Int): Int {
+        val hsv = FloatArray(3)
+        Color.RGBtoHSB(argb ushr 16 and 0xFF, argb ushr 8 and 0xFF, argb and 0xFF, hsv)
+        val hue = when (phoneColor) {
+            "green" -> 0.38f
+            "pink" -> 0.90f
+            "red" -> 0.0f
+            "yellow" -> 0.13f
+            else -> 0f
+        }
+        val neutral = phoneColor == "black" || phoneColor == "white"
+        val brightness = (hsv[2] * when (phoneColor) {
+            "black" -> 0.75f
+            "white" -> 1.10f
+            else -> 1f
+        }).coerceAtMost(1f)
+        val rgb = Color.HSBtoRGB(hue, if (neutral) 0f else hsv[1], brightness)
+        return (argb and -0x1000000) or (rgb and 0xFFFFFF)
+    }
+
+    /** Draws the rounded plate corners in the current screen color. */
+    private fun plate(guiGraphics: GuiGraphics, x: Int, y: Int, width: Int, height: Int, fill: Int, border: Int) {
+        guiGraphics.fill(x, y, x + width, y + height, border)
+        guiGraphics.fill(x + 1, y + 1, x + width - 1, y + height - 1, fill)
+        val screen = themed(COLOR_SCREEN)
+        guiGraphics.fill(x, y, x + 1, y + 1, screen)
+        guiGraphics.fill(x + width - 1, y, x + width, y + 1, screen)
+        guiGraphics.fill(x, y + height - 1, x + 1, y + height, screen)
+        guiGraphics.fill(x + width - 1, y + height - 1, x + width, y + height, screen)
+    }
+
     private companion object {
-        val FRAME: ResourceLocation = phoneTexture("frame")
-        val SLOT: ResourceLocation = phoneTexture("slot")
-        val SLOT_SELECT: ResourceLocation = phoneTexture("slot_selected")
-        val MARKER: ResourceLocation = phoneTexture("marker")
-        val ARROW_LEFT: ResourceLocation = phoneTexture("arrow_left")
-        val ARROW_RIGHT: ResourceLocation = phoneTexture("arrow_right")
+        val PHONE_COLORS = setOf("black", "blue", "green", "pink", "red", "white", "yellow")
 
         /** Size of the frame image, which the whole screen is laid out inside of. */
         const val FRAME_WIDTH = 378
@@ -1452,26 +1494,11 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         val UNCATEGORIZED_LABEL: Component = CobblemonTrainers.lang("category.uncategorized")
         val EMPTY_LABEL: Component = CobblemonTrainers.lang("screen.battle_phone.empty")
 
-        fun phoneTexture(name: String): ResourceLocation =
-            CobblemonTrainers.id("textures/gui/battle_phone/$name.png")
-
-        /**
-         * A bordered box with its four corner pixels knocked out, which is how everything on
-         * these screens gets rounded corners without a texture.
-         *
-         * The corners are painted back in [COLOR_SCREEN] rather than left alone: the panel
-         * behind is a flat fill of exactly that colour, so putting it back is what makes the
-         * corner disappear. A box drawn anywhere else would show four dots of the wrong blue.
-         */
-        fun plate(guiGraphics: GuiGraphics, x: Int, y: Int, width: Int, height: Int, fill: Int, border: Int) {
-            guiGraphics.fill(x, y, x + width, y + height, border)
-            guiGraphics.fill(x + 1, y + 1, x + width - 1, y + height - 1, fill)
-
-            guiGraphics.fill(x, y, x + 1, y + 1, COLOR_SCREEN)
-            guiGraphics.fill(x + width - 1, y, x + width, y + 1, COLOR_SCREEN)
-            guiGraphics.fill(x, y + height - 1, x + 1, y + height, COLOR_SCREEN)
-            guiGraphics.fill(x + width - 1, y + height - 1, x + width, y + height, COLOR_SCREEN)
-        }
+        fun phoneTexture(name: String, color: String): ResourceLocation =
+            CobblemonTrainers.id(
+                "textures/gui/battle_phone/" +
+                    (if (color == "blue" || name == "slot_selected") "$name.png" else "$color/$name.png")
+            )
 
         /**
          * A blit with blending on.

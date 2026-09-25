@@ -30,7 +30,8 @@ déjà en place. Un village de dresseurs se construit une fois.
 par le **Battle Phone**, un objet, pas une commande.
 
 Il se **craft**, à l'établi : quatre lingots de fer aux coins, quatre lingots de cuivre sur
-les côtés, et une **noigrume bleue** au centre.
+les côtés, et une **noigrume au choix** au centre. Sa couleur donne celle du téléphone :
+noir, bleu, vert, rose, rouge, blanc ou jaune.
 
 <p align="center"><img src="https://raw.githubusercontent.com/matheo-1712/cobblemon-trainers/refs/heads/master/assets/battle_phone_craft.png" alt="Battle Phone recipe"></p>
 
@@ -145,12 +146,18 @@ l'une d'elles donne le nom et le niveau du Pokémon.
 
 L'objet ne retient rien : il lit la progression du serveur, donc deux exemplaires affichent
 la même chose et le perdre ne perd rien. Il se craft avec du fer, du cuivre et une noigrume
-bleue - voir [le craft](#ce-qui-distingue-ce-mod) -, se trouve dans l'onglet créatif
+de la couleur voulue - voir [le craft](#ce-qui-distingue-ce-mod) -, se trouve dans l'onglet créatif
 **Cobblemon Trainers**, ou s'obtient avec :
 
 ```
 /give @s cobblemon-trainers:battle_phone
 ```
+
+Cette commande donne le modèle bleu historique. Pour une autre couleur, utilise
+`battle_phone_black`, `battle_phone_green`, `battle_phone_pink`, `battle_phone_red`,
+`battle_phone_white` ou `battle_phone_yellow` après `cobblemon-trainers:`. Toutes les couleurs
+ouvrent les mêmes dresseurs et montrent la même progression ; le cadre et les couleurs de
+l'interface suivent celles du téléphone utilisé.
 
 Seuls les dresseurs en `"listed": true` y apparaissent, comme dans `/cobblemontrainers list`,
 et un dresseur verrouillé peut se cacher entièrement jusqu'à ce que ses conditions soient

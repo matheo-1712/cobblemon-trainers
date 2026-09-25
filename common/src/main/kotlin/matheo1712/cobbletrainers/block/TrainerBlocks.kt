@@ -85,7 +85,7 @@ object TrainerBlocks {
         .title(CobblemonTrainers.lang("item_group"))
         .icon { ItemStack(TRAINER_SPAWNER_ITEM) }
         .displayItems { _, output ->
-            output.accept(TrainerItems.BATTLE_PHONE)
+            TrainerItems.BATTLE_PHONES.forEach { output.accept(it) }
             output.accept(TRAINER_SPAWNER_ITEM)
         }
         .build()
