@@ -64,7 +64,7 @@ object BattlePhoneNetworking {
     }
 
     /** Sends the player their own progress listing and asks their client to open the screen. */
-    fun openScreen(player: ServerPlayer) {
+    fun openScreen(player: ServerPlayer, color: String) {
         if (!ServerPlayNetworking.canSend(player, OpenBattlePhonePayload.TYPE)) {
             player.sendSystemMessage(
                 CobblemonTrainers.lang("chat.battle_phone.client_required").withStyle(ChatFormatting.RED)
@@ -103,7 +103,7 @@ object BattlePhoneNetworking {
             )
         }
 
-        ServerPlayNetworking.send(player, OpenBattlePhonePayload(entries))
+        ServerPlayNetworking.send(player, OpenBattlePhonePayload(entries, color))
     }
 
     /**
@@ -298,7 +298,7 @@ private fun RegistryFriendlyByteBuf.readOptionalText(): String? =
     if (readBoolean()) readUtf() else null
 
 /** Server -> client: the listed trainers and what the player has done about them. */
-data class OpenBattlePhonePayload(val entries: List<BattlePhoneEntry>) : CustomPacketPayload {
+data class OpenBattlePhonePayload(val entries: List<BattlePhoneEntry>, val color: String) : CustomPacketPayload {
 
     override fun type(): CustomPacketPayload.Type<OpenBattlePhonePayload> = TYPE
 
@@ -332,6 +332,7 @@ data class OpenBattlePhonePayload(val entries: List<BattlePhoneEntry>) : CustomP
                             buf.writeBoolean(it.due)
                         }
                     }
+                    buf.writeUtf(payload.color)
                 },
                 { buf ->
                     OpenBattlePhonePayload(
@@ -360,7 +361,8 @@ data class OpenBattlePhonePayload(val entries: List<BattlePhoneEntry>) : CustomP
                                     )
                                 }
                             )
-                        }
+                        },
+                        buf.readUtf()
                     )
                 }
             )
