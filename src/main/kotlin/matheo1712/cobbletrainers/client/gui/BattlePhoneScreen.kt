@@ -1,7 +1,11 @@
 package matheo1712.cobbletrainers.client.gui
 
 import com.cobblemon.mod.common.client.gui.drawProfilePokemon
+import com.cobblemon.mod.common.api.npc.NPCClasses
 import com.cobblemon.mod.common.client.render.models.blockbench.FloatingState
+import com.cobblemon.mod.common.entity.npc.NPCEntity
+import com.cobblemon.mod.common.entity.npc.NPCPlayerModelType
+import com.cobblemon.mod.common.entity.npc.NPCPlayerTexture
 import com.cobblemon.mod.common.util.math.fromEulerXYZDegrees
 import com.mojang.blaze3d.systems.RenderSystem
 import matheo1712.cobbletrainers.CobblemonTrainers
@@ -11,11 +15,14 @@ import matheo1712.cobbletrainers.network.BattlePhoneEntry
 import matheo1712.cobbletrainers.network.CallTrainerPayload
 import matheo1712.cobbletrainers.network.OpenBattlePhonePayload
 import matheo1712.cobbletrainers.trainers.RewardPreview
+import matheo1712.cobbletrainers.trainers.TrainerOutfit
+import matheo1712.cobbletrainers.trainers.TrainerSpawner
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
 import net.minecraft.ChatFormatting
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.screens.Screen
+import net.minecraft.client.gui.screens.inventory.InventoryScreen
 import net.minecraft.client.resources.sounds.SimpleSoundInstance
 import net.minecraft.sounds.SoundEvents
 import net.minecraft.network.chat.Component
@@ -31,7 +38,8 @@ import org.lwjgl.glfw.GLFW
  * Laid out after the clamshell the frame draws - the roster fills the lower screen, two
  * entries to a line, and whoever is selected there gets the upper one to themselves. It is
  * dressed with the mod's own textures, under
- * `assets/cobblemon-trainers/textures/gui/battle_phone/`. They are deliberately plain - a
+ * `assets/cobblemon-trainers/textures/gui/battle_phone/`. The selected trainer is previewed
+ * with Cobblemon's NPC model using the skin the server sent. The frame textures are deliberately plain - a
  * bezel, a slot, a couple of arrows, a status marker - and everything behind them is drawn
  * with flat rectangles, so replacing the set is a matter of redrawing six images at the same
  * sizes. [FRAME] is the one with a constraint: its two transparent holes have to line up with
@@ -81,6 +89,9 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
      */
     private var teamStates: List<FloatingState> = List(TEAM_SLOTS) { FloatingState() }
     private var teamStatesOwner: String? = null
+    private var previewEntity: NPCEntity? = null
+    private var previewOwner: String? = null
+    private var previewSkin: TrainerSkinCache.Skin? = null
 
     /**
      * What the frame is multiplied by to fit the window, and where it lands once it has been.
@@ -415,8 +426,9 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         )
 
         val skin = TrainerSkinCache.get(entry.id)
-        if (skin?.texture != null) {
-            TrainerSkinRenderer.drawFigure(guiGraphics, skin, FIGURE_CENTER_X, PORTRAIT_TOP, FIGURE_SCALE)
+        val entity = skin?.let { trainerPreview(entry, it) }
+        if (entity != null) {
+            renderTrainerModel(guiGraphics, entity)
         } else {
             guiGraphics.drawCenteredString(
                 font,
@@ -472,6 +484,88 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
             rewardTooltip.isNotEmpty() -> rewardTooltip
             teamTooltip != null -> listOf(teamTooltip)
             else -> emptyList()
+        }
+    }
+
+    /** Builds a detached Cobblemon NPC with the received skin for a consistent 3D preview. */
+    private fun trainerPreview(entry: BattlePhoneEntry, skin: TrainerSkinCache.Skin): NPCEntity? {
+        val bytes = skin.bytes ?: return null
+        if (previewOwner == entry.id && previewSkin === skin) return previewEntity
+        val level = minecraft?.level ?: return null
+        val npcClass = NPCClasses.getByIdentifier(TrainerSpawner.NPC_CLASS_HEALING) ?: return null
+        releasePreview()
+        val npc = NPCEntity(level)
+        npc.npc = npcClass
+        // The NPC class setter copies RESOURCE_IDENTIFIER only on the server. A local preview
+        // must select it explicitly, otherwise it keeps the constructor's first NPC model.
+        npc.forcedResourceIdentifier = npcClass.resourceIdentifier
+        npc.hideNameTag = true
+        npc.entityData.set(NPCEntity.LEVEL, entry.level)
+        npc.appliedAspects.add(CobblemonTrainers.TRAINER_ASPECT_PREFIX + entry.id)
+        npc.appliedAspects.removeIf { it == "model-default" || it == "model-slim" }
+        npc.appliedAspects.add(if (skin.slim) "model-slim" else "model-default")
+        TrainerOutfit.dress(npc, entry.cosmetics)
+        npc.updateAspects()
+        npc.entityData.set(
+            NPCEntity.NPC_PLAYER_TEXTURE,
+            NPCPlayerTexture(bytes.copyOf(), if (skin.slim) NPCPlayerModelType.SLIM else NPCPlayerModelType.DEFAULT)
+        )
+        previewOwner = entry.id
+        previewSkin = skin
+        previewEntity = npc
+        return npc
+    }
+
+    /** Cobblemon registers each NPC skin under its UUID, independently of our thumbnail cache. */
+    private fun releasePreview() {
+        previewEntity?.let { npc ->
+            ResourceLocation.tryBuild("cobblemon", npc.uuid.toString())?.let {
+                minecraft?.textureManager?.release(it)
+            }
+        }
+        previewEntity = null
+        previewOwner = null
+        previewSkin = null
+    }
+
+    override fun removed() {
+        releasePreview()
+        super.removed()
+    }
+
+    /** Render the selected trainer with Cobblemon's normal NPC entity renderer. */
+    private fun renderTrainerModel(guiGraphics: GuiGraphics, entity: NPCEntity) {
+        val tall = FIGURE_MODEL_HEIGHT.toFloat()
+        val scale = tall / entity.bbHeight.coerceAtLeast(0.1f)
+        val rotation = Quaternionf().rotateZ(Math.PI.toFloat())
+        val camera = Quaternionf().rotateX(FIGURE_MODEL_TILT)
+        val bodyYaw = entity.yBodyRot
+        val yaw = entity.yRot
+        val headYaw = entity.yHeadRot
+        val oldHeadYaw = entity.yHeadRotO
+        val nameVisible = entity.isCustomNameVisible
+        entity.yBodyRot = FIGURE_MODEL_YAW
+        entity.yRot = FIGURE_MODEL_YAW
+        entity.yHeadRot = FIGURE_MODEL_YAW
+        entity.yHeadRotO = FIGURE_MODEL_YAW
+        entity.isCustomNameVisible = false
+        try {
+            InventoryScreen.renderEntityInInventory(
+                guiGraphics,
+                FIGURE_CENTER_X.toFloat(),
+                PORTRAIT_TOP + tall / 2f,
+                scale,
+                Vector3f(0f, entity.bbHeight / 2f, 0f),
+                rotation,
+                camera,
+                entity
+            )
+        } finally {
+            entity.yBodyRot = bodyYaw
+            entity.yRot = yaw
+            entity.yHeadRot = headYaw
+            entity.yHeadRotO = oldHeadYaw
+            entity.isCustomNameVisible = nameVisible
         }
     }
 
@@ -1145,6 +1239,9 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
          */
         const val FIGURE_CENTER_X = UPPER_X + 28
         const val FIGURE_SCALE = 3
+        const val FIGURE_MODEL_HEIGHT = 96
+        const val FIGURE_MODEL_YAW = 168f
+        const val FIGURE_MODEL_TILT = 0f
         const val STATUS_Y = UPPER_Y + 137
 
         /**
