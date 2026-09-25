@@ -153,12 +153,13 @@ Tout est facultatif : `{}` donne un dresseur valide, quoique peu intéressant.
 | `progress` | - | Ce que le battre change |
 | `rewards` | `[]` | Objets remis au vainqueur |
 | `requires` | - | [Conditions pour le combattre](#conditions-pour-combattre) |
+| `notCallable` | `false` | `true` bloque l'appel depuis le Battle Phone ([détails](SPAWNING.md)) |
 | `location` | - | [Où le trouver, et l'appeler depuis le Battle Phone](SPAWNING.md) |
 | `cosmetics` | - | [Ce qu'il porte et ce qu'il tient](COSMETIQUES.md) |
 
 **➜ Le bloc `location` est décrit dans [SPAWNING.md](SPAWNING.md)**, avec ses conditions, ses
 textes et tout ce que le mod fait autour d'un appel. Le déclarer suffit à rendre le dresseur
-appelable ; ne pas le déclarer fait un dresseur qu'il faut aller trouver.
+appelable partout par défaut ; `notCallable: true` le bloque depuis le Battle Phone seulement.
 
 ### `battle`
 

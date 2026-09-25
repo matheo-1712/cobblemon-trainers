@@ -26,25 +26,27 @@ This page only covers the third one. For the rest of the format, see
 
 ## The `location` block
 
-**Naming a place in the `location` block is what makes a trainer callable.** There is no other
-switch. A trainer naming no place has no button: that is how you write a champion you have to go
-and find in their gym.
+By default, a trainer can be called from the Battle Phone **anywhere**. `notCallable: true`
+blocks only that call; `/cobblemontrainers spawn` and the trainer spawner block remain available.
+Conditions in `location` restrict where the player can call them; with no conditions, there is
+no location restriction.
 
 So the block does two distinct things, and you may well want only one of them:
 
 | What is in the block | Place shown | Call button |
 | --- | --- | --- |
-| Nothing, or no block at all | no | no |
-| A `label` only | yes | **no** |
-| At least one condition | yes | yes |
+| No `location` block | `anywhere` | yes |
+| A `label` only | yes | yes, anywhere |
+| At least one condition | yes | yes, when all match |
+| `notCallable: true` | — | **no** |
 
-A `label` on its own is therefore perfectly valid: the champion says where to find them, and
-does not go anywhere. That is the normal case for a trainer held somewhere in the world by a
-spawner block.
+`label` describes the displayed place; it does not restrict calling. To make a trainer stay
+where they are found, set `"notCallable": true`.
 
 ```json
 {
   "name": "Singles Ace",
+  "notCallable": false,
   "location": {
     "biome": "#minecraft:is_badlands",
     "time": "night"
