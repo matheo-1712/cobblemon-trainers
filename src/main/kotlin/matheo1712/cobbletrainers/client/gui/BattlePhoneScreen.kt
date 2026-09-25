@@ -194,7 +194,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         guiGraphics.fill(UPPER_X, UPPER_Y, (UPPER_X + UPPER_WIDTH), (UPPER_Y + UPPER_HEIGHT), COLOR_SCREEN)
         guiGraphics.fill(LOWER_X, LOWER_Y, (LOWER_X + LOWER_WIDTH), (LOWER_Y + LOWER_HEIGHT), COLOR_SCREEN)
 
-        guiGraphics.drawCenteredString(font, title, (UPPER_X + UPPER_WIDTH / 2), TITLE_Y, COLOR_TITLE)
+        guiGraphics.drawCenteredString(font, title, (UPPER_X + UPPER_WIDTH / 2), TITLE_Y, COLOR_TEXT_DIM)
 
         var tooltip: List<Component> = emptyList()
         if (groups.isEmpty()) {
@@ -412,9 +412,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
     ): List<Component> {
         val entry = selected ?: return emptyList()
 
-        // Every line of text spans the screen rather than the figure's column: the status of a
-        // trainer runs to a good seventy pixels, and centring that on a forty-eight pixel
-        // figure pushed the marker out under their legs.
+        // The header spans the screen; the footer reserves space for the call button.
         val centerX = UPPER_X + UPPER_WIDTH / 2
 
         guiGraphics.drawCenteredString(
@@ -434,18 +432,18 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
                 font,
                 UNKNOWN,
                 FIGURE_CENTER_X,
-                (PORTRAIT_TOP + TrainerSkinRenderer.FIGURE_HEIGHT * FIGURE_SCALE / 2),
+                (PORTRAIT_TOP + FIGURE_MODEL_HEIGHT / 2),
                 COLOR_TEXT_DIM
             )
         }
 
-        val status = CobblemonTrainers.lang(statusKey(entry))
-        val statusWidth = MARKER_WIDTH + MARKER_TEXT_GAP + font.width(status)
-        renderMarker(guiGraphics, entry.defeated, centerX - statusWidth / 2, STATUS_Y - MARKER_LINE_OFFSET)
+        val status = trim(CobblemonTrainers.lang(statusKey(entry)), CALL_X - (UPPER_X + CONTENT_INSET) - MARKER_WIDTH - MARKER_TEXT_GAP - 8)
+        val statusX = UPPER_X + CONTENT_INSET
+        renderMarker(guiGraphics, entry.defeated, statusX, STATUS_Y - MARKER_LINE_OFFSET)
         guiGraphics.drawString(
             font,
             status,
-            centerX - statusWidth / 2 + MARKER_WIDTH + MARKER_TEXT_GAP,
+            statusX + MARKER_WIDTH + MARKER_TEXT_GAP,
             STATUS_Y,
             COLOR_TEXT
         )
@@ -925,7 +923,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
      * without the screen knowing what a requirement is.
      */
     private fun renderRequirements(guiGraphics: GuiGraphics, entry: BattlePhoneEntry) {
-        val areaWidth = TEAM_COLUMNS * TEAM_CELL_WIDTH
+        val areaWidth = TEAM_SLOTS_WIDTH
         val areaHeight = TEAM_ROWS * TEAM_CELL_HEIGHT
         val wrapWidth = areaWidth - 2 * REQUIREMENT_INSET
 
@@ -936,7 +934,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
 
         val total = heading.size + lines.size
         var lineY = TEAM_TOP + (areaHeight - total * font.lineHeight) / 2
-        val centerX = TEAM_X + areaWidth / 2
+        val centerX = TEAM_X + TEAM_SLOT_INSET + areaWidth / 2
 
         (heading.map { it to COLOR_TEXT } + lines.map { it to COLOR_TEXT_DIM }).forEach { (line, color) ->
             guiGraphics.drawString(font, line, centerX - font.width(line) / 2, lineY, color)
@@ -1229,30 +1227,18 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         const val TITLE_Y = UPPER_Y + 4
         const val NAME_Y = UPPER_Y + 15
         const val TEAM_LINE_Y = UPPER_Y + 27
-        const val PORTRAIT_TOP = UPPER_Y + 38
+        const val PORTRAIT_TOP = UPPER_Y + 40
 
-        /**
-         * The figure sits left of centre in its column rather than in the middle of it: what it
-         * gives up is the strip the rewards are drawn in, and there is nowhere else on this
-         * screen to put them. Twenty-eight leaves four pixels between the figure and the edge of
-         * the panel, which is the least that still reads as a margin.
-         */
-        const val FIGURE_CENTER_X = UPPER_X + 28
-        const val FIGURE_SCALE = 3
-        const val FIGURE_MODEL_HEIGHT = 96
+        /** The trainer has room for held items before the reward rail. */
+        const val FIGURE_CENTER_X = UPPER_X + 34
+        const val CONTENT_INSET = 12
+        const val FIGURE_MODEL_HEIGHT = 88
         const val FIGURE_MODEL_YAW = 168f
         const val FIGURE_MODEL_TILT = 0f
         const val STATUS_Y = UPPER_Y + 137
 
-        /**
-         * The plate saying where the trainer is, in the strip the team leaves free above the
-         * status line. Twelve pixels tall, which is one line of text and its air - so this
-         * stays one line, and a place too long for it is trimmed rather than wrapped. It starts
-         * a pixel above the team rather than under it: the bottom row of cells is taller than
-         * the models it holds, so that pixel is empty, and taking it keeps two clear of the call
-         * button below.
-         */
-        const val LOCATION_TOP = UPPER_Y + 121
+        /** Location sits below the team, with a clear gap before the footer. */
+        const val LOCATION_TOP = UPPER_Y + 119
         const val LOCATION_HEIGHT = 12
         const val LOCATION_Y = LOCATION_TOP + 2
 
@@ -1263,18 +1249,11 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         /** Where the text starts, clear of the accent bar. */
         const val LOCATION_TEXT_INSET = LOCATION_ACCENT_INSET + LOCATION_ACCENT_WIDTH + 3
 
-        /**
-         * The call button, at the end of the status band.
-         *
-         * The status line is centred, so the far right of that band is the only clear stretch
-         * left on the upper screen: four pixels separate it from the bezel below, and the team
-         * takes everything above. It is drawn with rectangles, like everything here that is not
-         * one of the six textures - which is what keeps that set replaceable.
-         */
+        /** The call button shares its right edge with the location plate. */
         const val CALL_WIDTH = 62
         const val CALL_HEIGHT = 13
         const val CALL_BORDER = 1
-        const val CALL_X = UPPER_X + UPPER_WIDTH - CALL_WIDTH - 6
+        const val CALL_X = UPPER_X + UPPER_WIDTH - CALL_WIDTH - CONTENT_INSET
 
         /**
          * Two pixels above the status line, which puts the label of the button on exactly the
@@ -1288,23 +1267,13 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         const val TEAM_SLOTS = 6
         const val TEAM_COLUMNS = 3
         const val TEAM_ROWS = TEAM_SLOTS / TEAM_COLUMNS
-        const val TEAM_X = UPPER_X + 92
-        const val TEAM_CELL_WIDTH = 70
-        const val TEAM_CELL_HEIGHT = 38
+        const val TEAM_X = UPPER_X + 117
+        const val TEAM_CELL_WIDTH = 64
+        const val TEAM_CELL_HEIGHT = 36
         const val TEAM_SLOT_SIZE = 34
 
-        /**
-         * The team is centred in the band left between the line that says what it is worth and
-         * the plate of the location, the 8 being that line of text.
-         *
-         * Fixed at a round forty-six pixels it sat against the plate with all the air above it -
-         * a single pixel under the bottom row and thirteen over the top one. Reading it off its
-         * two neighbours is what keeps the two ends equal, whatever moves.
-         *
-         * Declared after [TEAM_CELL_HEIGHT] because it reads it - a const cannot look ahead.
-         */
-        const val TEAM_TOP =
-            (TEAM_LINE_Y + 8 + LOCATION_TOP) / 2 - TEAM_ROWS * TEAM_CELL_HEIGHT / 2
+        /** The trainer, team and rewards share the same vertical centre. */
+        const val TEAM_TOP = UPPER_Y + 45
 
         /** From the edge of a cell to the slot drawn in the middle of it. */
         const val TEAM_SLOT_INSET = (TEAM_CELL_WIDTH - TEAM_SLOT_SIZE) / 2
@@ -1316,29 +1285,12 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
          */
         const val TEAM_SLOTS_WIDTH = TEAM_COLUMNS * TEAM_CELL_WIDTH - 2 * TEAM_SLOT_INSET
 
-        /**
-         * The reward rail, in the strip between the figure and the team, one item to a cell.
-         *
-         * Twenty-six pixels wide, centred in the seven that the figure and the team each leave
-         * clear: an icon is sixteen, and the rest is the plate around it. The rail is centred on
-         * the team rather than started level with it, since it is only as tall as it has
-         * rewards - so the two columns of what a trainer is worth balance whatever the count.
-         *
-         * Four cells is what the strip holds; the fourth counts the rest when there are more.
-         *
-         * Declared after [TEAM_TOP] because the rail is centred on the team - a const cannot
-         * look ahead.
-         */
+        /** Up to four reward cells fit in the same band as the trainer and team. */
         const val ITEM_SIZE = 16
         const val REWARD_WIDTH = 26
 
-        /**
-         * The middle of the strip the rail is centred on, measured between what can be *seen* of
-         * the figure and of the team: the edge of the skin on one side, the first slot on the
-         * other. Centring on [TEAM_X] instead put the rail against the trainer with a wide hole
-         * after it, because a team cell carries eighteen pixels of air before its slot.
-         */
-        const val REWARD_CENTER_X = UPPER_X + 81
+        /** Centre the rail between the trainer and the visible team slots. */
+        const val REWARD_CENTER_X = UPPER_X + 87
         const val REWARD_TOP = TEAM_TOP
         const val REWARD_ROWS = 4
 
@@ -1352,7 +1304,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         const val REWARD_MARKER_INSET = 1
 
         /** The air between two cells, halved either side of one to make it the area to hover. */
-        const val REWARD_ROW_GAP = 4
+        const val REWARD_ROW_GAP = 2
 
         /** The plate's own margin, under the last cell and around the accent above the first. */
         const val REWARD_PADDING = 3
@@ -1387,7 +1339,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         const val CLICK_PADDING = 2
 
         /** Breathing room between the phone and the edge of the window, in window pixels. */
-        const val WINDOW_MARGIN = 4
+        const val WINDOW_MARGIN = 8
 
         /** Trainer IDs arrive as strings, and the part before this is the datapack namespace. */
         const val TRAINER_ID_SEPARATOR = ':'
