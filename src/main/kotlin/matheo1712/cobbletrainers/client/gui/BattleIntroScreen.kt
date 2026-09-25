@@ -20,7 +20,6 @@ import net.minecraft.Util
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.screens.Screen
 import net.minecraft.client.gui.screens.inventory.InventoryScreen
-import net.minecraft.client.renderer.RenderType
 import net.minecraft.client.resources.PlayerSkin
 import net.minecraft.client.resources.sounds.SimpleSoundInstance
 import net.minecraft.client.resources.sounds.SoundInstance
@@ -281,8 +280,8 @@ class BattleIntroScreen(private val intro: BattleIntroPayload) :
     }
 
     /**
-     * The fallback: the skin blitted flat, the way the battle phone draws a trainer it has
-     * never met. The player's own is always there; the trainer's is what the server pushed.
+     * The fallback: the skin blitted flat, like the trainer portraits in the Battle Phone's
+     * roster. The player's own is always there; the trainer's is what the server pushed.
      *
      * Said once per screen, because it is not supposed to happen: the trainer is the entity the
      * player is standing in front of. A figure that came out flat rather than posed is either
@@ -558,7 +557,7 @@ class BattleIntroScreen(private val intro: BattleIntroPayload) :
     private fun playerSkin(): TrainerSkinCache.Skin? {
         val skin = minecraft?.player?.skin ?: return null
 
-        return TrainerSkinCache.Skin(skin.texture(), skin.model() == PlayerSkin.Model.SLIM, 64, 64)
+        return TrainerSkinCache.Skin(skin.texture(), skin.model() == PlayerSkin.Model.SLIM, 64, 64, null)
     }
 
     /**

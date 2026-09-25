@@ -239,6 +239,7 @@ remplie, ou équipe du joueur K.O.
 | --- | --- | --- | --- |
 | `rematch` | `unlimited` | `unlimited`, `never` | Peut-on le redéfier une fois battu |
 | `listed` | `true` | booléen | Apparaît dans le Battle Phone et `/cobblemontrainers list` |
+| `hideAfterDefeat` | `false` | booléen | Masque le dresseur dans le Battle Phone du joueur après sa victoire ; conserve les victoires, les règles de revanche et la liste opérateur |
 
 ## Catégories
 
@@ -463,6 +464,8 @@ ordinaire, dans un écran : un onglet par datapack, un titre par catégorie, le 
 dresseur et son état. Il affiche aussi **l'équipe d'un dresseur une fois celui-ci vaincu**,
 modèles à l'appui - avant, les six cases restent vides, le serveur refusant purement et
 simplement d'envoyer l'équipe.
+
+Après une victoire, le bouton musical permet d'écouter le thème du dresseur s'il en possède un. Un second clic, un changement de dresseur ou la fermeture du téléphone arrête la préécoute ; la musique d'un combat reste prioritaire.
 
 Trois différences entre les deux :
 

@@ -219,6 +219,7 @@ in the dialogue box, before the battle, rather than let it lock up.
 | --- | --- | --- | --- |
 | `rematch` | `unlimited` | `unlimited`, `never` | Whether they can be challenged again once beaten |
 | `listed` | `true` | boolean | Shows up in the Battle Phone and `/cobblemontrainers list` |
+| `hideAfterDefeat` | `false` | boolean | Hides the trainer in the player's Battle Phone after their victory; keeps victories, rematch rules and the operator listing |
 
 ## Categories
 
@@ -433,6 +434,8 @@ The **Battle Phone** item (`cobblemon-trainers:battle_phone`) shows an ordinary 
 thing, in a screen: one tab per datapack, a heading per category, each trainer's skin and their
 state. It also shows **a trainer's team once they have been beaten**, models and all - before
 that the six slots stay empty, the server flatly refusing to send the team.
+
+After a victory, the music button plays the trainer's theme if they have one. Clicking again, selecting another trainer or closing the phone stops the preview; battle music takes priority.
 
 Three differences between the two:
 

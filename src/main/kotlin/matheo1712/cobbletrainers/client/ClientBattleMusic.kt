@@ -32,6 +32,21 @@ object ClientBattleMusic {
      * the question being asked is "is a battle on", not "has the audio thread caught up".
      */
     private var playing: SimpleSoundInstance? = null
+    private var preview = false
+
+    fun isPreviewPlaying(): Boolean = preview && playing != null
+
+    /** A phone preview must never replace a battle theme. */
+    fun playPreview(track: ResourceLocation, volume: Float, pitch: Float): Boolean {
+        if (playing != null && !preview) return false
+        play(track, volume, pitch)
+        preview = true
+        return true
+    }
+
+    fun stopPreview() {
+        if (preview) silence()
+    }
 
     /** Java-friendly: the mixin is the only caller. */
     @JvmStatic
@@ -46,6 +61,8 @@ object ClientBattleMusic {
      * on the listener, so nothing here depends on where the player is standing.
      */
     fun play(track: ResourceLocation, volume: Float, pitch: Float) {
+        // A battle takes ownership even when it requests the preview's current track.
+        preview = false
         // The one track twice: a trainer with a versus screen starts their theme on it, and the
         // battle it announces asks for the same one a few seconds later. Starting it again there
         // would drop the track back to its opening bars just as the fight begins, so whatever is
@@ -82,6 +99,7 @@ object ClientBattleMusic {
      * does not strike up the instant a battle ends.
      */
     fun silence() {
+        preview = false
         val theme = playing ?: return
 
         playing = null
@@ -96,6 +114,7 @@ object ClientBattleMusic {
      * dropped - the sounds themselves are stopped by the client's own teardown.
      */
     fun clear() {
+        preview = false
         playing = null
     }
 }
