@@ -219,6 +219,7 @@ in the dialogue box, before the battle, rather than let it lock up.
 | --- | --- | --- | --- |
 | `rematch` | `unlimited` | `unlimited`, `never` | Whether they can be challenged again once beaten |
 | `listed` | `true` | boolean | Shows up in the Battle Phone and `/cobblemontrainers list` |
+| `hideAfterDefeat` | `false` | boolean | Hides the trainer in the player's Battle Phone after their victory; keeps victories, rematch rules and the operator listing |
 
 ## Categories
 
