@@ -391,7 +391,7 @@ pour la configuration de l'IDE.
 ### Publier une release
 
 Publier une release GitHub dont le tag est `v<version>`, par exemple `v1.2.3`. Le workflow
-`release.yml` construit, publie sur Modrinth, et attache à la release le jar et
+`release.yml` construit, publie séparément sur Modrinth et CurseForge, et attache à la release le jar et
 `exemple_trainer_datapack.zip` - le pack d'exemple, prêt à poser dans `mods/`, `datapacks/` ou
 `resourcepacks/`.
 
@@ -402,7 +402,11 @@ changelog, et la case *pre-release* publie en beta.
 Le workflow pousse aussi `MODRINTH.md` par-dessus la description du projet Modrinth, à chaque
 release : la page de la boutique ne peut donc pas décrire une version antérieure.
 
-Un seul secret attendu par le dépôt : `MODRINTH_TOKEN`. En local, `./gradlew publishMods` est
+Deux secrets attendus par le dépôt : `MODRINTH_TOKEN` et `CURSEFORGE_TOKEN` (jeton d'auteur CurseForge).
+Les deux publications et l'ajout des fichiers GitHub sont trois tâches indépendantes après le build :
+un échec sur une plateforme n'empêche pas les autres. Relancer seulement la tâche échouée évite
+de republier une version déjà créée.
+En local, `./gradlew publishMods` est
 sans risque : sans jeton, il écrit ce qu'il aurait envoyé dans `build/mod-publish/`.
 
 ## Limites connues
