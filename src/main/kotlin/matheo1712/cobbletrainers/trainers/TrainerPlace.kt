@@ -40,9 +40,9 @@ object TrainerPlace {
      * That is why this reads the label before asking whether the block is empty.
      */
     fun describe(location: TrainerLocation?): Component {
-        if (location == null) return Component.empty()
+        if (location == null) return CobblemonTrainers.lang("location.anywhere")
         location.label?.takeIf { it.isNotBlank() }?.let { return Component.translatable(it) }
-        if (location.isEmpty) return Component.empty()
+        if (location.isEmpty) return CobblemonTrainers.lang("location.anywhere")
 
         return join(checks(location).map { it.label })
     }

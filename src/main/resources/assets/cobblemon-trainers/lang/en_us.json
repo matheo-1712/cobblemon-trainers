@@ -96,6 +96,7 @@
   "cobblemon-trainers.chat.no_pokemon": "You need at least one Pokémon to battle.",
 
   "cobblemon-trainers.location.separator": ", ",
+  "cobblemon-trainers.location.anywhere": "anywhere",
   "cobblemon-trainers.location.dimension": "%s",
   "cobblemon-trainers.location.biome": "%s",
   "cobblemon-trainers.location.biome_tag": "biomes of %s",

@@ -64,7 +64,8 @@ answer carries a single gimmick - and the order never changes:
 | The same mod on the client | Otherwise the player never sees the transformation |
 
 Cobblemon Trainers **does not depend** on Mega Showdown: the mod loads, runs and plays without
-it. A trainer declaring `["mega"]` simply battles as usual, never mega evolving.
+it. All trainer gimmicks are then disabled, including Terastallization, so the AI never sends a
+partially supported gimmick action.
 
 ## When the trainer mega evolves
 
@@ -195,8 +196,9 @@ lifts every move into a Max Move and it doubles the health bar:
 
 # Terastallization
 
-Nothing to install: Cobblemon ships the Tera types, the Tera Orb and the animation. A trainer
-declaring `["terastal"]` works on a bare install.
+Cobblemon technically ships the Tera types, the Tera Orb and the animation, but trainers disable
+all gimmicks until Mega Showdown is installed. With Mega Showdown, a trainer declaring
+`["terastal"]` can Terastallize.
 
 ## The Tera type
 
