@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <sub><strong>Compatible with</strong> · Minecraft 1.21.1 · Fabric · Cobblemon 1.8.1 · Java 21 · needed on client <em>and</em> server</sub>
+  <sub><strong>Compatible with</strong> · Minecraft 1.21.1 · Fabric - Neoforge · Cobblemon 1.8.1 · Java 21 · needed on client <em>and</em> server</sub>
 </p>
 
 ## What makes it different
