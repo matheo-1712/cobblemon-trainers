@@ -123,7 +123,8 @@ const App = (() => {
     const missing = Pack.usedKeys().filter((key) =>
       Pack.languages().every((code) => !(Pack.state.lang[code] || {})[key])).length;
 
-    [['__assets__', T('assets.title'), Pack.state.assets.length, 0],
+    [['__categories__', T('categories.title'), folders().length, 0],
+     ['__assets__', T('assets.title'), Pack.state.assets.length, 0],
      ['__lang__', T('lang.title'), keys, missing]].forEach(([key, label, count, warn]) => {
       const line = el('button', 'file' + (Pack.state.selected === key ? ' file-on' : ''));
       line.type = 'button';
@@ -197,7 +198,6 @@ const App = (() => {
    */
   const renderCategoryMenu = (entry, path) => {
     const known = folders();
-    if (!known.length) return null;
 
     const select = el('select', 'input input-menu');
     select.title = T('category.pick');
@@ -239,7 +239,10 @@ const App = (() => {
     });
     path.addEventListener('input', sync);
     sync();
-    return select;
+    const label = el('label', 'category-picker');
+    label.appendChild(el('span', 'field-label', T('kind.category')));
+    label.appendChild(select);
+    return label;
   };
 
   const renderHeader = (entry) => {
@@ -531,7 +534,8 @@ const App = (() => {
       battle: {
         intro: { list: 'intro-ids', menu: menuFor('intro') },
         music: { list: 'music-ids', menu: menuFor('music') }
-      }
+      },
+      requires: { victories: { category: { list: 'category-ids', menu: menuFor('category') } } }
     };
     // Imported or previously saved empty groups have no meaning; omit them from the JSON too.
     Form.prune(entry.doc);
@@ -1150,6 +1154,91 @@ const App = (() => {
 
   /* ---- category and advancement -------------------------------------------- */
 
+  const trainerFolder = (file) => file.path.includes('/')
+    ? file.path.slice(0, file.path.lastIndexOf('/')) : '';
+
+  const categoryMembers = (folder) => Pack.state.files.filter((file) =>
+    file.kind === 'trainer' && trainerFolder(file) === folder);
+
+  const categoryName = (folder) => {
+    const file = Pack.state.files.find((one) => one.kind === 'category' && one.path === folder);
+    const name = file && file.doc.name;
+    return (Pack.state.lang[I18N.lang === 'fr' ? 'fr_fr' : 'en_us'] || {})[name]
+      || name || folder || T('category.root');
+  };
+
+  const renderCategoryMembers = (folder) => {
+    const list = el('div', 'category-members');
+    const members = categoryMembers(folder);
+    list.appendChild(el('p', 'muted', T('categories.count', members.length,
+      members.filter((file) => (file.doc.progress || {}).listed !== false).length)));
+    members.forEach((file) => {
+      const row = el('button', 'category-member');
+      row.type = 'button';
+      row.appendChild(el('strong', null, file.path.split('/').pop()));
+      const requirements = file.doc.requires || {};
+      const victories = requirements.victories;
+      let description = T('categories.free');
+      if (Object.keys(requirements).some((key) => !['hidden', 'message'].includes(key))) {
+        description = victories && Object.keys(victories).length
+          ? T('categories.rule', victories.count ?? 1,
+            victories.category || victories.pack || T('categories.any'))
+          : T('categories.other');
+      }
+      row.appendChild(el('span', 'muted small', description));
+      if (victories && ['defeated', 'items', 'party', 'advancement'].some((key) =>
+        requirements[key] && (!Array.isArray(requirements[key]) || requirements[key].length))) {
+        row.appendChild(el('span', 'muted small', T('categories.other')));
+      }
+      row.addEventListener('click', () => { tab.trainer = 'form'; Pack.select(file.key); });
+      list.appendChild(row);
+    });
+    const add = el('button', 'btn btn-small', '+ ' + T('pack.add.trainer'));
+    add.type = 'button';
+    add.addEventListener('click', () => {
+      const base = (folder ? folder + '/' : '') + 'nouveau_dresseur';
+      let path = base;
+      let suffix = 2;
+      while (Pack.state.files.some((file) => file.kind === 'trainer' && file.path === path)) {
+        path = base + '_' + suffix++;
+      }
+      Pack.add('trainer', path);
+    });
+    list.appendChild(add);
+    return list;
+  };
+
+  const renderCategories = () => {
+    const wrap = el('div', 'editor-body');
+    wrap.appendChild(el('h1', null, T('categories.title')));
+    wrap.appendChild(el('p', 'muted', T('categories.help')));
+    const add = el('button', 'btn btn-primary', '+ ' + T('pack.add.category'));
+    add.type = 'button';
+    add.addEventListener('click', () => Pack.add('category'));
+    wrap.appendChild(add);
+    const grid = el('div', 'category-grid');
+    const groups = folders();
+    if (categoryMembers('').length) groups.push('');
+    groups.forEach((folder) => {
+      const card = el('section', 'category-card');
+      card.appendChild(el('h3', null, categoryName(folder)));
+      card.appendChild(el('p', 'muted mono small', folder ? Pack.state.namespace + ':' + folder : '—'));
+      const metadata = Pack.state.files.find((file) => file.kind === 'category' && file.path === folder);
+      if (folder) {
+        const edit = el('button', 'btn btn-ghost btn-small', T('categories.edit'));
+        edit.type = 'button';
+        edit.addEventListener('click', () => metadata
+          ? Pack.select(metadata.key) : Pack.add('category', folder, {}));
+        card.appendChild(edit);
+      }
+      card.appendChild(renderCategoryMembers(folder));
+      grid.appendChild(card);
+    });
+    if (!groups.length) grid.appendChild(el('p', 'muted', T('categories.empty')));
+    wrap.appendChild(grid);
+    return wrap;
+  };
+
   const renderCategory = (entry) => {
     const wrap = el('div', 'editor-body');
     wrap.appendChild(renderTabs(entry, ['form', 'json']));
@@ -1162,6 +1251,8 @@ const App = (() => {
       Pack.save();
       renderChecks(entry);
     }));
+    wrap.appendChild(el('h3', null, T('categories.members')));
+    wrap.appendChild(renderCategoryMembers(entry.path));
     return wrap;
   };
 
@@ -1562,6 +1653,12 @@ const App = (() => {
     const main = $('editor');
     main.innerHTML = '';
 
+    if (Pack.state.selected === '__categories__') {
+      main.appendChild(renderCategories());
+      renderChecks(null);
+      return;
+    }
+
     if (Pack.state.selected === '__assets__' || Pack.state.selected === '__lang__') {
       const assets = Pack.state.selected === '__assets__';
       const head = el('div', 'editor-head');
@@ -1628,6 +1725,7 @@ const App = (() => {
    * of is two answers to one question, which is how one of them ends up wrong.
    */
   const SOURCES = {
+    category: () => ({ pack: folders().map((folder) => Pack.state.namespace + ':' + folder), mod: [] }),
     intro: () => ({
       pack: Pack.state.files.filter((file) => file.kind === 'intro')
         .map((file) => Pack.state.namespace + ':' + file.path),
@@ -1705,6 +1803,10 @@ const App = (() => {
       Pack.state.description = event.target.value;
       Pack.save();
     });
+    $('pack-order').addEventListener('input', (event) => {
+      Pack.state.packOrder = event.target.value;
+      Pack.changed();
+    });
 
     ['trainer', 'intro', 'category', 'advancement'].forEach((kind) => {
       $('add-' + kind).addEventListener('click', () => Pack.add(kind));
@@ -1777,6 +1879,7 @@ const App = (() => {
     Pack.onChange(() => {
       $('namespace').value = Pack.state.namespace;
       $('description').value = Pack.state.description;
+      $('pack-order').value = Pack.state.packOrder;
       $('archive').value = Pack.state.archive;
       // Every reference holds the namespace, so renaming the pack renames its images too.
       if (Pack.state.namespace !== namespace) {
@@ -1789,6 +1892,7 @@ const App = (() => {
 
     $('namespace').value = Pack.state.namespace;
     $('description').value = Pack.state.description;
+    $('pack-order').value = Pack.state.packOrder;
     $('archive').value = Pack.state.archive;
     // The bytes outlive the page: a skin dropped yesterday has to draw itself again today.
     feedAll();

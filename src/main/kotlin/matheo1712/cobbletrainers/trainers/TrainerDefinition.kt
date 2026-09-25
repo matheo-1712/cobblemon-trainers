@@ -199,7 +199,9 @@ data class TrainerMessages(
  */
 data class TrainerProgressRules(
     val rematch: String = REMATCH_UNLIMITED,
-    val listed: Boolean = true
+    val listed: Boolean = true,
+    /** Hide from a player's Battle Phone after their victory; keep progress and rematch rules. */
+    val hideAfterDefeat: Boolean = false
 ) {
 
     /** False only for the exact word `never`; an unknown value keeps the permissive default. */

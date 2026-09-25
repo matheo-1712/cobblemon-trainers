@@ -1,4 +1,7 @@
 {
+  "cobblemon-trainers.screen.battle_phone.music.play": "Écouter le thème du dresseur",
+  "cobblemon-trainers.screen.battle_phone.music.stop": "Arrêter la préécoute",
+  "cobblemon-trainers.screen.battle_phone.music.busy": "Une musique de combat est en cours",
   "cobblemon-trainers.command.spawn_trainer.success": "Dresseur %s invoqué en %s, %s, %s",
   "cobblemon-trainers.command.spawn_trainer.unknown_trainer": "Dresseur introuvable. Vérifie les ID dans data/<namespace>/cobblemontrainers/ de tes datapacks.",
   "cobblemon-trainers.command.spawn_trainer.invalid_position": "Position invalide pour invoquer un dresseur.",

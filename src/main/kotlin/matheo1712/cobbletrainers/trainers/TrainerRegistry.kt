@@ -19,8 +19,9 @@ import java.io.InputStream
  *
  * **A folder is a category.** The directory a trainer sits in is its category, which is what
  * the battle phone groups on and what a `victories` requirement may be counted over. A
- * category describes itself through the one reserved file name, [CATEGORY_FILE]: everything
- * else in the folder is a trainer. See [TrainerCategory].
+ * category describes itself through [CATEGORY_FILE], and a pack can set its global display
+ * position through [PACK_FILE]. Everything else in the folder is a trainer. See
+ * [TrainerCategory] and [TrainerPack].
  *
  * Reloading is driven by the server resource manager (see [matheo1712.cobbletrainers.CobblemonTrainers.onInitialize]),
  * so `/reload` reloads trainers too.
@@ -42,11 +43,11 @@ object TrainerRegistry {
     const val DATAPACK_DIRECTORY = "${CobblemonTrainers.DATAPACK_ROOT}/trainers"
 
     /**
-     * The one file name that is not a trainer: `champions/category.json` is the presentation of
-     * the category `champions`. Keeping it inside the folder it describes is what lets a
-     * category be moved, copied or dropped in one piece.
+     * `champions/category.json` describes the `champions` folder; `pack.json` at this directory's
+     * root sets the whole namespace's display order.
      */
     const val CATEGORY_FILE = "category"
+    const val PACK_FILE = "pack"
 
     private const val JSON_EXTENSION = ".json"
     private const val PATH_SEPARATOR = '/'
@@ -55,6 +56,7 @@ object TrainerRegistry {
 
     private val trainers = mutableMapOf<ResourceLocation, TrainerDefinition>()
     private val categories = mutableMapOf<ResourceLocation, TrainerCategory>()
+    private val packs = mutableMapOf<String, TrainerPack>()
 
     /**
      * [listed] in reading order, sorted once per reload rather than once per caller: the
@@ -66,6 +68,7 @@ object TrainerRegistry {
     fun reload(manager: ResourceManager) {
         trainers.clear()
         categories.clear()
+        packs.clear()
 
         manager.listResources(DATAPACK_DIRECTORY) { path -> path.path.endsWith(JSON_EXTENSION) }
             .forEach { (location, resource) ->
@@ -73,7 +76,11 @@ object TrainerRegistry {
                     .removePrefix("$DATAPACK_DIRECTORY$PATH_SEPARATOR")
                     .removeSuffix(JSON_EXTENSION)
 
-                if (relative.substringAfterLast(PATH_SEPARATOR) == CATEGORY_FILE) {
+                if (relative == PACK_FILE) {
+                    read(location, resource::open, TrainerPack::class.java) { id, pack ->
+                        packs[id.namespace] = pack
+                    }
+                } else if (relative.substringAfterLast(PATH_SEPARATOR) == CATEGORY_FILE) {
                     val folder = relative.substringBeforeLast(PATH_SEPARATOR, "")
                     if (folder.isEmpty()) {
                         CobblemonTrainers.LOGGER.warn(
@@ -190,7 +197,7 @@ object TrainerRegistry {
 
     /**
      * The trainers a progress listing should show - the battle phone and `/listtrainers` - in
-     * the order they are meant to be read: by datapack, then by category, then by ID.
+     * the order they are meant to be read: by datapack rank, then category, then ID.
      *
      * Everything that presents progress to a player goes through here rather than [all]: the
      * demo trainers shipped by this mod and by others are loaded in every world, and a player
@@ -204,6 +211,7 @@ object TrainerRegistry {
     ): List<Pair<ResourceLocation, TrainerDefinition>> =
         entries.sortedWith(
             compareBy(
+                { (id, _) -> packs[id.namespace]?.order ?: TrainerPack.UNORDERED },
                 { (id, _) -> id.namespace },
                 // Trainers filed at the root of a pack come last, under their own heading: a
                 // category is something the pack chose, the root is what is left.

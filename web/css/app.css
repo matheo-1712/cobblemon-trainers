@@ -20,6 +20,14 @@
   color-scheme: dark;
 }
 
+.category-picker { display: flex; flex-direction: column; gap: 4px; }
+.category-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 16px; margin-top: 20px; }
+.category-card { background: var(--panel); border: 1px solid var(--line); border-top: 3px solid var(--blue-bright); border-radius: var(--radius); padding: 18px; min-width: 0; }
+.category-card h3 { font-size: 18px; overflow-wrap: anywhere; }
+.category-members { display: grid; gap: 8px; margin-top: 16px; }
+.category-member { display: flex; flex-direction: column; gap: 4px; text-align: left; padding: 12px; background: var(--panel-2); color: var(--text); border: 1px solid var(--line); border-radius: 6px; cursor: pointer; overflow-wrap: anywhere; }
+.category-member:hover, .category-member:focus-visible { border-color: var(--blue-bright); }
+
 * { box-sizing: border-box; }
 /* A row the stage hides is `display: flex` from .row, which outranks the default. */
 [hidden] { display: none !important; }

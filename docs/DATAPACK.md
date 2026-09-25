@@ -36,6 +36,7 @@ mon_pack/
 └── data/mon_pack/                      ← ton namespace
     └── cobblemontrainers/
         ├── trainers/                   ← les dresseurs
+        │   ├── pack.json               ← ordre du pack dans le Battle Phone (facultatif)
         │   ├── red.json                → mon_pack:red
         │   └── champions/              ← un dossier = une catégorie
         │       ├── category.json       ← présentation de la catégorie (facultatif)
@@ -57,8 +58,8 @@ mon_pack/
 - **L'ID est `<namespace>:<chemin>`, sous-dossiers compris**, `trainers/` non compté :
   `trainers/champions/erika.json` donne `mon_pack:champions/erika`. Le dossier est aussi la
   [catégorie](#catégories) du dresseur.
-- `category.json` est le **seul nom de fichier réservé** : il décrit le dossier où il se
-  trouve, il n'est jamais lu comme un dresseur.
+- `category.json` décrit son dossier et `pack.json`, à la racine de `trainers/`, règle l'ordre
+  du pack ; aucun des deux n'est lu comme un dresseur.
 - Un pack chargé plus tard écrase un dresseur de même ID, comme n'importe quelle ressource
   de datapack. Un fichier invalide est ignoré, l'erreur part dans les logs, et les autres
   dresseurs se chargent quand même.
@@ -238,6 +239,7 @@ remplie, ou équipe du joueur K.O.
 | --- | --- | --- | --- |
 | `rematch` | `unlimited` | `unlimited`, `never` | Peut-on le redéfier une fois battu |
 | `listed` | `true` | booléen | Apparaît dans le Battle Phone et `/cobblemontrainers list` |
+| `hideAfterDefeat` | `false` | booléen | Masque le dresseur dans le Battle Phone du joueur après sa victoire ; conserve les victoires, les règles de revanche et la liste opérateur |
 
 ## Catégories
 
@@ -265,6 +267,17 @@ Un `category.json` **dans le dossier** lui donne un nom et une place, les deux f
   exactement celle d'avant.
 - Un sous-dossier de sous-dossier est une catégorie à part entière (`champions/kanto`), avec
   son propre `category.json`.
+
+Un `pack.json` **à la racine de `trainers/`** règle l'ordre global du pack dans le Battle Phone
+et `/cobblemontrainers list` :
+
+```json
+{ "order": 1 }
+```
+
+Le plus petit `order` apparaît en premier. Les packs sans `order` viennent après ceux qui en
+ont un, triés par namespace. Ce rang concerne les packs, tandis que `category.json` règle
+l'ordre des catégories à l'intérieur d'un pack.
 
 ## Conditions pour combattre
 
@@ -451,6 +464,8 @@ ordinaire, dans un écran : un onglet par datapack, un titre par catégorie, le 
 dresseur et son état. Il affiche aussi **l'équipe d'un dresseur une fois celui-ci vaincu**,
 modèles à l'appui - avant, les six cases restent vides, le serveur refusant purement et
 simplement d'envoyer l'équipe.
+
+Après une victoire, le bouton musical permet d'écouter le thème du dresseur s'il en possède un. Un second clic, un changement de dresseur ou la fermeture du téléphone arrête la préécoute ; la musique d'un combat reste prioritaire.
 
 Trois différences entre les deux :
 

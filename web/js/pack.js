@@ -30,6 +30,7 @@ const Pack = (() => {
   const state = {
     namespace: 'mon_pack',
     description: 'Mes dresseurs',
+    packOrder: '',
     files: [],
     /** What lives under assets/: metadata only, the bytes being in IndexedDB. */
     assets: [],
@@ -172,6 +173,7 @@ const Pack = (() => {
       localStorage.setItem(KEY, JSON.stringify({
         namespace: state.namespace,
         description: state.description,
+        packOrder: state.packOrder,
         files: state.files,
         assets: state.assets,
         lang: state.lang,
@@ -190,6 +192,7 @@ const Pack = (() => {
       // A pack saved before assets existed carries neither, and neither may be undefined.
       state.assets = state.assets || [];
       state.lang = state.lang || { fr_fr: {}, en_us: {} };
+      state.packOrder = state.packOrder ?? '';
       state.archive = state.archive || 'zip';
       return state.files.length > 0 || state.assets.length > 0;
     } catch (e) {
@@ -203,6 +206,7 @@ const Pack = (() => {
     }
     state.files = [];
     state.assets = [];
+    state.packOrder = '';
     state.lang = { fr_fr: {}, en_us: {} };
     state.selected = null;
     state.nextId = 1;
@@ -379,6 +383,9 @@ const Pack = (() => {
     const archive = new JSZip();
     archive.file('pack.mcmeta', mcmeta());
     archive.file('README.txt', readme());
+    if (state.packOrder !== '' && Number.isInteger(Number(state.packOrder))) {
+      archive.file(`data/${state.namespace}/${ROOT}/trainers/pack.json`, json({ order: Number(state.packOrder) }));
+    }
     if (state.archive === 'jar') archive.file('fabric.mod.json', fabricMod());
 
     state.files.forEach((entry) => archive.file(pathOf(entry), json(entry.doc)));
@@ -494,6 +501,11 @@ const Pack = (() => {
         continue;
       }
       found += 1;
+
+      if (trainer && match[2] === 'pack') {
+        if (Number.isInteger(doc.order)) state.packOrder = String(doc.order);
+        continue;
+      }
 
       if (trainer && match[2].endsWith('/category')) {
         add('category', match[2].replace(/\/category$/, ''), doc);

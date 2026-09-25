@@ -1,7 +1,11 @@
 package matheo1712.cobbletrainers.client.gui
 
 import com.cobblemon.mod.common.client.gui.drawProfilePokemon
+import com.cobblemon.mod.common.api.npc.NPCClasses
 import com.cobblemon.mod.common.client.render.models.blockbench.FloatingState
+import com.cobblemon.mod.common.entity.npc.NPCEntity
+import com.cobblemon.mod.common.entity.npc.NPCPlayerModelType
+import com.cobblemon.mod.common.entity.npc.NPCPlayerTexture
 import com.cobblemon.mod.common.util.math.fromEulerXYZDegrees
 import com.mojang.blaze3d.systems.RenderSystem
 import matheo1712.cobbletrainers.CobblemonTrainers
@@ -11,11 +15,16 @@ import matheo1712.cobbletrainers.network.BattlePhoneEntry
 import matheo1712.cobbletrainers.network.CallTrainerPayload
 import matheo1712.cobbletrainers.network.OpenBattlePhonePayload
 import matheo1712.cobbletrainers.trainers.RewardPreview
+import matheo1712.cobbletrainers.trainers.TrainerOutfit
+import matheo1712.cobbletrainers.trainers.TrainerSpawner
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
+import matheo1712.cobbletrainers.client.ClientBattleMusic
+import matheo1712.cobbletrainers.battle.TrainerBattleMusic
 import net.minecraft.ChatFormatting
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.screens.Screen
+import net.minecraft.client.gui.screens.inventory.InventoryScreen
 import net.minecraft.client.resources.sounds.SimpleSoundInstance
 import net.minecraft.sounds.SoundEvents
 import net.minecraft.network.chat.Component
@@ -31,7 +40,8 @@ import org.lwjgl.glfw.GLFW
  * Laid out after the clamshell the frame draws - the roster fills the lower screen, two
  * entries to a line, and whoever is selected there gets the upper one to themselves. It is
  * dressed with the mod's own textures, under
- * `assets/cobblemon-trainers/textures/gui/battle_phone/`. They are deliberately plain - a
+ * `assets/cobblemon-trainers/textures/gui/battle_phone/`. The selected trainer is previewed
+ * with Cobblemon's NPC model using the skin the server sent. The frame textures are deliberately plain - a
  * bezel, a slot, a couple of arrows, a status marker - and everything behind them is drawn
  * with flat rectangles, so replacing the set is a matter of redrawing six images at the same
  * sizes. [FRAME] is the one with a constraint: its two transparent holes have to line up with
@@ -81,6 +91,10 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
      */
     private var teamStates: List<FloatingState> = List(TEAM_SLOTS) { FloatingState() }
     private var teamStatesOwner: String? = null
+    private var previewEntity: NPCEntity? = null
+    private var previewOwner: String? = null
+    private var musicOwner: String? = null
+    private var previewSkin: TrainerSkinCache.Skin? = null
 
     /**
      * What the frame is multiplied by to fit the window, and where it lands once it has been.
@@ -111,14 +125,14 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
     }
 
     /**
-     * One tab per namespace, in alphabetical order, preceded by an "everything" tab. That
+     * One tab per namespace, in server display order, preceded by an "everything" tab. That
      * first tab is dropped when a single datapack ships trainers: it would be the same list
      * twice, and the selector already names the one datapack there is.
      */
     private fun buildGroups(entries: List<BattlePhoneEntry>): List<Group> {
         // The server sends trainers in reading order - by pack, then by category - so grouping
         // on either keeps every tab sorted without sorting anything again.
-        val byNamespace = entries.groupBy { it.id.substringBefore(TRAINER_ID_SEPARATOR) }.toSortedMap()
+        val byNamespace = entries.groupBy { it.id.substringBefore(TRAINER_ID_SEPARATOR) }
         val groups = byNamespace.map { (namespace, group) -> Group(namespace, group, rowsOf(group)) }
         if (groups.size <= 1) return groups
 
@@ -183,7 +197,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         guiGraphics.fill(UPPER_X, UPPER_Y, (UPPER_X + UPPER_WIDTH), (UPPER_Y + UPPER_HEIGHT), COLOR_SCREEN)
         guiGraphics.fill(LOWER_X, LOWER_Y, (LOWER_X + LOWER_WIDTH), (LOWER_Y + LOWER_HEIGHT), COLOR_SCREEN)
 
-        guiGraphics.drawCenteredString(font, title, (UPPER_X + UPPER_WIDTH / 2), TITLE_Y, COLOR_TITLE)
+        guiGraphics.drawCenteredString(font, title, (UPPER_X + UPPER_WIDTH / 2), TITLE_Y, COLOR_TEXT_DIM)
 
         var tooltip: List<Component> = emptyList()
         if (groups.isEmpty()) {
@@ -400,10 +414,12 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         partialTick: Float
     ): List<Component> {
         val entry = selected ?: return emptyList()
+        if (musicOwner != null && musicOwner != entry.id) {
+            ClientBattleMusic.stopPreview()
+            musicOwner = null
+        }
 
-        // Every line of text spans the screen rather than the figure's column: the status of a
-        // trainer runs to a good seventy pixels, and centring that on a forty-eight pixel
-        // figure pushed the marker out under their legs.
+        // The header spans the screen; the footer reserves space for the call button.
         val centerX = UPPER_X + UPPER_WIDTH / 2
 
         guiGraphics.drawCenteredString(
@@ -415,25 +431,26 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         )
 
         val skin = TrainerSkinCache.get(entry.id)
-        if (skin?.texture != null) {
-            TrainerSkinRenderer.drawFigure(guiGraphics, skin, FIGURE_CENTER_X, PORTRAIT_TOP, FIGURE_SCALE)
+        val entity = skin?.let { trainerPreview(entry, it) }
+        if (entity != null) {
+            renderTrainerModel(guiGraphics, entity)
         } else {
             guiGraphics.drawCenteredString(
                 font,
                 UNKNOWN,
                 FIGURE_CENTER_X,
-                (PORTRAIT_TOP + TrainerSkinRenderer.FIGURE_HEIGHT * FIGURE_SCALE / 2),
+                (PORTRAIT_TOP + FIGURE_MODEL_HEIGHT / 2),
                 COLOR_TEXT_DIM
             )
         }
 
-        val status = CobblemonTrainers.lang(statusKey(entry))
-        val statusWidth = MARKER_WIDTH + MARKER_TEXT_GAP + font.width(status)
-        renderMarker(guiGraphics, entry.defeated, centerX - statusWidth / 2, STATUS_Y - MARKER_LINE_OFFSET)
+        val status = trim(CobblemonTrainers.lang(statusKey(entry)), (if (entry.defeated && entry.music != null) MUSIC_X else CALL_X) - (UPPER_X + CONTENT_INSET) - MARKER_WIDTH - MARKER_TEXT_GAP - 8)
+        val statusX = UPPER_X + CONTENT_INSET
+        renderMarker(guiGraphics, entry.defeated, statusX, STATUS_Y - MARKER_LINE_OFFSET)
         guiGraphics.drawString(
             font,
             status,
-            centerX - statusWidth / 2 + MARKER_WIDTH + MARKER_TEXT_GAP,
+            statusX + MARKER_WIDTH + MARKER_TEXT_GAP,
             STATUS_Y,
             COLOR_TEXT
         )
@@ -448,6 +465,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
 
         renderLocation(guiGraphics, entry)
         val callTooltip = renderCallButton(guiGraphics, entry, mouseX, mouseY)
+        val musicTooltip = renderMusicButton(guiGraphics, entry, mouseX, mouseY)
 
         // A defeated trainer keeps their team visible even if a new requirement blocks a
         // rematch. The requirements belong to the next battle and are shown in that case.
@@ -468,10 +486,95 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         }
 
         return when {
+            musicTooltip != null -> listOf(musicTooltip)
             callTooltip != null -> listOf(callTooltip)
             rewardTooltip.isNotEmpty() -> rewardTooltip
             teamTooltip != null -> listOf(teamTooltip)
             else -> emptyList()
+        }
+    }
+
+    /** Builds a detached Cobblemon NPC with the received skin for a consistent 3D preview. */
+    private fun trainerPreview(entry: BattlePhoneEntry, skin: TrainerSkinCache.Skin): NPCEntity? {
+        val bytes = skin.bytes ?: return null
+        if (previewOwner == entry.id && previewSkin === skin) return previewEntity
+        val level = minecraft?.level ?: return null
+        val npcClass = NPCClasses.getByIdentifier(TrainerSpawner.NPC_CLASS_HEALING) ?: return null
+        releasePreview()
+        val npc = NPCEntity(level)
+        npc.npc = npcClass
+        // The NPC class setter copies RESOURCE_IDENTIFIER only on the server. A local preview
+        // must select it explicitly, otherwise it keeps the constructor's first NPC model.
+        npc.forcedResourceIdentifier = npcClass.resourceIdentifier
+        npc.hideNameTag = true
+        npc.entityData.set(NPCEntity.LEVEL, entry.level)
+        npc.appliedAspects.add(CobblemonTrainers.TRAINER_ASPECT_PREFIX + entry.id)
+        npc.appliedAspects.removeIf { it == "model-default" || it == "model-slim" }
+        npc.appliedAspects.add(if (skin.slim) "model-slim" else "model-default")
+        TrainerOutfit.dress(npc, entry.cosmetics)
+        npc.updateAspects()
+        npc.entityData.set(
+            NPCEntity.NPC_PLAYER_TEXTURE,
+            NPCPlayerTexture(bytes.copyOf(), if (skin.slim) NPCPlayerModelType.SLIM else NPCPlayerModelType.DEFAULT)
+        )
+        previewOwner = entry.id
+        previewSkin = skin
+        previewEntity = npc
+        return npc
+    }
+
+    /** Cobblemon registers each NPC skin under its UUID, independently of our thumbnail cache. */
+    private fun releasePreview() {
+        previewEntity?.let { npc ->
+            ResourceLocation.tryBuild("cobblemon", npc.uuid.toString())?.let {
+                minecraft?.textureManager?.release(it)
+            }
+        }
+        previewEntity = null
+        previewOwner = null
+        previewSkin = null
+    }
+
+    override fun removed() {
+        ClientBattleMusic.stopPreview()
+        musicOwner = null
+        releasePreview()
+        super.removed()
+    }
+
+    /** Render the selected trainer with Cobblemon's normal NPC entity renderer. */
+    private fun renderTrainerModel(guiGraphics: GuiGraphics, entity: NPCEntity) {
+        val tall = FIGURE_MODEL_HEIGHT.toFloat()
+        val scale = tall / entity.bbHeight.coerceAtLeast(0.1f)
+        val rotation = Quaternionf().rotateZ(Math.PI.toFloat())
+        val camera = Quaternionf().rotateX(FIGURE_MODEL_TILT)
+        val bodyYaw = entity.yBodyRot
+        val yaw = entity.yRot
+        val headYaw = entity.yHeadRot
+        val oldHeadYaw = entity.yHeadRotO
+        val nameVisible = entity.isCustomNameVisible
+        entity.yBodyRot = FIGURE_MODEL_YAW
+        entity.yRot = FIGURE_MODEL_YAW
+        entity.yHeadRot = FIGURE_MODEL_YAW
+        entity.yHeadRotO = FIGURE_MODEL_YAW
+        entity.isCustomNameVisible = false
+        try {
+            InventoryScreen.renderEntityInInventory(
+                guiGraphics,
+                FIGURE_CENTER_X.toFloat(),
+                PORTRAIT_TOP + tall / 2f,
+                scale,
+                Vector3f(0f, entity.bbHeight / 2f, 0f),
+                rotation,
+                camera,
+                entity
+            )
+        } finally {
+            entity.yBodyRot = bodyYaw
+            entity.yRot = yaw
+            entity.yHeadRot = headYaw
+            entity.yHeadRotO = oldHeadYaw
+            entity.isCustomNameVisible = nameVisible
         }
     }
 
@@ -831,7 +934,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
      * without the screen knowing what a requirement is.
      */
     private fun renderRequirements(guiGraphics: GuiGraphics, entry: BattlePhoneEntry) {
-        val areaWidth = TEAM_COLUMNS * TEAM_CELL_WIDTH
+        val areaWidth = TEAM_SLOTS_WIDTH
         val areaHeight = TEAM_ROWS * TEAM_CELL_HEIGHT
         val wrapWidth = areaWidth - 2 * REQUIREMENT_INSET
 
@@ -842,7 +945,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
 
         val total = heading.size + lines.size
         var lineY = TEAM_TOP + (areaHeight - total * font.lineHeight) / 2
-        val centerX = TEAM_X + areaWidth / 2
+        val centerX = TEAM_X + TEAM_SLOT_INSET + areaWidth / 2
 
         (heading.map { it to COLOR_TEXT } + lines.map { it to COLOR_TEXT_DIM }).forEach { (line, color) ->
             guiGraphics.drawString(font, line, centerX - font.width(line) / 2, lineY, color)
@@ -904,6 +1007,30 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         return font.plainSubstrByWidth(raw, maxWidth - font.width(ELLIPSIS)) + ELLIPSIS
     }
 
+    /** Pixel music note avoids relying on a resource pack's font glyph coverage. */
+    private fun renderMusicButton(guiGraphics: GuiGraphics, entry: BattlePhoneEntry, mouseX: Int, mouseY: Int): Component? {
+        if (!entry.defeated || entry.music == null) return null
+        val active = musicOwner == entry.id && ClientBattleMusic.isPreviewPlaying()
+        val busy = ClientBattleMusic.isPlaying() && !ClientBattleMusic.isPreviewPlaying()
+        val hovered = overMusicButton(mouseX.toDouble(), mouseY.toDouble())
+        plate(guiGraphics, MUSIC_X, CALL_Y, MUSIC_WIDTH, CALL_HEIGHT,
+            if (busy) COLOR_PLATE else if (hovered || active) COLOR_CALL_TOP_HOVER else COLOR_CALL_BOTTOM,
+            COLOR_PLATE_EDGE)
+        val color = if (busy) COLOR_TEXT_LOCKED else COLOR_TEXT
+        val x = MUSIC_X + 5
+        val y = CALL_Y + 3
+        guiGraphics.fill(x + 3, y, x + 5, y + 7, color)
+        guiGraphics.fill(x + 4, y, x + 7, y + 2, color)
+        guiGraphics.fill(x, y + 5, x + 4, y + 8, color)
+        return if (hovered) CobblemonTrainers.lang(when {
+            busy -> "screen.battle_phone.music.busy"
+            active -> "screen.battle_phone.music.stop"
+            else -> "screen.battle_phone.music.play"
+        }) else null
+    }
+
+    private fun overMusicButton(x: Double, y: Double): Boolean =
+        x >= MUSIC_X && x < MUSIC_X + MUSIC_WIDTH && y >= CALL_Y && y < CALL_Y + CALL_HEIGHT
     override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
         if (super.mouseClicked(mouseX, mouseY, button)) return true
         if (groups.isEmpty()) return false
@@ -916,6 +1043,18 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
 
         // Before the roster: the button sits on the upper screen, which the test below leaves.
         selected?.let { entry ->
+            if (button == 0 && entry.defeated && entry.music != null && overMusicButton(frameX, frameY)) {
+                if (musicOwner == entry.id && ClientBattleMusic.isPreviewPlaying()) {
+                    ClientBattleMusic.stopPreview()
+                    musicOwner = null
+                } else {
+                    val track = ResourceLocation.tryParse(entry.music)
+                    if (track != null && ClientBattleMusic.playPreview(track, TrainerBattleMusic.VOLUME, TrainerBattleMusic.PITCH)) {
+                        musicOwner = entry.id
+                    }
+                }
+                return true
+            }
             if (callEnabled(entry) && overCallButton(frameX, frameY)) return callTrainer(entry)
         }
 
@@ -1135,27 +1274,18 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         const val TITLE_Y = UPPER_Y + 4
         const val NAME_Y = UPPER_Y + 15
         const val TEAM_LINE_Y = UPPER_Y + 27
-        const val PORTRAIT_TOP = UPPER_Y + 38
+        const val PORTRAIT_TOP = UPPER_Y + 40
 
-        /**
-         * The figure sits left of centre in its column rather than in the middle of it: what it
-         * gives up is the strip the rewards are drawn in, and there is nowhere else on this
-         * screen to put them. Twenty-eight leaves four pixels between the figure and the edge of
-         * the panel, which is the least that still reads as a margin.
-         */
-        const val FIGURE_CENTER_X = UPPER_X + 28
-        const val FIGURE_SCALE = 3
+        /** The trainer has room for held items before the reward rail. */
+        const val FIGURE_CENTER_X = UPPER_X + 34
+        const val CONTENT_INSET = 12
+        const val FIGURE_MODEL_HEIGHT = 88
+        const val FIGURE_MODEL_YAW = 168f
+        const val FIGURE_MODEL_TILT = 0f
         const val STATUS_Y = UPPER_Y + 137
 
-        /**
-         * The plate saying where the trainer is, in the strip the team leaves free above the
-         * status line. Twelve pixels tall, which is one line of text and its air - so this
-         * stays one line, and a place too long for it is trimmed rather than wrapped. It starts
-         * a pixel above the team rather than under it: the bottom row of cells is taller than
-         * the models it holds, so that pixel is empty, and taking it keeps two clear of the call
-         * button below.
-         */
-        const val LOCATION_TOP = UPPER_Y + 121
+        /** Location sits below the team, with a clear gap before the footer. */
+        const val LOCATION_TOP = UPPER_Y + 119
         const val LOCATION_HEIGHT = 12
         const val LOCATION_Y = LOCATION_TOP + 2
 
@@ -1166,24 +1296,19 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         /** Where the text starts, clear of the accent bar. */
         const val LOCATION_TEXT_INSET = LOCATION_ACCENT_INSET + LOCATION_ACCENT_WIDTH + 3
 
-        /**
-         * The call button, at the end of the status band.
-         *
-         * The status line is centred, so the far right of that band is the only clear stretch
-         * left on the upper screen: four pixels separate it from the bezel below, and the team
-         * takes everything above. It is drawn with rectangles, like everything here that is not
-         * one of the six textures - which is what keeps that set replaceable.
-         */
+        /** The call button shares its right edge with the location plate. */
         const val CALL_WIDTH = 62
         const val CALL_HEIGHT = 13
         const val CALL_BORDER = 1
-        const val CALL_X = UPPER_X + UPPER_WIDTH - CALL_WIDTH - 6
+        const val CALL_X = UPPER_X + UPPER_WIDTH - CALL_WIDTH - CONTENT_INSET
 
         /**
          * Two pixels above the status line, which puts the label of the button on exactly the
          * baseline of that line and leaves a pixel of air under the location plate.
          */
         const val CALL_Y = STATUS_Y - 2
+        const val MUSIC_WIDTH = 16
+        const val MUSIC_X = CALL_X - MUSIC_WIDTH - 4
 
         /** Lifts the label off the bottom edge of the button, the 8 being a line of text. */
         const val CALL_LABEL_INSET = (CALL_HEIGHT - 8) / 2
@@ -1191,23 +1316,13 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         const val TEAM_SLOTS = 6
         const val TEAM_COLUMNS = 3
         const val TEAM_ROWS = TEAM_SLOTS / TEAM_COLUMNS
-        const val TEAM_X = UPPER_X + 92
-        const val TEAM_CELL_WIDTH = 70
-        const val TEAM_CELL_HEIGHT = 38
+        const val TEAM_X = UPPER_X + 117
+        const val TEAM_CELL_WIDTH = 64
+        const val TEAM_CELL_HEIGHT = 36
         const val TEAM_SLOT_SIZE = 34
 
-        /**
-         * The team is centred in the band left between the line that says what it is worth and
-         * the plate of the location, the 8 being that line of text.
-         *
-         * Fixed at a round forty-six pixels it sat against the plate with all the air above it -
-         * a single pixel under the bottom row and thirteen over the top one. Reading it off its
-         * two neighbours is what keeps the two ends equal, whatever moves.
-         *
-         * Declared after [TEAM_CELL_HEIGHT] because it reads it - a const cannot look ahead.
-         */
-        const val TEAM_TOP =
-            (TEAM_LINE_Y + 8 + LOCATION_TOP) / 2 - TEAM_ROWS * TEAM_CELL_HEIGHT / 2
+        /** The trainer, team and rewards share the same vertical centre. */
+        const val TEAM_TOP = UPPER_Y + 45
 
         /** From the edge of a cell to the slot drawn in the middle of it. */
         const val TEAM_SLOT_INSET = (TEAM_CELL_WIDTH - TEAM_SLOT_SIZE) / 2
@@ -1219,29 +1334,12 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
          */
         const val TEAM_SLOTS_WIDTH = TEAM_COLUMNS * TEAM_CELL_WIDTH - 2 * TEAM_SLOT_INSET
 
-        /**
-         * The reward rail, in the strip between the figure and the team, one item to a cell.
-         *
-         * Twenty-six pixels wide, centred in the seven that the figure and the team each leave
-         * clear: an icon is sixteen, and the rest is the plate around it. The rail is centred on
-         * the team rather than started level with it, since it is only as tall as it has
-         * rewards - so the two columns of what a trainer is worth balance whatever the count.
-         *
-         * Four cells is what the strip holds; the fourth counts the rest when there are more.
-         *
-         * Declared after [TEAM_TOP] because the rail is centred on the team - a const cannot
-         * look ahead.
-         */
+        /** Up to four reward cells fit in the same band as the trainer and team. */
         const val ITEM_SIZE = 16
         const val REWARD_WIDTH = 26
 
-        /**
-         * The middle of the strip the rail is centred on, measured between what can be *seen* of
-         * the figure and of the team: the edge of the skin on one side, the first slot on the
-         * other. Centring on [TEAM_X] instead put the rail against the trainer with a wide hole
-         * after it, because a team cell carries eighteen pixels of air before its slot.
-         */
-        const val REWARD_CENTER_X = UPPER_X + 81
+        /** Centre the rail between the trainer and the visible team slots. */
+        const val REWARD_CENTER_X = UPPER_X + 87
         const val REWARD_TOP = TEAM_TOP
         const val REWARD_ROWS = 4
 
@@ -1255,7 +1353,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         const val REWARD_MARKER_INSET = 1
 
         /** The air between two cells, halved either side of one to make it the area to hover. */
-        const val REWARD_ROW_GAP = 4
+        const val REWARD_ROW_GAP = 2
 
         /** The plate's own margin, under the last cell and around the accent above the first. */
         const val REWARD_PADDING = 3
@@ -1290,7 +1388,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         const val CLICK_PADDING = 2
 
         /** Breathing room between the phone and the edge of the window, in window pixels. */
-        const val WINDOW_MARGIN = 4
+        const val WINDOW_MARGIN = 8
 
         /** Trainer IDs arrive as strings, and the part before this is the datapack namespace. */
         const val TRAINER_ID_SEPARATOR = ':'

@@ -10,6 +10,16 @@
 
 const I18N = (() => {
   const STRINGS = {
+    'categories.title': ['Catégories et progression', 'Categories and progression'],
+    'categories.help': ['Crée tes groupes, puis ouvre un dresseur pour choisir la catégorie et le nombre de victoires nécessaires à son déblocage. Les conditions se règlent sur chaque dresseur.', 'Create your groups, then open a trainer to choose the category and number of victories needed to unlock them. Requirements are set on each trainer.'],
+    'categories.empty': ['Commence par créer une catégorie : leaders, élite, champions…', 'Start by creating a category: leaders, elite, champions…'],
+    'categories.count': ['%s dresseur(s) · %s comptent pour les victoires', '%s trainer(s) · %s count towards victories'],
+    'categories.free': ['Aucune condition de progression', 'No progression requirement'],
+    'categories.rule': ['Victoires requises : %s · %s', 'Required victories: %s · %s'],
+    'categories.any': ['Tous les packs', 'All packs'],
+    'categories.other': ['Conditions supplémentaires à consulter', 'View additional requirements'],
+    'categories.edit': ['Modifier le nom et l’ordre', 'Edit name and order'],
+    'categories.members': ['Dresseurs de cette catégorie', 'Trainers in this category'],
     'app.title': ['Éditeur de dresseurs', 'Trainer editor'],
     'app.subtitle': ['Cobblemon Trainers', 'Cobblemon Trainers'],
     'app.docs': ['Documentation', 'Documentation'],
@@ -22,6 +32,9 @@ const I18N = (() => {
     'pack.namespace.hint': ['Le dossier sous data/ et le début de chaque ID. Minuscules, chiffres, _ - . uniquement.',
                             'The folder under data/ and the start of every id. Lowercase, digits, _ - . only.'],
     'pack.description': ['Description du pack', 'Pack description'],
+    'pack.order': ['Ordre dans le Battle Phone', 'Battle Phone order'],
+    'pack.order.hint': ['Le plus petit apparaît en premier. Vide : après les packs classés.',
+                        'Smallest comes first. Leave blank to follow ranked packs.'],
     'pack.files': ['Fichiers', 'Files'],
     'pack.empty': ['Aucun fichier. Commence par un dresseur, ou charge un modèle.',
                    'No file yet. Start with a trainer, or load a template.'],
