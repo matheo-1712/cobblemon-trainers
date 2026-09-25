@@ -93,6 +93,7 @@ object BattlePhoneNetworking {
                 categoryName = category?.let { TrainerRegistry.categoryName(it) }.orEmpty(),
                 location = TrainerPlace.describe(definition.location),
                 cosmetics = definition.cosmetics,
+                music = definition.battle.music?.takeIf { defeated && ResourceLocation.tryParse(it) != null },
                 callable = definition.callable(),
                 // Through the same resolution that hands them over, so the fiche can never
                 // advertise a reward the player would not actually receive - which is also why
@@ -244,6 +245,7 @@ data class BattlePhoneEntry(
     val location: Component,
     val cosmetics: TrainerCosmetics = TrainerCosmetics(),
     val callable: Boolean,
+    val music: String? = null,
     val rewards: List<RewardPreview>
 ) {
 
@@ -321,6 +323,7 @@ data class OpenBattlePhonePayload(val entries: List<BattlePhoneEntry>) : CustomP
                         ComponentSerialization.STREAM_CODEC.encode(buf, entry.location)
                         buf.writeCosmetics(entry.cosmetics)
                         buf.writeBoolean(entry.callable)
+                        buf.writeOptionalText(entry.music)
                         buf.writeVarInt(entry.rewards.size)
                         entry.rewards.forEach {
                             ItemStack.OPTIONAL_STREAM_CODEC.encode(buf, it.stack)
@@ -347,6 +350,7 @@ data class OpenBattlePhonePayload(val entries: List<BattlePhoneEntry>) : CustomP
                                 location = ComponentSerialization.STREAM_CODEC.decode(buf),
                                 cosmetics = buf.readCosmetics(),
                                 callable = buf.readBoolean(),
+                                music = buf.readOptionalText(),
                                 rewards = List(buf.readVarInt()) {
                                     RewardPreview(
                                         stack = ItemStack.OPTIONAL_STREAM_CODEC.decode(buf),

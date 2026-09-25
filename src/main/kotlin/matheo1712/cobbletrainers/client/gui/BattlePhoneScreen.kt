@@ -18,6 +18,8 @@ import matheo1712.cobbletrainers.trainers.RewardPreview
 import matheo1712.cobbletrainers.trainers.TrainerOutfit
 import matheo1712.cobbletrainers.trainers.TrainerSpawner
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
+import matheo1712.cobbletrainers.client.ClientBattleMusic
+import matheo1712.cobbletrainers.battle.TrainerBattleMusic
 import net.minecraft.ChatFormatting
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
@@ -91,6 +93,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
     private var teamStatesOwner: String? = null
     private var previewEntity: NPCEntity? = null
     private var previewOwner: String? = null
+    private var musicOwner: String? = null
     private var previewSkin: TrainerSkinCache.Skin? = null
 
     /**
@@ -411,6 +414,10 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         partialTick: Float
     ): List<Component> {
         val entry = selected ?: return emptyList()
+        if (musicOwner != null && musicOwner != entry.id) {
+            ClientBattleMusic.stopPreview()
+            musicOwner = null
+        }
 
         // The header spans the screen; the footer reserves space for the call button.
         val centerX = UPPER_X + UPPER_WIDTH / 2
@@ -437,7 +444,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
             )
         }
 
-        val status = trim(CobblemonTrainers.lang(statusKey(entry)), CALL_X - (UPPER_X + CONTENT_INSET) - MARKER_WIDTH - MARKER_TEXT_GAP - 8)
+        val status = trim(CobblemonTrainers.lang(statusKey(entry)), (if (entry.defeated && entry.music != null) MUSIC_X else CALL_X) - (UPPER_X + CONTENT_INSET) - MARKER_WIDTH - MARKER_TEXT_GAP - 8)
         val statusX = UPPER_X + CONTENT_INSET
         renderMarker(guiGraphics, entry.defeated, statusX, STATUS_Y - MARKER_LINE_OFFSET)
         guiGraphics.drawString(
@@ -458,6 +465,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
 
         renderLocation(guiGraphics, entry)
         val callTooltip = renderCallButton(guiGraphics, entry, mouseX, mouseY)
+        val musicTooltip = renderMusicButton(guiGraphics, entry, mouseX, mouseY)
 
         // A defeated trainer keeps their team visible even if a new requirement blocks a
         // rematch. The requirements belong to the next battle and are shown in that case.
@@ -478,6 +486,7 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         }
 
         return when {
+            musicTooltip != null -> listOf(musicTooltip)
             callTooltip != null -> listOf(callTooltip)
             rewardTooltip.isNotEmpty() -> rewardTooltip
             teamTooltip != null -> listOf(teamTooltip)
@@ -527,6 +536,8 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
     }
 
     override fun removed() {
+        ClientBattleMusic.stopPreview()
+        musicOwner = null
         releasePreview()
         super.removed()
     }
@@ -996,6 +1007,30 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
         return font.plainSubstrByWidth(raw, maxWidth - font.width(ELLIPSIS)) + ELLIPSIS
     }
 
+    /** Pixel music note avoids relying on a resource pack's font glyph coverage. */
+    private fun renderMusicButton(guiGraphics: GuiGraphics, entry: BattlePhoneEntry, mouseX: Int, mouseY: Int): Component? {
+        if (!entry.defeated || entry.music == null) return null
+        val active = musicOwner == entry.id && ClientBattleMusic.isPreviewPlaying()
+        val busy = ClientBattleMusic.isPlaying() && !ClientBattleMusic.isPreviewPlaying()
+        val hovered = overMusicButton(mouseX.toDouble(), mouseY.toDouble())
+        plate(guiGraphics, MUSIC_X, CALL_Y, MUSIC_WIDTH, CALL_HEIGHT,
+            if (busy) COLOR_PLATE else if (hovered || active) COLOR_CALL_TOP_HOVER else COLOR_CALL_BOTTOM,
+            COLOR_PLATE_EDGE)
+        val color = if (busy) COLOR_TEXT_LOCKED else COLOR_TEXT
+        val x = MUSIC_X + 5
+        val y = CALL_Y + 3
+        guiGraphics.fill(x + 3, y, x + 5, y + 7, color)
+        guiGraphics.fill(x + 4, y, x + 7, y + 2, color)
+        guiGraphics.fill(x, y + 5, x + 4, y + 8, color)
+        return if (hovered) CobblemonTrainers.lang(when {
+            busy -> "screen.battle_phone.music.busy"
+            active -> "screen.battle_phone.music.stop"
+            else -> "screen.battle_phone.music.play"
+        }) else null
+    }
+
+    private fun overMusicButton(x: Double, y: Double): Boolean =
+        x >= MUSIC_X && x < MUSIC_X + MUSIC_WIDTH && y >= CALL_Y && y < CALL_Y + CALL_HEIGHT
     override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
         if (super.mouseClicked(mouseX, mouseY, button)) return true
         if (groups.isEmpty()) return false
@@ -1008,6 +1043,18 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
 
         // Before the roster: the button sits on the upper screen, which the test below leaves.
         selected?.let { entry ->
+            if (button == 0 && entry.defeated && entry.music != null && overMusicButton(frameX, frameY)) {
+                if (musicOwner == entry.id && ClientBattleMusic.isPreviewPlaying()) {
+                    ClientBattleMusic.stopPreview()
+                    musicOwner = null
+                } else {
+                    val track = ResourceLocation.tryParse(entry.music)
+                    if (track != null && ClientBattleMusic.playPreview(track, TrainerBattleMusic.VOLUME, TrainerBattleMusic.PITCH)) {
+                        musicOwner = entry.id
+                    }
+                }
+                return true
+            }
             if (callEnabled(entry) && overCallButton(frameX, frameY)) return callTrainer(entry)
         }
 
@@ -1260,6 +1307,8 @@ class BattlePhoneScreen(data: OpenBattlePhonePayload) :
          * baseline of that line and leaves a pixel of air under the location plate.
          */
         const val CALL_Y = STATUS_Y - 2
+        const val MUSIC_WIDTH = 16
+        const val MUSIC_X = CALL_X - MUSIC_WIDTH - 4
 
         /** Lifts the label off the bottom edge of the button, the 8 being a line of text. */
         const val CALL_LABEL_INSET = (CALL_HEIGHT - 8) / 2

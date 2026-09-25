@@ -1,4 +1,7 @@
 {
+  "cobblemon-trainers.screen.battle_phone.music.play": "Play the trainer theme",
+  "cobblemon-trainers.screen.battle_phone.music.stop": "Stop preview",
+  "cobblemon-trainers.screen.battle_phone.music.busy": "Battle music is playing",
   "cobblemon-trainers.command.spawn_trainer.success": "Spawned trainer %s at %s, %s, %s",
   "cobblemon-trainers.command.spawn_trainer.unknown_trainer": "Unknown trainer. Check the trainer IDs in data/<namespace>/cobblemontrainers/ of your datapacks.",
   "cobblemon-trainers.command.spawn_trainer.invalid_position": "Invalid position for spawning a trainer.",

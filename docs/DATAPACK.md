@@ -464,6 +464,8 @@ dresseur et son état. Il affiche aussi **l'équipe d'un dresseur une fois celui
 modèles à l'appui - avant, les six cases restent vides, le serveur refusant purement et
 simplement d'envoyer l'équipe.
 
+Après une victoire, le bouton musical permet d'écouter le thème du dresseur s'il en possède un. Un second clic, un changement de dresseur ou la fermeture du téléphone arrête la préécoute ; la musique d'un combat reste prioritaire.
+
 Trois différences entre les deux :
 
 - Le Battle Phone **cache** les dresseurs verrouillés en `hidden` ; `/cobblemontrainers list` les
