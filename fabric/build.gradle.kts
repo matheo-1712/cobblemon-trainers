@@ -1,0 +1,342 @@
+import me.modmuss50.mpp.ReleaseType
+import net.fabricmc.loom.task.RemapJarTask
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
+plugins {
+	id("net.fabricmc.fabric-loom-remap")
+	`maven-publish`
+	id("org.jetbrains.kotlin.jvm")
+	id("me.modmuss50.mod-publish-plugin")
+}
+
+repositories {
+	// Modrinth Maven pour Cobblemon
+	maven {
+		name = "Modrinth"
+		url = uri("https://api.modrinth.com/maven")
+		content {
+			includeGroup("maven.modrinth")
+		}
+	}
+}
+
+/**
+ * Mods the dev game runs with, and nothing else: they are never compiled against, never
+ * published as a dependency, and never part of the jar.
+ *
+ * Trainers mega evolve through Cobblemon's own gimmick API, so not a line of this mod mentions
+ * Mega Showdown - it is only what puts the Mega Stones in the game, and therefore the only way
+ * to test `battle.gimmicks` at all. `accessories` comes along because Mega Showdown hard-depends
+ * on it, `owo` because accessories does, and `architectury` because Mega Showdown does too -
+ * Cobblemon 1.8 dropped its own need for it. The loader refuses to start without any of them.
+ *
+ * They are **copied into `run/mods`** rather than declared `modRuntimeOnly`, because a mod jar
+ * carries its libraries nested inside it (owo ships endec and jankson that way) and Loom does
+ * not put those on the dev classpath - the game crashed on a missing `endec` class. Fabric
+ * unpacks them like it would for a player, and remaps the mods on the way in.
+ */
+val devMods: Configuration by configurations.creating
+
+/**
+ * The Cobblemon archive on its own, fetched only so the libraries nested inside it can be
+ * unpacked. Deliberately not `modImplementation`: nothing is compiled or remapped against it,
+ * and it is the raw archive that carries `META-INF/jars`.
+ */
+val cobblemonArchive: Configuration by configurations.creating { isTransitive = false }
+
+// Compile against common in development and merge its classes into the Fabric jar before
+// remapping. It is an internal library, not another mod players have to install.
+val commonBundle: Configuration by configurations.creating {
+	isCanBeConsumed = false
+	isTransitive = false
+}
+
+group = rootProject.group
+version = rootProject.version
+
+base {
+	archivesName.set(rootProject.name)
+}
+
+evaluationDependsOn(":common")
+val commonSources = project(":common").extensions.getByType<SourceSetContainer>()
+loom {
+	mods {
+		create("cobblemon-trainers") {
+			sourceSet(sourceSets.main.get())
+			sourceSet(commonSources.named("main").get())
+		}
+	}
+}
+configurations.named("compileOnly") { extendsFrom(commonBundle) }
+
+dependencies {
+	commonBundle(project(path = ":common", configuration = "namedElements"))
+	// The development mod is grouped from both source sets above; do not also load its jar.
+	runtimeOnly(files(commonSources.named("main").map { it.output }))
+	// To change the versions see the gradle.properties file
+	minecraft("com.mojang:minecraft:${providers.gradleProperty("minecraft_version").get()}")
+	mappings(loom.officialMojangMappings())
+	modImplementation("net.fabricmc:fabric-loader:${providers.gradleProperty("loader_version").get()}")
+
+	// Fabric API. This is technically optional, but you probably want it anyway.
+	modImplementation("net.fabricmc.fabric-api:fabric-api:${providers.gradleProperty("fabric_api_version").get()}")
+	modImplementation("net.fabricmc:fabric-language-kotlin:${providers.gradleProperty("fabric_kotlin_version").get()}")
+
+	// Cobblemon 1.8.1 pour Fabric 1.21.1 - API uniquement (les joueurs l'installeront séparément)
+	modImplementation("maven.modrinth:cobblemon:${project.property("cobblemon_version")}")
+
+	// The same archive again, unremapped, for [cobblemonLibs] below.
+	cobblemonArchive("maven.modrinth:cobblemon:${project.property("cobblemon_version")}")
+
+    // Mega Showdown and what it needs, dropped into `run/mods` for the dev game. See the
+    // `devMods` configuration above. Architectury is one of them rather than a compile
+    // dependency: Cobblemon 1.8 neither compiles nor runs against it - only Mega Showdown does.
+    devMods("maven.modrinth:cobblemon-mega-showdown:${project.property("mega_showdown_version")}")
+    devMods("maven.modrinth:accessories:${project.property("accessories_version")}")
+    devMods("maven.modrinth:owo-lib:${project.property("owo_version")}")
+    devMods("maven.modrinth:architectury-api:${project.property("architectury_version")}")
+}
+
+/**
+ * Cobblemon's own nested libraries, unpacked onto the dev run classpath.
+ *
+ * Cobblemon 1.7.3 shaded GraalJS into its own jar, under `com.cobblemon.mod.relocations`, so it
+ * came along with the mod and the dev game never noticed. 1.8 ships it as JiJ libraries under
+ * their real names instead (`graal-sdk`, `js`, `truffle-api`, `regex`, `icu4j`, the Mongo
+ * drivers), and **Loom puts a mod's own classes on the dev classpath but not the jars nested
+ * inside it** - the same gap that makes `devMods` a copy into `run/mods` rather than a
+ * `modRuntimeOnly`. Fabric unpacks them for a player, so only the dev game goes without: it
+ * starts, then the Showdown thread dies on
+ * `NoClassDefFoundError: org/graalvm/polyglot/HostAccess` and no battle can ever run.
+ *
+ * They are taken out of the archive rather than named by Maven coordinates on purpose: a second
+ * version list is a list that falls out of step with `cobblemon_version`.
+ *
+ * `fabric-language-kotlin` is left behind. It is already a real dependency here, at a newer
+ * version, and a second copy on the classpath would be a problem rather than a fix.
+ */
+val cobblemonLibsDir = layout.buildDirectory.dir("cobblemon-libs")
+
+val cobblemonLibs = tasks.register<Sync>("cobblemonLibs") {
+	description = "Unpacks the libraries nested in the Cobblemon jar, for the dev run classpath."
+	group = "fabric"
+
+	from(cobblemonArchive.elements.map { archives -> archives.map { zipTree(it) } }) {
+		include("META-INF/jars/*.jar")
+		exclude("**/fabric-language-kotlin-*.jar")
+		eachFile { relativePath = RelativePath(true, name) }
+	}
+	into(cobblemonLibsDir)
+	includeEmptyDirs = false
+}
+
+dependencies {
+	localRuntime(fileTree(cobblemonLibsDir) {
+		include("*.jar")
+		builtBy(cobblemonLibs)
+	})
+}
+
+val copyDevMods = tasks.register<Copy>("copyDevMods") {
+	description = "Copies the dev-only mods into run/mods."
+	group = "fabric"
+
+	val modsDir = layout.projectDirectory.dir("run/mods")
+
+	from(devMods)
+	into(modsDir)
+
+	/*
+	 * A `Copy` only ever adds. These jars are named after their Modrinth version id, so bumping
+	 * one in gradle.properties leaves the previous jar sitting next to the new one and Fabric
+	 * stops on two copies of the same mod - which is what a Cobblemon bump does to Mega Showdown
+	 * every time. The old ones are dropped first, matched on the module name that precedes the
+	 * id, so anything else the folder holds is left alone.
+	 */
+	doFirst {
+		val incoming = source.files.map { it.name }.toSet()
+		val modules = incoming.map { it.substringBeforeLast('-') }.toSet()
+
+		modsDir.asFile.listFiles()
+			?.filter { it.name.endsWith(".jar") && it.name !in incoming }
+			?.filter { file -> modules.any { file.name.startsWith("$it-") } }
+			?.forEach {
+				logger.lifecycle("Removing stale dev mod ${it.name}")
+				it.delete()
+			}
+	}
+}
+
+/**
+ * The example pack, laid into `run/mods` so every dev world has it.
+ *
+ * It goes in as a **folder without `fabric.mod.json`**, which is the one shape that loads from
+ * there. The two others do not: a symlink or a junction to `examples/cobblemonrlm` would bring
+ * that file along, and `ModsFolderPackSource` skips anything carrying mod metadata on the
+ * grounds that Fabric has already loaded it - except Fabric only ever loads `.jar` *files* out
+ * of `mods/`, so a linked folder would load from nowhere at all. Vanilla's `DirectoryValidator`
+ * is the second reason: `allowed_symlinks.txt` is empty by default, so it turns a symlinked pack
+ * away before anything else gets a look at it.
+ *
+ * A [Sync] rather than a [Copy] so that a file deleted from `examples/` disappears from the run
+ * folder too - a stale trainer left behind there would keep loading, and its id would look like
+ * a pack that refuses to go away. The target is a folder of its own, so nothing else in
+ * `run/mods` is in reach.
+ *
+ * It re-runs on every `runClient`, which is when it matters; a `/reload` mid-session re-reads
+ * this copy rather than `examples/`, so editing a trainer and reloading wants the task run again.
+ */
+val copyExamplePack = tasks.register<Sync>("copyExamplePack") {
+	description = "Lays examples/cobblemonrlm into run/mods, for the dev game."
+	group = "fabric"
+
+	from(rootProject.layout.projectDirectory.dir("examples/cobblemonrlm")) {
+		exclude("fabric.mod.json")
+	}
+	into(layout.projectDirectory.dir("run/mods/cobblemonrlm"))
+}
+
+tasks.named("runClient") { dependsOn(copyDevMods, copyExamplePack) }
+tasks.named("runServer") { dependsOn(copyDevMods, copyExamplePack) }
+
+tasks.processResources {
+	val version = version
+	inputs.property("version", version)
+
+	filesMatching("fabric.mod.json") {
+		expand("version" to version)
+	}
+}
+
+tasks.withType<JavaCompile>().configureEach {
+	options.release = 21
+}
+
+kotlin {
+	compilerOptions {
+		jvmTarget = JvmTarget.JVM_21
+	}
+}
+
+java {
+	// Cobblemon déclare `depends: java [21]`, une version exacte. Sans toolchain, runClient
+	// et runServer héritent du JDK qui fait tourner Gradle et le loader refuse de démarrer.
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+
+	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
+	// if it is present.
+	// If you remove this line, sources will not be generated.
+	withSourcesJar()
+
+	sourceCompatibility = JavaVersion.VERSION_21
+	targetCompatibility = JavaVersion.VERSION_21
+}
+
+tasks.jar {
+	val projectName = rootProject.name
+	inputs.property("projectName", projectName)
+
+	from(commonBundle.elements.map { files -> files.map { zipTree(it.asFile) } }) {
+		exclude("META-INF/MANIFEST.MF")
+	}
+
+	from(rootProject.layout.projectDirectory.file("LICENSE")) {
+		rename { "${it}_$projectName" }
+	}
+}
+
+// Keep the published sources complete after moving declarations into the shared module.
+tasks.named<Jar>("sourcesJar") {
+	from(commonSources.named("main").map { it.allSource })
+}
+
+/**
+ * Release type, overridable from the command line so the release workflow drives the build
+ * without editing a tracked file: `./gradlew publishMods -Prelease_type=beta`.
+ */
+val releaseType = when (providers.gradleProperty("release_type").getOrElse("stable").lowercase()) {
+	"alpha" -> ReleaseType.ALPHA
+	"beta" -> ReleaseType.BETA
+	else -> ReleaseType.STABLE
+}
+
+// Captured out here on purpose: inside `publishMods`, `version` is the extension's own
+// property, and interpolating it yields its Gradle description rather than the number.
+val modVersion = project.version.toString()
+
+publishMods {
+	// `remapJar`, not `jar`: the latter still carries named mappings and would crash outside a
+	// development environment.
+	file = tasks.named<RemapJarTask>("remapJar").flatMap { it.archiveFile }
+	displayName = "Cobblemon Trainers $modVersion"
+	version = modVersion
+	type = releaseType
+	modLoaders.add("fabric")
+
+	// The release workflow passes the GitHub release body here. Without it - a local run - the
+	// changelog is a pointer rather than a lie.
+	changelog = providers.environmentVariable("CHANGELOG")
+		.orElse("See https://github.com/matheo-1712/cobblemon-trainers/releases/tag/v$modVersion")
+
+	// A missing token turns the whole thing into a rehearsal: the release assets are written to
+	// build/mod-publish instead of being uploaded. That is what makes `./gradlew publishMods`
+	// safe to run locally, and it is the same code path the workflow takes.
+	dryRun = providers.environmentVariable("MODRINTH_TOKEN").orNull == null
+
+	modrinth {
+		// The placeholder only ever reaches a dry run: a real publication needs the token, and
+		// its absence is exactly what turns dryRun on above.
+		accessToken = providers.environmentVariable("MODRINTH_TOKEN").orElse("dry-run")
+		projectId = providers.gradleProperty("modrinth_id")
+		minecraftVersions.add(providers.gradleProperty("minecraft_version").get())
+
+		// Modrinth requires accurate environment metadata (Content Rules 5.1), and since plugin
+		// 2.1.0 it is set here rather than in the version settings on the site.
+		//
+		// Both sides need the mod: the trainers themselves are server-side, but the Battle Phone
+		// and the spawner screen are not optional extras, and Cobblemon is a both-sides mod to
+		// begin with. The `canSend` guards are a courtesy message for a client that is missing
+		// it, not a supported setup.
+		environment = CLIENT_AND_SERVER
+
+		// Pinned to the exact versions the mod is built against, straight from
+		// gradle.properties: bumping a dependency there moves the published requirement with it,
+		// and the two can never drift apart.
+		//
+		// Modrinth matches either a version ID or a version number, and refuses the publish
+		// unless exactly one version matches - a typo here fails loudly rather than shipping a
+		// requirement nobody can satisfy. `cobblemon_version` is already a version ID.
+		requires {
+			slug = "cobblemon"
+			version = providers.gradleProperty("cobblemon_version")
+		}
+		requires {
+			slug = "fabric-api"
+			version = providers.gradleProperty("fabric_api_version")
+		}
+		requires {
+			slug = "fabric-language-kotlin"
+			version = providers.gradleProperty("fabric_kotlin_version")
+		}
+	}
+}
+
+// configure the maven publication
+publishing {
+	publications {
+		register<MavenPublication>("mavenJava") {
+			from(components["java"])
+		}
+	}
+
+	// See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
+	repositories {
+		// Add repositories to publish to here.
+		// Notice: This block does NOT have the same function as the block in the top level.
+		// The repositories here will be used for publishing your artifact, not for
+		// retrieving dependencies.
+	}
+}

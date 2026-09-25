@@ -14,9 +14,9 @@ here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 root="$(cd "$here/.." && pwd)"
 assets="$here/assets"
 
-textures="$root/src/main/resources/assets/cobblemon-trainers/textures/gui/intro"
-sounds="$root/src/main/resources/assets/cobblemon-trainers/sounds.json"
-intros="$root/src/main/resources/data/cobblemon-trainers/cobblemontrainers/intro"
+textures="$root/common/src/main/resources/assets/cobblemon-trainers/textures/gui/intro"
+sounds="$root/common/src/main/resources/assets/cobblemon-trainers/sounds.json"
+intros="$root/common/src/main/resources/data/cobblemon-trainers/cobblemontrainers/intro"
 examples="$root/examples/cobblemonrlm/data/cobblemonrlm/cobblemontrainers/trainers"
 
 rm -rf "$assets/intro" "$assets/intros" "$assets/examples"
@@ -24,7 +24,7 @@ mkdir -p "$assets/intro" "$assets/intros" "$assets/examples"
 
 # The mod's own identity, taken where it already lives rather than copied into the site.
 cp "$root/assets/logo.png" "$assets/logo.png"
-cp "$root/src/main/resources/assets/cobblemon-trainers/icon.png" "$assets/icon.png"
+cp "$root/common/src/main/resources/assets/cobblemon-trainers/icon.png" "$assets/icon.png"
 
 cp "$textures"/*.png "$assets/intro/"
 cp "$intros"/*.json "$assets/intros/"

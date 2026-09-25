@@ -66,7 +66,7 @@ une page de vente, pas une page du wiki.
 ## Commandes
 
 ```bash
-./gradlew build          # compile + remap + produit build/libs/*.jar
+./gradlew build          # compile + remap + produit fabric/build/libs/*.jar
 ./gradlew runClient      # client de dev (tâche fournie par Fabric Loom)
 ./gradlew runServer      # serveur de dev
 ./gradlew genSources     # décompile Minecraft/Cobblemon pour la navigation IDE
@@ -76,13 +76,13 @@ une page de vente, pas une page du wiki.
 Sur Windows, utiliser `.\gradlew.bat`.
 
 Il n'existe pas de source set `src/test` - `build` ne lance donc aucun test.
-Toute vérification passe par `runClient`/`runServer`, dont les mondes vivent dans `run/`
-(gitignoré). **Ne pas mettre de jar Cobblemon dans `run/mods/`** : il est déjà fourni par
+Toute vérification passe par `runClient`/`runServer`, dont les mondes vivent dans `fabric/run/`
+(gitignoré). **Ne pas mettre de jar Cobblemon dans `fabric/run/mods/`** : il est déjà fourni par
 `modImplementation`, et le doublon fait planter le client au démarrage. Mega Showdown et ses
 dépendances, elles, y sont bien - c'est `copyDevMods` qui les y dépose avant chaque `runClient`,
 et c'est voulu (voir « Les gimmicks de combat »).
 
-`copyExamplePack` y dépose aussi le pack d'exemple, en dossier `run/mods/cobblemonrlm/`, pour que
+`copyExamplePack` y dépose aussi le pack d'exemple, en dossier `fabric/run/mods/cobblemonrlm/`, pour que
 tout monde de dev ait ses dresseurs sans rien installer. Un lien symbolique vers
 `examples/cobblemonrlm` ne marcherait pas, pour deux raisons : il emporterait le `fabric.mod.json`
 que `ModsFolderPackSource` refuse, alors que Fabric ne charge que des `.jar` du dossier - le pack
@@ -91,7 +91,7 @@ d'`allowed_symlinks.txt`, qui est vide par défaut. D'où une copie, et un `Sync
 `Copy` : un dresseur retiré d'`examples/` doit disparaître du monde de dev aussi. Contrepartie
 assumée : un `/reload` relit la copie, donc éditer un dresseur demande de relancer la tâche.
 
-Le projet cible **Java 21**, imposé par un toolchain Gradle dans `build.gradle.kts`.
+Le projet cible **Java 21**, imposé par les toolchains de `common/build.gradle.kts` et `fabric/build.gradle.kts`.
 Cobblemon déclare `depends: java [21]`, une version exacte : sans le toolchain, `runClient`
 hérite du JDK de Gradle et le loader refuse de démarrer. Le CI utilise le même JDK 21.
 
@@ -113,7 +113,7 @@ jamais eu besoin. Il reste parce que Mega Showdown, lui, le réclame en dur.
 ces jars portent leur ID de version Modrinth dans leur nom : bumper Mega Showdown laissait
 l'ancien à côté du neuf, et Fabric s'arrête sur deux exemplaires du même mod. Le nettoyage ne
 vise que les noms de module de `devMods`, donc un mod que l'auteur a posé lui-même dans
-`run/mods` n'est pas touché.
+`fabric/run/mods` n'est pas touché.
 
 `cobblemonLibs` **dépaquette les bibliothèques imbriquées dans le jar de Cobblemon** et les pose
 sur le classpath de run via `localRuntime`. C'est la même faille que ci-dessus, mais côté
@@ -1306,7 +1306,7 @@ Points à ne pas redécouvrir :
   dessinée.
 - **Ce mixin vise une méthode de Cobblemon, mais son descripteur est quand même remappé.**
   `PoseStack` et `VertexConsumer` *sont* obfusqués (`class_4587`, `class_4588`), contrairement à
-  `RenderSystem` et compagnie. Vérifié dans `build/libs/*.jar` : le descripteur du `@Inject` y
+  `RenderSystem` et compagnie. Vérifié dans `fabric/build/libs/*.jar` : le descripteur du `@Inject` y
   est exactement celui de la méthode du jar de Cobblemon.
 - **Le `MultiBufferSource` est celui du jeu**, faute d'en avoir un à cet endroit : Cobblemon ne
   reçoit qu'un `VertexConsumer`, et une armure en demande un par texture. C'est le même
@@ -1558,7 +1558,7 @@ et la forme à l'écran - via le `MegaEvolutionEvent` de Cobblemon, qui ne regar
 appartient le Pokémon. Cobblemon a bien les instructions (`ZPowerInstruction`), les événements et
 les boutons de combat des quatre, mais rien dans une installation nue n'offre les trois autres.
 
-**Le jeu de dev le charge depuis `run/mods/`**, où `copyDevMods` copie la configuration
+**Le jeu de dev le charge depuis `fabric/run/mods/`**, où `copyDevMods` copie la configuration
 `devMods` (Mega Showdown, `accessories` dont il dépend en dur, `owo` dont accessories dépend).
 Un `modRuntimeOnly` a été essayé et retiré : un jar de mod embarque ses bibliothèques en JiJ -
 owo y range endec et jankson - et Loom ne les met pas sur le classpath de dev, donc le jeu
@@ -1908,7 +1908,7 @@ construit un `.jar` pour `mods/` peut le déposer tel quel aux deux autres empla
 réempaqueter en `.zip`.
 
 Loom remappe les mixins statiquement (pas de refmap dans le jar) : après un changement,
-vérifier dans `build/libs/*.jar` que la cible est bien passée en intermediary
+vérifier dans `fabric/build/libs/*.jar` que la cible est bien passée en intermediary
 (`detectPackResources` → `method_52441`, `PackDetector` → `class_8621` ;
 `getMarkerParticleTarget` → `method_35752` ; `MusicManager` → `class_1142`, `tick` →
 `method_18669`).
@@ -2130,7 +2130,7 @@ Points à ne pas redécouvrir :
   du Kotlin DSL.
 - **Dans le bloc `publishMods`, `version` est la propriété de l'extension**, pas celle du projet :
   l'interpoler donne sa description Gradle. D'où le `modVersion` capturé au-dessus.
-- Sans jeton, `publishMods` bascule en `dryRun` et écrit dans `build/mod-publish/` - c'est ce qui
+- Sans jeton, `publishMods` bascule en `dryRun` et écrit dans `fabric/build/mod-publish/` - c'est ce qui
   rend `./gradlew publishMods` sûr en local.
 
 ### Le pack d'exemple dans la release

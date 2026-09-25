@@ -100,7 +100,7 @@ jobs:
           TAG: ${{ github.event.release.tag_name }}
         run: |
           # The remapped jar, not the sources one sitting next to it.
-          jar="build/libs/cobblemon-trainers-${{ steps.release.outputs.version }}.jar"
+          jar="fabric/build/libs/cobblemon-trainers-${{ steps.release.outputs.version }}.jar"
           pack="build/dist/exemple_trainer_datapack.zip"
 
           for asset in "$jar" "$pack"; do

@@ -60,6 +60,9 @@ ones from your packs.
 
 ## One rule, one page
 
+For contributors, [Development structure](DEVELOPMENT.md) describes the shared `common`
+module and the gradual preparation for a NeoForge port.
+
 Each subject is described in exactly one place, and the other pages link to it:
 
 - the **commands** are in `COMMANDS.md`;

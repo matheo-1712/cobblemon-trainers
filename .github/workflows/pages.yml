@@ -14,8 +14,8 @@ on:
     branches: [master]
     paths:
       - 'web/**'
-      - 'src/main/resources/assets/cobblemon-trainers/**'
-      - 'src/main/resources/data/cobblemon-trainers/**'
+      - 'common/src/main/resources/assets/cobblemon-trainers/**'
+      - 'common/src/main/resources/data/cobblemon-trainers/**'
       - 'examples/cobblemonrlm/data/**'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
