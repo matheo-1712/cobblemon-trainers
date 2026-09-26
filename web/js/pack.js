@@ -348,8 +348,9 @@ const Pack = (() => {
   };
 
   /**
-   * A mod identity, so Fabric loads the pack itself and can refuse to start when the mod is
-   * missing rather than leave a pack loaded for nothing.
+   * A mod identity, so Fabric and NeoForge can associate this pack with Cobblemon Trainers -
+   * as a `recommends`/`optional` link rather than a hard `depends`, so a world without the
+   * mod installed still loads; the trainers simply do nothing without it.
    *
    * It only belongs in a `.jar`: Fabric skips an archive that is not one, while the mod's own
    * ModsFolderPackSource skips anything carrying mod metadata - a `.zip` with this file inside
@@ -361,13 +362,14 @@ const Pack = (() => {
     version: '1.0.0',
     name: state.description || state.namespace,
     environment: '*',
-    depends: { 'cobblemon-trainers': '*' }
+    recommends: { 'cobblemon-trainers': '*' }
   });
 
   /**
    * The NeoForge side of the same identity. `lowcodefml` is NeoForge's loader for mods that
-   * ship no Java at all - exactly this pack's case - so no main class is needed for the jar
-   * to be recognised and refuse to start without Cobblemon Trainers.
+   * ship no Java at all - exactly this pack's case - so no main class is needed. The dependency
+   * on Cobblemon Trainers is `optional`: the jar still loads without it, the trainers just do
+   * nothing until the mod is installed.
    *
    * versionRange targets the NeoForge line for pack_format 48 (Minecraft 1.21-1.21.1); bump it
    * if the pack ever targets a newer Minecraft version.
@@ -392,7 +394,7 @@ description='''${state.description || state.namespace}'''
 
 [[dependencies.${state.namespace}]]
     modId="cobblemon_trainers"
-    type="required"
+    type="optional"
     versionRange="[1,)"
     ordering="NONE"
     side="BOTH"
@@ -403,8 +405,9 @@ description='''${state.description || state.namespace}'''
     return `Pack ${state.namespace} - Cobblemon Trainers\n\n`
       + (state.archive === 'jar'
         ? 'A poser dans mods/ (Fabric ou NeoForge). Le fabric.mod.json et le\n'
-          + 'neoforge.mods.toml declarent tous deux la dependance au mod,\n'
-          + 'donc le jeu le dira clairement si Cobblemon Trainers manque.\n'
+          + 'neoforge.mods.toml signalent tous deux Cobblemon Trainers en dependance\n'
+          + 'optionnelle : sans le mod, ce jar se charge quand meme, les dresseurs\n'
+          + 'restent simplement inactifs.\n'
         : assets
           ? 'A poser dans mods/ : c\'est la seule voie qui charge data/ ET assets/\n'
             + '(les musiques, les skins et les traductions) en un seul fichier.\n'
