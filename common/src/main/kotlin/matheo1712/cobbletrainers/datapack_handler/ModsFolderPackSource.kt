@@ -18,6 +18,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Optional
 import java.util.function.Consumer
+import java.util.zip.ZipFile
 
 /**
  * Loads datapacks jar dropped in mods/.
@@ -49,7 +50,7 @@ class ModsFolderPackSource private constructor(private val packType: PackType) :
         val name = path.fileName.toString()
         val info = locationInfo(path)
 
-        if (!isOurs(supplier, info)) return null
+        if (!isOurs(path, supplier, info)) return null
 
         val pack = Pack.readMetaAndCreate(info, supplier, packType, selection)
         if (pack != null) {
@@ -63,11 +64,18 @@ class ModsFolderPackSource private constructor(private val packType: PackType) :
      * something for this pack type - so a data-only pack never shows up in the resource pack
      * screen, and vice versa.
      */
-    private fun isOurs(supplier: Pack.ResourcesSupplier, info: PackLocationInfo): Boolean =
+    private fun isOurs(path: Path, supplier: Pack.ResourcesSupplier, info: PackLocationInfo): Boolean =
         try {
-            supplier.openPrimary(info).use { resources ->
-                Platform.current.modMetadataPaths.none { resources.getRootResource(*it.toTypedArray()) != null } &&
-                    resources.getNamespaces(packType).isNotEmpty()
+            // PackResources rejects uppercase path segments, including NeoForge's META-INF.
+            // Discovery has already validated the candidate; inspect metadata at its root.
+            val metadata = Platform.current.modMetadataPaths
+            val isMod = if (Files.isDirectory(path)) {
+                metadata.any { segments -> Files.exists(segments.fold(path) { base, part -> base.resolve(part) }) }
+            } else {
+                ZipFile(path.toFile()).use { zip -> metadata.any { zip.getEntry(it.joinToString("/")) != null } }
+            }
+            !isMod && supplier.openPrimary(info).use { resources ->
+                resources.getNamespaces(packType).isNotEmpty()
             }
         } catch (e: Exception) {
             CobblemonTrainers.LOGGER.warn("Could not open {} as a pack: {}", info.id(), e.message)

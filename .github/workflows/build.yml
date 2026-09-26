@@ -23,12 +23,15 @@ jobs:
         run: chmod +x ./gradlew
       - name: build
         run: ./gradlew build
-      - name: verify Fabric artifact
+      - name: verify loader artifacts
         run: |
           version=$(sed -n 's/^version=//p' gradle.properties | tr -d '\r')
           python3 .github/scripts/verify-release.py "fabric/build/libs/cobblemon-trainers-${version}.jar" "$version"
+          python3 .github/scripts/verify-release.py "neoforge/build/libs/cobblemon-trainers-neoforge-${version}.jar" "$version" neoforge
       - name: capture build artifacts
         uses: actions/upload-artifact@v7
         with:
           name: Artifacts
-          path: fabric/build/libs/
+          path: |
+            fabric/build/libs/
+            neoforge/build/libs/

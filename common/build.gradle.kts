@@ -39,7 +39,7 @@ val verifyLoaderIndependence = tasks.register("verifyLoaderIndependence") {
     val sources = fileTree("src/main") { include("**/*.kt", "**/*.java") }
     inputs.files(sources)
     doLast {
-        val forbidden = Regex("(?m)^\\s*(?:import|package)\\s+(?:net\\.fabricmc|net\\.neoforged|matheo1712\\.cobbletrainers\\.fabric)\\b")
+        val forbidden = Regex("(?m)^\\s*(?:import|package)\\s+(?:net\\.fabricmc|net\\.neoforged|matheo1712\\.cobbletrainers\\.(?:fabric|neoforge))\\b")
         val violations = sources.files.filter { forbidden.containsMatchIn(it.readText()) }
         check(violations.isEmpty()) { "Loader-specific sources in common: ${violations.joinToString()}" }
     }
