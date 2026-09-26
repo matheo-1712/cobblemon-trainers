@@ -391,7 +391,7 @@ description='''${state.description || state.namespace}'''
     side="BOTH"
 
 [[dependencies.${state.namespace}]]
-    modId="cobblemon-trainers"
+    modId="cobblemon_trainers"
     type="required"
     versionRange="[1,)"
     ordering="NONE"
