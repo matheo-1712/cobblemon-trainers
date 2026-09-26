@@ -4,7 +4,7 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 
 ## Projet
 
-Mod Fabric pour Minecraft 1.21.1 qui ajoute des dresseurs Pokémon configurables à
+Mod Fabric et NeoForge pour Minecraft 1.21.1 qui ajoute des dresseurs Pokémon configurables à
 Cobblemon 1.8.1. Code principal en Kotlin (`matheo1712.cobbletrainers`), les mixins en Java.
 L'essentiel du travail se fait côté serveur logique - les dresseurs viennent de datapacks et
 combattent là-bas - mais **le mod a un côté client, requis, et c'est un endroit légitime pour
@@ -66,7 +66,7 @@ une page de vente, pas une page du wiki.
 ## Commandes
 
 ```bash
-./gradlew build          # compile + remap + produit build/libs/*.jar
+./gradlew build          # compile + remap + produit fabric/build/libs/*.jar
 ./gradlew runClient      # client de dev (tâche fournie par Fabric Loom)
 ./gradlew runServer      # serveur de dev
 ./gradlew genSources     # décompile Minecraft/Cobblemon pour la navigation IDE
@@ -76,13 +76,13 @@ une page de vente, pas une page du wiki.
 Sur Windows, utiliser `.\gradlew.bat`.
 
 Il n'existe pas de source set `src/test` - `build` ne lance donc aucun test.
-Toute vérification passe par `runClient`/`runServer`, dont les mondes vivent dans `run/`
-(gitignoré). **Ne pas mettre de jar Cobblemon dans `run/mods/`** : il est déjà fourni par
+Toute vérification passe par `runClient`/`runServer`, dont les mondes vivent dans `fabric/run/`
+(gitignoré). **Ne pas mettre de jar Cobblemon dans `fabric/run/mods/`** : il est déjà fourni par
 `modImplementation`, et le doublon fait planter le client au démarrage. Mega Showdown et ses
 dépendances, elles, y sont bien - c'est `copyDevMods` qui les y dépose avant chaque `runClient`,
 et c'est voulu (voir « Les gimmicks de combat »).
 
-`copyExamplePack` y dépose aussi le pack d'exemple, en dossier `run/mods/cobblemonrlm/`, pour que
+`copyExamplePack` y dépose aussi le pack d'exemple, en dossier `fabric/run/mods/cobblemonrlm/`, pour que
 tout monde de dev ait ses dresseurs sans rien installer. Un lien symbolique vers
 `examples/cobblemonrlm` ne marcherait pas, pour deux raisons : il emporterait le `fabric.mod.json`
 que `ModsFolderPackSource` refuse, alors que Fabric ne charge que des `.jar` du dossier - le pack
@@ -91,7 +91,7 @@ d'`allowed_symlinks.txt`, qui est vide par défaut. D'où une copie, et un `Sync
 `Copy` : un dresseur retiré d'`examples/` doit disparaître du monde de dev aussi. Contrepartie
 assumée : un `/reload` relit la copie, donc éditer un dresseur demande de relancer la tâche.
 
-Le projet cible **Java 21**, imposé par un toolchain Gradle dans `build.gradle.kts`.
+Le projet cible **Java 21**, imposé par les toolchains de `common/build.gradle.kts` et `fabric/build.gradle.kts`.
 Cobblemon déclare `depends: java [21]`, une version exacte : sans le toolchain, `runClient`
 hérite du JDK de Gradle et le loader refuse de démarrer. Le CI utilise le même JDK 21.
 
@@ -113,7 +113,7 @@ jamais eu besoin. Il reste parce que Mega Showdown, lui, le réclame en dur.
 ces jars portent leur ID de version Modrinth dans leur nom : bumper Mega Showdown laissait
 l'ancien à côté du neuf, et Fabric s'arrête sur deux exemplaires du même mod. Le nettoyage ne
 vise que les noms de module de `devMods`, donc un mod que l'auteur a posé lui-même dans
-`run/mods` n'est pas touché.
+`fabric/run/mods` n'est pas touché.
 
 `cobblemonLibs` **dépaquette les bibliothèques imbriquées dans le jar de Cobblemon** et les pose
 sur le classpath de run via `localRuntime`. C'est la même faille que ci-dessus, mais côté
@@ -140,6 +140,28 @@ curl -s "https://api.modrinth.com/v2/version/<ID>" | python -c "import sys,json;
 ```
 
 ## Architecture
+
+### Structure multiloader
+
+`common/` contient la logique Minecraft/Cobblemon, les modèles, les commandes, les combats,
+le réseau (payloads et validation), les écrans, les caches, le rendu, les mixins et toutes
+les ressources partagées. Aucun import Fabric ou NeoForge n'y est autorisé ; la tâche
+`verifyLoaderIndependence` le vérifie dans `check`.
+
+`fabric/` contient les deux entrypoints Fabric, les implémentations de `TrainerPlatform`
+et `TrainerClientPlatform`, les déclarations `META-INF/services` et `fabric.mod.json`.
+Les services sont séparés pour qu'un serveur dédié ne charge jamais l'adaptateur client.
+Les callbacks réseau doivent être exécutés sur le thread du jeu de leur côté.
+
+Le build commun utilise Loom et le jar Fabric de Cobblemon comme classpath de compilation
+avec les mappings Mojang ; ce n'est pas un mod exécutable. Fabric consomme son `namedElements`,
+regroupe les deux source sets en développement et embarque les classes et ressources communes
+avant son remapping. Aucun jar commun n'est à installer. Le port NeoForge demandera encore
+son adaptateur et la validation de son classpath, de ses registres et des cibles de mixins.
+
+Les commandes restent utilisables depuis la racine. Le jeu de développement vit dans
+`fabric/run/`, les jars distribuables dans `fabric/build/libs/`, et le pack d'exemple reste
+produit à la racine dans `build/dist/`. Voir `docs/DEVELOPPEMENT.md` et `docs/en/DEVELOPMENT.md`.
 
 Flux complet : JSON de datapack → `TrainerDefinition` → `NPCEntity` Cobblemon →
 messages, musique et récompenses de combat.
@@ -1306,7 +1328,7 @@ Points à ne pas redécouvrir :
   dessinée.
 - **Ce mixin vise une méthode de Cobblemon, mais son descripteur est quand même remappé.**
   `PoseStack` et `VertexConsumer` *sont* obfusqués (`class_4587`, `class_4588`), contrairement à
-  `RenderSystem` et compagnie. Vérifié dans `build/libs/*.jar` : le descripteur du `@Inject` y
+  `RenderSystem` et compagnie. Vérifié dans `fabric/build/libs/*.jar` : le descripteur du `@Inject` y
   est exactement celui de la méthode du jar de Cobblemon.
 - **Le `MultiBufferSource` est celui du jeu**, faute d'en avoir un à cet endroit : Cobblemon ne
   reçoit qu'un `VertexConsumer`, et une armure en demande un par texture. C'est le même
@@ -1558,7 +1580,7 @@ et la forme à l'écran - via le `MegaEvolutionEvent` de Cobblemon, qui ne regar
 appartient le Pokémon. Cobblemon a bien les instructions (`ZPowerInstruction`), les événements et
 les boutons de combat des quatre, mais rien dans une installation nue n'offre les trois autres.
 
-**Le jeu de dev le charge depuis `run/mods/`**, où `copyDevMods` copie la configuration
+**Le jeu de dev le charge depuis `fabric/run/mods/`**, où `copyDevMods` copie la configuration
 `devMods` (Mega Showdown, `accessories` dont il dépend en dur, `owo` dont accessories dépend).
 Un `modRuntimeOnly` a été essayé et retiré : un jar de mod embarque ses bibliothèques en JiJ -
 owo y range endec et jankson - et Loom ne les met pas sur le classpath de dev, donc le jeu
@@ -1908,7 +1930,7 @@ construit un `.jar` pour `mods/` peut le déposer tel quel aux deux autres empla
 réempaqueter en `.zip`.
 
 Loom remappe les mixins statiquement (pas de refmap dans le jar) : après un changement,
-vérifier dans `build/libs/*.jar` que la cible est bien passée en intermediary
+vérifier dans `fabric/build/libs/*.jar` que la cible est bien passée en intermediary
 (`detectPackResources` → `method_52441`, `PackDetector` → `class_8621` ;
 `getMarkerParticleTarget` → `method_35752` ; `MusicManager` → `class_1142`, `tick` →
 `method_18669`).
@@ -2067,8 +2089,9 @@ Points à ne pas redécouvrir :
 ## Publication
 
 `.github/workflows/release.yml` se déclenche à la **publication d'une release GitHub** :
-il construit une fois, puis lance trois jobs indépendants pour Modrinth, CurseForge et les
-assets GitHub. Modrinth passe par `./gradlew publishMods` (`me.modmuss50.mod-publish-plugin`).
+il construit les jars Fabric et NeoForge, puis lance les publications indépendantes pour
+Modrinth, CurseForge et les assets GitHub. Modrinth passe par les tâches `publishMods` propres
+à chaque loader (`me.modmuss50.mod-publish-plugin`).
 CurseForge passe par `.github/scripts/publish-curseforge.sh`, qui envoie le jar à l'API d'upload
 avec `gameVersionNames` (`1.21.1`, `Fabric`) et les trois dépendances requises. L'ancien essai
 par le plugin a été retiré après `Invalid game version ID: 11779 belongs to an invalid
@@ -2077,6 +2100,14 @@ dépendent que du build : l'échec d'une plateforme n'empêche pas l'autre ni le
 `CURSEFORGE_TOKEN` et `MODRINTH_TOKEN` sont deux secrets distincts ; `curseforge_id` est l'ID
 numérique du projet. Pour une publication partiellement échouée, relancer seulement les jobs
 échoués évite de créer un doublon sur la plateforme où la version existe déjà.
+
+Le jar remappé Fabric vient de `fabric/build/libs/`, celui de NeoForge de
+`neoforge/build/libs/`. `verify-release.py` vérifie leurs versions,
+ses points d'entrée, ses services, ses mixins et les ressources partagées avant publication.
+Ils sont placés avec le pack dans `build/release/` : chaque job télécharge cet artefact
+unique et vérifie `SHA256SUMS`. Modrinth reçoit `-Prelease_file=<chemin>` pour éviter une
+seconde compilation ; CurseForge reçoit `RELEASE_FILE` et `LOADER`. Son mode `DRY_RUN=true`
+écrit les métadonnées dans `build/mod-publish/curseforge-<loader>.json` sans jeton ni envoi.
 
 Pour couper une release : publier une release GitHub dont le tag est `v<version>`. Rien à
 bumper avant. Le corps de la release devient le changelog partout, et la case *pre-release*
@@ -2124,13 +2155,14 @@ Points à ne pas redécouvrir :
 - **La release GitHub existe déjà** quand le workflow tourne. Le publisher `github` du plugin
   ne sait que *créer* une release, jamais alimenter une release existante (sauf via l'option
   `parent`, réservée aux sous-projets) : les assets passent donc par `gh release upload`.
-- **`file` pointe sur `remapJar`, pas `jar`.** Le second garde les mappings nommés et planterait
+- **Par défaut, `file` pointe sur `remapJar`, pas `jar`.** En CI, `release_file` désigne sa copie
+  déjà construite et vérifiée. Le second garde les mappings nommés et planterait
   hors environnement de développement. `RemapJarTask` dérive de `org.gradle.jvm.tasks.Jar`, pas
   de `org.gradle.api.tasks.bundling.Jar` - `tasks.named<Jar>(…)` échoue avec l'import par défaut
   du Kotlin DSL.
 - **Dans le bloc `publishMods`, `version` est la propriété de l'extension**, pas celle du projet :
   l'interpoler donne sa description Gradle. D'où le `modVersion` capturé au-dessus.
-- Sans jeton, `publishMods` bascule en `dryRun` et écrit dans `build/mod-publish/` - c'est ce qui
+- Sans jeton, `publishMods` bascule en `dryRun` et écrit dans `fabric/build/mod-publish/` - c'est ce qui
   rend `./gradlew publishMods` sûr en local.
 
 ### Le pack d'exemple dans la release

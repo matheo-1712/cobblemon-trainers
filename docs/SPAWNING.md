@@ -11,18 +11,34 @@ Le mod ne fait jamais apparaître un dresseur tout seul. Il n'y a que trois faç
 | `/cobblemontrainers spawn` | Un opérateur | Tester, dépanner |
 | Le Battle Phone | N'importe quel joueur | Un dresseur qui vient quand on l'appelle |
 
-Cette page ne traite que de la troisième. Pour le reste du format, voir
+Cette page détaille l'appel et le rechargement du bloc. Pour le reste du format, voir
 [DATAPACK.md](DATAPACK.md).
 
 *This page is also available [in English](en/SPAWNING.md).*
 
 ## Sommaire
 
+- [Le bloc de dresseur](#le-bloc-de-dresseur)
+
 - [Le bloc `location`](#le-bloc-location) · [Les conditions](#les-conditions) ·
   [Les textes](#les-textes)
 - [Ce que voit le joueur](#ce-que-voit-le-joueur) · [Ce que fait le mod](#ce-que-fait-le-mod)
 - [Les valeurs fixées par le mod](#les-valeurs-fixées-par-le-mod)
 - [Tester](#tester) · [Erreurs fréquentes](#erreurs-fréquentes)
+
+## Le bloc de dresseur
+
+Un opérateur configure le bloc avec l'ID d'un dresseur. Le bloc conserve cet ID et ses
+réglages : l'équipe, le nom et la tenue sont relus dans la définition actuelle chaque fois que
+le dresseur est créé. Au chargement d'un chunk ou d'un monde, le dresseur présent est remplacé
+après un court délai de chargement. Une copie du bloc placée depuis une structure crée elle
+aussi un dresseur neuf ; si la structure contient l'ancienne entité, celle qui apparaît sur
+le bloc est écartée. Une définition modifiée dans le datapack prend donc effet au prochain
+chargement du bloc, ou immédiatement avec le bouton **Réapparaître**.
+
+Ce bouton utilise les réglages **déjà enregistrés** sur le serveur. Clique d'abord sur
+**Terminé** si tu as changé l'ID ou les réglages dans l'écran. Le bouton ne réclame pas le
+délai normal de réapparition après une mort.
 
 ## Le bloc `location`
 
