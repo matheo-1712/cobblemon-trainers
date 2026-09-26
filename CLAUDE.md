@@ -2067,17 +2067,23 @@ Points à ne pas redécouvrir :
 ## Publication
 
 `.github/workflows/release.yml` se déclenche à la **publication d'une release GitHub** :
-il construit, publie sur Modrinth via `./gradlew publishMods`
-(`me.modmuss50.mod-publish-plugin`), puis attache les assets à la release.
+il construit une fois, puis lance trois jobs indépendants pour Modrinth, CurseForge et les
+assets GitHub. Modrinth passe par `./gradlew publishMods` (`me.modmuss50.mod-publish-plugin`).
+CurseForge passe par `.github/scripts/publish-curseforge.sh`, qui envoie le jar à l'API d'upload
+avec `gameVersionNames` (`1.21.1`, `Fabric`) et les trois dépendances requises. L'ancien essai
+par le plugin a été retiré après `Invalid game version ID: 11779 belongs to an invalid
+dependency` : au moins un des tags numériques ajoutés par le plugin était refusé. Les jobs ne
+dépendent que du build : l'échec d'une plateforme n'empêche pas l'autre ni les assets GitHub.
+`CURSEFORGE_TOKEN` et `MODRINTH_TOKEN` sont deux secrets distincts ; `curseforge_id` est l'ID
+numérique du projet. Pour une publication partiellement échouée, relancer seulement les jobs
+échoués évite de créer un doublon sur la plateforme où la version existe déjà.
 
-**Modrinth est la seule plateforme.** CurseForge a été tenté puis retiré : son API d'upload
-répondait invariablement `Invalid game version ID: 11779 belongs to an invalid dependency`.
-Le plugin envoie quatre catégories d'IDs (version Minecraft, modloader, environnement
-client/server, version Java), toutes résolues depuis la liste de CurseForge elle-même - l'ID
-existe donc, c'est son type que le projet refuse. Retirer `javaVersions` n'a rien changé, ce
-qui laisse le tag d'environnement, que le plugin impose (`client` ou `server`, au moins un).
-Ne pas réessayer sans avoir d'abord identifié 11779 via `GET /api/game/versions` avec un jeton
-CurseForge.
+Le jar remappé vient de `fabric/build/libs/`. `verify-release.py` vérifie sa version,
+ses points d'entrée, ses services, ses mixins et les ressources partagées avant publication.
+Il est placé avec le pack dans `build/release/` : les trois jobs téléchargent cet artefact
+unique et vérifient `SHA256SUMS`. Modrinth reçoit `-Prelease_file=<chemin>` pour éviter une
+seconde compilation ; CurseForge reçoit `RELEASE_FILE`. Son mode `DRY_RUN=true` écrit les
+métadonnées dans `build/mod-publish/curseforge.json` sans jeton ni envoi.
 
 Pour couper une release : publier une release GitHub dont le tag est `v<version>`. Rien à
 bumper avant. Le corps de la release devient le changelog partout, et la case *pre-release*
@@ -2111,8 +2117,9 @@ Points à ne pas redécouvrir :
   à un autre projet, et la modération refuse un slug qui ne correspond pas au nom du projet.
   Le `modrinth_id` de `gradle.properties` est l'ID du projet, immuable : il ne suit pas le slug.
   Le seul endroit du dépôt qui nomme le slug est le lien de `MODRINTH.md`.
-- **Le workflow exige `MODRINTH_TOKEN` avant de construire.** Sans jeton, `publishMods`
-  bascule en `dryRun` et le workflow finirait vert sans rien publier.
+- **Le job Modrinth exige `MODRINTH_TOKEN` avant d'appeler `publishMods`.** Sans jeton,
+  `publishMods` bascule en `dryRun` et le job finirait vert sans rien publier. Le job CurseForge
+  exige `CURSEFORGE_TOKEN` séparément.
 - **Un numéro de version déjà publié sur Modrinth est refusé (409).** Une release qui échoue
   après l'upload Modrinth ne se rejoue pas sur le même tag : reprendre sur le suivant, ou
   supprimer la version depuis le tableau de bord.
@@ -2124,7 +2131,8 @@ Points à ne pas redécouvrir :
 - **La release GitHub existe déjà** quand le workflow tourne. Le publisher `github` du plugin
   ne sait que *créer* une release, jamais alimenter une release existante (sauf via l'option
   `parent`, réservée aux sous-projets) : les assets passent donc par `gh release upload`.
-- **`file` pointe sur `remapJar`, pas `jar`.** Le second garde les mappings nommés et planterait
+- **Par défaut, `file` pointe sur `remapJar`, pas `jar`.** En CI, `release_file` désigne sa copie
+  déjà construite et vérifiée. Le second garde les mappings nommés et planterait
   hors environnement de développement. `RemapJarTask` dérive de `org.gradle.jvm.tasks.Jar`, pas
   de `org.gradle.api.tasks.bundling.Jar` - `tasks.named<Jar>(…)` échoue avec l'import par défaut
   du Kotlin DSL.

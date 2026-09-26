@@ -61,6 +61,13 @@ base {
 evaluationDependsOn(":common")
 val commonSources = project(":common").extensions.getByType<SourceSetContainer>()
 loom {
+	runs.configureEach {
+		generateRunConfig.set(true)
+		// Use Gradle so Java 21, shared outputs, dev mods and the example pack are prepared.
+		preferGradleTask.set(true)
+		appendProjectPathToDisplayName.set(false)
+		displayName.set(if (name == "client") "Minecraft Client (Fabric)" else "Minecraft Server (Fabric)")
+	}
 	mods {
 		create("cobblemon-trainers") {
 			sourceSet(sourceSets.main.get())
@@ -270,7 +277,11 @@ val modVersion = project.version.toString()
 publishMods {
 	// `remapJar`, not `jar`: the latter still carries named mappings and would crash outside a
 	// development environment.
-	file = tasks.named<RemapJarTask>("remapJar").flatMap { it.archiveFile }
+	// CI publishes the already-built, checksummed artifact used by every destination.
+	// Without an override, local publishing still builds the remapped Fabric jar.
+	file = providers.gradleProperty("release_file")
+		.map { rootProject.layout.projectDirectory.file(it) }
+		.orElse(tasks.named<RemapJarTask>("remapJar").flatMap { it.archiveFile })
 	displayName = "Cobblemon Trainers $modVersion"
 	version = modVersion
 	type = releaseType

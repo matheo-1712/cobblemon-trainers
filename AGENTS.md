@@ -2100,6 +2100,13 @@ dépendent que du build : l'échec d'une plateforme n'empêche pas l'autre ni le
 numérique du projet. Pour une publication partiellement échouée, relancer seulement les jobs
 échoués évite de créer un doublon sur la plateforme où la version existe déjà.
 
+Le jar remappé vient de `fabric/build/libs/`. `verify-release.py` vérifie sa version,
+ses points d'entrée, ses services, ses mixins et les ressources partagées avant publication.
+Il est placé avec le pack dans `build/release/` : les trois jobs téléchargent cet artefact
+unique et vérifient `SHA256SUMS`. Modrinth reçoit `-Prelease_file=<chemin>` pour éviter une
+seconde compilation ; CurseForge reçoit `RELEASE_FILE`. Son mode `DRY_RUN=true` écrit les
+métadonnées dans `build/mod-publish/curseforge.json` sans jeton ni envoi.
+
 Pour couper une release : publier une release GitHub dont le tag est `v<version>`. Rien à
 bumper avant. Le corps de la release devient le changelog partout, et la case *pre-release*
 choisit entre `stable` et `beta` (`alpha` si le tag contient `alpha`).
@@ -2146,7 +2153,8 @@ Points à ne pas redécouvrir :
 - **La release GitHub existe déjà** quand le workflow tourne. Le publisher `github` du plugin
   ne sait que *créer* une release, jamais alimenter une release existante (sauf via l'option
   `parent`, réservée aux sous-projets) : les assets passent donc par `gh release upload`.
-- **`file` pointe sur `remapJar`, pas `jar`.** Le second garde les mappings nommés et planterait
+- **Par défaut, `file` pointe sur `remapJar`, pas `jar`.** En CI, `release_file` désigne sa copie
+  déjà construite et vérifiée. Le second garde les mappings nommés et planterait
   hors environnement de développement. `RemapJarTask` dérive de `org.gradle.jvm.tasks.Jar`, pas
   de `org.gradle.api.tasks.bundling.Jar` - `tasks.named<Jar>(…)` échoue avec l'import par défaut
   du Kotlin DSL.

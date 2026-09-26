@@ -34,6 +34,19 @@ From the root, with Java 21 (`.\gradlew.bat` on Windows):
 publication files are written to `fabric/build/mod-publish/`. Build, release and editor
 workflows use the new paths.
 
+In IntelliJ, reloading Gradle generates `Minecraft Client (Fabric)` and
+`Minecraft Server (Fabric)`. `./gradlew :fabric:ideaSyncTask` also regenerates them.
+These configurations run Gradle tasks, which prepare Java 21, development mods and
+the example pack. No Architectury launcher is used.
+
+A release builds the jar once in `fabric/build/libs/`, validates its contents, then
+stages it with the example pack in `build/release/`. Modrinth, CurseForge and GitHub
+receive these same files after SHA-256 verification. The property
+`-Prelease_file=build/release/cobblemon-trainers-<version>.jar` lets `publishMods`
+use that jar without rebuilding it. The CurseForge script accepts the same path through
+`RELEASE_FILE`; `DRY_RUN=true` only writes its metadata to
+`build/mod-publish/curseforge.json` (with `VERSION` and `RELEASE_TYPE` set).
+
 ## Logic and platform boundary
 
 `TrainerPlatform` defines loader operations: server events, commands, reloads, registries,

@@ -50,10 +50,10 @@ jobs:
           # Everything downstream - the jar name, fabric.mod.json, the Modrinth version number -
           # is built from this string, so a tag like "latest" has to stop here rather than ship a
           # jar named after it.
-          case "$version" in
-            [0-9]*.[0-9]*) ;;
-            *) echo "::error::tag $TAG does not carry a version number (expected something like v1.2.3)"; exit 1 ;;
-          esac
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-+][0-9A-Za-z.+-]+)?$ ]]; then
+            echo "::error::tag $TAG does not carry a version number (expected something like v1.2.3)"
+            exit 1
+          fi
 
           if [ "$PRERELEASE" = "true" ]; then
             case "$version" in
@@ -71,13 +71,22 @@ jobs:
       - name: build
         run: ./gradlew build exampleDatapack "-Pversion=${{ steps.release.outputs.version }}"
 
+      - name: stage release files
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          python3 .github/scripts/verify-release.py "fabric/build/libs/cobblemon-trainers-${VERSION}.jar" "$VERSION"
+          mkdir -p build/release
+          cp "fabric/build/libs/cobblemon-trainers-${VERSION}.jar" build/release/
+          cp build/dist/exemple_trainer_datapack.zip build/release/
+          cd build/release
+          sha256sum "cobblemon-trainers-${VERSION}.jar" exemple_trainer_datapack.zip > SHA256SUMS
+
       - name: save release files
         uses: actions/upload-artifact@v7
         with:
           name: release-files
-          path: |
-            build/libs/cobblemon-trainers-${{ steps.release.outputs.version }}.jar
-            build/dist/exemple_trainer_datapack.zip
+          path: build/release/
           if-no-files-found: error
 
     outputs:
@@ -96,6 +105,15 @@ jobs:
           distribution: 'microsoft'
       - run: chmod +x ./gradlew
 
+      - uses: actions/download-artifact@v8
+        with:
+          name: release-files
+          path: build/release
+
+      - name: verify release files
+        working-directory: build/release
+        run: sha256sum -c SHA256SUMS
+
       # The plugin silently switches to dry-run when the token is absent.
       - name: check Modrinth credentials
         env:
@@ -109,7 +127,8 @@ jobs:
         run: |
           ./gradlew publishMods \
             "-Pversion=${{ needs.build.outputs.version }}" \
-            "-Prelease_type=${{ needs.build.outputs.type }}"
+            "-Prelease_type=${{ needs.build.outputs.type }}" \
+            "-Prelease_file=build/release/cobblemon-trainers-${{ needs.build.outputs.version }}.jar"
 
       - name: update the modrinth description
         env:
@@ -146,7 +165,11 @@ jobs:
       - uses: actions/download-artifact@v8
         with:
           name: release-files
-          path: build
+          path: build/release
+
+      - name: verify release files
+        working-directory: build/release
+        run: sha256sum -c SHA256SUMS
 
       - name: publish to CurseForge
         env:
@@ -154,6 +177,7 @@ jobs:
           CHANGELOG: ${{ github.event.release.body }}
           RELEASE_TYPE: ${{ needs.build.outputs.type }}
           VERSION: ${{ needs.build.outputs.version }}
+          RELEASE_FILE: build/release/cobblemon-trainers-${{ needs.build.outputs.version }}.jar
         run: bash .github/scripts/publish-curseforge.sh
 
   github-assets:
@@ -165,7 +189,11 @@ jobs:
       - uses: actions/download-artifact@v8
         with:
           name: release-files
-          path: build
+          path: build/release
+
+      - name: verify release files
+        working-directory: build/release
+        run: sha256sum -c SHA256SUMS
 
       - name: attach the assets to the github release
         env:
@@ -174,8 +202,8 @@ jobs:
           TAG: ${{ github.event.release.tag_name }}
           VERSION: ${{ needs.build.outputs.version }}
         run: |
-          jar="build/libs/cobblemon-trainers-${VERSION}.jar"
-          pack="build/dist/exemple_trainer_datapack.zip"
+          jar="build/release/cobblemon-trainers-${VERSION}.jar"
+          pack="build/release/exemple_trainer_datapack.zip"
 
           for asset in "$jar" "$pack"; do
             [ -f "$asset" ] || { echo "::error::$asset was not built"; exit 1; }
