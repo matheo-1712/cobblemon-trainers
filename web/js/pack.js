@@ -364,11 +364,46 @@ const Pack = (() => {
     depends: { 'cobblemon-trainers': '*' }
   });
 
+  /**
+   * The NeoForge side of the same identity. `lowcodefml` is NeoForge's loader for mods that
+   * ship no Java at all - exactly this pack's case - so no main class is needed for the jar
+   * to be recognised and refuse to start without Cobblemon Trainers.
+   *
+   * versionRange targets the NeoForge line for pack_format 48 (Minecraft 1.21-1.21.1); bump it
+   * if the pack ever targets a newer Minecraft version.
+   */
+  const neoforgeModsToml = () => `modLoader="lowcodefml"
+loaderVersion="[1,)"
+license="All rights reserved"
+issueTrackerURL="https://github.com/matheo-1712/cobblemon-trainers/issues"
+
+[[mods]]
+modId="${state.namespace}"
+version="1.0.0"
+displayName="${state.description || state.namespace}"
+description='''${state.description || state.namespace}'''
+
+[[dependencies.${state.namespace}]]
+    modId="neoforge"
+    type="required"
+    versionRange="[21,)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.${state.namespace}]]
+    modId="cobblemon-trainers"
+    type="required"
+    versionRange="[1,)"
+    ordering="NONE"
+    side="BOTH"
+`;
+
   const readme = () => {
     const assets = state.assets.length > 0 || languages().some((code) => Object.keys(state.lang[code]).length);
     return `Pack ${state.namespace} - Cobblemon Trainers\n\n`
       + (state.archive === 'jar'
-        ? 'A poser dans mods/. Le fabric.mod.json declare la dependance au mod,\n'
+        ? 'A poser dans mods/ (Fabric ou NeoForge). Le fabric.mod.json et le\n'
+          + 'neoforge.mods.toml declarent tous deux la dependance au mod,\n'
           + 'donc le jeu le dira clairement si Cobblemon Trainers manque.\n'
         : assets
           ? 'A poser dans mods/ : c\'est la seule voie qui charge data/ ET assets/\n'
@@ -387,6 +422,8 @@ const Pack = (() => {
       archive.file(`data/${state.namespace}/${ROOT}/trainers/pack.json`, json({ order: Number(state.packOrder) }));
     }
     if (state.archive === 'jar') archive.file('fabric.mod.json', fabricMod());
+    if (state.archive === 'jar') archive.file('META-INF/neoforge.mods.toml', neoforgeModsToml());
+    if (state.archive === 'jar') archive.file('', fabricMod());
 
     state.files.forEach((entry) => archive.file(pathOf(entry), json(entry.doc)));
 
@@ -444,7 +481,7 @@ const Pack = (() => {
 
     // The format describes the archive being read, so it is decided here rather than left
     // over from whatever was loaded before - an import replaces, it does not inherit.
-    state.archive = entries.some((item) => item.name.endsWith('fabric.mod.json')) ? 'jar' : 'zip';
+    state.archive = entries.some((item) => item.name.endsWith('fabric.mod.json') || item.name.endsWith('neoforge.mods.toml')) ? 'jar' : 'zip';
 
     // The assets half first, so a trainer read afterwards already has its music to point at.
     for (const item of entries) {
