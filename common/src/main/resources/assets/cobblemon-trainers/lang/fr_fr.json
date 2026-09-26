@@ -69,11 +69,14 @@
   "cobblemon-trainers.screen.trainer_spawner.trainer.hint": "namespace:nom - vide pour aucun dresseur",
   "cobblemon-trainers.screen.trainer_spawner.radius": "Rayon de retour (blocs)",
   "cobblemon-trainers.screen.trainer_spawner.delay": "Délai de réapparition (secondes)",
+  "cobblemon-trainers.screen.trainer_spawner.respawn": "Réapparaître",
 
   "cobblemon-trainers.chat.spawner.configured": "Bloc réglé sur %s.",
   "cobblemon-trainers.chat.spawner.cleared": "Bloc vidé : il n'invoque plus personne.",
   "cobblemon-trainers.chat.spawner.unknown_trainer": "Dresseur « %s » introuvable. Vérifie les ID dans data/<namespace>/cobblemontrainers/ de tes datapacks.",
   "cobblemon-trainers.chat.spawner.client_required": "Configurer un bloc de dresseur demande Cobblemon Trainers installé côté client.",
+  "cobblemon-trainers.chat.spawner.respawned": "Dresseur recréé depuis sa définition actuelle.",
+  "cobblemon-trainers.chat.spawner.respawn_failed": "Impossible de recréer ce dresseur : vérifie la configuration du bloc et le datapack.",
 
   "cobblemon-trainers.chat.trainer_message": "[%s] %s",
 

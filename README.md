@@ -1,6 +1,6 @@
 # Cobblemon Trainers
 
-Mod Fabric qui ajoute des dresseurs Pokémon configurables à Cobblemon. Chaque dresseur est
+Mod Fabric et NeoForge qui ajoute des dresseurs Pokémon configurables à Cobblemon. Chaque dresseur est
 un fichier JSON : une équipe au format Showdown, un skin - celui d'un compte Minecraft ou une
 image livrée par le pack -, des dialogues dans la boîte de Cobblemon, une musique de combat -
 et, pour un champion, un écran de versus avant le combat -, et de quoi monter une progression - catégories, conditions à remplir pour être défié,
@@ -47,16 +47,18 @@ jusque-là.
 | | Version |
 | --- | --- |
 | Minecraft | 1.21.1 |
-| Fabric Loader | ≥ 0.17.2 |
+| Fabric Loader ou NeoForge | Fabric ≥ 0.17.2 ; NeoForge ≥ 21.1.251 |
 | Java | 21 (exactement - Cobblemon refuse les autres) |
 | Cobblemon | ≥ 1.8.0 |
-| Fabric API | requis |
-| Fabric Language Kotlin | requis |
+| Fabric API et Fabric Language Kotlin | requis avec Fabric |
+| Kotlin for Forge | requis avec NeoForge (≥ 5.12.0) |
 
 ## Installation
 
-Place `cobblemon-trainers-<version>.jar` dans le dossier `mods/`, à côté de Cobblemon,
-Fabric API et Fabric Language Kotlin. En solo, il n'y a rien de plus à faire.
+Place le jar correspondant à ton loader dans `mods/`, avec Cobblemon. Le jar Fabric est
+`cobblemon-trainers-<version>.jar` et demande Fabric API et Fabric Language Kotlin ; le jar
+NeoForge est `cobblemon-trainers-neoforge-<version>.jar` et demande Kotlin for Forge.
+En solo, il n'y a rien de plus à faire.
 
 **En multijoueur, le mod est requis des deux côtés** : le serveur et chaque joueur. Le Battle
 Phone, l'écran du bloc de dresseur et la musique de combat sont des choses qu'un client doit
@@ -373,15 +375,17 @@ les pièges sont dans [docs/DATAPACK.md](docs/DATAPACK.md#où-poser-le-pack).
 ./gradlew build
 ```
 
-Le jar remappé sort dans `build/libs/`. Pour lancer un environnement de test :
+Les jars sortent dans `fabric/build/libs/` et `neoforge/build/libs/`. Pour lancer un
+environnement de test :
 
 ```bash
 ./gradlew runClient
+./gradlew :neoforge:runClient
 ```
 
 Le projet cible Java 21 via un toolchain Gradle, ce qui force aussi `runClient` et
 `runServer` - sans ça, Cobblemon refuse de démarrer sous un JDK plus récent. Ne place pas
-de jar Cobblemon dans `run/mods/` : il est déjà fourni par les dépendances, et le doublon
+de jar Cobblemon dans `fabric/run/mods/` : il est déjà fourni par les dépendances, et le doublon
 fait planter le client.
 
 Les versions de Cobblemon et Architectury sont des **ID de version Modrinth** dans
@@ -398,7 +402,7 @@ pour la configuration de l'IDE.
 ### Publier une release
 
 Publier une release GitHub dont le tag est `v<version>`, par exemple `v1.2.3`. Le workflow
-`release.yml` construit, publie séparément sur Modrinth et CurseForge, et attache à la release le jar et
+`release.yml` construit les deux loaders, publie chacun sur Modrinth et CurseForge, et attache à la release les deux jars et
 `exemple_trainer_datapack.zip` - le pack d'exemple, prêt à poser dans `mods/`, `datapacks/` ou
 `resourcepacks/`.
 
@@ -410,7 +414,7 @@ Le workflow pousse aussi `MODRINTH.md` par-dessus la description du projet Modri
 release : la page de la boutique ne peut donc pas décrire une version antérieure.
 
 Deux secrets attendus par le dépôt : `MODRINTH_TOKEN` et `CURSEFORGE_TOKEN` (jeton d'auteur CurseForge).
-Les deux publications et l'ajout des fichiers GitHub sont trois tâches indépendantes après le build :
+Les publications et l'ajout des fichiers GitHub sont des tâches indépendantes après le build :
 un échec sur une plateforme n'empêche pas les autres. Relancer seulement la tâche échouée évite
 de republier une version déjà créée.
 En local, `./gradlew publishMods` est

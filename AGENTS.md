@@ -4,7 +4,7 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 
 ## Projet
 
-Mod Fabric pour Minecraft 1.21.1 qui ajoute des dresseurs Pokémon configurables à
+Mod Fabric et NeoForge pour Minecraft 1.21.1 qui ajoute des dresseurs Pokémon configurables à
 Cobblemon 1.8.1. Code principal en Kotlin (`matheo1712.cobbletrainers`), les mixins en Java.
 L'essentiel du travail se fait côté serveur logique - les dresseurs viennent de datapacks et
 combattent là-bas - mais **le mod a un côté client, requis, et c'est un endroit légitime pour
@@ -2089,8 +2089,9 @@ Points à ne pas redécouvrir :
 ## Publication
 
 `.github/workflows/release.yml` se déclenche à la **publication d'une release GitHub** :
-il construit une fois, puis lance trois jobs indépendants pour Modrinth, CurseForge et les
-assets GitHub. Modrinth passe par `./gradlew publishMods` (`me.modmuss50.mod-publish-plugin`).
+il construit les jars Fabric et NeoForge, puis lance les publications indépendantes pour
+Modrinth, CurseForge et les assets GitHub. Modrinth passe par les tâches `publishMods` propres
+à chaque loader (`me.modmuss50.mod-publish-plugin`).
 CurseForge passe par `.github/scripts/publish-curseforge.sh`, qui envoie le jar à l'API d'upload
 avec `gameVersionNames` (`1.21.1`, `Fabric`) et les trois dépendances requises. L'ancien essai
 par le plugin a été retiré après `Invalid game version ID: 11779 belongs to an invalid
@@ -2100,12 +2101,13 @@ dépendent que du build : l'échec d'une plateforme n'empêche pas l'autre ni le
 numérique du projet. Pour une publication partiellement échouée, relancer seulement les jobs
 échoués évite de créer un doublon sur la plateforme où la version existe déjà.
 
-Le jar remappé vient de `fabric/build/libs/`. `verify-release.py` vérifie sa version,
+Le jar remappé Fabric vient de `fabric/build/libs/`, celui de NeoForge de
+`neoforge/build/libs/`. `verify-release.py` vérifie leurs versions,
 ses points d'entrée, ses services, ses mixins et les ressources partagées avant publication.
-Il est placé avec le pack dans `build/release/` : les trois jobs téléchargent cet artefact
-unique et vérifient `SHA256SUMS`. Modrinth reçoit `-Prelease_file=<chemin>` pour éviter une
-seconde compilation ; CurseForge reçoit `RELEASE_FILE`. Son mode `DRY_RUN=true` écrit les
-métadonnées dans `build/mod-publish/curseforge.json` sans jeton ni envoi.
+Ils sont placés avec le pack dans `build/release/` : chaque job télécharge cet artefact
+unique et vérifie `SHA256SUMS`. Modrinth reçoit `-Prelease_file=<chemin>` pour éviter une
+seconde compilation ; CurseForge reçoit `RELEASE_FILE` et `LOADER`. Son mode `DRY_RUN=true`
+écrit les métadonnées dans `build/mod-publish/curseforge-<loader>.json` sans jeton ni envoi.
 
 Pour couper une release : publier une release GitHub dont le tag est `v<version>`. Rien à
 bumper avant. Le corps de la release devient le changelog partout, et la case *pre-release*

@@ -11,18 +11,33 @@ The mod never spawns a trainer on its own. There are only three ways to see one:
 | `/cobblemontrainers spawn` | An operator | Testing, troubleshooting |
 | The Battle Phone | Any player | A trainer who comes when called |
 
-This page only covers the third one. For the rest of the format, see
+This page covers calling and reloading the block. For the rest of the format, see
 [DATAPACK.md](DATAPACK.md).
 
 *Cette page existe aussi [en français](../SPAWNING.md).*
 
 ## Contents
 
+- [The trainer spawner block](#the-trainer-spawner-block)
+
 - [The `location` block](#the-location-block) · [The conditions](#the-conditions) ·
   [The text](#the-text)
 - [What the player sees](#what-the-player-sees) · [What the mod does](#what-the-mod-does)
 - [The values the mod fixes](#the-values-the-mod-fixes)
 - [Testing](#testing) · [Common mistakes](#common-mistakes)
+
+## The trainer spawner block
+
+An operator configures the block with a trainer ID. The block keeps that ID and its
+settings: the team, name and outfit come from the current definition whenever it creates the
+trainer. When a chunk or world loads, the existing trainer is replaced after a short loading
+grace period. A block copied by a structure also creates a fresh trainer; if the structure
+contains the old entity, the copy standing on the block is removed. Datapack edits therefore
+take effect the next time the block loads, or immediately with **Respawn**.
+
+This button uses settings **already saved** on the server. Click **Done** first if you changed
+the ID or settings in the screen. The button does not wait for the usual post-death respawn
+delay.
 
 ## The `location` block
 
