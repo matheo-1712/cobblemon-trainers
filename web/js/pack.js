@@ -366,6 +366,20 @@ const Pack = (() => {
   });
 
   /**
+   * NeoForge modid rule (unlike Fabric or Minecraft namespaces): `^[a-z][a-z0-9_]{1,63}$`, so
+   * no hyphens or dots. The pack's namespace is free to use them (Minecraft namespaces allow
+   * `-` and `.`), so the two ids only match by coincidence - this is the pack's own identity
+   * for NeoForge, independent from where its data/assets files live.
+   */
+  const neoforgeModId = () => {
+    let id = state.namespace.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+    if (!/^[a-z]/.test(id)) id = 'pack_' + id;
+    id = id.slice(0, 64);
+    if (id.length < 2) id = (id + '_pack').slice(0, 64);
+    return id;
+  };
+
+  /**
    * The NeoForge side of the same identity. `lowcodefml` is NeoForge's loader for mods that
    * ship no Java at all - exactly this pack's case - so no main class is needed. The dependency
    * on Cobblemon Trainers is `optional`: the jar still loads without it, the trainers just do
@@ -374,31 +388,31 @@ const Pack = (() => {
    * versionRange targets the NeoForge line for pack_format 48 (Minecraft 1.21-1.21.1); bump it
    * if the pack ever targets a newer Minecraft version.
    */
-  const neoforgeModsToml = () => `modLoader="lowcodefml"
+  const neoforgeModsToml = () => { const id = neoforgeModId(); return `modLoader="lowcodefml"
 loaderVersion="[1,)"
 license="All rights reserved"
 issueTrackerURL="https://github.com/matheo-1712/cobblemon-trainers/issues"
 
 [[mods]]
-modId="${state.namespace}"
+modId="${id}"
 version="1.0.0"
 displayName="${state.description || state.namespace}"
 description='''${state.description || state.namespace}'''
 
-[[dependencies.${state.namespace}]]
+[[dependencies.${id}]]
     modId="neoforge"
     type="required"
     versionRange="[21,)"
     ordering="NONE"
     side="BOTH"
 
-[[dependencies.${state.namespace}]]
+[[dependencies.${id}]]
     modId="cobblemon_trainers"
     type="optional"
     versionRange="[0.9.0,)"
     ordering="NONE"
     side="BOTH"
-`;
+`; };
 
   const readme = () => {
     const assets = state.assets.length > 0 || languages().some((code) => Object.keys(state.lang[code]).length);
