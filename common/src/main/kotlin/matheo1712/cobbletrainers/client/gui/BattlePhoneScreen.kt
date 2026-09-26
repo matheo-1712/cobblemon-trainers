@@ -1,0 +1,1530 @@
+package matheo1712.cobbletrainers.client.gui
+
+import matheo1712.cobbletrainers.client.platform.ClientPlatform
+
+import com.cobblemon.mod.common.client.gui.drawProfilePokemon
+import com.cobblemon.mod.common.api.npc.NPCClasses
+import com.cobblemon.mod.common.client.render.models.blockbench.FloatingState
+import com.cobblemon.mod.common.entity.npc.NPCEntity
+import com.cobblemon.mod.common.entity.npc.NPCPlayerModelType
+import com.cobblemon.mod.common.entity.npc.NPCPlayerTexture
+import com.cobblemon.mod.common.util.math.fromEulerXYZDegrees
+import com.mojang.blaze3d.systems.RenderSystem
+import matheo1712.cobbletrainers.CobblemonTrainers
+import matheo1712.cobbletrainers.client.cache.TrainerSkinCache
+import matheo1712.cobbletrainers.client.cache.TrainerTeamCache
+import matheo1712.cobbletrainers.network.BattlePhoneEntry
+import matheo1712.cobbletrainers.network.CallTrainerPayload
+import matheo1712.cobbletrainers.network.OpenBattlePhonePayload
+import matheo1712.cobbletrainers.trainers.RewardPreview
+import matheo1712.cobbletrainers.trainers.TrainerOutfit
+import matheo1712.cobbletrainers.trainers.TrainerSpawner
+import matheo1712.cobbletrainers.client.ClientBattleMusic
+import matheo1712.cobbletrainers.battle.TrainerBattleMusic
+import net.minecraft.ChatFormatting
+import net.minecraft.client.Minecraft
+import net.minecraft.client.gui.GuiGraphics
+import net.minecraft.client.gui.screens.Screen
+import net.minecraft.client.gui.screens.inventory.InventoryScreen
+import net.minecraft.client.resources.sounds.SimpleSoundInstance
+import net.minecraft.sounds.SoundEvents
+import net.minecraft.network.chat.Component
+import net.minecraft.resources.ResourceLocation
+import org.joml.Quaternionf
+import org.joml.Vector3f
+import org.lwjgl.glfw.GLFW
+import java.awt.Color
+
+/**
+ * The battle phone screen: the trainers of the world, sorted by the datapack they come from,
+ * and whether the player has beaten them.
+ *
+ * Laid out after the clamshell the frame draws - the roster fills the lower screen, two
+ * entries to a line, and whoever is selected there gets the upper one to themselves. It is
+ * dressed with the mod's own textures, under
+ * `assets/cobblemon-trainers/textures/gui/battle_phone/`. The selected trainer is previewed
+ * with Cobblemon's NPC model using the skin the server sent. The frame textures are deliberately plain - a
+ * bezel, a slot, a couple of arrows, a status marker - and everything behind them is drawn
+ * with flat rectangles. The item color selects matching frame textures and tints those flat
+ * colors. [FRAME] is the one with a constraint: its two transparent holes have to line up with
+ * [UPPER_X] and [LOWER_X] and their friends, since those holes are where the screens draw.
+ *
+ * The listing is whatever the server sent, and nothing is ever sent back beyond two questions:
+ * the skin of a trainer, and the team of one the player has beaten. Both are cached - see
+ * [TrainerSkinCache] and [TrainerTeamCache].
+ */
+class BattlePhoneScreen(data: OpenBattlePhonePayload) :
+    Screen(CobblemonTrainers.lang("screen.battle_phone.title")) {
+
+    private val phoneColor = data.color.takeIf { it in PHONE_COLORS } ?: "blue"
+    private val themedColors = HashMap<Int, Int>()
+    private val FRAME = phoneTexture("frame", phoneColor)
+    private val SLOT = phoneTexture("slot", phoneColor)
+    private val SLOT_SELECT = phoneTexture("slot_selected", phoneColor)
+    private val MARKER = phoneTexture("marker", phoneColor)
+    private val ARROW_LEFT = phoneTexture("arrow_left", phoneColor)
+    private val ARROW_RIGHT = phoneTexture("arrow_right", phoneColor)
+
+    /**
+     * A line of the roster. A datapack heading only appears in the tab that holds every
+     * datapack at once, where it is what makes the sort by pack visible; a tab that is already
+     * one datapack has its name in the selector above. Category headings appear in both, and
+     * in neither for a pack that files every trainer at its root. A [Row] holds a whole line
+     * of entries, so one group never spills into the columns of the next.
+     */
+    private sealed class Row(val height: Int) {
+        /**
+         * A heading over a run of trainers: the datapack they come from in the tab that holds
+         * every pack, the category they are filed under everywhere. [primary] is the first of
+         * those two, and the only difference between them is how they are drawn.
+         */
+        class Header(
+            val label: Component,
+            val primary: Boolean,
+            val defeated: Int,
+            val total: Int
+        ) : Row(HEADER_HEIGHT)
+        class Trainers(val entries: List<BattlePhoneEntry>) : Row(ROW_HEIGHT)
+    }
+
+    /** A datapack tab. A null [namespace] is the tab holding every trainer at once. */
+    private class Group(val namespace: String?, val entries: List<BattlePhoneEntry>, val rows: List<Row>)
+
+    private val groups: List<Group> = buildGroups(data.entries)
+
+    private var groupIndex = 0
+    private var scroll = 0
+    private var selected: BattlePhoneEntry? = null
+
+    /**
+     * One animation state per team slot, thrown away when the selected trainer changes: a
+     * state belongs to the model it was posed for.
+     */
+    private var teamStates: List<FloatingState> = List(TEAM_SLOTS) { FloatingState() }
+    private var teamStatesOwner: String? = null
+    private var previewEntity: NPCEntity? = null
+    private var previewOwner: String? = null
+    private var musicOwner: String? = null
+    private var previewSkin: TrainerSkinCache.Skin? = null
+
+    /**
+     * What the frame is multiplied by to fit the window, and where it lands once it has been.
+     *
+     * The frame is a clamshell, so it is tall - taller than the interface Minecraft promises,
+     * which is only 240 pixels once the GUI scale has been applied, and taller than the 270
+     * that automatic scale leaves on a 1080p screen. Laying it out one for one would cut a
+     * third of the phone off for most players, so everything is drawn through one pose and
+     * the pose carries this factor. It never goes above 1: enlarging pixel art buys nothing.
+     */
+    private var uiScale = 1f
+    private var left = 0
+    private var top = 0
+
+    private val group: Group
+        get() = groups[groupIndex]
+
+    override fun init() {
+        uiScale = minOf(
+            1f,
+            (width - 2 * WINDOW_MARGIN).toFloat() / FRAME_WIDTH,
+            (height - 2 * WINDOW_MARGIN).toFloat() / FRAME_HEIGHT
+        )
+        left = ((width - FRAME_WIDTH * uiScale) / 2f).toInt()
+        top = ((height - FRAME_HEIGHT * uiScale) / 2f).toInt()
+
+        if (selected == null) selected = groups.firstOrNull()?.entries?.firstOrNull()
+    }
+
+    /**
+     * One tab per namespace, in server display order, preceded by an "everything" tab. That
+     * first tab is dropped when a single datapack ships trainers: it would be the same list
+     * twice, and the selector already names the one datapack there is.
+     */
+    private fun buildGroups(entries: List<BattlePhoneEntry>): List<Group> {
+        // The server sends trainers in reading order - by pack, then by category - so grouping
+        // on either keeps every tab sorted without sorting anything again.
+        val byNamespace = entries.groupBy { it.id.substringBefore(TRAINER_ID_SEPARATOR) }
+        val groups = byNamespace.map { (namespace, group) -> Group(namespace, group, rowsOf(group)) }
+        if (groups.size <= 1) return groups
+
+        val allRows = byNamespace.flatMap { (namespace, group) ->
+            listOf(header(Component.literal(namespace), primary = true, group)) + rowsOf(group)
+        }
+        return listOf(Group(null, entries, allRows)) + groups
+    }
+
+    /**
+     * Cuts a datapack's trainers into lines of [LIST_COLUMNS], keeping the server's order and
+     * putting a heading over each run of one category.
+     *
+     * A pack that files everything at its root gets no heading at all, which is the layout
+     * this screen had before categories existed: a heading naming the only group there is
+     * would be a line spent on nothing.
+     */
+    private fun rowsOf(entries: List<BattlePhoneEntry>): List<Row> {
+        val runs = entries.groupConsecutiveBy { it.category }
+        if (runs.size == 1 && runs.first().first.isEmpty()) return lines(entries)
+
+        return runs.flatMap { (category, run) ->
+            val label = when {
+                category.isEmpty() -> UNCATEGORIZED_LABEL
+                else -> Component.translatable(run.first().categoryName.ifEmpty { category })
+            }
+            listOf(header(label, primary = false, run)) + lines(run)
+        }
+    }
+
+    /** A heading carries the score of the run below it - the same counter as the selector's. */
+    private fun header(label: Component, primary: Boolean, run: List<BattlePhoneEntry>): Row.Header =
+        Row.Header(label, primary, run.count { it.defeated }, run.size)
+
+    private fun lines(entries: List<BattlePhoneEntry>): List<Row> =
+        entries.chunked(LIST_COLUMNS).map { Row.Trainers(it) }
+
+    /** Cuts a list into the runs of neighbours that answer the same key, order untouched. */
+    private inline fun <T, K> List<T>.groupConsecutiveBy(key: (T) -> K): List<Pair<K, List<T>>> {
+        val runs = mutableListOf<Pair<K, MutableList<T>>>()
+        for (item in this) {
+            val itemKey = key(item)
+            if (runs.isEmpty() || runs.last().first != itemKey) runs.add(itemKey to mutableListOf())
+            runs.last().second.add(item)
+        }
+        return runs.map { (k, items) -> k to items }
+    }
+
+    override fun render(guiGraphics: GuiGraphics, mouseX: Int, mouseY: Int, partialTick: Float) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick)
+
+        // Everything below is laid out in the frame's own pixels; the pose puts them on screen.
+        // The cursor has to make the same trip, or a hover would answer somewhere else.
+        val pose = guiGraphics.pose()
+        pose.pushPose()
+        pose.translate(left.toFloat(), top.toFloat(), 0f)
+        pose.scale(uiScale, uiScale, 1f)
+
+        val frameMouseX = frameX(mouseX.toDouble()).toInt()
+        val frameMouseY = frameY(mouseY.toDouble()).toInt()
+
+        guiGraphics.fill(UPPER_X, UPPER_Y, (UPPER_X + UPPER_WIDTH), (UPPER_Y + UPPER_HEIGHT), themed(COLOR_SCREEN))
+        guiGraphics.fill(LOWER_X, LOWER_Y, (LOWER_X + LOWER_WIDTH), (LOWER_Y + LOWER_HEIGHT), themed(COLOR_SCREEN))
+
+        guiGraphics.drawCenteredString(font, title, (UPPER_X + UPPER_WIDTH / 2), TITLE_Y, themed(COLOR_TEXT_DIM))
+
+        var tooltip: List<Component> = emptyList()
+        if (groups.isEmpty()) {
+            guiGraphics.drawCenteredString(
+                font,
+                EMPTY_LABEL,
+                (LOWER_X + LOWER_WIDTH / 2),
+                (LOWER_Y + LOWER_HEIGHT / 2),
+                themed(COLOR_TEXT)
+            )
+        } else {
+            renderSelector(guiGraphics, frameMouseX, frameMouseY)
+            renderList(guiGraphics, frameMouseX, frameMouseY)
+            tooltip = renderDetails(guiGraphics, frameMouseX, frameMouseY, partialTick)
+        }
+
+        // The frame comes last: its rounded corners and brackets cut into the panels below.
+        blit(guiGraphics, FRAME, 0, 0, FRAME_WIDTH, FRAME_HEIGHT, 0f, 0f, FRAME_WIDTH, FRAME_HEIGHT, FRAME_WIDTH, FRAME_HEIGHT)
+        RenderSystem.disableBlend()
+
+        pose.popPose()
+
+        // The tooltip is drawn by the screen, not by us: it belongs at the cursor, at the
+        // size everything else in the interface is, so it goes outside the pose. It is a list
+        // rather than a line because the reward rail answers for several items at once.
+        if (tooltip.isNotEmpty()) guiGraphics.renderComponentTooltip(font, tooltip, mouseX, mouseY)
+    }
+
+    /**
+     * The strip above the roster: the datapack being shown, flanked by its arrows, and how
+     * much of it the player has beaten. The arrows hug the name rather than the edges of the
+     * screen, which leaves the end of the strip free for the counter.
+     */
+    private fun renderSelector(guiGraphics: GuiGraphics, mouseX: Int, mouseY: Int) {
+        // Both arrow images hold their hovered state below the idle one.
+        if (groups.size > 1) {
+            renderArrow(guiGraphics, ARROW_LEFT, leftArrowX(), overLeftArrow(mouseX.toDouble(), mouseY.toDouble()))
+            renderArrow(guiGraphics, ARROW_RIGHT, rightArrowX(), overRightArrow(mouseX.toDouble(), mouseY.toDouble()))
+        }
+        val label = group.namespace?.let { Component.literal(it) } ?: ALL_LABEL
+        guiGraphics.drawCenteredString(
+            font,
+            trim(label, 2 * SELECTOR_ARROW_GAP - 8),
+            (LIST_X + LIST_WIDTH / 2),
+            (SELECTOR_Y + 1),
+            themed(COLOR_TEXT)
+        )
+
+        val defeated = group.entries.count { it.defeated }
+        guiGraphics.drawCenteredString(
+            font,
+            CobblemonTrainers.lang("screen.battle_phone.progress", defeated, group.entries.size),
+            (LIST_X + LIST_WIDTH - PROGRESS_INSET),
+            (SELECTOR_Y + 1),
+            themed(COLOR_TEXT)
+        )
+    }
+
+    private fun renderArrow(guiGraphics: GuiGraphics, texture: ResourceLocation, arrowX: Int, hovered: Boolean) {
+        val v = if (hovered) ARROW_HEIGHT.toFloat() else 0f
+        blit(guiGraphics, texture, arrowX, SELECTOR_Y, ARROW_WIDTH, ARROW_HEIGHT, 0f, v, ARROW_WIDTH, ARROW_HEIGHT, ARROW_WIDTH, ARROW_HEIGHT * 2)
+    }
+
+    private fun renderList(guiGraphics: GuiGraphics, mouseX: Int, mouseY: Int) {
+        // The scissor stack is not part of the pose: it wants real pixels, so the panel has
+        // to make the trip itself. The extra pixel keeps rounding from shaving the last row.
+        guiGraphics.enableScissor(
+            screenX(LIST_X),
+            screenY(PANEL_Y),
+            screenX(LIST_X + LIST_WIDTH) + 1,
+            screenY(PANEL_Y + PANEL_HEIGHT) + 1
+        )
+        forEachVisibleRow { row, rowY ->
+            when (row) {
+                is Row.Header -> renderRowHeader(guiGraphics, row, rowY)
+                is Row.Trainers -> row.entries.forEachIndexed { column, entry ->
+                    renderEntry(guiGraphics, entry, (LIST_X + column * COLUMN_WIDTH), rowY, mouseX, mouseY)
+                }
+            }
+        }
+        guiGraphics.disableScissor()
+
+        renderScrollBar(guiGraphics)
+    }
+
+    /**
+     * Walks the rows that fit in the panel from [scroll] down, handing each its top edge as an
+     * offset from the frame. Rows are not all the same height, so rendering and hit testing
+     * both have to walk rather than divide.
+     */
+    private inline fun forEachVisibleRow(action: (Row, Int) -> Unit) {
+        val rows = group.rows
+        var rowY = PANEL_Y
+        var index = scroll
+        while (index < rows.size && rowY + rows[index].height <= PANEL_Y + PANEL_HEIGHT) {
+            action(rows[index], rowY)
+            rowY += rows[index].height
+            index++
+        }
+    }
+
+    /**
+     * The heading over a run of trainers, with a rule running to the edge of the panel. A
+     * category sits a few pixels in and in a quieter colour than a datapack, so the two read
+     * as two levels in the tab that shows both.
+     */
+    private fun renderRowHeader(guiGraphics: GuiGraphics, header: Row.Header, rowY: Int) {
+        val textX = LIST_X + if (header.primary) 0 else HEADER_INDENT
+        val textY = rowY + HEADER_HEIGHT - HEADER_PADDING_BOTTOM - font.lineHeight
+        val color = if (header.primary) themed(COLOR_HEADER) else themed(COLOR_SUBHEADER)
+
+        val score = CobblemonTrainers.lang(
+            "screen.battle_phone.progress",
+            header.defeated,
+            header.total
+        ).string
+        val scoreX = LIST_X + LIST_WIDTH - font.width(score)
+        guiGraphics.drawString(font, score, scoreX, textY, themed(COLOR_TEXT_DIM))
+
+        val label = trim(header.label, scoreX - textX - HEADER_SCORE_GAP)
+        guiGraphics.drawString(font, label, textX, textY, color)
+
+        val ruleX = textX + font.width(label) + 4
+        val ruleY = textY + font.lineHeight / 2
+        if (ruleX < scoreX - HEADER_SCORE_GAP) {
+            guiGraphics.fill(ruleX, ruleY, scoreX - HEADER_SCORE_GAP, ruleY + 1, themed(COLOR_HEADER_RULE))
+        }
+    }
+
+    /** One entry of the roster, drawn from the left edge of the column it landed in. */
+    private fun renderEntry(
+        guiGraphics: GuiGraphics,
+        entry: BattlePhoneEntry,
+        slotX: Int,
+        rowY: Int,
+        mouseX: Int,
+        mouseY: Int
+    ) {
+        val columnEnd = slotX + COLUMN_WIDTH
+
+        blit(guiGraphics, SLOT, slotX, rowY, SLOT_SIZE, SLOT_SIZE, 0f, 0f, SLOT_TEXTURE_SIZE, SLOT_TEXTURE_SIZE, SLOT_TEXTURE_SIZE, SLOT_TEXTURE_SIZE)
+
+        val skin = TrainerSkinCache.get(entry.id)
+        if (skin?.texture != null) {
+            TrainerSkinRenderer.drawFace(guiGraphics, skin, slotX + 2, rowY + 2, SLOT_SIZE - 4)
+        } else {
+            guiGraphics.drawCenteredString(font, UNKNOWN, slotX + SLOT_SIZE / 2, rowY + 6, themed(COLOR_TEXT_DIM))
+        }
+
+        // The outline goes over the head, the way a Pokédex draws it over the sprite.
+        val hovered = mouseX >= slotX && mouseX < columnEnd && mouseY >= rowY && mouseY < rowY + SLOT_SIZE
+        val selectionOffset = when {
+            entry.id == selected?.id -> SLOT_TEXTURE_SIZE.toFloat()
+            hovered -> 0f
+            else -> null
+        }
+        if (selectionOffset != null) {
+            blit(guiGraphics, SLOT_SELECT, slotX, rowY, SLOT_SIZE, SLOT_SIZE, 0f, selectionOffset, SLOT_TEXTURE_SIZE, SLOT_TEXTURE_SIZE, SLOT_TEXTURE_SIZE, SLOT_TEXTURE_SIZE * 2)
+        }
+
+        val nameX = slotX + SLOT_SIZE + 5
+        val nameWidth = columnEnd - nameX - MARKER_WIDTH - 4
+        guiGraphics.drawString(
+            font,
+            trim(Component.translatable(entry.name), nameWidth),
+            nameX,
+            rowY + (SLOT_SIZE - font.lineHeight) / 2,
+            when {
+                entry.locked -> themed(COLOR_TEXT_LOCKED)
+                entry.defeated -> themed(COLOR_TEXT)
+                else -> themed(COLOR_TEXT_DIM)
+            }
+        )
+
+        renderMarker(guiGraphics, entry.defeated, columnEnd - MARKER_WIDTH, rowY + (SLOT_SIZE - MARKER_HEIGHT) / 2)
+    }
+
+    /** The status marker: the full ball for a beaten trainer, its outline otherwise. */
+    private fun renderMarker(guiGraphics: GuiGraphics, defeated: Boolean, markerX: Int, markerY: Int) {
+        blit(
+            guiGraphics,
+            MARKER,
+            markerX,
+            markerY,
+            MARKER_WIDTH,
+            MARKER_HEIGHT,
+            0f,
+            if (defeated) MARKER_HEIGHT.toFloat() else 0f,
+            MARKER_WIDTH,
+            MARKER_HEIGHT,
+            MARKER_WIDTH,
+            MARKER_HEIGHT * 2
+        )
+    }
+
+    private fun renderScrollBar(guiGraphics: GuiGraphics) {
+        val maxScroll = maxScroll()
+        if (maxScroll == 0) return
+
+        val barX = (LIST_X + LIST_WIDTH + 2)
+        val barTop = PANEL_Y
+        guiGraphics.fill(barX, barTop, barX + SCROLL_BAR_WIDTH, (PANEL_Y + PANEL_HEIGHT), themed(COLOR_SCROLL_TRACK))
+
+        val thumbHeight = maxOf(PANEL_HEIGHT / (maxScroll + 1), MIN_THUMB_HEIGHT)
+        val thumbTop = barTop + (PANEL_HEIGHT - thumbHeight) * scroll / maxScroll
+        guiGraphics.fill(barX, thumbTop, barX + SCROLL_BAR_WIDTH, thumbTop + thumbHeight, themed(COLOR_SCROLL_THUMB))
+    }
+
+    /** @return the tooltip to draw over everything, empty unless the mouse is on something. */
+    private fun renderDetails(
+        guiGraphics: GuiGraphics,
+        mouseX: Int,
+        mouseY: Int,
+        partialTick: Float
+    ): List<Component> {
+        val entry = selected ?: return emptyList()
+        if (musicOwner != null && musicOwner != entry.id) {
+            ClientBattleMusic.stopPreview()
+            musicOwner = null
+        }
+
+        // The header spans the screen; the footer reserves space for the call button.
+        val centerX = UPPER_X + UPPER_WIDTH / 2
+
+        guiGraphics.drawCenteredString(
+            font,
+            trim(Component.translatable(entry.name), UPPER_WIDTH - 8),
+            (UPPER_X + UPPER_WIDTH / 2),
+            NAME_Y,
+            themed(COLOR_TITLE)
+        )
+
+        val skin = TrainerSkinCache.get(entry.id)
+        val entity = skin?.let { trainerPreview(entry, it) }
+        if (entity != null) {
+            renderTrainerModel(guiGraphics, entity)
+        } else {
+            guiGraphics.drawCenteredString(
+                font,
+                UNKNOWN,
+                FIGURE_CENTER_X,
+                (PORTRAIT_TOP + FIGURE_MODEL_HEIGHT / 2),
+                themed(COLOR_TEXT_DIM)
+            )
+        }
+
+        val status = trim(CobblemonTrainers.lang(statusKey(entry)), (if (entry.defeated && entry.music != null) MUSIC_X else CALL_X) - (UPPER_X + CONTENT_INSET) - MARKER_WIDTH - MARKER_TEXT_GAP - 8)
+        val statusX = UPPER_X + CONTENT_INSET
+        renderMarker(guiGraphics, entry.defeated, statusX, STATUS_Y - MARKER_LINE_OFFSET)
+        guiGraphics.drawString(
+            font,
+            status,
+            statusX + MARKER_WIDTH + MARKER_TEXT_GAP,
+            STATUS_Y,
+            themed(COLOR_TEXT)
+        )
+
+        guiGraphics.drawCenteredString(
+            font,
+            CobblemonTrainers.lang("screen.battle_phone.team", entry.level, entry.teamSize).string,
+            centerX,
+            TEAM_LINE_Y,
+            themed(COLOR_TEXT_DIM)
+        )
+
+        renderLocation(guiGraphics, entry)
+        val callTooltip = renderCallButton(guiGraphics, entry, mouseX, mouseY)
+        val musicTooltip = renderMusicButton(guiGraphics, entry, mouseX, mouseY)
+
+        // A defeated trainer keeps their team visible even if a new requirement blocks a
+        // rematch. The requirements belong to the next battle and are shown in that case.
+        if (entry.locked && !entry.defeated) renderRequirements(guiGraphics, entry)
+
+        // Then the item renderer, which flushes the batch and manages the depth state itself,
+        // so it comes after everything drawn with fills and text.
+        val rewardTooltip = renderRewards(guiGraphics, entry, mouseX, mouseY)
+
+        // Models last of all: they render through their own buffer, so nothing of ours is in
+        // flight. Drawn whatever the tooltips say - short-circuiting on one would stop the team
+        // rendering as soon as the cursor rested elsewhere, which reads as the party blinking
+        // out.
+        val teamTooltip = if (entry.locked && !entry.defeated) {
+            null
+        } else {
+            renderTeam(guiGraphics, entry, mouseX, mouseY, partialTick)
+        }
+
+        return when {
+            musicTooltip != null -> listOf(musicTooltip)
+            callTooltip != null -> listOf(callTooltip)
+            rewardTooltip.isNotEmpty() -> rewardTooltip
+            teamTooltip != null -> listOf(teamTooltip)
+            else -> emptyList()
+        }
+    }
+
+    /** Builds a detached Cobblemon NPC with the received skin for a consistent 3D preview. */
+    private fun trainerPreview(entry: BattlePhoneEntry, skin: TrainerSkinCache.Skin): NPCEntity? {
+        val bytes = skin.bytes ?: return null
+        if (previewOwner == entry.id && previewSkin === skin) return previewEntity
+        val level = minecraft?.level ?: return null
+        val npcClass = NPCClasses.getByIdentifier(TrainerSpawner.NPC_CLASS_HEALING) ?: return null
+        releasePreview()
+        val npc = NPCEntity(level)
+        npc.npc = npcClass
+        // The NPC class setter copies RESOURCE_IDENTIFIER only on the server. A local preview
+        // must select it explicitly, otherwise it keeps the constructor's first NPC model.
+        npc.forcedResourceIdentifier = npcClass.resourceIdentifier
+        npc.hideNameTag = true
+        npc.entityData.set(NPCEntity.LEVEL, entry.level)
+        npc.appliedAspects.add(CobblemonTrainers.TRAINER_ASPECT_PREFIX + entry.id)
+        npc.appliedAspects.removeIf { it == "model-default" || it == "model-slim" }
+        npc.appliedAspects.add(if (skin.slim) "model-slim" else "model-default")
+        TrainerOutfit.dress(npc, entry.cosmetics)
+        npc.updateAspects()
+        npc.entityData.set(
+            NPCEntity.NPC_PLAYER_TEXTURE,
+            NPCPlayerTexture(bytes.copyOf(), if (skin.slim) NPCPlayerModelType.SLIM else NPCPlayerModelType.DEFAULT)
+        )
+        previewOwner = entry.id
+        previewSkin = skin
+        previewEntity = npc
+        return npc
+    }
+
+    /** Cobblemon registers each NPC skin under its UUID, independently of our thumbnail cache. */
+    private fun releasePreview() {
+        previewEntity?.let { npc ->
+            ResourceLocation.tryBuild("cobblemon", npc.uuid.toString())?.let {
+                minecraft?.textureManager?.release(it)
+            }
+        }
+        previewEntity = null
+        previewOwner = null
+        previewSkin = null
+    }
+
+    override fun removed() {
+        ClientBattleMusic.stopPreview()
+        musicOwner = null
+        releasePreview()
+        super.removed()
+    }
+
+    /** Render the selected trainer with Cobblemon's normal NPC entity renderer. */
+    private fun renderTrainerModel(guiGraphics: GuiGraphics, entity: NPCEntity) {
+        val tall = FIGURE_MODEL_HEIGHT.toFloat()
+        val scale = tall / entity.bbHeight.coerceAtLeast(0.1f)
+        val rotation = Quaternionf().rotateZ(Math.PI.toFloat())
+        val camera = Quaternionf().rotateX(FIGURE_MODEL_TILT)
+        val bodyYaw = entity.yBodyRot
+        val yaw = entity.yRot
+        val headYaw = entity.yHeadRot
+        val oldHeadYaw = entity.yHeadRotO
+        val nameVisible = entity.isCustomNameVisible
+        entity.yBodyRot = FIGURE_MODEL_YAW
+        entity.yRot = FIGURE_MODEL_YAW
+        entity.yHeadRot = FIGURE_MODEL_YAW
+        entity.yHeadRotO = FIGURE_MODEL_YAW
+        entity.isCustomNameVisible = false
+        try {
+            InventoryScreen.renderEntityInInventory(
+                guiGraphics,
+                FIGURE_CENTER_X.toFloat(),
+                PORTRAIT_TOP + tall / 2f,
+                scale,
+                Vector3f(0f, entity.bbHeight / 2f, 0f),
+                rotation,
+                camera,
+                entity
+            )
+        } finally {
+            entity.yBodyRot = bodyYaw
+            entity.yRot = yaw
+            entity.yHeadRot = headYaw
+            entity.yHeadRotO = oldHeadYaw
+            entity.isCustomNameVisible = nameVisible
+        }
+    }
+
+    /**
+     * Where the trainer is to be found, on its own plate in the strip the team leaves free.
+     *
+     * A plate rather than a floating caption: the line sits between the party above and the
+     * status below, and loose small text there read as something that had slipped out of one of
+     * them. The accent bar down its left edge is what makes it a field with a value rather than
+     * a sentence - the same blue that heads a category in the roster.
+     *
+     * It spans the team rather than the screen: a place reads long - a biome, a time and a sky
+     * add up - and a plate centred on the whole width would reach under the legs of the figure.
+     * The team it spans is the slots, not the cells they sit in: a cell is half again as wide as
+     * the model it holds, so a plate on the cells reached a good way further left than anything
+     * a player can see of the team - and that stretch is where the reward rail lives.
+     * A trainer who names no place draws nothing here.
+     */
+    private fun renderLocation(guiGraphics: GuiGraphics, entry: BattlePhoneEntry) {
+        if (entry.location.string.isEmpty()) return
+
+        val plateX = TEAM_X + TEAM_SLOT_INSET
+        val plateWidth = TEAM_SLOTS_WIDTH
+        plate(guiGraphics, plateX, LOCATION_TOP, plateWidth, LOCATION_HEIGHT, themed(COLOR_PLATE), themed(COLOR_PLATE_EDGE))
+        guiGraphics.fill(
+            plateX + LOCATION_ACCENT_INSET,
+            LOCATION_TOP + LOCATION_ACCENT_INSET,
+            plateX + LOCATION_ACCENT_INSET + LOCATION_ACCENT_WIDTH,
+            LOCATION_TOP + LOCATION_HEIGHT - LOCATION_ACCENT_INSET,
+            themed(COLOR_HEADER)
+        )
+
+        // Centred on what is left of the plate once the accent has taken its edge, so the text
+        // does not read as pushed off centre.
+        val textLeft = plateX + LOCATION_TEXT_INSET
+        val textWidth = plateWidth - LOCATION_TEXT_INSET - LOCATION_ACCENT_INSET
+        guiGraphics.drawCenteredString(
+            font,
+            trim(
+                CobblemonTrainers.lang("screen.battle_phone.location", entry.location),
+                textWidth
+            ),
+            textLeft + textWidth / 2,
+            LOCATION_Y,
+            themed(COLOR_TEXT)
+        )
+    }
+
+    /**
+     * What beating this trainer hands over: one item to a cell, read downwards, on a rail of
+     * its own in the strip between the figure and the team.
+     *
+     * That strip is the only space on the upper screen that was ever free, which is why the
+     * figure was moved a few pixels left to open it up rather than the rewards being squeezed
+     * into a band below - there is no band below, the screen ends four pixels under the status
+     * line. Reading down the side of the trainer also puts what they give you next to who they
+     * are, which is where it belongs.
+     *
+     * A plate rather than loose icons: a single reward floating beside the trainer read as
+     * something that had come adrift from the party, and the recessed box that holds the place
+     * and the call button is what makes this a field of the fiche too. It is only as tall as it
+     * has rewards, and centred against the team, so one trophy is one cell rather than a column
+     * with something at the top of it.
+     *
+     * A reward that drops once carries the marker of the status line beside it: the outline for
+     * one still owed, the full ball once it has been claimed, and a claimed item dimmed under a
+     * wash of the plate. Those are the same two shapes that say whether a trainer has been
+     * beaten, on the same screen, so the rail answers "will I get this again" without a legend -
+     * and the tooltip says it in words for anyone who reads the mark as decoration. A reward
+     * that drops every time carries nothing, which is why the marker column exists only when
+     * something needs it: the strip is narrow, and a column of blanks would cost the icons
+     * their place in it.
+     *
+     * Nothing here grows with the list. Four cells is what the strip holds between the team and
+     * the status band, so a fifth reward does not lengthen the rail - the last cell counts what
+     * was left out and names it on hover instead. A trainer who gives forty items draws exactly
+     * the same rail as one who gives four.
+     *
+     * Rewards are shown before the trainer has been beaten, unlike their team: a team is a
+     * reward for winning, a reward is the reason to try.
+     */
+    private fun renderRewards(
+        guiGraphics: GuiGraphics,
+        entry: BattlePhoneEntry,
+        mouseX: Int,
+        mouseY: Int
+    ): List<Component> {
+        if (entry.rewards.isEmpty()) return emptyList()
+
+        // One cell is given up to say how many were left out, so the fiche never quietly
+        // shortens a long reward list.
+        val overflowing = entry.rewards.size > REWARD_ROWS
+        val shown = if (overflowing) REWARD_ROWS - 1 else entry.rewards.size
+        val cells = if (overflowing) REWARD_ROWS else shown
+
+        // The marker column is paid for only when a cell the rail actually draws asks for it -
+        // a one-time reward left out of a long list is named in the overflow tooltip instead.
+        // The rail stays centred in the strip either way, so neither width leans on the team.
+        val marked = entry.rewards.take(shown).any { it.once }
+        val width = if (marked) REWARD_WIDTH_MARKED else REWARD_WIDTH
+        val railX = REWARD_CENTER_X - width / 2
+        val itemX = if (marked) railX + REWARD_ITEM_INSET else railX + (width - ITEM_SIZE) / 2
+
+        val height = REWARD_HEAD + cells * ITEM_SIZE + (cells - 1) * REWARD_ROW_GAP + REWARD_PADDING
+        val top = REWARD_TOP + (TEAM_ROWS * TEAM_CELL_HEIGHT - height) / 2
+        fun rowY(index: Int) = top + REWARD_HEAD + index * (ITEM_SIZE + REWARD_ROW_GAP)
+        val hoveredCell = (0 until cells).firstOrNull { index ->
+            mouseX >= railX && mouseX < railX + width &&
+                mouseY >= rowY(index) - REWARD_ROW_GAP / 2 &&
+                mouseY < rowY(index) + ITEM_SIZE + REWARD_ROW_GAP / 2
+        }
+
+        plate(guiGraphics, railX, top, width, height, themed(COLOR_PLATE), themed(COLOR_PLATE_EDGE))
+
+        // The accent that heads the location plate, laid across the top of this one: the two are
+        // the same kind of field, and the rail is far too narrow to be titled in words.
+        guiGraphics.fill(
+            railX + REWARD_ACCENT_INSET,
+            top + REWARD_ACCENT_INSET,
+            railX + width - REWARD_ACCENT_INSET,
+            top + REWARD_ACCENT_INSET + REWARD_ACCENT_HEIGHT,
+            themed(COLOR_HEADER)
+        )
+
+        // The highlight is a flat fill rather than a plate: a plate paints its corners back in
+        // the colour of the screen, and these corners sit on the rail, not on the screen.
+        hoveredCell?.let { index ->
+            guiGraphics.fill(
+                railX + 1,
+                rowY(index) - REWARD_ROW_GAP / 2,
+                railX + width - 1,
+                rowY(index) + ITEM_SIZE + REWARD_ROW_GAP / 2,
+                themed(COLOR_REWARD_HOVER)
+            )
+        }
+
+        // The markers are blits, so they belong with the fills, ahead of the first item.
+        for (index in 0 until shown) {
+            val reward = entry.rewards[index]
+            if (!reward.once) continue
+            renderMarker(
+                guiGraphics,
+                defeated = !reward.due,
+                markerX = railX + width - REWARD_MARKER_INSET - MARKER_WIDTH,
+                markerY = rowY(index) + (ITEM_SIZE - MARKER_HEIGHT) / 2
+            )
+        }
+
+        // Then the items, after every fill: the item renderer flushes the batch in flight and
+        // manages the depth state itself, so it must not cut into a run of rectangles.
+        for (index in 0 until shown) {
+            val reward = entry.rewards[index]
+            guiGraphics.renderItem(reward.stack, itemX, rowY(index))
+            // Vanilla's own decoration draws the count in the corner of the icon, and draws
+            // nothing at all for a single item - which is what a player already reads as one.
+            guiGraphics.renderItemDecorations(font, reward.stack, itemX, rowY(index))
+
+        }
+
+        if (overflowing) {
+            guiGraphics.drawCenteredString(
+                font,
+                CobblemonTrainers.lang("screen.battle_phone.reward_more", entry.rewards.size - shown),
+                railX + width / 2,
+                rowY(shown) + (ITEM_SIZE - 8) / 2,
+                themed(COLOR_TEXT_DIM)
+            )
+        }
+
+        val hovered = hoveredCell ?: return emptyList()
+        if (hovered < shown) {
+            val reward = entry.rewards[hovered]
+            return listOfNotNull(
+                CobblemonTrainers.lang(
+                    "screen.battle_phone.reward", reward.stack.count, reward.stack.hoverName
+                ),
+                note(reward)
+            )
+        }
+
+        // The overflow cell answers for everything the rail could not draw. Its own list is
+        // capped too: a tooltip taller than the window would be as unreadable as no answer.
+        val rest = entry.rewards.drop(shown)
+        val named = rest.take(REWARD_TOOLTIP_LINES).map { reward ->
+            val note = note(reward)
+            when (note) {
+                null -> CobblemonTrainers.lang(
+                    "screen.battle_phone.reward_line", reward.stack.count, reward.stack.hoverName
+                )
+                else -> CobblemonTrainers.lang(
+                    "screen.battle_phone.reward_line_note",
+                    reward.stack.count,
+                    reward.stack.hoverName,
+                    note
+                )
+            }
+        }
+        val unnamed = rest.size - named.size
+        val counted = when {
+            unnamed > 0 -> listOf(CobblemonTrainers.lang("screen.battle_phone.reward_more_lines", unnamed))
+            else -> emptyList()
+        }
+        return listOf(CobblemonTrainers.lang("screen.battle_phone.reward_more_title", rest.size)) +
+            named + counted
+    }
+
+    /**
+     * What a reward is worth saying about itself beyond its name, or null for one that drops
+     * every time - the ordinary case, which a label would only add noise to.
+     */
+    private fun note(reward: RewardPreview): Component? = when {
+        !reward.due -> CobblemonTrainers.lang("screen.battle_phone.reward_claimed")
+            .withStyle(ChatFormatting.GRAY)
+        reward.once -> CobblemonTrainers.lang("screen.battle_phone.reward_once")
+            .withStyle(ChatFormatting.GOLD)
+        else -> null
+    }
+
+    /**
+     * The call button, and the tooltip that explains a greyed out one.
+     *
+     * Three states, and the middle one is the point: a trainer who takes no rematch keeps a
+     * visible button, so "why can I not call them" is answered on the screen rather than only
+     * in the chat once the player has tried.
+     *
+     * Whether the player is standing in the right place is never decided here - the client
+     * knows how a place reads, not where it is. Pressing the button somewhere else is answered
+     * by the server, in words.
+     */
+    private fun renderCallButton(
+        guiGraphics: GuiGraphics,
+        entry: BattlePhoneEntry,
+        mouseX: Int,
+        mouseY: Int
+    ): Component? {
+        if (!callable(entry)) return null
+
+        val enabled = callEnabled(entry)
+        val hovered = overCallButton(mouseX.toDouble(), mouseY.toDouble())
+
+        val border = when {
+            !enabled -> themed(COLOR_PLATE_EDGE)
+            hovered -> themed(COLOR_TITLE)
+            else -> themed(COLOR_HEADER)
+        }
+        plate(guiGraphics, CALL_X, CALL_Y, CALL_WIDTH, CALL_HEIGHT, themed(COLOR_PLATE), border)
+
+        // A key has a lit face and a shadow under it. Two flat colours would do neither, and a
+        // single fill made the button read as a hole in the screen rather than something to
+        // press - which matters, since it is the only thing on this screen that is pressed.
+        if (enabled) {
+            val top = if (hovered) themed(COLOR_CALL_TOP_HOVER) else themed(COLOR_CALL_TOP)
+            val bottom = if (hovered) themed(COLOR_CALL_BOTTOM_HOVER) else themed(COLOR_CALL_BOTTOM)
+            guiGraphics.fillGradient(
+                CALL_X + CALL_BORDER,
+                CALL_Y + CALL_BORDER,
+                CALL_X + CALL_WIDTH - CALL_BORDER,
+                CALL_Y + CALL_HEIGHT - CALL_BORDER,
+                top,
+                bottom
+            )
+            // One lit line along the top edge, the light coming from above like everywhere else.
+            guiGraphics.fill(
+                CALL_X + CALL_BORDER + 1,
+                CALL_Y + CALL_BORDER,
+                CALL_X + CALL_WIDTH - CALL_BORDER - 1,
+                CALL_Y + CALL_BORDER + 1,
+                themed(COLOR_CALL_HIGHLIGHT)
+            )
+        }
+
+        guiGraphics.drawCenteredString(
+            font,
+            CobblemonTrainers.lang("screen.battle_phone.call"),
+            CALL_X + CALL_WIDTH / 2,
+            CALL_Y + CALL_LABEL_INSET,
+            if (enabled) themed(COLOR_TITLE) else themed(COLOR_TEXT_LOCKED)
+        )
+
+        if (!hovered) return null
+        return if (enabled) {
+            CobblemonTrainers.lang("screen.battle_phone.call.where", entry.location)
+        } else {
+            CobblemonTrainers.lang("screen.battle_phone.call.no_rematch")
+        }
+    }
+
+    /** A trainer the phone draws a button for at all: one who says where they can be found. */
+    private fun callable(entry: BattlePhoneEntry): Boolean = entry.callable && !entry.locked
+
+    /** A button that answers when pressed, as opposed to one drawn to say why it will not. */
+    private fun callEnabled(entry: BattlePhoneEntry): Boolean =
+        callable(entry) && !(entry.defeated && !entry.rematch)
+
+    /**
+     * The six team slots, filled only once the player has beaten the trainer - the server
+     * refuses to send a team before that, so an empty slot is the honest answer either way.
+     */
+    private fun renderTeam(
+        guiGraphics: GuiGraphics,
+        entry: BattlePhoneEntry,
+        mouseX: Int,
+        mouseY: Int,
+        partialTick: Float
+    ): Component? {
+        val team = if (entry.defeated) TrainerTeamCache.get(entry.id) else emptyList()
+        val states = statesFor(entry)
+        var tooltip: Component? = null
+
+        for (slot in 0 until TEAM_SLOTS) {
+            val cellX = (TEAM_X + (slot % TEAM_COLUMNS) * TEAM_CELL_WIDTH)
+            val cellY = (TEAM_TOP + (slot / TEAM_COLUMNS) * TEAM_CELL_HEIGHT)
+
+            blit(
+                guiGraphics,
+                SLOT,
+                cellX + TEAM_SLOT_INSET,
+                cellY + (TEAM_CELL_HEIGHT - TEAM_SLOT_SIZE) / 2,
+                TEAM_SLOT_SIZE,
+                TEAM_SLOT_SIZE,
+                0f,
+                0f,
+                SLOT_TEXTURE_SIZE,
+                SLOT_TEXTURE_SIZE,
+                SLOT_TEXTURE_SIZE,
+                SLOT_TEXTURE_SIZE
+            )
+
+            val member = team?.getOrNull(slot)
+            if (member == null) {
+                guiGraphics.drawCenteredString(
+                    font,
+                    UNKNOWN,
+                    cellX + TEAM_CELL_WIDTH / 2,
+                    cellY + (TEAM_CELL_HEIGHT - font.lineHeight) / 2,
+                    themed(COLOR_TEXT_DIM)
+                )
+                continue
+            }
+
+            renderPokemon(guiGraphics, member, states[slot], cellX, cellY, partialTick)
+
+            val hovered = mouseX >= cellX && mouseX < cellX + TEAM_CELL_WIDTH &&
+                mouseY >= cellY && mouseY < cellY + TEAM_CELL_HEIGHT
+            if (hovered) {
+                val name = member.nickname.ifEmpty { member.pokemon.species.translatedName.string }
+                tooltip = CobblemonTrainers.lang("screen.battle_phone.pokemon", name, member.level)
+            }
+        }
+
+        return tooltip
+    }
+
+    /**
+     * What this player still has to do, drawn where the team would be. The lines come from the
+     * server already built as components, so they are read here in the player's own language
+     * without the screen knowing what a requirement is.
+     */
+    private fun renderRequirements(guiGraphics: GuiGraphics, entry: BattlePhoneEntry) {
+        val areaWidth = TEAM_SLOTS_WIDTH
+        val areaHeight = TEAM_ROWS * TEAM_CELL_HEIGHT
+        val wrapWidth = areaWidth - 2 * REQUIREMENT_INSET
+
+        val heading = font.split(CobblemonTrainers.lang("screen.battle_phone.locked"), wrapWidth)
+        val lines = entry.requirements.flatMap { requirement ->
+            font.split(CobblemonTrainers.lang("requirement.line", requirement), wrapWidth)
+        }
+
+        val total = heading.size + lines.size
+        var lineY = TEAM_TOP + (areaHeight - total * font.lineHeight) / 2
+        val centerX = TEAM_X + TEAM_SLOT_INSET + areaWidth / 2
+
+        (heading.map { it to themed(COLOR_TEXT) } + lines.map { it to themed(COLOR_TEXT_DIM) }).forEach { (line, color) ->
+            guiGraphics.drawString(font, line, centerX - font.width(line) / 2, lineY, color)
+            lineY += font.lineHeight
+        }
+    }
+
+    private fun renderPokemon(
+        guiGraphics: GuiGraphics,
+        member: TrainerTeamCache.Member,
+        state: FloatingState,
+        cellX: Int,
+        cellY: Int,
+        partialTick: Float
+    ) {
+        val pose = guiGraphics.pose()
+        pose.pushPose()
+        // A model hangs below the point it is translated to, so aim near the top of the slot.
+        pose.translate(
+            (cellX + TEAM_CELL_WIDTH / 2).toDouble(),
+            (cellY + TEAM_MODEL_TOP).toDouble(),
+            0.0
+        )
+        pose.scale(TEAM_POSE_SCALE, TEAM_POSE_SCALE, 1f)
+        drawProfilePokemon(
+            renderablePokemon = member.pokemon,
+            matrixStack = pose,
+            rotation = Quaternionf().fromEulerXYZDegrees(MODEL_ROTATION),
+            state = state,
+            partialTicks = partialTick,
+            scale = TEAM_MODEL_SCALE
+        )
+        pose.popPose()
+    }
+
+    /** Animation states belong to the models they were posed for, so they follow the selection. */
+    private fun statesFor(entry: BattlePhoneEntry): List<FloatingState> {
+        if (teamStatesOwner != entry.id) {
+            teamStatesOwner = entry.id
+            teamStates = List(TEAM_SLOTS) { FloatingState() }
+        }
+        return teamStates
+    }
+
+    /**
+     * What the detail panel says about that trainer. A beaten one that turns down rematches is
+     * worth its own line: the player would otherwise keep looking for a fight that is over.
+     */
+    private fun statusKey(entry: BattlePhoneEntry): String = when {
+        entry.defeated && !entry.rematch -> "screen.battle_phone.status.defeated_final"
+        entry.defeated -> "screen.battle_phone.status.defeated"
+        entry.locked -> "screen.battle_phone.status.locked"
+        else -> "screen.battle_phone.status.pending"
+    }
+
+    private fun trim(text: Component, maxWidth: Int): String {
+        val raw = text.string
+        if (font.width(raw) <= maxWidth) return raw
+        return font.plainSubstrByWidth(raw, maxWidth - font.width(ELLIPSIS)) + ELLIPSIS
+    }
+
+    /** Pixel music note avoids relying on a resource pack's font glyph coverage. */
+    private fun renderMusicButton(guiGraphics: GuiGraphics, entry: BattlePhoneEntry, mouseX: Int, mouseY: Int): Component? {
+        if (!entry.defeated || entry.music == null) return null
+        val active = musicOwner == entry.id && ClientBattleMusic.isPreviewPlaying()
+        val busy = ClientBattleMusic.isPlaying() && !ClientBattleMusic.isPreviewPlaying()
+        val hovered = overMusicButton(mouseX.toDouble(), mouseY.toDouble())
+        plate(guiGraphics, MUSIC_X, CALL_Y, MUSIC_WIDTH, CALL_HEIGHT,
+            if (busy) themed(COLOR_PLATE) else if (hovered || active) themed(COLOR_CALL_TOP_HOVER) else themed(COLOR_CALL_BOTTOM),
+            themed(COLOR_PLATE_EDGE))
+        val color = if (busy) themed(COLOR_TEXT_LOCKED) else themed(COLOR_TEXT)
+        val x = MUSIC_X + 5
+        val y = CALL_Y + 3
+        guiGraphics.fill(x + 3, y, x + 5, y + 7, color)
+        guiGraphics.fill(x + 4, y, x + 7, y + 2, color)
+        guiGraphics.fill(x, y + 5, x + 4, y + 8, color)
+        return if (hovered) CobblemonTrainers.lang(when {
+            busy -> "screen.battle_phone.music.busy"
+            active -> "screen.battle_phone.music.stop"
+            else -> "screen.battle_phone.music.play"
+        }) else null
+    }
+
+    private fun overMusicButton(x: Double, y: Double): Boolean =
+        x >= MUSIC_X && x < MUSIC_X + MUSIC_WIDTH && y >= CALL_Y && y < CALL_Y + CALL_HEIGHT
+    override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
+        if (super.mouseClicked(mouseX, mouseY, button)) return true
+        if (groups.isEmpty()) return false
+
+        val frameX = frameX(mouseX)
+        val frameY = frameY(mouseY)
+
+        if (overLeftArrow(frameX, frameY)) return selectGroup(-1)
+        if (overRightArrow(frameX, frameY)) return selectGroup(1)
+
+        // Before the roster: the button sits on the upper screen, which the test below leaves.
+        selected?.let { entry ->
+            if (button == 0 && entry.defeated && entry.music != null && overMusicButton(frameX, frameY)) {
+                if (musicOwner == entry.id && ClientBattleMusic.isPreviewPlaying()) {
+                    ClientBattleMusic.stopPreview()
+                    musicOwner = null
+                } else {
+                    val track = ResourceLocation.tryParse(entry.music)
+                    if (track != null && ClientBattleMusic.playPreview(track, TrainerBattleMusic.VOLUME, TrainerBattleMusic.PITCH)) {
+                        musicOwner = entry.id
+                    }
+                }
+                return true
+            }
+            if (callEnabled(entry) && overCallButton(frameX, frameY)) return callTrainer(entry)
+        }
+
+        if (frameX < LIST_X || frameX >= (LIST_X + LIST_WIDTH)) return false
+
+        val column = (frameX.toInt() - LIST_X) / COLUMN_WIDTH
+
+        var clicked = false
+        forEachVisibleRow { row, rowY ->
+            if (row is Row.Trainers && frameY >= rowY && frameY < (rowY + row.height)) {
+                // A short last line leaves its trailing columns empty, and they answer nothing.
+                row.entries.getOrNull(column)?.let {
+                    selected = it
+                    clicked = true
+                }
+            }
+        }
+        return clicked
+    }
+
+    override fun mouseScrolled(mouseX: Double, mouseY: Double, scrollX: Double, scrollY: Double): Boolean {
+        if (groups.isEmpty()) return false
+
+        scroll = (scroll - scrollY.toInt()).coerceIn(0, maxScroll())
+        return true
+    }
+
+    /**
+     * The furthest the list may scroll, found by filling the panel from the last row back.
+     * Dividing would not do: a header is shorter than a trainer.
+     */
+    private fun maxScroll(): Int {
+        val rows = group.rows
+        var height = 0
+        var index = rows.size
+        while (index > 0 && height + rows[index - 1].height <= PANEL_HEIGHT) {
+            height += rows[index - 1].height
+            index--
+        }
+        return index
+    }
+
+    override fun keyPressed(keyCode: Int, scanCode: Int, modifiers: Int): Boolean {
+        if (super.keyPressed(keyCode, scanCode, modifiers)) return true
+        if (groups.size <= 1) return false
+
+        return when (keyCode) {
+            GLFW.GLFW_KEY_LEFT -> selectGroup(-1)
+            GLFW.GLFW_KEY_RIGHT -> selectGroup(1)
+            else -> false
+        }
+    }
+
+    private fun leftArrowX() = (LIST_X + LIST_WIDTH / 2 - SELECTOR_ARROW_GAP - ARROW_WIDTH)
+
+    private fun rightArrowX() = (LIST_X + LIST_WIDTH / 2 + SELECTOR_ARROW_GAP)
+
+    /**
+     * Asks the server for that trainer, and gets out of the way.
+     *
+     * The screen closes rather than waits: the trainer arrives a walk away, and the answer -
+     * their coordinates, or the reason there are none - is a chat message the player cannot
+     * read through an open phone.
+     */
+    private fun callTrainer(entry: BattlePhoneEntry): Boolean {
+        if (!ClientPlatform.current.canSend(CallTrainerPayload.TYPE)) return false
+
+        Minecraft.getInstance().soundManager.play(
+            SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0f)
+        )
+        ClientPlatform.current.send(CallTrainerPayload(entry.id))
+        onClose()
+        return true
+    }
+
+    /** Hit box of the call button, which is the rectangle it is drawn in. */
+    private fun overCallButton(mouseX: Double, mouseY: Double): Boolean =
+        mouseX >= CALL_X && mouseX < CALL_X + CALL_WIDTH &&
+            mouseY >= CALL_Y && mouseY < CALL_Y + CALL_HEIGHT
+
+    private fun overLeftArrow(mouseX: Double, mouseY: Double): Boolean =
+        overArrow(leftArrowX(), mouseX, mouseY)
+
+    private fun overRightArrow(mouseX: Double, mouseY: Double): Boolean =
+        overArrow(rightArrowX(), mouseX, mouseY)
+
+    /**
+     * The hit box of an arrow, which is the same one the hovered state is drawn from - a
+     * button that lights up somewhere other than where it answers is worse than no highlight.
+     * It is a couple of pixels wider than the image: an arrow is a thin thing to aim at.
+     */
+    private fun overArrow(arrowX: Int, mouseX: Double, mouseY: Double): Boolean =
+        groups.size > 1 &&
+            mouseX >= arrowX - CLICK_PADDING && mouseX < arrowX + ARROW_WIDTH + CLICK_PADDING &&
+            mouseY >= SELECTOR_Y - CLICK_PADDING && mouseY < (SELECTOR_Y + ARROW_HEIGHT) + CLICK_PADDING
+
+    /** Moves to another datapack tab, always landing on a valid one. */
+    private fun selectGroup(step: Int): Boolean {
+        groupIndex = Math.floorMod(groupIndex + step, groups.size)
+        scroll = 0
+        selected = group.entries.firstOrNull()
+        return true
+    }
+
+    /**
+     * A window coordinate in the frame's own pixels, the space every hit box here is in.
+     * [frameY] can land above the frame or below it, which simply matches nothing.
+     */
+    private fun frameX(windowX: Double) = (windowX - left) / uiScale
+
+    private fun frameY(windowY: Double) = (windowY - top) / uiScale
+
+    /** The other direction, for the scissor stack, which the pose does not reach. */
+    private fun screenX(offset: Int) = left + (offset * uiScale).toInt()
+
+    private fun screenY(offset: Int) = top + (offset * uiScale).toInt()
+
+    /**
+     * Consulting the phone does not stop the world.
+     *
+     * A screen pauses the integrated server by default, which is right for a menu and wrong
+     * here: the phone is something a player pulls out mid-adventure, and it would otherwise
+     * behave differently in single player and in multiplayer, where nothing ever pauses.
+     */
+    override fun isPauseScreen(): Boolean = false
+
+    /** Keeps the blue screen's brightness and contrast while changing its accent hue. */
+    private fun themed(argb: Int): Int {
+        if (phoneColor == "blue") return argb
+        return themedColors.getOrPut(argb) { recolor(argb) }
+    }
+
+    private fun recolor(argb: Int): Int {
+        val hsv = FloatArray(3)
+        Color.RGBtoHSB(argb ushr 16 and 0xFF, argb ushr 8 and 0xFF, argb and 0xFF, hsv)
+        val hue = when (phoneColor) {
+            "green" -> 0.38f
+            "pink" -> 0.90f
+            "red" -> 0.0f
+            "yellow" -> 0.13f
+            else -> 0f
+        }
+        val neutral = phoneColor == "black" || phoneColor == "white"
+        val brightness = (hsv[2] * when (phoneColor) {
+            "black" -> 0.75f
+            "white" -> 1.10f
+            else -> 1f
+        }).coerceAtMost(1f)
+        val rgb = Color.HSBtoRGB(hue, if (neutral) 0f else hsv[1], brightness)
+        return (argb and -0x1000000) or (rgb and 0xFFFFFF)
+    }
+
+    /** Draws the rounded plate corners in the current screen color. */
+    private fun plate(guiGraphics: GuiGraphics, x: Int, y: Int, width: Int, height: Int, fill: Int, border: Int) {
+        guiGraphics.fill(x, y, x + width, y + height, border)
+        guiGraphics.fill(x + 1, y + 1, x + width - 1, y + height - 1, fill)
+        val screen = themed(COLOR_SCREEN)
+        guiGraphics.fill(x, y, x + 1, y + 1, screen)
+        guiGraphics.fill(x + width - 1, y, x + width, y + 1, screen)
+        guiGraphics.fill(x, y + height - 1, x + 1, y + height, screen)
+        guiGraphics.fill(x + width - 1, y + height - 1, x + width, y + height, screen)
+    }
+
+    private companion object {
+        val PHONE_COLORS = setOf("black", "blue", "green", "pink", "red", "white", "yellow")
+
+        /** Size of the frame image, which the whole screen is laid out inside of. */
+        const val FRAME_WIDTH = 378
+        const val FRAME_HEIGHT = 392
+
+        /**
+         * The two holes in the frame. The phone is a clamshell with a screen in each half:
+         * the upper one is the fiche of whoever is selected, the lower one the roster it is
+         * selected from. Both have to line up with the transparent zones of [FRAME].
+         */
+        const val UPPER_X = 51
+        const val UPPER_Y = 25
+        const val UPPER_WIDTH = 306
+        const val UPPER_HEIGHT = 150
+
+        const val LOWER_X = 51
+        const val LOWER_Y = 202
+        const val LOWER_WIDTH = 309
+        const val LOWER_HEIGHT = 179
+
+        // The lower screen: a datapack selector over the roster.
+        const val LIST_X = LOWER_X + 4
+        const val LIST_WIDTH = 296
+
+        /**
+         * The roster is two entries wide. A column is exactly what a row used to be when the
+         * list shared one screen with the fiche, so an entry is laid out the same; the second
+         * screen buys twice as many of them on show rather than wider ones.
+         */
+        const val LIST_COLUMNS = 2
+        const val COLUMN_WIDTH = LIST_WIDTH / LIST_COLUMNS
+
+        const val SELECTOR_Y = LOWER_Y + 5
+
+        /** How far the arrows sit either side of the datapack name they page through. */
+        const val SELECTOR_ARROW_GAP = 70
+
+        /** Where the progress counter is centred, measured back from the end of the list. */
+        const val PROGRESS_INSET = 32
+
+        const val PANEL_Y = LOWER_Y + 20
+        const val PANEL_HEIGHT = LOWER_HEIGHT - 24
+        const val ROW_HEIGHT = 24
+
+        /**
+         * A heading and the air around it, the 9 being the height of a line of text.
+         *
+         * A heading belongs to the run *below* it, so it has to end up closer to the group it
+         * opens than to the one it closes - and what separates it from the group above is not
+         * [HEADER_PADDING_TOP] alone, the row up there carrying its own slack ([ROW_HEIGHT] is
+         * taller than [SLOT_SIZE]). Counting that in, the gap above is 9 pixels against 6
+         * below, which is why the two numbers here read the wrong way round.
+         */
+        const val HEADER_PADDING_TOP = 5
+        const val HEADER_PADDING_BOTTOM = 6
+        const val HEADER_HEIGHT = HEADER_PADDING_TOP + 9 + HEADER_PADDING_BOTTOM
+
+        /** The entry slot is a 25×25 image, drawn smaller so a row stays compact. */
+        const val SLOT_TEXTURE_SIZE = 25
+        const val SLOT_SIZE = 20
+
+        /** The status marker holds its two states one above the other. */
+        const val MARKER_WIDTH = 14
+        const val MARKER_HEIGHT = 14
+        const val MARKER_TEXT_GAP = 3
+
+        /** Lifts the marker so it reads as centred on the status line, which is shorter. */
+        const val MARKER_LINE_OFFSET = 2
+
+        /** Both arrows are one image holding two states, the second below the first. */
+        const val ARROW_WIDTH = 7
+        const val ARROW_HEIGHT = 10
+
+        const val SCROLL_BAR_WIDTH = 4
+        const val MIN_THUMB_HEIGHT = 12
+
+        /*
+         * The upper screen, read top to bottom: the phone's title, the trainer's name, what
+         * their team is worth, then the trainer themselves beside that team, and their status
+         * along the bottom. The three lines of text are banded across the full width and the
+         * two pictures share the middle, which is what keeps a long status clear of the
+         * figure - they used to share a column, and the marker ended up behind their legs.
+         */
+        const val TITLE_Y = UPPER_Y + 4
+        const val NAME_Y = UPPER_Y + 15
+        const val TEAM_LINE_Y = UPPER_Y + 27
+        const val PORTRAIT_TOP = UPPER_Y + 40
+
+        /** The trainer has room for held items before the reward rail. */
+        const val FIGURE_CENTER_X = UPPER_X + 34
+        const val CONTENT_INSET = 12
+        const val FIGURE_MODEL_HEIGHT = 88
+        const val FIGURE_MODEL_YAW = 168f
+        const val FIGURE_MODEL_TILT = 0f
+        const val STATUS_Y = UPPER_Y + 137
+
+        /** Location sits below the team, with a clear gap before the footer. */
+        const val LOCATION_TOP = UPPER_Y + 119
+        const val LOCATION_HEIGHT = 12
+        const val LOCATION_Y = LOCATION_TOP + 2
+
+        /** The accent bar down the left edge of that plate, and the air around it. */
+        const val LOCATION_ACCENT_INSET = 2
+        const val LOCATION_ACCENT_WIDTH = 2
+
+        /** Where the text starts, clear of the accent bar. */
+        const val LOCATION_TEXT_INSET = LOCATION_ACCENT_INSET + LOCATION_ACCENT_WIDTH + 3
+
+        /** The call button shares its right edge with the location plate. */
+        const val CALL_WIDTH = 62
+        const val CALL_HEIGHT = 13
+        const val CALL_BORDER = 1
+        const val CALL_X = UPPER_X + UPPER_WIDTH - CALL_WIDTH - CONTENT_INSET
+
+        /**
+         * Two pixels above the status line, which puts the label of the button on exactly the
+         * baseline of that line and leaves a pixel of air under the location plate.
+         */
+        const val CALL_Y = STATUS_Y - 2
+        const val MUSIC_WIDTH = 16
+        const val MUSIC_X = CALL_X - MUSIC_WIDTH - 4
+
+        /** Lifts the label off the bottom edge of the button, the 8 being a line of text. */
+        const val CALL_LABEL_INSET = (CALL_HEIGHT - 8) / 2
+
+        const val TEAM_SLOTS = 6
+        const val TEAM_COLUMNS = 3
+        const val TEAM_ROWS = TEAM_SLOTS / TEAM_COLUMNS
+        const val TEAM_X = UPPER_X + 117
+        const val TEAM_CELL_WIDTH = 64
+        const val TEAM_CELL_HEIGHT = 36
+        const val TEAM_SLOT_SIZE = 34
+
+        /** The trainer, team and rewards share the same vertical centre. */
+        const val TEAM_TOP = UPPER_Y + 45
+
+        /** From the edge of a cell to the slot drawn in the middle of it. */
+        const val TEAM_SLOT_INSET = (TEAM_CELL_WIDTH - TEAM_SLOT_SIZE) / 2
+
+        /**
+         * What the eye reads as the width of the team: the slots, not the cells around them. A
+         * cell is half again as wide as the slot it holds, so laying the team out on cells put
+         * a good eighteen pixels of nothing at each end of something meant to look centred.
+         */
+        const val TEAM_SLOTS_WIDTH = TEAM_COLUMNS * TEAM_CELL_WIDTH - 2 * TEAM_SLOT_INSET
+
+        /** Up to four reward cells fit in the same band as the trainer and team. */
+        const val ITEM_SIZE = 16
+        const val REWARD_WIDTH = 26
+
+        /** Centre the rail between the trainer and the visible team slots. */
+        const val REWARD_CENTER_X = UPPER_X + 87
+        const val REWARD_TOP = TEAM_TOP
+        const val REWARD_ROWS = 4
+
+        /**
+         * The rail once it has a marker column. Ten pixels wider is all the strip has to give -
+         * it ends where the plate of the location below begins - which is why the marker sits
+         * beside the icon rather than over it, and why the column is not always there.
+         */
+        const val REWARD_WIDTH_MARKED = 36
+        const val REWARD_ITEM_INSET = 3
+        const val REWARD_MARKER_INSET = 1
+
+        /** The air between two cells, halved either side of one to make it the area to hover. */
+        const val REWARD_ROW_GAP = 2
+
+        /** The plate's own margin, under the last cell and around the accent above the first. */
+        const val REWARD_PADDING = 3
+        const val REWARD_ACCENT_INSET = 2
+        const val REWARD_ACCENT_HEIGHT = 2
+
+        /** From the top of the plate to the first icon: the accent, its inset, and a pixel of air. */
+        const val REWARD_HEAD = REWARD_ACCENT_INSET + REWARD_ACCENT_HEIGHT + REWARD_PADDING
+
+        /** How many of the leftovers the overflow cell names, before it counts them instead. */
+        const val REWARD_TOOLTIP_LINES = 8
+
+        /**
+         * How a model is sized, copied from Cobblemon's own party slots: a scale on the pose
+         * and another passed to the renderer, which multiply. Neither is arbitrary - the
+         * second one alone leaves a Pokémon a few pixels tall, and the pair keeps the depth
+         * squash Cobblemon's portraits have, since only the first applies to z.
+         */
+        const val TEAM_POSE_SCALE = 2.5f
+        const val TEAM_MODEL_SCALE = 4.5f
+
+        /**
+         * Where the model hangs from, measured from the top of its cell. A model is drawn
+         * downwards from that point over roughly the height of a slot, so this centres it.
+         */
+        const val TEAM_MODEL_TOP = 6
+
+        /** The three-quarter view Cobblemon uses for a Pokémon portrait. */
+        val MODEL_ROTATION: Vector3f = Vector3f(13f, 35f, 0f)
+
+        /** A couple of pixels of slack around the arrows, which are thin things to aim at. */
+        const val CLICK_PADDING = 2
+
+        /** Breathing room between the phone and the edge of the window, in window pixels. */
+        const val WINDOW_MARGIN = 8
+
+        /** Trainer IDs arrive as strings, and the part before this is the datapack namespace. */
+        const val TRAINER_ID_SEPARATOR = ':'
+
+        // The screen behind the bezel, and the shades of text on it.
+        const val COLOR_SCREEN = 0xFF16344B.toInt()
+        const val COLOR_SCROLL_TRACK = 0xFF0C2033.toInt()
+        const val COLOR_SCROLL_THUMB = 0xFF5AAAEB.toInt()
+        const val COLOR_TITLE = 0xFFFFFFFF.toInt()
+        const val COLOR_TEXT = 0xFFE6F4FF.toInt()
+        const val COLOR_TEXT_DIM = 0xFF8FB6D0.toInt()
+        const val COLOR_HEADER = 0xFF5AAAEB.toInt()
+        const val COLOR_SUBHEADER = 0xFF7FC4E8.toInt()
+        const val COLOR_HEADER_RULE = 0x665AAAEB
+        const val COLOR_TEXT_LOCKED = 0xFF6A8AA3.toInt()
+
+        /**
+         * The plates: a shade below the screen so a box reads as recessed into it, and an edge a
+         * shade above so it still has an outline. Used by the location plate and by the shell of
+         * the call button, which is what makes the two read as one family.
+         */
+        const val COLOR_PLATE = 0xFF102A3E.toInt()
+        const val COLOR_PLATE_EDGE = 0xFF27567A.toInt()
+
+        /**
+         * The face of the call button, lit from above. The hover pair is the same two colours
+         * brightened rather than a different hue: hovering has to read as the same key with a
+         * light on it, not as another control.
+         */
+        const val COLOR_CALL_TOP = 0xFF2A7BB4.toInt()
+        const val COLOR_CALL_BOTTOM = 0xFF17527C.toInt()
+        const val COLOR_CALL_TOP_HOVER = 0xFF43A0DC.toInt()
+        const val COLOR_CALL_BOTTOM_HOVER = 0xFF2270A4.toInt()
+        const val COLOR_CALL_HIGHLIGHT = 0x66FFFFFF
+
+        /** The lit cell of the reward rail, a wash of the accent blue rather than a border. */
+        const val COLOR_REWARD_HOVER = 0x335AAAEB
+
+        /**
+         * What a claimed reward is dimmed under: the colour of the plate it sits on, so the item
+         * reads as sunk into the rail rather than tinted some colour of its own.
+         */
+        const val COLOR_REWARD_SPENT = 0xAA102A3E.toInt()
+
+        /** How far a category heading sits in from the datapack heading above it. */
+        const val HEADER_INDENT = 6
+
+        /** Clearance kept between a heading and the score at the end of its line. */
+        const val HEADER_SCORE_GAP = 4
+
+        /** Breathing room either side of the requirement lines, which wrap. */
+        const val REQUIREMENT_INSET = 4
+
+        const val ELLIPSIS = "…"
+
+        /** Stands in for a skin or a team member that is missing, hidden, or still on its way. */
+        const val UNKNOWN = "?"
+
+        val ALL_LABEL: Component = CobblemonTrainers.lang("screen.battle_phone.all")
+        val UNCATEGORIZED_LABEL: Component = CobblemonTrainers.lang("category.uncategorized")
+        val EMPTY_LABEL: Component = CobblemonTrainers.lang("screen.battle_phone.empty")
+
+        fun phoneTexture(name: String, color: String): ResourceLocation =
+            CobblemonTrainers.id(
+                "textures/gui/battle_phone/" +
+                    (if (color == "blue" || name == "slot_selected") "$name.png" else "$color/$name.png")
+            )
+
+        /**
+         * A blit with blending on.
+         *
+         * `GuiGraphics.blit` leaves the blend state to its caller, and every texture here has
+         * transparent pixels - the frame most of all, which is drawn over the content. Enabling
+         * it once per screen would not do: drawing text ends its own batch, and that turns
+         * blending back off.
+         */
+        fun blit(
+            guiGraphics: GuiGraphics,
+            texture: ResourceLocation,
+            x: Int,
+            y: Int,
+            width: Int,
+            height: Int,
+            u: Float,
+            v: Float,
+            uWidth: Int,
+            vHeight: Int,
+            textureWidth: Int,
+            textureHeight: Int
+        ) {
+            RenderSystem.enableBlend()
+            RenderSystem.defaultBlendFunc()
+            guiGraphics.blit(texture, x, y, width, height, u, v, uWidth, vHeight, textureWidth, textureHeight)
+        }
+    }
+}

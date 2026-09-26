@@ -1,4 +1,4 @@
-# Publishes a release to Modrinth and to the GitHub release itself.
+# Builds a GitHub release once, then publishes independently to Modrinth and CurseForge.
 #
 # Triggered by publishing a release on GitHub: its tag names the version, its body becomes the
 # changelog on every platform, and the pre-release checkbox picks between a stable and a beta
@@ -16,12 +16,11 @@ on:
   release:
     types: [published]
 
-# Attaching the jar and the example pack to the release that triggered the run.
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  publish:
+  build:
     runs-on: ubuntu-24.04
     steps:
       - name: checkout repository
@@ -51,10 +50,10 @@ jobs:
           # Everything downstream - the jar name, fabric.mod.json, the Modrinth version number -
           # is built from this string, so a tag like "latest" has to stop here rather than ship a
           # jar named after it.
-          case "$version" in
-            [0-9]*.[0-9]*) ;;
-            *) echo "::error::tag $TAG does not carry a version number (expected something like v1.2.3)"; exit 1 ;;
-          esac
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-+][0-9A-Za-z.+-]+)?$ ]]; then
+            echo "::error::tag $TAG does not carry a version number (expected something like v1.2.3)"
+            exit 1
+          fi
 
           if [ "$PRERELEASE" = "true" ]; then
             case "$version" in
@@ -69,19 +68,57 @@ jobs:
           echo "type=$type" >> "$GITHUB_OUTPUT"
           echo "Releasing $version as $type"
 
-      # Without the token publishMods falls back to a dry run, and the workflow would go green
-      # having uploaded nothing. Catch it before the long build.
-      - name: check the publishing credentials
-        env:
-          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
-        run: |
-          if [ -z "$MODRINTH_TOKEN" ]; then
-            echo "::error::the secret MODRINTH_TOKEN is empty, nothing would be published"
-            exit 1
-          fi
-
       - name: build
         run: ./gradlew build exampleDatapack "-Pversion=${{ steps.release.outputs.version }}"
+
+      - name: stage release files
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          python3 .github/scripts/verify-release.py "fabric/build/libs/cobblemon-trainers-${VERSION}.jar" "$VERSION"
+          mkdir -p build/release
+          cp "fabric/build/libs/cobblemon-trainers-${VERSION}.jar" build/release/
+          cp build/dist/exemple_trainer_datapack.zip build/release/
+          cd build/release
+          sha256sum "cobblemon-trainers-${VERSION}.jar" exemple_trainer_datapack.zip > SHA256SUMS
+
+      - name: save release files
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-files
+          path: build/release/
+          if-no-files-found: error
+
+    outputs:
+      version: ${{ steps.release.outputs.version }}
+      type: ${{ steps.release.outputs.type }}
+
+  modrinth:
+    needs: build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: gradle/actions/wrapper-validation@v6
+      - uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: 'microsoft'
+      - run: chmod +x ./gradlew
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: release-files
+          path: build/release
+
+      - name: verify release files
+        working-directory: build/release
+        run: sha256sum -c SHA256SUMS
+
+      # The plugin silently switches to dry-run when the token is absent.
+      - name: check Modrinth credentials
+        env:
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+        run: test -n "$MODRINTH_TOKEN" || { echo '::error::MODRINTH_TOKEN is empty'; exit 1; }
 
       - name: publish to modrinth
         env:
@@ -89,32 +126,10 @@ jobs:
           CHANGELOG: ${{ github.event.release.body }}
         run: |
           ./gradlew publishMods \
-            "-Pversion=${{ steps.release.outputs.version }}" \
-            "-Prelease_type=${{ steps.release.outputs.type }}"
+            "-Pversion=${{ needs.build.outputs.version }}" \
+            "-Prelease_type=${{ needs.build.outputs.type }}" \
+            "-Prelease_file=build/release/cobblemon-trainers-${{ needs.build.outputs.version }}.jar"
 
-      # The release already exists, so its assets are attached here rather than through the
-      # Gradle plugin, which only knows how to create a release of its own.
-      - name: attach the assets to the github release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.event.release.tag_name }}
-        run: |
-          # The remapped jar, not the sources one sitting next to it.
-          jar="build/libs/cobblemon-trainers-${{ steps.release.outputs.version }}.jar"
-          pack="build/dist/exemple_trainer_datapack.zip"
-
-          for asset in "$jar" "$pack"; do
-            [ -f "$asset" ] || { echo "::error::$asset was not built"; exit 1; }
-          done
-
-          gh release upload "$TAG" "$jar" "$pack" --clobber
-
-      # The Modrinth page body is MODRINTH.md, kept in the repo, so the description is reviewed
-      # in a pull request like everything else and can never drift from the build it describes.
-      # The Gradle plugin only ever creates versions - the project itself is patched here.
-      #
-      # Last on purpose: a refused description must not cost the release its assets. The run
-      # still goes red, and re-running the workflow re-applies it.
       - name: update the modrinth description
         env:
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
@@ -122,12 +137,8 @@ jobs:
           project=$(sed -n 's/^modrinth_id=//p' gradle.properties)
           [ -n "$project" ] || { echo "::error::modrinth_id is missing from gradle.properties"; exit 1; }
 
-          # -Rs reads the file whole and hands jq the escaping, which a hand-built JSON string
-          # would get wrong on the first quote or backslash in the page.
           jq -Rs '{body: .}' MODRINTH.md > modrinth-body.json
 
-          # An args array rather than backslash continuations: one long unreadable line and a
-          # continuation that silently loses a header are both worse than this.
           args=(
             -sS -o modrinth-response.txt -w '%{http_code}'
             -X PATCH "https://api.modrinth.com/v2/project/$project"
@@ -138,7 +149,6 @@ jobs:
           )
           code=$(curl "${args[@]}")
 
-          # A successful PATCH answers 204 with an empty body.
           if [ "$code" != "204" ]; then
             echo "::error::Modrinth refused the description update (HTTP $code)"
             cat modrinth-response.txt
@@ -146,3 +156,57 @@ jobs:
           fi
 
           echo "description updated from MODRINTH.md"
+
+  curseforge:
+    needs: build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v8
+        with:
+          name: release-files
+          path: build/release
+
+      - name: verify release files
+        working-directory: build/release
+        run: sha256sum -c SHA256SUMS
+
+      - name: publish to CurseForge
+        env:
+          CURSEFORGE_TOKEN: ${{ secrets.CURSEFORGE_TOKEN }}
+          CHANGELOG: ${{ github.event.release.body }}
+          RELEASE_TYPE: ${{ needs.build.outputs.type }}
+          VERSION: ${{ needs.build.outputs.version }}
+          RELEASE_FILE: build/release/cobblemon-trainers-${{ needs.build.outputs.version }}.jar
+        run: bash .github/scripts/publish-curseforge.sh
+
+  github-assets:
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: release-files
+          path: build/release
+
+      - name: verify release files
+        working-directory: build/release
+        run: sha256sum -c SHA256SUMS
+
+      - name: attach the assets to the github release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.event.release.tag_name }}
+          VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          jar="build/release/cobblemon-trainers-${VERSION}.jar"
+          pack="build/release/exemple_trainer_datapack.zip"
+
+          for asset in "$jar" "$pack"; do
+            [ -f "$asset" ] || { echo "::error::$asset was not built"; exit 1; }
+          done
+
+          gh release upload "$TAG" "$jar" "$pack" --clobber

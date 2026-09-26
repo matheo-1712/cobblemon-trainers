@@ -137,7 +137,7 @@ const SCHEMA = (() => {
   };
 
   const REQUIRES = {
-    k: 'requires', t: 'group', doc: 'DATAPACK.md#conditions-pour-combattre',
+    k: 'requires', t: 'group', open: true, doc: 'DATAPACK.md#conditions-pour-combattre',
     l: t('Conditions pour le combattre', 'Conditions to fight'),
     h: t('Toutes s’additionnent : ce ne sont jamais des alternatives.',
          'They all add up: never alternatives.'),
@@ -145,7 +145,9 @@ const SCHEMA = (() => {
       { k: 'defeated', t: 'strlist', def: [], l: t('Dresseurs à battre', 'Trainers to defeat'),
         h: t('Sans namespace, l’ID est lu dans le pack du dresseur qui l’exige.',
              'With no namespace, the id is read in the pack of the trainer asking for it.') },
-      { k: 'victories', t: 'group', l: t('Nombre de victoires', 'Number of victories'),
+      { k: 'victories', t: 'group', open: true, l: t('Nombre de victoires', 'Number of victories'),
+        h: t('Exemple : 4 victoires dans leaders pour débloquer un élite. Seuls les dresseurs différents et listés comptent.',
+             'Example: 4 victories in leaders to unlock an elite trainer. Only distinct, listed trainers count.'),
         fields: [
           { k: 'count', t: 'count_or_all', def: null, l: t('Combien', 'How many'),
             h: t('Un nombre positif, ou « all » pour tous ceux du groupe. Vide = 1 victoire.',
@@ -236,7 +238,7 @@ const SCHEMA = (() => {
     { k: 'notCallable', t: 'bool', def: false, doc: 'SPAWNING.md', l: t('Pas appelable', 'Cannot be called'),
       h: t('true bloque uniquement l’appel depuis le Battle Phone. Les commandes et le bloc de spawn restent utilisables.',
            'true blocks Battle Phone calls only. Commands and the trainer spawner block still work.') },
-    SKIN, BATTLE, MESSAGES, PROGRESS, REWARDS, REQUIRES, LOCATION, COSMETICS
+    REQUIRES, SKIN, BATTLE, MESSAGES, PROGRESS, REWARDS, LOCATION, COSMETICS
   ];
 
   const CATEGORY = [

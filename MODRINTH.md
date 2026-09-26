@@ -31,8 +31,10 @@ in place. A village of trainers is built once.
 **On the player side, meeting a trainer works nothing like that**: it all goes through the
 **Battle Phone**, an item, not a command.
 
-It is **crafted**: four iron ingots in the corners, four copper ingots on the sides, and a
-**blue apricorn** in the middle.
+It is **crafted**: four iron ingots in the corners, four copper ingots on the sides, and an
+**apricorn of your choice** in the middle. Black, blue, green, pink, red, white and yellow
+apricorns each make a matching Battle Phone. Its screen frame and interface colors match the
+phone, while every color opens the same trainer list.
 
 <p align="center"><img src="https://raw.githubusercontent.com/matheo-1712/cobblemon-trainers/refs/heads/master/assets/battle_phone_craft.png" alt="Battle Phone recipe"></p>
 
