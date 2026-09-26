@@ -5,10 +5,10 @@ plugins {
 }
 
 // The root coordinates all modules; loader-specific tasks stay in their modules.
-tasks.named("assemble") { dependsOn(":common:assemble", ":fabric:assemble") }
-tasks.named("check") { dependsOn(":common:check", ":fabric:check") }
-tasks.named("build") { dependsOn(":common:build", ":fabric:build") }
-tasks.named("clean") { dependsOn(":common:clean", ":fabric:clean") }
+tasks.named("assemble") { dependsOn(":common:assemble", ":fabric:assemble", ":neoforge:assemble") }
+tasks.named("check") { dependsOn(":common:check", ":fabric:check", ":neoforge:check") }
+tasks.named("build") { dependsOn(":common:build", ":fabric:build", ":neoforge:build") }
+tasks.named("clean") { dependsOn(":common:clean", ":fabric:clean", ":neoforge:clean") }
 
 // Preserve the familiar root commands while selecting the Fabric runtime explicitly.
 for (name in listOf("runClient", "runServer", "genSources", "publishMods")) {

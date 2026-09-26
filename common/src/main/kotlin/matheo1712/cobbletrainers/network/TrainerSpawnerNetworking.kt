@@ -40,9 +40,18 @@ object TrainerSpawnerNetworking {
             ConfigureTrainerSpawnerPayload.TYPE,
             ConfigureTrainerSpawnerPayload.CODEC
         )
+        Platform.current.registerC2S(RespawnTrainerSpawnerPayload.TYPE, RespawnTrainerSpawnerPayload.CODEC)
 
         Platform.current.receive(ConfigureTrainerSpawnerPayload.TYPE) { payload, player ->
             configure(player, payload)
+        }
+        Platform.current.receive(RespawnTrainerSpawnerPayload.TYPE) { payload, player ->
+            val blockEntity = editableBlock(player, payload.pos) ?: return@receive
+            player.sendSystemMessage(
+                CobblemonTrainers.lang(
+                    if (blockEntity.respawnNow()) "chat.spawner.respawned" else "chat.spawner.respawn_failed"
+                ).withStyle(ChatFormatting.GRAY)
+            )
         }
     }
 
@@ -68,14 +77,7 @@ object TrainerSpawnerNetworking {
     }
 
     private fun configure(player: ServerPlayer, payload: ConfigureTrainerSpawnerPayload) {
-        if (!player.canUseGameMasterBlocks()) return
-
-        val level = player.serverLevel()
-        val pos = payload.pos
-        if (!level.isLoaded(pos)) return
-        if (player.distanceToSqr(Vec3.atCenterOf(pos)) > MAX_EDIT_DISTANCE_SQR) return
-
-        val blockEntity = level.getBlockEntity(pos) as? TrainerSpawnerBlockEntity ?: return
+        val blockEntity = editableBlock(player, payload.pos) ?: return
 
         val raw = payload.trainerId.trim()
         val trainerId = if (raw.isEmpty()) {
@@ -103,6 +105,14 @@ object TrainerSpawnerNetworking {
             )
         }
         player.sendSystemMessage(message.withStyle(ChatFormatting.GRAY))
+    }
+
+    private fun editableBlock(player: ServerPlayer, pos: BlockPos): TrainerSpawnerBlockEntity? {
+        if (!player.canUseGameMasterBlocks()) return null
+        val level = player.serverLevel()
+        if (!level.isLoaded(pos)) return null
+        if (player.distanceToSqr(Vec3.atCenterOf(pos)) > MAX_EDIT_DISTANCE_SQR) return null
+        return level.getBlockEntity(pos) as? TrainerSpawnerBlockEntity
     }
 }
 
@@ -177,6 +187,21 @@ data class ConfigureTrainerSpawnerPayload(
                         respawnDelaySeconds = buf.readVarInt()
                     )
                 }
+            )
+    }
+}
+
+/** Client -> server: force one fresh NPC using the block's saved trainer ID. */
+data class RespawnTrainerSpawnerPayload(val pos: BlockPos) : CustomPacketPayload {
+    override fun type(): CustomPacketPayload.Type<RespawnTrainerSpawnerPayload> = TYPE
+
+    companion object {
+        val TYPE: CustomPacketPayload.Type<RespawnTrainerSpawnerPayload> =
+            CustomPacketPayload.Type(CobblemonTrainers.id("respawn_trainer_spawner"))
+        val CODEC: StreamCodec<RegistryFriendlyByteBuf, RespawnTrainerSpawnerPayload> =
+            CustomPacketPayload.codec(
+                { payload, buf -> buf.writeBlockPos(payload.pos) },
+                { buf -> RespawnTrainerSpawnerPayload(buf.readBlockPos()) }
             )
     }
 }

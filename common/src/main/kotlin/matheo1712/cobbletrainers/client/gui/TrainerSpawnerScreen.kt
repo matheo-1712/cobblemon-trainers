@@ -6,6 +6,7 @@ import matheo1712.cobbletrainers.CobblemonTrainers
 import matheo1712.cobbletrainers.block.TrainerSpawnerBlockEntity
 import matheo1712.cobbletrainers.network.ConfigureTrainerSpawnerPayload
 import matheo1712.cobbletrainers.network.OpenTrainerSpawnerPayload
+import matheo1712.cobbletrainers.network.RespawnTrainerSpawnerPayload
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.components.Button
@@ -68,12 +69,17 @@ class TrainerSpawnerScreen(private val data: OpenTrainerSpawnerPayload) :
 
         addRenderableWidget(
             Button.builder(CommonComponents.GUI_DONE) { commit() }
-                .bounds(panelLeft, height - 28, HALF_WIDTH, 20)
+                .bounds(panelLeft, height - 28, ACTION_WIDTH, 20)
                 .build()
         )
         addRenderableWidget(
+            Button.builder(CobblemonTrainers.lang("screen.trainer_spawner.respawn")) {
+                ClientPlatform.current.send(RespawnTrainerSpawnerPayload(data.pos))
+            }.bounds(panelLeft + ACTION_WIDTH + GAP, height - 28, ACTION_WIDTH, 20).build()
+        )
+        addRenderableWidget(
             Button.builder(CommonComponents.GUI_CANCEL) { onClose() }
-                .bounds(panelLeft + HALF_WIDTH + GAP, height - 28, HALF_WIDTH, 20)
+                .bounds(panelLeft + 2 * (ACTION_WIDTH + GAP), height - 28, ACTION_WIDTH, 20)
                 .build()
         )
 
@@ -179,6 +185,7 @@ class TrainerSpawnerScreen(private val data: OpenTrainerSpawnerPayload) :
         const val PANEL_WIDTH = 300
         const val GAP = 4
         const val HALF_WIDTH = (PANEL_WIDTH - GAP) / 2
+        const val ACTION_WIDTH = (PANEL_WIDTH - 2 * GAP) / 3
         const val ROW_HEIGHT = 12
 
         const val TITLE_COLOR = 0xFFFFFF

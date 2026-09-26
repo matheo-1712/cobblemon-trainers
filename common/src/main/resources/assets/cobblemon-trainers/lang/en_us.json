@@ -69,11 +69,14 @@
   "cobblemon-trainers.screen.trainer_spawner.trainer.hint": "namespace:name - leave empty for no trainer",
   "cobblemon-trainers.screen.trainer_spawner.radius": "Leash radius (blocks)",
   "cobblemon-trainers.screen.trainer_spawner.delay": "Respawn delay (seconds)",
+  "cobblemon-trainers.screen.trainer_spawner.respawn": "Respawn",
 
   "cobblemon-trainers.chat.spawner.configured": "Spawner set to %s.",
   "cobblemon-trainers.chat.spawner.cleared": "Spawner cleared: it no longer spawns anything.",
   "cobblemon-trainers.chat.spawner.unknown_trainer": "Unknown trainer '%s'. Check the trainer IDs in data/<namespace>/cobblemontrainers/ of your datapacks.",
   "cobblemon-trainers.chat.spawner.client_required": "Configuring a spawner needs Cobblemon Trainers installed on your client.",
+  "cobblemon-trainers.chat.spawner.respawned": "Trainer recreated from its current definition.",
+  "cobblemon-trainers.chat.spawner.respawn_failed": "Could not recreate this trainer; check the block settings and datapack.",
 
   "cobblemon-trainers.chat.trainer_message": "[%s] %s",
 

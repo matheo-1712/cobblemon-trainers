@@ -1,6 +1,6 @@
 # Structure de développement
 
-Le mod est organisé en deux modules. Fabric est la seule version exécutable aujourd'hui.
+Le mod est organisé en trois modules : logique commune, Fabric et NeoForge.
 
 | Emplacement | Rôle |
 | --- | --- |
@@ -10,6 +10,8 @@ Le mod est organisé en deux modules. Fabric est la seule version exécutable au
 | `fabric/src/main/` | Points d'entrée Fabric, adaptateurs de plateforme, services et `fabric.mod.json`. |
 | `fabric/run/` | Environnement de développement Fabric, mondes et mods de test. |
 | `fabric/build/libs/` | Jars Fabric distribuables, avec le contenu commun intégré. |
+| `neoforge/src/main/` | Points d'entrée NeoForge, adaptateurs, services et `neoforge.mods.toml`. |
+| `neoforge/build/libs/` | Jar NeoForge distribuable, compilé depuis les sources communes. |
 | `examples/`, `web/`, `docs/` | Packs d'exemple, éditeur et documentation partagés. |
 
 Les packages de la logique, identifiants, données sauvegardées et formats JSON restent les
@@ -21,9 +23,12 @@ existant a été déplacé de `run/` vers `fabric/run/` avec son contenu.
 Depuis la racine, avec Java 21 (`.\gradlew.bat` sous Windows) :
 
 ```sh
-./gradlew clean build       # Reconstruit common et Fabric
+./gradlew clean build       # Reconstruit common, Fabric et NeoForge
 ./gradlew :common:build     # Compile et vérifie le code commun
 ./gradlew :fabric:build     # Construit le jar Fabric avec common
+./gradlew :neoforge:build   # Construit le jar NeoForge depuis common
+./gradlew :neoforge:runClient
+./gradlew :neoforge:runServer
 ./gradlew runClient         # Alias de :fabric:runClient
 ./gradlew runServer         # Alias de :fabric:runServer
 ./gradlew genSources        # Sources du jeu pour Fabric
@@ -39,13 +44,14 @@ Dans IntelliJ, recharger Gradle génère `Minecraft Client (Fabric)` et
 Ces configurations lancent les tâches Gradle, qui préparent Java 21, les mods de
 développement et le pack d'exemple. Aucun lanceur Architectury n'est utilisé.
 
-La release construit une seule fois le jar dans `fabric/build/libs/`, vérifie son contenu,
-puis le place avec le pack d'exemple dans `build/release/`. Modrinth, CurseForge et GitHub
-reçoivent ces mêmes fichiers après vérification SHA-256. La propriété
+La release construit une fois les jars Fabric et NeoForge, vérifie leur contenu,
+puis les place avec le pack d'exemple dans `build/release/`. Modrinth, CurseForge et GitHub
+reçoivent les mêmes fichiers après vérification SHA-256. La propriété
 `-Prelease_file=build/release/cobblemon-trainers-<version>.jar` permet à `publishMods`
 d'utiliser ce jar sans le reconstruire. Le script CurseForge accepte le même chemin via
 `RELEASE_FILE` ; `DRY_RUN=true` écrit uniquement ses métadonnées dans
-`build/mod-publish/curseforge.json` (avec `VERSION` et `RELEASE_TYPE` renseignés).
+`build/mod-publish/curseforge-<loader>.json` (avec `VERSION`, `RELEASE_TYPE` et
+`LOADER=neoforge` pour NeoForge).
 
 ## Frontière entre logique et plateforme
 
@@ -53,7 +59,8 @@ d'utiliser ce jar sans le reconstruire. Le script CurseForge accepte le même ch
 rechargement, registres, chemins, détection des mods et transport réseau. `TrainerClientPlatform`
 isole les événements et le transport client. Les implémentations Fabric sont découvertes
 par `ServiceLoader`, sans référence de `common` vers une classe Fabric et sans initialiser
-les classes client sur un serveur dédié. Les récepteurs réseau tournent sur le thread du jeu.
+les classes client sur un serveur dédié. NeoForge fournit ses propres implémentations des
+mêmes services. Les récepteurs réseau tournent sur le thread du jeu.
 Les règles et les validations restent dans leurs classes communes.
 
 Le build commun utilise Loom pour compiler contre Minecraft et Cobblemon avec les mappings
@@ -65,9 +72,10 @@ Fabric utilise le jar commun non remappé (`namedElements`), l'intègre avant so
 remapping et regroupe les deux source sets pour lancer le jeu. Le jar de sources inclut
 également les sources communes. Le module commun ne définit aucun lancement de jeu.
 
-## Ajouter NeoForge
+## Version NeoForge
 
-La logique est partagée, mais le port NeoForge reste à réaliser : ajouter son module, ses
-points d'entrée et ses deux services, puis valider le classpath Cobblemon, le cycle des
-registres, le réseau et les cibles des mixins. Les mixins partagés doivent être vérifiés
-sur ce loader. La présence de `common` ne rend pas le jar Fabric compatible avec NeoForge.
+NeoForge compile les sources de `common` avec son propre Minecraft et Cobblemon 1.8.1.
+Son identifiant de loader est `cobblemon_trainers`, car NeoForge interdit les tirets dans
+un ID de mod. Les identifiants des ressources et des données restent `cobblemon-trainers`.
+Le module attend NeoForge 21.1.251 et Kotlin for Forge 5.12.0. Son jar est distinct de celui
+de Fabric.

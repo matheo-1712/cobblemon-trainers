@@ -20,7 +20,7 @@ import java.util.*
  *
  * The trainer is identified by its datapack ID rather than by the entity: the entity is only
  * ever a consequence, respawned whenever it is missing. [spawnedTrainer] holds the UUID of the
- * current one so it can be found again after a restart.
+ * current one so it can be removed when the block loads and recreates it from today's datapack.
  *
  * The settings ride along into a structure for free - `StructureTemplate` saves and restores
  * block entity NBT - which is what makes a configured spawner reusable as part of a building.
@@ -53,6 +53,10 @@ class TrainerSpawnerBlockEntity(pos: BlockPos, state: BlockState) :
         get() = blockState.getValue(TrainerSpawnerBlock.FACING).toYRot()
 
     private var spawnedTrainer: UUID? = null
+
+    /** A saved block or a structure copy always rebuilds from today's datapack definition. */
+    private var refreshAfterLoad = false
+    private var structureCopyCleanupUntil = 0L
 
     /**
      * Game time at which the next spawn is due, or 0 when nothing is pending. Not saved: it is
@@ -97,9 +101,23 @@ class TrainerSpawnerBlockEntity(pos: BlockPos, state: BlockState) :
      */
     fun despawnTrainer() {
         val level = this.level as? ServerLevel ?: return
-        spawnedTrainer?.let { (level.getEntity(it) as? NPCEntity)?.discard() }
+        spawnedTrainer?.let { uuid ->
+            (level.getEntity(uuid) as? NPCEntity)?.takeIf { spawnerAspect() in it.aspects }?.discard()
+        }
         sweepOrphans(level)
         spawnedTrainer = null
+    }
+
+    /** Recreate the NPC from the current definition, without touching the block settings. */
+    fun respawnNow(): Boolean {
+        val level = this.level as? ServerLevel ?: return false
+        val id = trainerId ?: return false
+        despawnTrainer()
+        refreshAfterLoad = false
+        respawnAt = 0L
+        seenAlive = false
+        spawn(level, id)
+        return spawnedTrainer != null
     }
 
     fun serverTick(level: ServerLevel) {
@@ -110,11 +128,26 @@ class TrainerSpawnerBlockEntity(pos: BlockPos, state: BlockState) :
         val id = trainerId ?: return
         val tracked = spawnedTrainer?.let { level.getEntity(it) as? NPCEntity }
 
+        if (refreshAfterLoad) {
+            if (respawnAt == 0L) {
+                respawnAt = level.gameTime + RELOAD_GRACE_TICKS
+                structureCopyCleanupUntil = level.gameTime + STRUCTURE_COPY_CLEANUP_TICKS
+            }
+            if (level.gameTime < respawnAt) return
+            // A structure may carry an old entity as well as the block. Give entities time
+            // to load, then discard the old one and build from the current trainer JSON.
+            if (tracked?.battleIds?.isNotEmpty() == true) return
+            refreshAfterLoad = false
+            respawnNow()
+            return
+        }
+
         if (tracked != null && tracked.isAlive && spawnerAspect() in tracked.aspects) {
             // Found again - a pending respawn was a false alarm, most likely a chunk that had
             // not finished loading its entities.
             seenAlive = true
             respawnAt = 0L
+            if (level.gameTime <= structureCopyCleanupUntil) sweepOrphans(level, tracked.uuid)
             keepNear(tracked)
             return
         }
@@ -206,18 +239,27 @@ class TrainerSpawnerBlockEntity(pos: BlockPos, state: BlockState) :
     }
 
     /**
-     * Discards every trainer around that belongs to this block. Called only when none is meant
-     * to be left - right before spawning a fresh one, and when the block goes away.
+     * Discards superseded trainers around this block. Also runs while one is tracked, because
+     * an entity chunk can arrive later than its replacement.
      *
      * The aspect is written at spawn time and saved to NBT, so this also catches a trainer the
      * block lost track of: one that wandered into a chunk which unloaded while the spawner kept
      * ticking, and came back after its replacement was already standing there.
      */
-    private fun sweepOrphans(level: ServerLevel) {
+    private fun sweepOrphans(level: ServerLevel, keep: UUID? = null) {
         val aspect = spawnerAspect()
         val reach = leashRadius.toDouble() * 2 + 2
+        val home = spawnPosition()
+        val trainerAspect = CobblemonTrainers.TRAINER_ASPECT_PREFIX + trainerId
         level.getEntitiesOfClass(NPCEntity::class.java, AABB.ofSize(spawnPosition(), reach, reach, reach)) {
-            aspect in it.aspects
+            it.uuid != keep && (
+                aspect in it.aspects ||
+                    // A structure saved with entities may place an old NPC beside a copy
+                    // of the block. Its aspect still names the source block's position.
+                    (level.gameTime <= structureCopyCleanupUntil && trainerAspect in it.aspects &&
+                        it.aspects.any { marker -> marker.startsWith(CobblemonTrainers.SPAWNER_ASPECT_PREFIX) } &&
+                        it.position().distanceToSqr(home) < STRUCTURE_COPY_DISTANCE_SQR)
+                )
         }.forEach { it.discard() }
     }
 
@@ -250,6 +292,8 @@ class TrainerSpawnerBlockEntity(pos: BlockPos, state: BlockState) :
         }
         spawnedTrainer = if (tag.hasUUID(SPAWNED_KEY)) tag.getUUID(SPAWNED_KEY) else null
         seenAlive = false
+        respawnAt = 0L
+        refreshAfterLoad = trainerId != null
     }
 
     /**
@@ -283,11 +327,12 @@ class TrainerSpawnerBlockEntity(pos: BlockPos, state: BlockState) :
         private const val RETRY_INTERVAL_TICKS = 200L
 
         /**
-         * How long a freshly loaded block gives its trainer to show up before deciding it is
-         * gone. Long enough for a neighbouring chunk to finish loading its entities, short
-         * enough that a spawner placed as part of a structure is not left empty.
+         * How long a freshly loaded block waits for the old entity before replacing it. A
+         * neighbouring chunk can finish loading after the block, including in a structure.
          */
         private const val RELOAD_GRACE_TICKS = 60L
+        private const val STRUCTURE_COPY_DISTANCE_SQR = 0.5
+        private const val STRUCTURE_COPY_CLEANUP_TICKS = 200L
 
         private const val TRAINER_KEY = "Trainer"
         private const val LEASH_KEY = "LeashRadius"
