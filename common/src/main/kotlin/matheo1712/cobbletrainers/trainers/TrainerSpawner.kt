@@ -83,6 +83,12 @@ object TrainerSpawner {
         val modelId = definition.skin.modelId()
         if (modelId == null) npc.appliedAspects.add("model-default")
         else npc.appliedAspects.addAll(definition.skin.modelAspects())
+        // The name beside the bytes. The image still arrives through NPC_PLAYER_TEXTURE, so
+        // nothing has to be installed client-side; this only lets a client that *does* hold the
+        // same file in a resource pack draw that one instead.
+        definition.skin.textureId()?.let {
+            npc.appliedAspects.add(CobblemonTrainers.SKIN_ASPECT_PREFIX + it)
+        }
 
         // 5. Battle AI difficulty, overridden per entity so every trainer can differ while
         //    sharing one NPC class. Cobblemon clamps it to 0..5 anyway.

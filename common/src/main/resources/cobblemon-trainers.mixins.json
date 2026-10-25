@@ -15,6 +15,7 @@
 		"client.MinecraftMixin",
 		"client.MusicManagerMixin",
 		"client.BattleMusicHandlerMixin",
+		"client.NPCRendererMixin",
 		"client.PosableModelMixin"
 	],
 	"injectors": {

@@ -595,13 +595,19 @@ par défaut et la raison est dans les logs.
 fichier est un **skin de joueur ordinaire**, PNG 64×64 avec transparence, rendu sur le gabarit
 Steve ou sur celui d'Alex avec `"model": "slim"`.
 
-Cette voie a deux particularités :
+Cette voie a trois particularités :
 
 - **L'image est lue par le serveur**, qui l'envoie aux clients avec le dresseur : un joueur
   qui n'a pas ton pack voit quand même le bon skin.
 - **Elle doit donc être dans `mods/`.** Un pack rangé dans `resourcepacks/` ou `datapacks/`
   est hors de portée du serveur ; le dresseur reste en skin par défaut, l'explication est dans
   les logs.
+- **Un resource pack côté client fait foi.** Si le joueur a le **même chemin** dans ses propres
+  resource packs, c'est son image qui est dessinée, dans le monde comme dans le Battle Phone.
+  Le fichier et sa référence ne changent pas - seul le dossier change -, donc le même pack sert
+  à habiller tout le monde depuis `mods/` ou à se re-skinner chez soi depuis `resourcepacks/`.
+  Sans pack côté client, rien ne change. Seul `texture` est concerné : les autres types ne
+  nomment aucun chemin.
 
 Sans image à toi, le mod en fournit une pour essayer :
 `cobblemon-trainers:textures/trainers/example.png`.
