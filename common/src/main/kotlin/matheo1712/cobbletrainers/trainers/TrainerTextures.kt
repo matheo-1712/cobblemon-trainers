@@ -23,6 +23,10 @@ import net.minecraft.server.packs.PackType
  *
  * A pack living in `datapacks/` or `resourcepacks/` is out of reach: neither is read by the
  * side that needs the bytes. Ship the texture through `mods/`.
+ *
+ * A client that happens to hold the same path in its own resource packs draws that file
+ * instead, which is a decision taken where the drawing happens and changes nothing here - see
+ * [matheo1712.cobbletrainers.client.cache.TrainerSkinOverrides].
  */
 object TrainerTextures {
 

@@ -87,6 +87,19 @@ object CobblemonTrainers {
     const val TRINKET_ASPECT_PREFIX = "trainer_trinket:"
 
     /**
+     * Prefix of the aspect naming the texture a `texture` skin declared, followed by that
+     * resource location (`trainer_skin:my_pack:textures/trainers/red.png`).
+     *
+     * The image itself still travels as bytes in `NPC_PLAYER_TEXTURE`, so a pack installed on
+     * the server alone keeps dressing everyone. This is the name beside those bytes, and it is
+     * what lets a client prefer the same file out of its own resource packs - see
+     * [matheo1712.cobbletrainers.client.cache.TrainerSkinOverrides]. An aspect rather than a
+     * packet for the same reason as the three above: it is synced to every client that can see
+     * the trainer, and saved to NBT, at no cost on either side.
+     */
+    const val SKIN_ASPECT_PREFIX = "trainer_skin:"
+
+    /**
      * Prefix of the aspect naming the player who called a trainer from their battle phone,
      * followed by their UUID. Saved to NBT like the two above, which is what lets
      * [matheo1712.cobbletrainers.trainers.TrainerCalls] recognise a called trainer whose call

@@ -6,6 +6,7 @@ import matheo1712.cobbletrainers.platform.Platform
 import matheo1712.cobbletrainers.client.gui.BattleIntroScreen
 import matheo1712.cobbletrainers.client.gui.BattlePhoneScreen
 import matheo1712.cobbletrainers.client.cache.TrainerSkinCache
+import matheo1712.cobbletrainers.client.cache.TrainerSkinOverrides
 import matheo1712.cobbletrainers.client.cache.TrainerTeamCache
 import matheo1712.cobbletrainers.client.gui.TrainerSpawnerScreen
 import matheo1712.cobbletrainers.client.render.TrainerOutfitRenderer
@@ -78,6 +79,7 @@ object CobblemonTrainersClient {
         }
 
         Platform.current.registerReloadListener(PackType.CLIENT_RESOURCES, CobblemonTrainers.id("outfits"), OutfitReloadListener::onResourceManagerReload)
+        Platform.current.registerReloadListener(PackType.CLIENT_RESOURCES, CobblemonTrainers.id("skins"), SkinReloadListener::onResourceManagerReload)
     }
 
     /**
@@ -89,6 +91,22 @@ object CobblemonTrainersClient {
 
         fun onResourceManagerReload(manager: ResourceManager) {
             TrainerOutfitRenderer.clear()
+        }
+    }
+
+    /**
+     * Forgets which trainer skins this client's own resource packs can override.
+     *
+     * A reload is the one moment that answer changes, and the skins already built on the old
+     * one are stale with it: dropping them has the phone ask the server again, which is the
+     * only way a freshly added pack can win a trainer it did not hold a moment ago. See
+     * [TrainerSkinOverrides].
+     */
+    private object SkinReloadListener {
+
+        fun onResourceManagerReload(manager: ResourceManager) {
+            TrainerSkinOverrides.clear()
+            TrainerSkinCache.clear()
         }
     }
 }

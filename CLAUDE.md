@@ -260,6 +260,8 @@ messages, musique et récompenses de combat.
   seul endroit du mod qui pose un modèle d'entité dans un écran.
 - **`client.gui.TrainerSkinRenderer` / `client.cache.TrainerSkinCache`** - le dessin d'un skin
   à plat, et les textures que le Battle Phone a reçues.
+- **`client.cache.TrainerSkinOverrides`** - le seul endroit qui décide si un resource pack du
+  client remplace le skin qu'un dresseur a reçu du serveur. Voir « Skins ».
 - **`client.render.TrainerRig` / `client.render.TrainerOutfitRenderer`** - le mannequin humanoïde
   calé sur les os de Cobblemon, et ce qu'on y accroche. Même section.
 - **`client.cache.TrainerTeamCache`** - les équipes que le Battle Phone a reçues, prêtes à
@@ -1203,8 +1205,9 @@ l'image derrière un nom déjà résolu.
 `NPC_PLAYER_TEXTURE` : ce sont eux qui déterminent le rig utilisé au rendu. Un échec est
 silencieux, le NPC garde son skin par défaut.
 
-`skin.type` accepte `player_username`, `player_uuid` (profil Mojang, téléchargement réseau)
-et `texture` (une image de pack, lue par `TrainerTextures`).
+`skin.type` accepte `player_username`, `player_uuid` (profil Mojang, téléchargement réseau),
+`texture` (une image de pack, lue par `TrainerTextures`) et `model` (un modèle NPC Cobblemon,
+résolu chez le client).
 
 Points à ne pas redécouvrir sur `texture` :
 
@@ -1216,11 +1219,49 @@ Points à ne pas redécouvrir sur `texture` :
   celui du serveur ne connaît que `data/`, celui du client n'existe pas sur un serveur dédié.
   `TrainerTextures` lit donc le classpath (assets du mod et de tout ce que Fabric a chargé),
   puis les packs de `mods/` via `ModsFolderPackSource.readResource`. Un pack rangé dans
-  `resourcepacks/` ou `datapacks/` est hors de portée, et c'est irréductible.
+  `resourcepacks/` ou `datapacks/` est hors de portée, et c'est irréductible **pour cette
+  voie** : un pack qui veut livrer ses assets côté client passe par `model`, ci-dessous.
+- **Un resource pack du client fait foi, et ça ne change rien au serveur.** Le chemin déclaré
+  voyage à côté des octets - l'aspect `trainer_skin:` sur l'entité, `textureResource` dans le
+  paquet du Battle Phone -, et le client dessine son propre fichier quand il l'a. Deux
+  consommateurs appliquent la règle, chacun sur sa source : `client.NPCRendererMixin` pour le
+  monde, `TrainerSkinCache` pour la fiche. Les séparer est voulu - il n'y a pas d'entité à
+  interroger dans un écran -, et c'est `TrainerSkinOverrides` qui tranche pour les deux, pour
+  qu'un dresseur n'ait pas deux visages. Un registre synchronisé à la connexion a été écarté,
+  pour la même raison que l'écran de versus : rien à invalider. Seul `texture` est concerné,
+  les autres types ne nommant aucun chemin - et `TrainerSkinOverrides` est vidé au rechargement
+  des ressources, avec le cache de skins, parce qu'un pack qui vient d'arriver doit pouvoir
+  gagner un dresseur qu'il ne tenait pas.
 - **Le gabarit vient du JSON** (`skin.model`, `default` ou `slim`) : contrairement à un profil
   Mojang, une image seule ne dit pas sur quel rig la dessiner.
 - Le mod livre `assets/cobblemon-trainers/textures/trainers/example.png` pour que la voie soit
   testable sans fabriquer un skin.
+
+Points à ne pas redécouvrir sur `model` :
+
+- **C'est la seule voie de skin que le serveur ne résout pas.** `resolveAsync` rend `null` dès
+  que `skin.modelId()` répond, donc aucun octet ne part : la géométrie, le poser, les
+  animations et la texture vivent dans les resource packs du **client**, lus par le
+  `VaryingModelRepository` de Cobblemon. Conséquence assumée, et la seule du mod : le pack doit
+  être installé des deux côtés. C'est ce que dit le README d'`examples/custom_model`, qui est la
+  référence de la voie.
+- **Ce qui voyage est le nom, pas le fichier.** `npc.forcedResourceIdentifier`, que Cobblemon
+  synchronise et persiste en `ForcedResourceIdentifier`. Surtout **ne pas** écrire sur la
+  `NPCClass` : c'est un singleton partagé par tous les dresseurs (voir « Contraintes de l'API NPC
+  de Cobblemon »).
+- **`skin.value` nomme un resolver de variation**, pas un fichier de géométrie ni une NPCClass :
+  le `name` d'un `bedrock/npcs/variations/<dossier>/<n>_<nom>.json`. C'est lui qui désigne
+  ensuite le modèle, le poser et la texture.
+- **Aucun aspect de rig n'est imposé.** `TrainerSpawner` ne pose `model-default` que lorsque
+  `modelId()` est nul : un resolver possède sa propre géométrie, et lui coller un aspect de
+  joueur reviendrait à lui demander d'être Steve. `skin.aspects` est à lui, et les `:` y sont
+  refusés pour que `trainer_id:` et les tags de trinket ne puissent pas s'y glisser.
+- **Un resolver mal écrit est signalé au chargement** (`TrainerSkin.validate`), là où l'auteur du
+  pack lit son log : sans ça le dresseur retomberait sur le skin par défaut sans un mot.
+- **Le Battle Phone le sait par son listing**, qui porte `modelResource` et `aspects` à côté du
+  reste - il n'a pas d'entité à interroger.
+- Toute la doc joueur de cette voie est dans `docs/DATAPACK.md`, avec le tableau des fichiers
+  qu'un pack doit livrer.
 
 ### La tenue d'un dresseur
 
@@ -1882,6 +1923,13 @@ chargement sur un serveur dédié.
 `client.PosableModelMixin` dessine la tenue d'un dresseur à la queue de `PosableModel.render`,
 seul instant où les os portent encore la pose dessinée ; il est décrit sous « La tenue d'un
 dresseur ». Comme les trois ci-dessus il est déclaré dans le tableau `client` du mixins.json.
+
+`client.NPCRendererMixin` laisse un resource pack du client surcharger le skin d'un dresseur,
+sur `NPCRenderer.getTextureLocation` ; il est décrit sous « Skins ». C'est la seule couture
+nécessaire pour le monde : `NPCRenderer.scale` rappelle cette méthode et pose sa réponse dans
+le `RenderContext`. Déclaré dans le tableau `client` comme les quatre ci-dessus. Contrairement
+à `AIBattleActorMixin`, son descripteur nomme `ResourceLocation`, que Loom remappe - à
+revérifier dans le jar construit après un changement.
 
 `AIBattleActorMixin` remplace l'IA de combat des dresseurs du mod par `TrainerBattleAI` (voir
 « L'IA de combat »). Le constructeur de `NPCBattleActor` prend pourtant l'IA en paramètre -

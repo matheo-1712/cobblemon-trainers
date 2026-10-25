@@ -566,12 +566,17 @@ default skin and the reason is in the log.
 file is an **ordinary player skin**, a 64×64 PNG with transparency, rendered on the Steve rig or
 on Alex's with `"model": "slim"`.
 
-That route has two particularities:
+That route has three particularities:
 
 - **The image is read by the server**, which sends it to the clients along with the trainer: a
   player who does not have your pack still sees the right skin.
 - **So it has to be in `mods/`.** A pack sitting in `resourcepacks/` or `datapacks/` is out of
   the server's reach; the trainer stays on the default skin, and the log explains why.
+- **A resource pack on the client wins.** If the player holds the **same path** in their own
+  resource packs, their image is drawn instead, in the world and in the Battle Phone alike. The
+  file and the reference to it do not change - only the folder does - so one pack either dresses
+  everyone from `mods/` or re-skins a single client from `resourcepacks/`. With no pack on the
+  client, nothing changes. Only `texture` is concerned: the other types name no path.
 
 If you have no image of your own, the mod ships one to try it with:
 `cobblemon-trainers:textures/trainers/example.png`.

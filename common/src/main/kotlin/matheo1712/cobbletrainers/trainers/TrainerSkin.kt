@@ -27,6 +27,16 @@ data class TrainerSkin(
     val model: String = "default",
     val aspects: List<String> = emptyList()
 ) {
+    /**
+     * The PNG this skin declares, for a `texture` type and nothing else.
+     *
+     * The bytes are what dresses the trainer (see [TrainerTextures]); this is the *name* beside
+     * them, which a client may use to prefer the same file out of its own resource packs. The
+     * other types declare no path, so there is nothing of theirs to override.
+     */
+    fun textureId(): ResourceLocation? =
+        if (type.equals("texture", ignoreCase = true)) ResourceLocation.tryParse(value) else null
+
     /** The resolver's name, not the geometry file or an NPC class. */
     fun modelId(): ResourceLocation? =
         if (type.equals("model", ignoreCase = true) && ':' in value) ResourceLocation.tryParse(value)
