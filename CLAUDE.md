@@ -1559,6 +1559,21 @@ Points à ne pas redécouvrir :
   se voyait pas avant que la couche ne garde une mémoire entre les tours. `DecisionKey` rend la
   réponse déjà donnée tant qu'elle reste valide. Sans ça, la seconde passe lisait un `struck`
   que la première venait de remplir : une Frimousse intacte y paraissait cassée.
+- **Une place sur le banc ne se promet qu'une fois, et c'est `willBeSwitchedIn` qui le tient.**
+  `onChoiceRequested` demande une décision **par emplacement actif** puis ne remet ce drapeau à
+  faux qu'une fois toute la requête répondue : c'est lui, et lui seul, qui empêche le second
+  emplacement d'un combat double de rappeler le Pokémon que le premier vient de prendre.
+  Cobblemon le pose dans `considerSwitching` et ne lit le banc qu'à travers `canBeSentOut()`,
+  qui le consulte - d'où un `PassActionResponse` parfaitement légal pour un emplacement qu'il ne
+  peut plus remplir. Le filet de sécurité de forced-switch, lui, choisissait à la main sur
+  `health` et `isSentOut` : il offrait donc le même remplaçant aux deux emplacements vidés d'un
+  même tour, Showdown répondait `Can't switch: The Pokémon in slot N can only switch in once`,
+  et cette erreur n'atteint personne - le camp qui l'a envoyée ne peut plus jouer du tout.
+  D'où deux règles : tout ce qui regarde le banc passe par `canBeSentOut()`, et **toute** réponse
+  de switch qui sort de la couche repasse par `reserve` pour poser le drapeau - y compris une
+  réponse rendue depuis le cache, les drapeaux étant effacés entre les deux passes d'un tour. Le
+  `release` de `correctSwitch` est l'inverse : un switch que la couche refuse rend sa place, et
+  s'en passer coûtait au voisin un remplaçant pourtant libre.
 - **Rien de *nous* ne doit remonter de `choose()`.** Un combat attend cette réponse : une
   exception y laisserait le joueur enfermé dans un combat où personne ne peut jouer. D'où le
   `try/catch`, qui rend la décision de Cobblemon telle quelle. Il entoure nos corrections

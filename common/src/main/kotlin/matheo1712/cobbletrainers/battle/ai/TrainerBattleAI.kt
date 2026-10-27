@@ -168,14 +168,17 @@ class TrainerBattleAI(
             responses[request]?.let { cached ->
                 if (cached.isValid(activePokemon, moveset, forceSwitch) &&
                     cached.isCompatibleWithBattleState(activePokemon, forceSwitch, opponents)
-                ) return withGimmick(
-                    cached,
-                    activePokemon,
-                    battle,
-                    moveset,
-                    request,
-                    forceSwitch,
-                    opponents
+                ) return reserve(
+                    withGimmick(
+                        cached,
+                        activePokemon,
+                        battle,
+                        moveset,
+                        request,
+                        forceSwitch,
+                        opponents
+                    ),
+                    activePokemon
                 )
 
                 LOGGER.debug(
@@ -225,21 +228,71 @@ class TrainerBattleAI(
         if (level != CorrectionLevel.NONE && moveset != null) {
             responses[request] = safeDecision
         }
-        return withGimmick(
-            safeDecision,
-            activePokemon,
-            battle,
-            moveset,
-            request,
-            forceSwitch,
-            opponents
+        return reserve(
+            withGimmick(
+                safeDecision,
+                activePokemon,
+                battle,
+                moveset,
+                request,
+                forceSwitch,
+                opponents
+            ),
+            activePokemon
         )
     }
 
+    /**
+     * A benched Pokémon that can legally come in.
+     *
+     * `canBeSentOut` is Cobblemon's own predicate, and the only thing that reads
+     * `willBeSwitchedIn` - the mark saying a replacement has already been promised to another
+     * slot of this very request. It also answers the revival case, where the one that can come
+     * in is the fainted one. See [reserve].
+     */
     private fun availableSwitch(activePokemon: ActiveBattlePokemon): SwitchActionResponse? =
         activePokemon.actor.pokemonList
-            .firstOrNull { !it.gone && it.health > 0 && !it.isSentOut() }
+            .firstOrNull { !it.gone && it.canBeSentOut() }
             ?.let { SwitchActionResponse(it.uuid) }
+
+    /**
+     * Marks the Pokémon a switch names as promised, the way Cobblemon marks its own.
+     *
+     * `AIBattleActor.onChoiceRequested` asks for one decision per active slot and only clears
+     * every `willBeSwitchedIn` once the whole request has been answered. That mark is therefore
+     * what keeps the second slot of a double battle from calling in the Pokémon the first slot
+     * already took - and a bench Pokémon can fill exactly one empty slot. Cobblemon sets it
+     * inside `considerSwitching`, so every switch that comes out of this layer instead has to
+     * set it too, cached answers included: the flags are cleared between the two passes
+     * Cobblemon makes each turn, so the second pass starts from a clean slate.
+     *
+     * Skipping this is what caused the soft lock: both freshly emptied slots of a double battle
+     * were handed the same replacement, Showdown answered
+     * `Can't switch: The Pokémon in slot N can only switch in once`, and that error reaches
+     * nobody - the side it came from simply cannot play any more.
+     */
+    private fun reserve(
+        response: ShowdownActionResponse,
+        activePokemon: ActiveBattlePokemon
+    ): ShowdownActionResponse {
+        if (response is SwitchActionResponse) {
+            activePokemon.actor.pokemonList
+                .firstOrNull { it.uuid == response.newPokemonId }
+                ?.willBeSwitchedIn = true
+        }
+        return response
+    }
+
+    /**
+     * Hands back the mark Cobblemon set on a switch this layer went on to refuse, so that the
+     * other slot of the same request may still call that Pokémon in. Safe to do early: anything
+     * that falls back to Cobblemon's own choice passes through [reserve] on the way out.
+     */
+    private fun release(uuid: UUID, activePokemon: ActiveBattlePokemon) {
+        activePokemon.actor.pokemonList
+            .firstOrNull { it.uuid == uuid }
+            ?.willBeSwitchedIn = false
+    }
 
     private fun ShowdownActionResponse.isCompatibleWithBattleState(
         activePokemon: ActiveBattlePokemon,
@@ -806,6 +859,7 @@ class TrainerBattleAI(
         if (gain >= MATCHUP_GAIN_REQUIRED) return choice
 
         val best = s.best ?: return choice
+        release(choice.newPokemonId, s.active)
         return use(best.move, s, "switching in ${incoming.species.name} gains only ${round(gain)}")
     }
 
@@ -836,7 +890,7 @@ class TrainerBattleAI(
 
         val current = matchup(s.self, s.opponentPokemon)
         val candidate = s.active.actor.pokemonList
-            .filter { !it.gone && it.health > 0 && !it.isSentOut() }
+            .filter { !it.gone && it.canBeSentOut() }
             .maxByOrNull { matchup(it.effectedPokemon, s.opponentPokemon) }
             ?: return null
 
