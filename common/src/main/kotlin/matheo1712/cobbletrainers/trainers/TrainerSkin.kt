@@ -37,6 +37,11 @@ data class TrainerSkin(
     fun textureId(): ResourceLocation? =
         if (type.equals("texture", ignoreCase = true)) ResourceLocation.tryParse(value) else null
 
+    /** `default` or `slim` for a `texture` skin, null for the types where Mojang or the resolver decides. */
+    fun rig(): String? =
+        if (!type.equals("texture", ignoreCase = true)) null
+        else model.lowercase().takeIf { it == "default" || it == "slim" }
+
     /** The resolver's name, not the geometry file or an NPC class. */
     fun modelId(): ResourceLocation? =
         if (type.equals("model", ignoreCase = true) && ':' in value) ResourceLocation.tryParse(value)

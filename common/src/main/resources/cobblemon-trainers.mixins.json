@@ -16,6 +16,7 @@
 		"client.MusicManagerMixin",
 		"client.BattleMusicHandlerMixin",
 		"client.NPCRendererMixin",
+		"client.PosableStateMixin",
 		"client.PosableModelMixin"
 	],
 	"injectors": {

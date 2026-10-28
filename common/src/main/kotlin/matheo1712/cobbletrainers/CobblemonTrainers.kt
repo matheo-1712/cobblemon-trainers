@@ -100,6 +100,14 @@ object CobblemonTrainers {
     const val SKIN_ASPECT_PREFIX = "trainer_skin:"
 
     /**
+     * Prefix of the aspect naming the player rig a `texture` skin declared (`trainer_rig:slim`
+     * or `trainer_rig:default`). Same idea as [SKIN_ASPECT_PREFIX], for the geometry: the client
+     * applies it over whatever `model-*` aspect arrived, so the rig always matches the
+     * declaration - see `client.PosableStateMixin`.
+     */
+    const val RIG_ASPECT_PREFIX = "trainer_rig:"
+
+    /**
      * Prefix of the aspect naming the player who called a trainer from their battle phone,
      * followed by their UUID. Saved to NBT like the two above, which is what lets
      * [matheo1712.cobbletrainers.trainers.TrainerCalls] recognise a called trainer whose call

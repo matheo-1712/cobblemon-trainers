@@ -22,6 +22,15 @@ dependencies {
     minecraft("com.mojang:minecraft:${providers.gradleProperty("minecraft_version").get()}")
     mappings(loom.officialMojangMappings())
     modCompileOnly("maven.modrinth:cobblemon:${providers.gradleProperty("cobblemon_version").get()}")
+    // Never called from here - `verifyLoaderIndependence` rejects every Fabric import in common.
+    // It is on the classpath so the remapper can resolve Cobblemon's class hierarchy. Since 1.8.2
+    // Cobblemon registers its resource reloaders through an anonymous class implementing Fabric
+    // API's `IdentifiableResourceReloadListener`; without that interface, tiny-remapper cannot see
+    // that the class overrides `PreparableReloadListener.reload`, and leaves the method under its
+    // intermediary name. The dev client then dies in `Minecraft.<init>` on an `AbstractMethodError`.
+    // Loom keeps one remapped copy per mod, so the poorest classpath that asks for the remap
+    // decides what every project gets - which is why this belongs here and not only in :fabric.
+    modCompileOnly("net.fabricmc.fabric-api:fabric-api:${providers.gradleProperty("fabric_api_version").get()}")
     compileOnly("net.fabricmc:sponge-mixin:${providers.gradleProperty("mixin_version").get()}")
     testImplementation(kotlin("test-junit"))
     testImplementation("junit:junit:${providers.gradleProperty("junit_version").get()}")

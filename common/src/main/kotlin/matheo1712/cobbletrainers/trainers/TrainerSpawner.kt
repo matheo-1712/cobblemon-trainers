@@ -88,6 +88,12 @@ object TrainerSpawner {
         // same file in a resource pack draw that one instead.
         definition.skin.textureId()?.let {
             npc.appliedAspects.add(CobblemonTrainers.SKIN_ASPECT_PREFIX + it)
+            // Same for the rig: the declared one wins on the client, and is right from the first frame.
+            definition.skin.rig()?.let { rig ->
+                npc.appliedAspects.add(CobblemonTrainers.RIG_ASPECT_PREFIX + rig)
+                npc.appliedAspects -= "model-default"
+                npc.appliedAspects += "model-$rig"
+            }
         }
 
         // 5. Battle AI difficulty, overridden per entity so every trainer can differ while

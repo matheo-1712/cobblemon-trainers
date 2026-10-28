@@ -82,8 +82,9 @@ Les règles et les validations restent dans leurs classes communes.
 
 Le build commun utilise Loom pour compiler contre Minecraft et Cobblemon avec les mappings
 Mojang. Il utilise actuellement le jar Fabric de Cobblemon comme dépendance de compilation,
-sans dépendre de Fabric API ni importer ses classes. `verifyLoaderIndependence`, exécutée
-par `check`, refuse les imports de loaders dans les sources communes.
+et Fabric API en `modCompileOnly` - jamais importée, uniquement pour que le remapper résolve
+la hiérarchie de classes de Cobblemon. `verifyLoaderIndependence`, exécutée par `check`,
+refuse les imports de loaders dans les sources communes.
 
 Fabric utilise le jar commun non remappé (`namedElements`), l'intègre avant son propre
 remapping et regroupe les deux source sets pour lancer le jeu. Le jar de sources inclut
@@ -91,7 +92,7 @@ remapping et regroupe les deux source sets pour lancer le jeu. Le jar de sources
 
 ## Version NeoForge
 
-NeoForge compile les sources de `common` avec son propre Minecraft et Cobblemon 1.8.1.
+NeoForge compile les sources de `common` avec son propre Minecraft et Cobblemon 1.8.4.
 Son identifiant de loader est `cobblemon_trainers`, car NeoForge interdit les tirets dans
 un ID de mod. Les identifiants des ressources et des données restent `cobblemon-trainers`.
 Le module attend NeoForge 21.1.251 et Kotlin for Forge 5.12.0. Son jar est distinct de celui
