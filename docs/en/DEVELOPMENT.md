@@ -78,9 +78,10 @@ server. NeoForge supplies its own implementations of these services. Network rec
 shared classes.
 
 The common build uses Loom to compile against Minecraft and Cobblemon with Mojang mappings.
-It currently uses the Fabric Cobblemon jar as a compile dependency, without depending on
-Fabric API or importing its classes. `verifyLoaderIndependence`, run by `check`, rejects
-loader imports in shared sources.
+It currently uses the Fabric Cobblemon jar as a compile dependency, plus Fabric API as
+`modCompileOnly` - never imported, only so the remapper can resolve Cobblemon's class
+hierarchy. `verifyLoaderIndependence`, run by `check`, rejects loader imports in shared
+sources.
 
 Fabric consumes the unremapped common jar (`namedElements`), merges it before its own
 remapping and groups both source sets when running the game. The sources jar also includes
@@ -88,7 +89,7 @@ shared sources. The common module defines no game launches.
 
 ## NeoForge version
 
-NeoForge compiles `common` sources against its own Minecraft and Cobblemon 1.8.1.
+NeoForge compiles `common` sources against its own Minecraft and Cobblemon 1.8.4.
 Its loader mod ID is `cobblemon_trainers`, since NeoForge forbids hyphens in mod IDs.
 Resource and data identifiers remain `cobblemon-trainers`. The module requires
 NeoForge 21.1.251 and Kotlin for Forge 5.12.0. Its jar is separate from Fabric's.
