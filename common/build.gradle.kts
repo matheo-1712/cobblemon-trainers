@@ -32,6 +32,7 @@ dependencies {
     // decides what every project gets - which is why this belongs here and not only in :fabric.
     modCompileOnly("net.fabricmc.fabric-api:fabric-api:${providers.gradleProperty("fabric_api_version").get()}")
     compileOnly("net.fabricmc:sponge-mixin:${providers.gradleProperty("mixin_version").get()}")
+    compileOnly("io.github.llamalad7:mixinextras-common:${providers.gradleProperty("mixinextras_version").get()}")
     testImplementation(kotlin("test-junit"))
     testImplementation("junit:junit:${providers.gradleProperty("junit_version").get()}")
 }

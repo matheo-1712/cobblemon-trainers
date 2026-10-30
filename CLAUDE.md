@@ -1970,6 +1970,12 @@ vaut pour `datapacks/` comme pour `resourcepacks/`, ce qui est le but : un auteu
 construit un `.jar` pour `mods/` peut le déposer tel quel aux deux autres emplacements sans
 réempaqueter en `.zip`.
 
+**Pas de `@Redirect` dans le mod**, `PackDetectorMixin` est un `@WrapOperation`. Compilé contre
+Mixin 0.17, un `@Redirect` écrit son `at` en tableau, et MixinExtras jusqu'à 0.5.4 (Fabric
+Loader 0.19.3) le lit comme une annotation seule : `ClassCastException` au chargement de la
+classe visée, donc crash au démarrage (issue #107). D'où aussi `fabricloader >=0.19.5`.
+MixinExtras n'est qu'en `compileOnly` dans `common` : les deux loaders le fournissent.
+
 Loom remappe les mixins statiquement (pas de refmap dans le jar) : après un changement,
 vérifier dans `fabric/build/libs/*.jar` que la cible est bien passée en intermediary
 (`detectPackResources` → `method_52441`, `PackDetector` → `class_8621` ;
