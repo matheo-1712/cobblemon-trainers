@@ -3,6 +3,7 @@ package matheo1712.cobbletrainers.network
 import matheo1712.cobbletrainers.platform.Platform
 
 import matheo1712.cobbletrainers.CobblemonTrainers
+import matheo1712.cobbletrainers.battle.TrainerLevelScaling
 import matheo1712.cobbletrainers.parser.ShowdownTeamParser
 import matheo1712.cobbletrainers.trainers.RewardPreview
 import matheo1712.cobbletrainers.trainers.TrainerRegistry
@@ -85,7 +86,7 @@ object BattlePhoneNetworking {
             BattlePhoneEntry(
                 id = id.toString(),
                 name = definition.name,
-                level = definition.battle.level,
+                level = TrainerLevelScaling.levelFor(player, definition) ?: definition.battle.level,
                 teamSize = ShowdownTeamParser.countPokemon(definition.team),
                 defeated = defeated,
                 rematch = definition.progress.allowsRematch,
@@ -172,7 +173,7 @@ object BattlePhoneNetworking {
         val members = if (id != null && definition != null &&
             TrainerProgress.of(player.server).hasDefeated(id, player.uuid)
         ) {
-            teamOf(definition, id)
+            teamOf(definition, id, player)
         } else {
             emptyList()
         }
@@ -187,10 +188,15 @@ object BattlePhoneNetworking {
      * aspects a Pokémon ends up with: the parser puts a form in the property string, and only
      * `create()` turns it into the aspect set the client needs to draw the right model. One
      * bad entry costs its slot, not the whole team.
+     *
+     * A trainer declaring `battle.autoLevel` is shown at the level it would fight [player] at,
+     * over every `Level:` line, exactly as [TrainerLevelScaling] sets it in battle.
      */
-    fun teamOf(definition: TrainerDefinition, trainerId: ResourceLocation): List<TrainerTeamMember> =
-        ShowdownTeamParser.parse(definition.team).mapNotNull { properties ->
-            if (properties.level == null) properties.level = definition.battle.level
+    fun teamOf(definition: TrainerDefinition, trainerId: ResourceLocation, player: ServerPlayer): List<TrainerTeamMember> {
+        val scaled = TrainerLevelScaling.levelFor(player, definition)
+        return ShowdownTeamParser.parse(definition.team).mapNotNull { properties ->
+            if (scaled != null) properties.level = scaled
+            else if (properties.level == null) properties.level = definition.battle.level
             try {
                 val pokemon = ShowdownTeamParser.createPokemon(properties)
                 TrainerTeamMember(
@@ -208,6 +214,7 @@ object BattlePhoneNetworking {
                 null
             }
         }
+    }
 }
 
 /**

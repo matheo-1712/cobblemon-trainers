@@ -173,9 +173,20 @@ appelable partout par défaut ; `notCallable: true` le bloque depuis le Battle P
 | `music` | piste du mod | ID du son joué pendant le combat, `null` pour le silence |
 | `gimmicks` | `[]` | [Gimmicks de combat](GIMMICKS.md) utilisés : `mega`, `zmove`, `max`, `terastal` |
 | `intro` | - | [Écran de versus](INTROS.md) avant le combat : l'id d'une intro, ou absent pour aucun |
+| `autoLevel` | - | Aligne toute l'équipe sur le Pokémon le plus haut du joueur : `offset`, `min`, `max` |
 
 Le suffixe `_50` (`singles_50`, `doubles_50`, `triples_50`) met **les deux équipes** au
 niveau 50 le temps du combat. `level` n'a donc plus d'effet visible sur un dresseur en `_50`.
+
+`autoLevel` recalcule le niveau à chaque combat : celui du Pokémon le plus haut de l'équipe du
+joueur, K.O. compris, plus `offset`, borné par `min` et `max`. Il remplace `level` **et** les
+lignes `Level:`, et le Battle Phone affiche le niveau que le joueur affronterait. Sans effet en `_50`.
+
+| Exemple | Effet |
+| --- | --- |
+| `"autoLevel": {}` | Même niveau que le joueur |
+| `"autoLevel": {"offset": 5}` | Toujours 5 niveaux au-dessus |
+| `"autoLevel": {"offset": -5, "min": 10, "max": 60}` | 5 en dessous, jamais sous 10 ni au-dessus de 60 |
 
 Le combat se joue sur des copies. Les deux équipes y entrent **automatiquement soignées** -
 PV pleins, statuts effacés, PP refaits -, un Pokémon KO compris. Et rien n'en ressort : quel

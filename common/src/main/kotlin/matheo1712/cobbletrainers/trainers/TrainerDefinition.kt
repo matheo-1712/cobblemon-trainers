@@ -95,6 +95,8 @@ data class TrainerDefinition(
  *   trainer whose battle simply starts, which is what every trainer written before this did.
  *   How long it lasts is the intro's own business; see
  *   [matheo1712.cobbletrainers.intro.TrainerIntro].
+ * @param autoLevel Scales the whole team to the challenger's strongest Pokémon, battle by battle.
+ *   Null - the default - is a trainer whose levels are the ones written. See [TrainerAutoLevel].
  */
 data class TrainerBattleSettings(
     val level: Int = 1,
@@ -103,7 +105,8 @@ data class TrainerBattleSettings(
     val healParty: Boolean = true,
     val music: String? = TrainerBattleMusic.DEFAULT_TRACK,
     val gimmicks: List<String> = emptyList(),
-    val intro: String? = null
+    val intro: String? = null,
+    val autoLevel: TrainerAutoLevel? = null
 ) {
 
     /**
@@ -117,6 +120,7 @@ data class TrainerBattleSettings(
      */
     fun validate(id: ResourceLocation) {
         validateIntro(id)
+        autoLevel?.validate(id, format)
 
         for (name in gimmicks) {
             if (TrainerGimmicks.isSupported(name)) continue
@@ -157,6 +161,43 @@ data class TrainerBattleSettings(
             CobblemonTrainers.LOGGER.warn(
                 "Trainer {}: battle.intro names {}, which no pack provides. Loaded intros: {}",
                 id, introId, TrainerIntros.ids().joinToString(", ").ifEmpty { "none" }
+            )
+        }
+    }
+}
+
+/**
+ * A team that follows the challenger: every Pokémon of the trainer takes the level of the
+ * player's strongest, plus [offset], held between [min] and [max]. Computed by
+ * [matheo1712.cobbletrainers.battle.TrainerLevelScaling] each time a battle opens.
+ *
+ * The block being there is the switch - `{}` is a trainer at exactly the player's level. It
+ * overrides `battle.level` and every `Level:` line of the team alike: a scaled team whose ace
+ * kept its written level would be a team scaled by halves.
+ *
+ * @param offset Levels added to the player's strongest: `5` stays ahead, `-5` stays behind.
+ * @param min Lowest level the team ever takes.
+ * @param max Highest level the team ever takes.
+ */
+data class TrainerAutoLevel(
+    val offset: Int = 0,
+    val min: Int? = null,
+    val max: Int? = null
+) {
+
+    fun validate(id: ResourceLocation, format: String) {
+        if (min != null && max != null && min > max) {
+            CobblemonTrainers.LOGGER.warn(
+                "Trainer {}: battle.autoLevel.min ({}) is above battle.autoLevel.max ({}), so the " +
+                    "team always fights at {}.",
+                id, min, max, max
+            )
+        }
+        if (format.trim().endsWith("_50")) {
+            CobblemonTrainers.LOGGER.warn(
+                "Trainer {}: battle.autoLevel does nothing with the format '{}', which sets both " +
+                    "teams to level 50.",
+                id, format
             )
         }
     }

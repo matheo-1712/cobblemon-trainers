@@ -87,7 +87,17 @@ const SCHEMA = (() => {
              'The Pokémon must carry the stone or crystal, in its team entry.') },
       { k: 'intro', t: 'intro', def: '', doc: 'INTROS.md', l: t('Écran de versus', 'Versus screen'),
         h: t('L’id d’une intro : bw, kagumi... ou mon_pack:arene.',
-             'An intro id: bw, kagumi... or my_pack:arena.') }
+             'An intro id: bw, kagumi... or my_pack:arena.') },
+      { k: 'autoLevel', t: 'group', doc: 'DATAPACK.md#battle', l: t('Niveau automatique', 'Automatic level'),
+        h: t('Toute l’équipe prend le niveau du Pokémon le plus haut du joueur, à chaque combat. Remplace level et les lignes Level:.',
+             'The whole team takes the level of the player’s highest Pokémon, every battle. Replaces level and the Level: lines.'),
+        fields: [
+          { k: 'offset', t: 'num', def: null, l: t('Écart', 'Offset'),
+            h: t('0 = même niveau, 5 = cinq au-dessus, -5 = cinq en dessous.',
+                 '0 = same level, 5 = five above, -5 = five below.') },
+          { k: 'min', t: 'num', def: null, min: 1, max: 100, l: t('Niveau minimum', 'Minimum level') },
+          { k: 'max', t: 'num', def: null, min: 1, max: 100, l: t('Niveau maximum', 'Maximum level') }
+        ] }
     ]
   };
 

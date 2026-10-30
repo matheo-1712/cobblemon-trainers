@@ -231,6 +231,10 @@ class TrainerBattleInteraction : NPCInteractConfiguration {
         fun openBattle(npc: NPCEntity, player: ServerPlayer, definition: TrainerDefinition?) {
             val format = battleFormatOf(definition?.battle?.format)
 
+            // Asked here, at the last moment, so the level follows the party the player battles
+            // with - not the one they had when the dialogue or the intro opened.
+            if (definition != null) TrainerLevelScaling.apply(npc, player, definition)
+
             BattleBuilder.pvn(
                 player = player,
                 npcEntity = npc,
