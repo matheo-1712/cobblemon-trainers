@@ -74,7 +74,7 @@ object BattleIntroNetworking {
                 trainerId = trainerId.toString(),
                 trainerName = definition.name,
                 category = category,
-                level = TrainerLevelScaling.levelFor(player, definition) ?: definition.battle.level,
+                level = TrainerLevelScaling.levelFor(player, definition) ?: definition.battle.level.value,
                 teamSize = ShowdownTeamParser.countPokemon(definition.team),
                 npcId = npc.id,
                 scene = intro,

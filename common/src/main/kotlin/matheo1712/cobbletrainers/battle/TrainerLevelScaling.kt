@@ -7,7 +7,7 @@ import matheo1712.cobbletrainers.trainers.TrainerDefinition
 import net.minecraft.server.level.ServerPlayer
 
 /**
- * The level a trainer declaring `battle.autoLevel` fights at: the player's strongest Pokémon,
+ * The level a trainer with an automatic `battle.level` fights at: the player's strongest Pokémon,
  * shifted by the offset, then held between the bounds.
  *
  * One function answers for the battle, the battle phone and the versus screen, so the level a
@@ -21,11 +21,11 @@ object TrainerLevelScaling {
 
     /**
      * The level every Pokémon of this trainer takes against [player], or null for a trainer
-     * whose levels are its own - no `autoLevel`, an empty party, or a level-adjusting format,
+     * whose levels are its own - a fixed level, an empty party, or a level-adjusting format,
      * which sets both sides to its own level anyway.
      */
     fun levelFor(player: ServerPlayer, definition: TrainerDefinition): Int? {
-        val auto = definition.battle.autoLevel ?: return null
+        val auto = definition.battle.level.takeIf { it.auto } ?: return null
         if (TrainerBattleInteraction.battleFormatOf(definition.battle.format).adjustLevel > 0) return null
 
         val strongest = player.party().maxOfOrNull { it.level } ?: return null

@@ -580,13 +580,16 @@ const App = (() => {
 
   /* ---- the intro ---------------------------------------------------------- */
 
+  /** `battle.level` is a number or a block; the preview has no player to follow, so it shows the fixed one. */
+  const levelOf = (level) => (level && typeof level === 'object' ? level.value ?? 1 : level ?? 1);
+
   const about = () => {
     const trainer = Pack.state.files.find((file) => file.kind === 'trainer');
     const skin = (trainer && trainer.doc.skin) || {};
     return {
       name: trainer ? trainer.doc.name || 'Trainer' : 'Trainer',
       category: trainer && trainer.path.includes('/') ? trainer.path.split('/')[0] : '',
-      level: trainer && trainer.doc.battle ? trainer.doc.battle.level ?? 1 : 1,
+      level: trainer && trainer.doc.battle ? levelOf(trainer.doc.battle.level) : 1,
       team: trainer && trainer.doc.team ? trainer.doc.team.length : 6,
       player: preview.player,
       playerSlim: false,

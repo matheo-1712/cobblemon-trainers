@@ -164,27 +164,35 @@ leaving it out makes a trainer you have to go and find.
 
 | Field | Default | What it does |
 | --- | --- | --- |
-| `level` | `1` | Level of the Pokémon that have **no** `Level:` line |
+| `level` | `1` | Level of the Pokémon that have **no** `Level:` line, or an automatic level block |
 | `format` | `singles` | `singles`, `doubles`, `triples` - aliases `solo`, `duo`, `trio`, suffix `_50` |
 | `difficulty` | `5` | [How well the AI plays](DIFFICULTY.md), from 0 (at random) to 5 (playing to win) |
 | `healParty` | `true` | Heals the trainer's team before and after every battle |
 | `music` | the mod's track | Sound ID played during the battle, `null` for silence |
 | `gimmicks` | `[]` | [Battle gimmicks](GIMMICKS.md) the trainer uses: `mega`, `zmove`, `max`, `terastal` |
 | `intro` | - | [Versus screen](INTROS.md) before the battle: an intro's id, or absent for none |
-| `autoLevel` | - | Matches the whole team to the player's highest Pokémon: `offset`, `min`, `max` |
 
 The `_50` suffix (`singles_50`, `doubles_50`, `triples_50`) puts **both teams** at level 50 for
 the battle. `level` therefore has no visible effect on a `_50` trainer.
 
-`autoLevel` recomputes the level for every battle: that of the highest Pokémon in the player's
-party, fainted included, plus `offset`, held between `min` and `max`. It replaces `level` **and**
-the `Level:` lines, and the Battle Phone shows the level the player would face. No effect with `_50`.
+`level` can also be written as a block:
+
+| Field | Default | What it does |
+| --- | --- | --- |
+| `auto` | `false` | `true`: the team follows the player's highest Pokémon, fainted included |
+| `value` | `1` | Fixed level; with `auto`, the spawn level before the first battle |
+| `offset` | `0` | Gap with that Pokémon: `5` above, `-5` below |
+| `min` / `max` | - | Bounds of the automatic level |
+
+With `auto`, the level is recomputed for every battle and **also** replaces the `Level:` lines.
+The Battle Phone shows the one the player would face.
 
 | Example | Effect |
 | --- | --- |
-| `"autoLevel": {}` | Same level as the player |
-| `"autoLevel": {"offset": 5}` | Always 5 levels above |
-| `"autoLevel": {"offset": -5, "min": 10, "max": 60}` | 5 below, never under 10 nor above 60 |
+| `"level": 50` | Level 50 |
+| `"level": {"auto": true}` | Same level as the player |
+| `"level": {"auto": true, "offset": 5}` | Always 5 levels above |
+| `"level": {"auto": true, "offset": -5, "min": 10, "max": 60}` | 5 below, between 10 and 60 |
 
 The battle is fought on copies. Both teams enter it **automatically healed** - full HP, statuses
 cleared, PP restored -, a fainted Pokémon included. And nothing comes back out: whatever the

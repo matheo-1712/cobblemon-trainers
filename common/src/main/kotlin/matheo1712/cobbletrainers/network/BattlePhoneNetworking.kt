@@ -86,7 +86,7 @@ object BattlePhoneNetworking {
             BattlePhoneEntry(
                 id = id.toString(),
                 name = definition.name,
-                level = TrainerLevelScaling.levelFor(player, definition) ?: definition.battle.level,
+                level = TrainerLevelScaling.levelFor(player, definition) ?: definition.battle.level.value,
                 teamSize = ShowdownTeamParser.countPokemon(definition.team),
                 defeated = defeated,
                 rematch = definition.progress.allowsRematch,
@@ -189,14 +189,14 @@ object BattlePhoneNetworking {
      * `create()` turns it into the aspect set the client needs to draw the right model. One
      * bad entry costs its slot, not the whole team.
      *
-     * A trainer declaring `battle.autoLevel` is shown at the level it would fight [player] at,
+     * A trainer whose `battle.level` is automatic is shown at the level it would fight [player] at,
      * over every `Level:` line, exactly as [TrainerLevelScaling] sets it in battle.
      */
     fun teamOf(definition: TrainerDefinition, trainerId: ResourceLocation, player: ServerPlayer): List<TrainerTeamMember> {
         val scaled = TrainerLevelScaling.levelFor(player, definition)
         return ShowdownTeamParser.parse(definition.team).mapNotNull { properties ->
             if (scaled != null) properties.level = scaled
-            else if (properties.level == null) properties.level = definition.battle.level
+            else if (properties.level == null) properties.level = definition.battle.level.value
             try {
                 val pokemon = ShowdownTeamParser.createPokemon(properties)
                 TrainerTeamMember(

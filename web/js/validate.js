@@ -95,11 +95,12 @@ const Validate = (() => {
         'Le format met les deux équipes au niveau 50 : battle.level n’a plus d’effet visible.',
         'The format puts both teams at level 50: battle.level has no visible effect left.');
     }
-    const auto = battle.autoLevel;
-    if (auto && String(battle.format || '').endsWith('_50')) {
-      say(found, 'info',
-        'Le format met les deux équipes au niveau 50 : battle.autoLevel n’a plus d’effet.',
-        'The format puts both teams at level 50: battle.autoLevel has no effect left.');
+    const block = battle.level && typeof battle.level === 'object' ? battle.level : null;
+    const auto = block && block.auto === true ? block : null;
+    if (block && !auto && (block.offset || block.min != null || block.max != null)) {
+      say(found, 'warn',
+        'Écart, minimum et maximum ne servent qu’avec "auto": true : ici ils sont ignorés.',
+        'Offset, minimum and maximum only apply with "auto": true: here they are ignored.');
     }
     if (auto && auto.min != null && auto.max != null && auto.min > auto.max) {
       say(found, 'warn',

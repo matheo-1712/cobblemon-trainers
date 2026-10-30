@@ -166,27 +166,35 @@ appelable partout par défaut ; `notCallable: true` le bloque depuis le Battle P
 
 | Champ | Défaut | Rôle |
 | --- | --- | --- |
-| `level` | `1` | Niveau des Pokémon qui n'ont **pas** de ligne `Level:` |
+| `level` | `1` | Niveau des Pokémon qui n'ont **pas** de ligne `Level:`, ou un bloc de niveau automatique |
 | `format` | `singles` | `singles`, `doubles`, `triples` - alias `solo`, `duo`, `trio`, suffixe `_50` |
 | `difficulty` | `5` | [Intelligence de l'IA](DIFFICULTE.md), de 0 (au hasard) à 5 (sérieux) |
 | `healParty` | `true` | Soigne l'équipe du dresseur avant et après chaque combat |
 | `music` | piste du mod | ID du son joué pendant le combat, `null` pour le silence |
 | `gimmicks` | `[]` | [Gimmicks de combat](GIMMICKS.md) utilisés : `mega`, `zmove`, `max`, `terastal` |
 | `intro` | - | [Écran de versus](INTROS.md) avant le combat : l'id d'une intro, ou absent pour aucun |
-| `autoLevel` | - | Aligne toute l'équipe sur le Pokémon le plus haut du joueur : `offset`, `min`, `max` |
 
 Le suffixe `_50` (`singles_50`, `doubles_50`, `triples_50`) met **les deux équipes** au
 niveau 50 le temps du combat. `level` n'a donc plus d'effet visible sur un dresseur en `_50`.
 
-`autoLevel` recalcule le niveau à chaque combat : celui du Pokémon le plus haut de l'équipe du
-joueur, K.O. compris, plus `offset`, borné par `min` et `max`. Il remplace `level` **et** les
-lignes `Level:`, et le Battle Phone affiche le niveau que le joueur affronterait. Sans effet en `_50`.
+`level` s'écrit aussi en bloc :
+
+| Champ | Défaut | Rôle |
+| --- | --- | --- |
+| `auto` | `false` | `true` : l'équipe suit le Pokémon le plus haut du joueur, K.O. compris |
+| `value` | `1` | Niveau fixe ; avec `auto`, niveau d'apparition avant le premier combat |
+| `offset` | `0` | Écart avec ce Pokémon : `5` au-dessus, `-5` en dessous |
+| `min` / `max` | - | Bornes du niveau automatique |
+
+En `auto`, le niveau est recalculé à chaque combat et remplace **aussi** les lignes `Level:`.
+Le Battle Phone affiche celui que le joueur affronterait.
 
 | Exemple | Effet |
 | --- | --- |
-| `"autoLevel": {}` | Même niveau que le joueur |
-| `"autoLevel": {"offset": 5}` | Toujours 5 niveaux au-dessus |
-| `"autoLevel": {"offset": -5, "min": 10, "max": 60}` | 5 en dessous, jamais sous 10 ni au-dessus de 60 |
+| `"level": 50` | Niveau 50 |
+| `"level": {"auto": true}` | Même niveau que le joueur |
+| `"level": {"auto": true, "offset": 5}` | Toujours 5 niveaux au-dessus |
+| `"level": {"auto": true, "offset": -5, "min": 10, "max": 60}` | 5 en dessous, entre 10 et 60 |
 
 Le combat se joue sur des copies. Les deux équipes y entrent **automatiquement soignées** -
 PV pleins, statuts effacés, PP refaits -, un Pokémon KO compris. Et rien n'en ressort : quel

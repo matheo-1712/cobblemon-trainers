@@ -1,6 +1,12 @@
 package matheo1712.cobbletrainers.trainers
 
 import com.google.gson.JsonElement
+import com.google.gson.JsonParser
+import com.google.gson.JsonSyntaxException
+import com.google.gson.TypeAdapter
+import com.google.gson.annotations.JsonAdapter
+import com.google.gson.stream.JsonReader
+import com.google.gson.stream.JsonWriter
 import matheo1712.cobbletrainers.CobblemonTrainers
 import matheo1712.cobbletrainers.intro.TrainerIntros
 import matheo1712.cobbletrainers.battle.TrainerBattleMusic
@@ -77,7 +83,8 @@ data class TrainerDefinition(
 /**
  * How a battle against this trainer goes.
  *
- * @param level Level of the Pokémon that do not state one themselves.
+ * @param level Level of the Pokémon that do not state one themselves - a plain number - or a
+ *   level that follows the challenger. See [TrainerLevel].
  * @param format How many Pokémon fight at once: `singles`, `doubles` or `triples`.
  * @param difficulty Battle AI difficulty, from 0 to 5. This is *not* the level, see [level].
  * @param healParty Whether the trainer team is healed to full when a battle starts and again
@@ -95,18 +102,15 @@ data class TrainerDefinition(
  *   trainer whose battle simply starts, which is what every trainer written before this did.
  *   How long it lasts is the intro's own business; see
  *   [matheo1712.cobbletrainers.intro.TrainerIntro].
- * @param autoLevel Scales the whole team to the challenger's strongest Pokémon, battle by battle.
- *   Null - the default - is a trainer whose levels are the ones written. See [TrainerAutoLevel].
  */
 data class TrainerBattleSettings(
-    val level: Int = 1,
+    val level: TrainerLevel = TrainerLevel(),
     val format: String = "singles",
     val difficulty: Int = 5,
     val healParty: Boolean = true,
     val music: String? = TrainerBattleMusic.DEFAULT_TRACK,
     val gimmicks: List<String> = emptyList(),
-    val intro: String? = null,
-    val autoLevel: TrainerAutoLevel? = null
+    val intro: String? = null
 ) {
 
     /**
@@ -120,7 +124,7 @@ data class TrainerBattleSettings(
      */
     fun validate(id: ResourceLocation) {
         validateIntro(id)
-        autoLevel?.validate(id, format)
+        level.validate(id, format)
 
         for (name in gimmicks) {
             if (TrainerGimmicks.isSupported(name)) continue
@@ -167,38 +171,104 @@ data class TrainerBattleSettings(
 }
 
 /**
- * A team that follows the challenger: every Pokémon of the trainer takes the level of the
- * player's strongest, plus [offset], held between [min] and [max]. Computed by
+ * `battle.level`, written either as a number or as a block.
+ *
+ * A number is a fixed level, the one every trainer had before: `"level": 50`. The block says the
+ * same thing at length - `{"auto": false, "value": 50}` - and is the only way to say the other
+ * thing, a team that follows the challenger: with [auto], every Pokémon of the trainer takes the
+ * level of the player's strongest, plus [offset], held between [min] and [max]. Computed by
  * [matheo1712.cobbletrainers.battle.TrainerLevelScaling] each time a battle opens.
  *
- * The block being there is the switch - `{}` is a trainer at exactly the player's level. It
- * overrides `battle.level` and every `Level:` line of the team alike: a scaled team whose ace
+ * One field rather than a `level` beside an `autoLevel`: two fields deciding the same level would
+ * leave one of them silently dead whenever the other is set.
+ *
+ * An automatic level overrides every `Level:` line of the team as well: a scaled team whose ace
  * kept its written level would be a team scaled by halves.
  *
+ * @param auto Whether the team follows the challenger. False is a fixed level.
+ * @param value The fixed level, for the Pokémon with no `Level:` line. With [auto], the team
+ *   still spawns at it, and keeps it until its first battle.
  * @param offset Levels added to the player's strongest: `5` stays ahead, `-5` stays behind.
- * @param min Lowest level the team ever takes.
- * @param max Highest level the team ever takes.
+ * @param min Lowest level an automatic team ever takes.
+ * @param max Highest level an automatic team ever takes.
  */
-data class TrainerAutoLevel(
+@JsonAdapter(TrainerLevel.Adapter::class)
+data class TrainerLevel(
+    val auto: Boolean = false,
+    val value: Int = 1,
     val offset: Int = 0,
     val min: Int? = null,
     val max: Int? = null
 ) {
 
     fun validate(id: ResourceLocation, format: String) {
+        if (!auto) {
+            if (offset != 0 || min != null || max != null) {
+                CobblemonTrainers.LOGGER.warn(
+                    "Trainer {}: battle.level has an offset, a min or a max but no \"auto\": true, " +
+                        "so they are ignored and the team stays at level {}.",
+                    id, value
+                )
+            }
+            return
+        }
         if (min != null && max != null && min > max) {
             CobblemonTrainers.LOGGER.warn(
-                "Trainer {}: battle.autoLevel.min ({}) is above battle.autoLevel.max ({}), so the " +
-                    "team always fights at {}.",
+                "Trainer {}: battle.level.min ({}) is above battle.level.max ({}), so the team " +
+                    "always fights at {}.",
                 id, min, max, max
             )
         }
         if (format.trim().endsWith("_50")) {
             CobblemonTrainers.LOGGER.warn(
-                "Trainer {}: battle.autoLevel does nothing with the format '{}', which sets both " +
-                    "teams to level 50.",
+                "Trainer {}: an automatic battle.level does nothing with the format '{}', which " +
+                    "sets both teams to level 50.",
                 id, format
             )
+        }
+    }
+
+    /**
+     * Reads both shapes. Anything else - a string, a list - fails the file the way a word in an
+     * `Int` field always did, rather than quietly falling back to level 1.
+     */
+    class Adapter : TypeAdapter<TrainerLevel>() {
+
+        override fun write(out: JsonWriter, level: TrainerLevel?) {
+            when {
+                level == null -> out.nullValue()
+                level == TrainerLevel(value = level.value) -> out.value(level.value)
+                else -> {
+                    out.beginObject()
+                    out.name("auto").value(level.auto)
+                    out.name("value").value(level.value)
+                    out.name("offset").value(level.offset)
+                    level.min?.let { out.name("min").value(it) }
+                    level.max?.let { out.name("max").value(it) }
+                    out.endObject()
+                }
+            }
+        }
+
+        override fun read(reader: JsonReader): TrainerLevel {
+            val json = JsonParser.parseReader(reader)
+            return when {
+                json.isJsonNull -> TrainerLevel()
+                json.isJsonPrimitive && json.asJsonPrimitive.isNumber -> TrainerLevel(value = json.asInt)
+                json.isJsonObject -> json.asJsonObject.let { block ->
+                    fun int(name: String): Int? = block.get(name)?.takeIf { !it.isJsonNull }?.asInt
+                    TrainerLevel(
+                        auto = block.get("auto")?.takeIf { !it.isJsonNull }?.asBoolean ?: false,
+                        value = int("value") ?: 1,
+                        offset = int("offset") ?: 0,
+                        min = int("min"),
+                        max = int("max")
+                    )
+                }
+                else -> throw JsonSyntaxException(
+                    "battle.level must be a number or a block like {\"auto\": true, \"offset\": 5}, got $json"
+                )
+            }
         }
     }
 }

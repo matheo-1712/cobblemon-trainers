@@ -6,7 +6,13 @@
   },
   "battle": {
     "format": "single",
-    "level": 80,
+    "level": {
+      "auto": true,
+      "value": 25,
+      "offset": 5,
+      "min": 70,
+      "max": 90
+    },
     "difficulty": 5,
     "music": "cobblemon-trainers:battle_music.neoflare",
     "intro": "rerebleue",
