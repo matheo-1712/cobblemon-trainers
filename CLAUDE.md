@@ -194,6 +194,8 @@ messages, musique et récompenses de combat.
   plus bas).
 - **`battle.TrainerBattleRange`** - la distance au-delà de laquelle un combat de dresseur
   s'arrête, celle d'un combat contre un Pokémon sauvage. Même section.
+- **`battle.TrainerLevelScaling`** - le niveau d'un dresseur dont le `battle.level` est automatique. Voir
+  « Le niveau automatique ».
 - **`battle.TrainerSendOut`** - l'endroit où le dresseur lance son Pokémon : devant lui. Voir
   « Le Pokémon lancé devant le dresseur ».
 - **`battle.TrainerBattleIntro`** - l'écran de versus d'un dresseur qui en déclare un, et
@@ -1027,6 +1029,41 @@ Points à ne pas redécouvrir :
   côtés, plutôt que de survivre à une équipe réorganisée entre-temps.
 - **Le client compare avant de parler.** Il n'existe aucun événement sur ce champ, d'où le tick ;
   ce qui est borné, c'est ce qui part sur le réseau, pas ce qui est lu.
+
+### Le niveau automatique
+
+`battle.level` s'écrit `50` ou `{"auto": true, "offset": 5, "min": 10, "max": 60}` (plus
+`value`, le niveau fixe). En `auto`, toute l'équipe prend le niveau du Pokémon le plus haut du
+joueur, décalé puis borné. `TrainerLevelScaling.levelFor` est la seule règle, et le combat, le
+listing du Battle Phone, sa fiche d'équipe et l'écran de versus la lisent tous : ce qu'on
+montre au joueur est ce qu'il affronte.
+
+Points à ne pas redécouvrir :
+
+- **Un seul champ, pas un `autoLevel` à côté de `level`.** Ça a été écrit une fois puis replié
+  dans `level` : deux champs décidaient du même niveau, et `level` mourait sans un mot dès que
+  l'autre était posé. D'où `TrainerLevel` et son `@JsonAdapter`, qui lit un nombre ou un bloc -
+  la même idée que `requires.victories.count` - et rend un nombre à l'écriture tant que le
+  niveau est fixe. Un mot à la place d'un nombre fait échouer le fichier, comme quand le champ
+  était un `Int`, plutôt que de retomber en silence au niveau 1.
+- **`auto` est un booléen explicite**, pas la seule présence du bloc : `{"auto": false,
+  "value": 50}` vaut `50`, et un `offset` sans `auto` est signalé au chargement comme ignoré.
+- **`value` reste lu en `auto`** : c'est le niveau d'apparition, celui que l'équipe garde
+  jusqu'à son premier combat, faute de joueur à suivre.
+- **Le niveau est posé dans `openBattle`, juste avant `pvn`**, pas au clic : une intro dure
+  quelques secondes, et c'est l'équipe qui entre en combat qui compte. `pvn` se bat sur
+  `npc.party` tel quel (`getPartyForChallenge` le rend dès qu'il est non nul), donc c'est ce
+  store qui est modifié - le combat suivant le recalcule, pour qui le défie.
+- **`Pokemon.setLevel` garde la part de PV** et borne au `maxPokemonLevel` de la config : un
+  dresseur en `healParty: false` reste aussi usé qu'il l'était.
+- **Les K.O. du joueur comptent.** Les exclure laisserait mettre K.O. son meilleur Pokémon,
+  défier un dresseur calé sur le reste, et le ranimer en plein combat.
+- **Il écrase aussi les lignes `Level:`.** Une équipe recalée dont l'as garderait son niveau
+  écrit serait recalée à moitié.
+- **Sans effet en `_50`**, où Cobblemon met les deux camps au niveau du format : signalé au
+  chargement.
+- **`min` au-dessus de `max` ne lève pas** : les bornes sont appliquées l'une après l'autre,
+  `max` gagne, et le chargement l'a dit. Un `coerceIn` lèverait en plein combat.
 
 ### Le regard des dresseurs
 

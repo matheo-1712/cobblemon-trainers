@@ -226,6 +226,106 @@ const Form = (() => {
       return input;
     },
 
+    /*
+     * `battle.level`: a plain number, or a block once "automatic" is ticked.
+     *
+     * One field in the file, so one control here - two rows would let the form write a number
+     * and a block for the same level. A fixed level is written back as a number, which is what
+     * every trainer file already says; only the switch turns it into `{"auto": true, ...}`.
+     */
+    level(field, doc, changed) {
+      const wrap = el('div', 'level-field');
+      const raw = doc[field.k];
+      const block = raw && typeof raw === 'object' ? raw : {};
+      const state = {
+        auto: block.auto === true,
+        value: typeof raw === 'number' ? raw : block.value,
+        offset: block.offset,
+        min: block.min,
+        max: block.max
+      };
+
+      const write = () => {
+        const value = state.value === undefined || state.value === 1 ? undefined : state.value;
+        if (!state.auto) {
+          if (value === undefined) delete doc[field.k]; else doc[field.k] = value;
+        } else {
+          const out = { auto: true };
+          if (value !== undefined) out.value = value;
+          if (state.offset !== undefined && state.offset !== 0) out.offset = state.offset;
+          if (state.min !== undefined) out.min = state.min;
+          if (state.max !== undefined) out.max = state.max;
+          doc[field.k] = out;
+        }
+        changed();
+      };
+
+      const part = (key) => I18N.of(field.parts[key]);
+
+      // What the settings amount to, in a sentence: an offset of -5 reads as a number, "five
+      // levels fewer than your strongest" reads as a trainer.
+      const hint = el('p', 'field-hint');
+      const describe = () => {
+        if (!state.auto) { hint.textContent = part('fixed'); return; }
+        const offset = state.offset || 0;
+        const lines = [offset === 0 ? part('same')
+          : part(offset > 0 ? 'above' : 'below').replace('{n}', Math.abs(offset))];
+        if (state.min !== undefined) lines.push(part('floor').replace('{n}', state.min));
+        if (state.max !== undefined) lines.push(part('ceil').replace('{n}', state.max));
+        hint.textContent = lines.join(' ');
+      };
+
+      const number = (key, opts) => {
+        const box = el('label', 'level-part');
+        if (opts.label) box.appendChild(el('span', 'level-part-label', part(key)));
+        const input = el('input', 'input input-num');
+        input.type = 'number';
+        if (opts.min !== undefined) input.min = opts.min;
+        if (opts.max !== undefined) input.max = opts.max;
+        if (opts.placeholder !== undefined) input.placeholder = opts.placeholder;
+        input.value = state[key] ?? '';
+        input.addEventListener('input', () => {
+          state[key] = input.value === '' ? undefined : Number(input.value);
+          describe();
+          write();
+        });
+        box.appendChild(input);
+        return box;
+      };
+
+      const toggle = el('label', 'switch');
+      const check = el('input');
+      check.type = 'checkbox';
+      check.checked = state.auto;
+      toggle.appendChild(check);
+      toggle.appendChild(el('span', 'switch-mark'));
+      toggle.appendChild(el('span', 'switch-text', part('auto')));
+
+      // One mode, one set of boxes. The fixed level is not shown while the team follows the
+      // player: it only decides the level before the first battle, and a box saying "25" next to
+      // a switch saying "match the player" reads as a contradiction.
+      const fixed = el('div', 'level-row');
+      fixed.appendChild(number('value', { min: 1, max: 100, placeholder: '1' }));
+      const autoParts = el('div', 'level-row');
+      autoParts.appendChild(number('offset', { label: true, placeholder: '0' }));
+      autoParts.appendChild(number('min', { label: true, min: 1, max: 100, placeholder: part('none') }));
+      autoParts.appendChild(number('max', { label: true, min: 1, max: 100, placeholder: part('none') }));
+
+      const sync = () => {
+        fixed.hidden = state.auto;
+        autoParts.hidden = !state.auto;
+        describe();
+      };
+      check.addEventListener('change', () => { state.auto = check.checked; sync(); write(); });
+      sync();
+
+      wrap.appendChild(toggle);
+      wrap.appendChild(fixed);
+      wrap.appendChild(autoParts);
+      wrap.appendChild(hint);
+      return wrap;
+    },
+
     count_or_all(field, doc, changed) {
       const input = el('input', 'input');
       input.type = 'text';

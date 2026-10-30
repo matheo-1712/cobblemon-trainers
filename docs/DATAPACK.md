@@ -166,7 +166,7 @@ appelable partout par défaut ; `notCallable: true` le bloque depuis le Battle P
 
 | Champ | Défaut | Rôle |
 | --- | --- | --- |
-| `level` | `1` | Niveau des Pokémon qui n'ont **pas** de ligne `Level:` |
+| `level` | `1` | Niveau des Pokémon qui n'ont **pas** de ligne `Level:`, ou un bloc de niveau automatique |
 | `format` | `singles` | `singles`, `doubles`, `triples` - alias `solo`, `duo`, `trio`, suffixe `_50` |
 | `difficulty` | `5` | [Intelligence de l'IA](DIFFICULTE.md), de 0 (au hasard) à 5 (sérieux) |
 | `healParty` | `true` | Soigne l'équipe du dresseur avant et après chaque combat |
@@ -176,6 +176,25 @@ appelable partout par défaut ; `notCallable: true` le bloque depuis le Battle P
 
 Le suffixe `_50` (`singles_50`, `doubles_50`, `triples_50`) met **les deux équipes** au
 niveau 50 le temps du combat. `level` n'a donc plus d'effet visible sur un dresseur en `_50`.
+
+`level` s'écrit aussi en bloc :
+
+| Champ | Défaut | Rôle |
+| --- | --- | --- |
+| `auto` | `false` | `true` : l'équipe suit le Pokémon le plus haut du joueur, K.O. compris |
+| `value` | `1` | Niveau fixe ; avec `auto`, niveau d'apparition avant le premier combat |
+| `offset` | `0` | Écart avec ce Pokémon : `5` au-dessus, `-5` en dessous |
+| `min` / `max` | - | Bornes du niveau automatique |
+
+En `auto`, le niveau est recalculé à chaque combat et remplace **aussi** les lignes `Level:`.
+Le Battle Phone affiche celui que le joueur affronterait.
+
+| Exemple | Effet |
+| --- | --- |
+| `"level": 50` | Niveau 50 |
+| `"level": {"auto": true}` | Même niveau que le joueur |
+| `"level": {"auto": true, "offset": 5}` | Toujours 5 niveaux au-dessus |
+| `"level": {"auto": true, "offset": -5, "min": 10, "max": 60}` | 5 en dessous, entre 10 et 60 |
 
 Le combat se joue sur des copies. Les deux équipes y entrent **automatiquement soignées** -
 PV pleins, statuts effacés, PP refaits -, un Pokémon KO compris. Et rien n'en ressort : quel

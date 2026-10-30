@@ -1,6 +1,7 @@
 package matheo1712.cobbletrainers.trainers
 
 import com.google.gson.Gson
+import com.google.gson.JsonSyntaxException
 import net.minecraft.resources.ResourceLocation
 import kotlin.test.*
 
@@ -13,9 +14,28 @@ class TrainerDefinitionTest {
         assertNull(trainer.requirements())
         val silent = gson.fromJson("""{"battle":{"music":null,"level":50},"notCallable":true}""", TrainerDefinition::class.java)
         assertNull(silent.battle.music)
-        assertEquals(50, silent.battle.level)
+        assertEquals(TrainerLevel(value = 50), silent.battle.level)
         assertEquals(5, silent.battle.difficulty)
         assertFalse(silent.callable())
+    }
+
+    @Test fun `level reads a plain number or an automatic block`() {
+        val gson = Gson()
+        fun level(json: String) = gson.fromJson("""{"battle":{"level":$json}}""", TrainerDefinition::class.java).battle.level
+
+        assertEquals(TrainerLevel(value = 50), level("50"))
+        assertEquals(TrainerLevel(value = 50), level("""{"auto": false, "value": 50}"""))
+        assertEquals(TrainerLevel(auto = true), level("""{"auto": true}"""))
+        assertEquals(
+            TrainerLevel(auto = true, offset = -5, min = 10, max = 60),
+            level("""{"auto": true, "offset": -5, "min": 10, "max": 60}""")
+        )
+        assertFailsWith<JsonSyntaxException> { level("\"auto\"") }
+
+        // What is written reads back the same, and a fixed level stays a plain number.
+        val auto = TrainerLevel(auto = true, offset = 5, max = 60)
+        assertEquals(auto, gson.fromJson(gson.toJson(auto), TrainerLevel::class.java))
+        assertEquals("50", gson.toJson(TrainerLevel(value = 50)))
     }
 
     @Test fun `presentation alone never locks a trainer but real requirements do`() {

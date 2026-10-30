@@ -7,6 +7,7 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import matheo1712.cobbletrainers.CobblemonTrainers
 import matheo1712.cobbletrainers.battle.TrainerBattleIntro
+import matheo1712.cobbletrainers.battle.TrainerLevelScaling
 import matheo1712.cobbletrainers.intro.TrainerIntro
 import matheo1712.cobbletrainers.parser.ShowdownTeamParser
 import matheo1712.cobbletrainers.trainers.TrainerDefinition
@@ -73,13 +74,13 @@ object BattleIntroNetworking {
                 trainerId = trainerId.toString(),
                 trainerName = definition.name,
                 category = category,
-                level = definition.battle.level,
+                level = TrainerLevelScaling.levelFor(player, definition) ?: definition.battle.level.value,
                 teamSize = ShowdownTeamParser.countPokemon(definition.team),
                 npcId = npc.id,
                 scene = intro,
                 // Only a scene that draws one pays for building it - and only such a scene ever
                 // shows the player what they are about to fight.
-                team = if (intro.needsTeam()) BattlePhoneNetworking.teamOf(definition, trainerId) else emptyList()
+                team = if (intro.needsTeam()) BattlePhoneNetworking.teamOf(definition, trainerId, player) else emptyList()
             )
         )
     }

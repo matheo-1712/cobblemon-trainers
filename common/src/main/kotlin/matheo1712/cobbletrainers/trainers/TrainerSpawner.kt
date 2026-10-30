@@ -102,7 +102,7 @@ object TrainerSpawner {
 
         // 6. initialize() resets `party` to whatever the NPC class provides, so the trainer
         //    team has to be assigned afterwards.
-        npc.initialize(definition.battle.level)
+        npc.initialize(definition.battle.level.value)
         // Cobblemon synchronizes this override and persists it as ForcedResourceIdentifier.
         if (modelId != null) npc.forcedResourceIdentifier = modelId
 
@@ -155,7 +155,7 @@ object TrainerSpawner {
         for (properties in pokemonProps) {
             // A `Level:` line on the Pokémon wins over the trainer-wide level.
             if (properties.level == null) {
-                properties.level = definition.battle.level
+                properties.level = definition.battle.level.value
             }
             // create() is where a property the parser accepted meets Cobblemon's registries -
             // an unknown species or held item throws here. One bad entry costs its Pokémon, not
