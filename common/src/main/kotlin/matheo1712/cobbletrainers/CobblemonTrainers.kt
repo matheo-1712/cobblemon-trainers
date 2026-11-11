@@ -2,6 +2,7 @@ package matheo1712.cobbletrainers
 
 import matheo1712.cobbletrainers.platform.Platform
 
+import matheo1712.cobbletrainers.advancement.LeagueCompletedTrigger
 import matheo1712.cobbletrainers.advancement.TrainerDefeatedTrigger
 import matheo1712.cobbletrainers.battle.TrainerBattleEventHandler
 import matheo1712.cobbletrainers.battle.TrainerBattleInteraction
@@ -9,6 +10,7 @@ import matheo1712.cobbletrainers.block.TrainerBlocks
 import matheo1712.cobbletrainers.command.TrainerCommands
 import matheo1712.cobbletrainers.intro.TrainerIntros
 import matheo1712.cobbletrainers.item.TrainerItems
+import matheo1712.cobbletrainers.league.TrainerLeagues
 import matheo1712.cobbletrainers.network.BattleIntroNetworking
 import matheo1712.cobbletrainers.network.BattleLeadNetworking
 import matheo1712.cobbletrainers.network.BattleMusicNetworking
@@ -56,8 +58,9 @@ object CobblemonTrainers {
      * The one folder the mod reads from a datapack, one level under `data/<namespace>/`.
      *
      * Everything a pack declares sits in it, one sub-folder per kind:
-     * [trainers][TrainerRegistry.DATAPACK_DIRECTORY] and
-     * [intros][TrainerIntros.DATAPACK_DIRECTORY]. A pack therefore has one folder to move,
+     * [trainers][TrainerRegistry.DATAPACK_DIRECTORY],
+     * [intros][TrainerIntros.DATAPACK_DIRECTORY] and
+     * [leagues][TrainerLeagues.DATAPACK_DIRECTORY]. A pack therefore has one folder to move,
      * and a kind added later costs no new top-level name.
      */
     const val DATAPACK_ROOT = "cobblemontrainers"
@@ -126,6 +129,7 @@ object CobblemonTrainers {
         // Register blocks, items, network and the advancement trigger. The trigger has to be
         // known before datapacks are read, or an advancement using it fails to parse.
         TrainerDefeatedTrigger.register()
+        LeagueCompletedTrigger.register()
         TrainerBlocks.register()
         TrainerItems.register()
         TrainerSpawnerNetworking.register()
@@ -165,6 +169,9 @@ object CobblemonTrainers {
             // word can only be said once the intros are in.
             TrainerIntros.reload(manager)
             TrainerRegistry.reload(manager)
+            // Leagues last: they name trainers, and one naming a trainer nobody provides is
+            // dropped rather than left unfinishable.
+            TrainerLeagues.reload(manager)
             warnAboutMisfiledJson(manager)
             // A pack may have changed the image behind a skin name we already resolved.
             TrainerSkins.clearCache()
@@ -188,7 +195,8 @@ object CobblemonTrainers {
 
             val misfiled = manager.listResources(DATAPACK_ROOT, json).keys
                 .filterNot { it.path.startsWith("${TrainerRegistry.DATAPACK_DIRECTORY}/") }
-                .filterNot { it.path.startsWith("${TrainerIntros.DATAPACK_DIRECTORY}/") } +
+                .filterNot { it.path.startsWith("${TrainerIntros.DATAPACK_DIRECTORY}/") }
+                .filterNot { it.path.startsWith("${TrainerLeagues.DATAPACK_DIRECTORY}/") } +
                 manager.listResources(TrainerIntros.LEGACY_DIRECTORY, json).keys
 
             if (misfiled.isEmpty()) return
@@ -197,11 +205,12 @@ object CobblemonTrainers {
             val rest = misfiled.size - MISFILED_SAMPLE
 
             LOGGER.warn(
-                "Ignoring {} file(s) filed outside {}/ and {}/, which is where trainers and " +
-                    "intros are now read from: {}{}",
+                "Ignoring {} file(s) filed outside {}/, {}/ and {}/, which is where trainers, " +
+                    "intros and leagues are read from: {}{}",
                 misfiled.size,
                 TrainerRegistry.DATAPACK_DIRECTORY,
                 TrainerIntros.DATAPACK_DIRECTORY,
+                TrainerLeagues.DATAPACK_DIRECTORY,
                 named,
                 if (rest > 0) " and $rest more" else ""
             )

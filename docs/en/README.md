@@ -21,6 +21,7 @@ the reference: this is where you come to find out *why*.
 | [DIFFICULTY.md](DIFFICULTY.md) | Exactly what `battle.difficulty` does, from `0` to `5` |
 | [GIMMICKS.md](GIMMICKS.md) | Mega Evolution, Z-Moves, Dynamax, Terastallization: `battle.gimmicks`, the stone, the Z-Crystal, the Tera type |
 | [INTROS.md](INTROS.md) | Writing a trainer's versus screen: the layers, where they sit, when they arrive and what they sound like |
+| [LEAGUES.md](LEAGUES.md) | Chaining trainers with no healing in between: the league file, how it plays, what is kept |
 | [COSMETICS.md](COSMETICS.md) | Dressing a trainer: armour, an item in hand, a Mega Bracelet |
 
 An example pack covering every option lives in
@@ -72,6 +73,7 @@ Each subject is described in exactly one place, and the other pages link to it:
 - anything the **AI** does is in `DIFFICULTY.md`;
 - anything about **battle gimmicks** is in `GIMMICKS.md`;
 - anything about the **versus screen** is in `INTROS.md`;
+- anything about **leagues** is in `LEAGUES.md`;
 - anything about **what a trainer wears** is in `COSMETICS.md`.
 
 A rule written in two places is a rule that ends up wrong in one of them. Adding a field means

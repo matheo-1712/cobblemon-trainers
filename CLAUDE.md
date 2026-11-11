@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Projet
 
 Mod Fabric et NeoForge pour Minecraft 1.21.1 qui ajoute des dresseurs Pokémon configurables à
-Cobblemon 1.8.1. Code principal en Kotlin (`matheo1712.cobbletrainers`), les mixins en Java.
+Cobblemon 1.8.4. Code principal en Kotlin (`matheo1712.cobbletrainers`), les mixins en Java.
 L'essentiel du travail se fait côté serveur logique - les dresseurs viennent de datapacks et
 combattent là-bas - mais **le mod a un côté client, requis, et c'est un endroit légitime pour
 ce qui appartient au client** : un écran, un dessin, une instance sonore, un réglage que seul
@@ -99,8 +99,30 @@ hérite du JDK de Gradle et le loader refuse de démarrer. Le CI utilise le mêm
 
 Toutes les versions sont dans `gradle.properties`, jamais en dur dans `build.gradle.kts`.
 Cobblemon et Architectury sont tirés du **Maven Modrinth** et référencés par **ID de
-version Modrinth** (`cobblemon_version=gBW3vLC7`), pas par numéro sémantique : pour
+version Modrinth** (`cobblemon_version=PdOzYHKU`), pas par numéro sémantique : pour
 changer de version, il faut récupérer le nouvel ID sur Modrinth.
+
+**Un ID de version n'est pas l'ID du projet.** Les deux se ressemblent - huit caractères
+alphanumériques - et celui du projet Cobblemon, `MdwFAVRL`, se lit partout : c'est lui que Mega
+Showdown déclare en dépendance. Posé dans `cobblemon_version`, il fait échouer Gradle à la
+**configuration** de `:common` (« Could not find maven.modrinth:cobblemon:MdwFAVRL »), donc avant
+la moindre compilation. Et chaque version de Cobblemon porte **un ID par loader** - `PdOzYHKU`
+pour le jar Fabric de 1.8.4, `xsVHrAsY` pour celui de NeoForge -, d'où les deux propriétés.
+`/v2/project/<ID>` répond pour un ID de projet et `/v2/version/<ID>` pour un ID de version :
+c'est ce qui les distingue en une requête.
+
+**`:common` compile contre Fabric API, et ce n'est pas une entorse à l'indépendance de loader.**
+Rien ne l'importe - `verifyLoaderIndependence` refuse tout `net.fabricmc` dans ses sources - et la
+dépendance est `modCompileOnly`, donc elle ne part ni dans le jar ni à l'exécution. Elle est là
+pour le **remapper**. Depuis 1.8.2, Cobblemon enregistre ses resource reloaders par une classe
+anonyme qui implémente `IdentifiableResourceReloadListener`, une interface de Fabric API : sans
+elle sur le classpath, tiny-remapper ne voit pas que la méthode surcharge
+`PreparableReloadListener.reload` et la laisse sous son nom intermediary `method_25931`. Les
+*types* sont bien remappés, le *nom de méthode* non - d'où un jar qui compile parfaitement et un
+client de dev qui meurt dans `Minecraft.<init>` sur un `AbstractMethodError`, dans du code de
+Cobblemon, avant que la moindre ligne du mod tourne. Loom ne garde **qu'une copie remappée par
+mod**, partagée entre les projets : c'est donc le classpath le plus pauvre qui demande le
+remapping qui décide pour tout le monde, et la poser dans `:fabric` seul ne change rien.
 
 Mega Showdown, `accessories`, `owo` et `architectury` sont là aussi, dans la configuration
 `devMods` : rien ne compile contre eux, ils ne servent qu'au jeu de dev (voir « Les gimmicks de

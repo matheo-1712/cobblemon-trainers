@@ -96,6 +96,13 @@
 
   "cobblemon-trainers.chat.locked": "%s ne veut pas encore te combattre.",
 
+  "cobblemon-trainers.chat.league.order": "%s se combat dans %s. Ton prochain adversaire y est %s.",
+  "cobblemon-trainers.chat.league.team_changed": "Un Pokémon a rejoint ton équipe depuis ton dernier combat dans %s. Retire-le, ou recommence depuis %s.",
+  "cobblemon-trainers.chat.league.carried": "%s : ton équipe est revenue à l'état où ton dernier combat l'a laissée. Rien de ce qui a été soigné entre-temps ne compte.",
+  "cobblemon-trainers.chat.league.progress": "%s : %s/%s. Suivant : %s.",
+  "cobblemon-trainers.chat.league.failed": "%s s'arrête là pour cette fois. Tu repars de %s.",
+  "cobblemon-trainers.chat.league.completed": "%s terminée !",
+
   "cobblemon-trainers.chat.no_healthy_pokemon": "Aucun de tes Pokémon ne peut combattre. Soigne ton équipe avant de défier un dresseur.",
   "cobblemon-trainers.chat.fainted_in_lead": "Ce combat envoie %s Pokémon à la fois, et tu en as moins que ça en état de se battre. Soigne ton équipe avant de défier un dresseur.",
 

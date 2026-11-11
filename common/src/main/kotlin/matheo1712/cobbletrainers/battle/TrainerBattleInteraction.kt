@@ -8,6 +8,7 @@ import com.cobblemon.mod.common.util.isInBattle
 import com.cobblemon.mod.common.util.party
 import matheo1712.cobbletrainers.CobblemonTrainers
 import matheo1712.cobbletrainers.dialogue.TrainerDialogue
+import matheo1712.cobbletrainers.league.LeagueRuns
 import matheo1712.cobbletrainers.trainers.TrainerDefinition
 import matheo1712.cobbletrainers.trainers.TrainerRegistry
 import matheo1712.cobbletrainers.trainers.TrainerLock
@@ -144,6 +145,10 @@ class TrainerBattleInteraction : NPCInteractConfiguration {
             val missing = TrainerLock.unmet(player, trainerId, definition)
             if (missing.isNotEmpty()) return TrainerLock.refusalLines(definition, missing)
 
+            // After the trainer's own conditions: a league only has a say about a trainer who
+            // would otherwise fight.
+            LeagueRuns.refusal(player, trainerId).takeIf { it.isNotEmpty() }?.let { return it }
+
             partyRefusal(player, battleFormatOf(definition.battle.format))?.let { return listOf(it) }
 
             return emptyList()
@@ -211,13 +216,17 @@ class TrainerBattleInteraction : NPCInteractConfiguration {
          */
         fun startBattle(npc: NPCEntity, player: ServerPlayer, definition: TrainerDefinition?) {
             val format = battleFormatOf(definition?.battle?.format)
+            val trainerId = TrainerRegistry.idFromAspects(npc.aspects)
+
+            // Before the party is looked at, so what a league takes back is what gets counted:
+            // a team healed since the last battle of a run is brought back down here.
+            if (trainerId != null && !player.isInBattle()) LeagueRuns.prepare(player, trainerId)
 
             partyRefusal(player, format)?.let { refused ->
                 player.sendSystemMessage(refused.withStyle(ChatFormatting.GRAY))
                 return
             }
 
-            val trainerId = TrainerRegistry.idFromAspects(npc.aspects)
             if (definition != null && trainerId != null &&
                 TrainerBattleIntro.begin(npc, player, trainerId, definition)
             ) {

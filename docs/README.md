@@ -20,6 +20,7 @@ pages restent la référence : c'est ici qu'on vient quand on veut savoir *pourq
 | [DIFFICULTE.md](DIFFICULTE.md) | Ce que fait exactement `battle.difficulty`, de `0` à `5` |
 | [GIMMICKS.md](GIMMICKS.md) | Méga-évolution, Z-Move, dynamax, téracristal : `battle.gimmicks`, la gemme, le cristal Z, le type Tera |
 | [INTROS.md](INTROS.md) | Écrire l'écran de versus d'un dresseur : les calques, leur place, leurs temps et leurs sons |
+| [LIGUES.md](LIGUES.md) | Enchaîner des dresseurs sans soin entre les combats : le fichier de ligue, le déroulé, ce qui est gardé |
 | [COSMETIQUES.md](COSMETIQUES.md) | Habiller un dresseur : armure, objet en main, bracelet méga |
 
 Un pack d'exemple couvrant chaque option vit dans
@@ -47,6 +48,7 @@ Phone sous leur propre onglet, à côté de ceux de tes packs.
 | Utiliser un modèle de dresseur personnalisé | [Pack d'exemple](../examples/custom_model/README.md) |
 | Lui mettre une armure ou une Poké Ball en main | [Habiller un dresseur](COSMETIQUES.md) |
 | Ranger mes dresseurs en ligue | [Catégories](DATAPACK.md#catégories) |
+| Enchaîner des dresseurs sans soin, façon Conseil 4 | [Écrire une ligue](LIGUES.md) |
 | Verrouiller un dresseur derrière un autre | [Conditions pour combattre](DATAPACK.md#conditions-pour-combattre) |
 | Donner des objets à la victoire | [Revanches et récompenses](DATAPACK.md#revanches-et-récompenses) |
 | Déclencher un advancement | [Advancements](DATAPACK.md#advancements) |
@@ -68,6 +70,7 @@ Chaque sujet n'est décrit qu'à un seul endroit, et les autres pages y renvoien
 - tout ce que fait **l'IA** est dans `DIFFICULTE.md` ;
 - tout ce qui touche aux **gimmicks de combat** est dans `GIMMICKS.md` ;
 - tout ce qui touche à **l'écran de versus** est dans `INTROS.md` ;
+- tout ce qui touche aux **ligues** est dans `LIGUES.md` ;
 - tout ce qui touche à **la tenue d'un dresseur** est dans `COSMETIQUES.md`.
 
 Une règle écrite à deux endroits est une règle qui finit fausse à l'un des deux. Ajouter un

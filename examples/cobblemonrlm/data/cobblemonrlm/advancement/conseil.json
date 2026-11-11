@@ -1,0 +1,19 @@
+{
+  "parent": "cobblemonrlm:ligue",
+  "display": {
+    "icon": {
+      "id": "cobblemon:master_ball"
+    },
+    "title": "Le Conseil",
+    "description": "Battre les trois dresseurs du Conseil à la suite, sans soin",
+    "frame": "challenge"
+  },
+  "criteria": {
+    "conseil": {
+      "trigger": "cobblemon-trainers:league_completed",
+      "conditions": {
+        "league": "cobblemonrlm:conseil"
+      }
+    }
+  }
+}

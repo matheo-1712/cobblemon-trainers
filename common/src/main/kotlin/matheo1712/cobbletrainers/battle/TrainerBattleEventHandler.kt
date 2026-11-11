@@ -12,6 +12,7 @@ import com.cobblemon.mod.common.entity.npc.NPCEntity
 import matheo1712.cobbletrainers.CobblemonTrainers
 import matheo1712.cobbletrainers.advancement.TrainerDefeatedTrigger
 import matheo1712.cobbletrainers.dialogue.TrainerDialogue
+import matheo1712.cobbletrainers.league.LeagueRuns
 import matheo1712.cobbletrainers.trainers.TrainerCalls
 import matheo1712.cobbletrainers.trainers.TrainerDefinition
 import matheo1712.cobbletrainers.trainers.TrainerProgress
@@ -60,6 +61,7 @@ object TrainerBattleEventHandler {
         Platform.current.onServerStopped {
             TrainerBattleRange.clear()
             TrainerBattleIntro.clear()
+            LeagueRuns.clear()
         }
     }
 
@@ -82,6 +84,11 @@ object TrainerBattleEventHandler {
         // Cobblemon only measures how far a player has strayed in a battle against a wild
         // Pokémon, so a trainer battle has to be measured here. See TrainerBattleRange.
         TrainerBattleRange.watch(battle, npc)
+        // A league run starts, or moves on, with the battle that really opened - not with the
+        // click that asked for it.
+        if (trainerId != null) {
+            players.forEach { LeagueRuns.battleStarted(it, trainerId, battle.battleId) }
+        }
         // Cobblemon has no "battle over" event - see the class docs - so everything that has to
         // happen whichever way a battle ends hangs off this one handler.
         battle.onEndHandlers.add { ended ->
@@ -121,6 +128,15 @@ object TrainerBattleEventHandler {
         }
 
         if (winningPlayers.isNotEmpty()) recordVictory(trainerId, definition, winners)
+
+        // After the trainer's own record and rewards, so a league's come last in the chat.
+        players.forEach { player ->
+            if (player in winningPlayers) {
+                LeagueRuns.battleWon(player, trainerId, battle.battleId)
+            } else {
+                LeagueRuns.battleLost(player, trainerId, battle.battleId)
+            }
+        }
     }
 
     /**

@@ -1,0 +1,12 @@
+{
+  "name": "Maître du Conseil",
+  "battle": {
+    "level": 45,
+    "difficulty": 3
+  },
+  "team": [
+    "Dragonite\nAbility: Multiscale\nLevel: 45\n- Dragon Claw\n- Fire Punch\n- Dragon Dance",
+    "Tyranitar\nAbility: Sand Stream\nLevel: 45\n- Stone Edge\n- Crunch\n- Earthquake",
+    "Lapras\nAbility: Water Absorb\nLevel: 45\n- Surf\n- Ice Beam\n- Thunderbolt"
+  ]
+}

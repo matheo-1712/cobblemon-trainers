@@ -1,0 +1,19 @@
+{
+  "name": "Le Conseil",
+  "trainers": [
+    "conseil/portier",
+    "conseil/stratege",
+    "conseil/maitre"
+  ],
+  "heal": 0,
+  "rewards": [
+    {
+      "item": "cobblemon:master_ball",
+      "firstWinOnly": true
+    },
+    {
+      "item": "cobblemon:rare_candy",
+      "count": 3
+    }
+  ]
+}
