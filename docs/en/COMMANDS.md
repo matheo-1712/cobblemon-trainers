@@ -23,6 +23,7 @@ Battle Phone, which reads the same progress without granting any power at all.
 | [`defeat`](#defeat) | Records a win without a battle |
 | [`debugai`](#debugai) | Shows in chat what the mod corrects in the AI |
 | [`testintro`](INTROS.md#preview-in-game) | Plays an intro without a battle |
+| [`league`](LEAGUES.md#the-host) | Places the host of a league, and sets [where its trainers appear](LEAGUES.md#the-arena) |
 
 ## A trainer's ID
 

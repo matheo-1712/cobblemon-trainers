@@ -2,17 +2,19 @@ package matheo1712.cobbletrainers
 
 import matheo1712.cobbletrainers.platform.Platform
 
+import matheo1712.cobbletrainers.advancement.LeagueCompletedTrigger
 import matheo1712.cobbletrainers.advancement.TrainerDefeatedTrigger
 import matheo1712.cobbletrainers.battle.TrainerBattleEventHandler
 import matheo1712.cobbletrainers.battle.TrainerBattleInteraction
 import matheo1712.cobbletrainers.block.TrainerBlocks
 import matheo1712.cobbletrainers.command.TrainerCommands
 import matheo1712.cobbletrainers.intro.TrainerIntros
-import matheo1712.cobbletrainers.item.TrainerItems
+import matheo1712.cobbletrainers.league.LeagueRuns
+import matheo1712.cobbletrainers.league.TrainerLeagues
 import matheo1712.cobbletrainers.network.BattleIntroNetworking
 import matheo1712.cobbletrainers.network.BattleLeadNetworking
 import matheo1712.cobbletrainers.network.BattleMusicNetworking
-import matheo1712.cobbletrainers.network.BattlePhoneNetworking
+import matheo1712.cobbletrainers.network.TrainerSkinNetworking
 import matheo1712.cobbletrainers.network.TrainerSpawnerNetworking
 import matheo1712.cobbletrainers.trainers.TrainerCalls
 import matheo1712.cobbletrainers.trainers.TrainerGaze
@@ -47,6 +49,7 @@ import org.slf4j.LoggerFactory
  * - A trainer spawner block, which keeps one trainer standing where it is placed
  * - A battle phone item, the same listing in a screen, for every player
  * - Calling a trainer from that screen, for a trainer that declares where it is to be found
+ * - Leagues: a host a player signs up with, then trainers one after the other with no healing
  */
 object CobblemonTrainers {
 
@@ -56,8 +59,9 @@ object CobblemonTrainers {
      * The one folder the mod reads from a datapack, one level under `data/<namespace>/`.
      *
      * Everything a pack declares sits in it, one sub-folder per kind:
-     * [trainers][TrainerRegistry.DATAPACK_DIRECTORY] and
-     * [intros][TrainerIntros.DATAPACK_DIRECTORY]. A pack therefore has one folder to move,
+     * [trainers][TrainerRegistry.DATAPACK_DIRECTORY],
+     * [intros][TrainerIntros.DATAPACK_DIRECTORY] and
+     * [leagues][TrainerLeagues.DATAPACK_DIRECTORY]. A pack therefore has one folder to move,
      * and a kind added later costs no new top-level name.
      */
     const val DATAPACK_ROOT = "cobblemontrainers"
@@ -115,6 +119,21 @@ object CobblemonTrainers {
      */
     const val CALL_ASPECT_PREFIX = "trainer_call:"
 
+    /**
+     * Prefix of the aspect naming the league an NPC is the host of, followed by the league ID.
+     * A host carries this *instead of* [TRAINER_ASPECT_PREFIX]: it is not a trainer, and this
+     * is what sends its right-click to [matheo1712.cobbletrainers.league.LeagueDialogue].
+     */
+    const val LEAGUE_HOST_ASPECT_PREFIX = "league_host:"
+
+    /**
+     * Prefix of the aspect naming the player a tournament spawned a trainer for, followed by
+     * their UUID. Same idea as [CALL_ASPECT_PREFIX]: it is what lets
+     * [matheo1712.cobbletrainers.league.LeagueRuns] recognise a trainer whose run a restart
+     * has forgotten.
+     */
+    const val LEAGUE_RUN_ASPECT_PREFIX = "league_run:"
+
     @JvmField
     val LOGGER: Logger = LoggerFactory.getLogger(MOD_ID)
 
@@ -126,10 +145,10 @@ object CobblemonTrainers {
         // Register blocks, items, network and the advancement trigger. The trigger has to be
         // known before datapacks are read, or an advancement using it fails to parse.
         TrainerDefeatedTrigger.register()
+        LeagueCompletedTrigger.register()
         TrainerBlocks.register()
-        TrainerItems.register()
         TrainerSpawnerNetworking.register()
-        BattlePhoneNetworking.register()
+        TrainerSkinNetworking.register()
         BattleLeadNetworking.register()
         BattleMusicNetworking.register()
         BattleIntroNetworking.register()
@@ -142,6 +161,7 @@ object CobblemonTrainers {
             TrainerBattleEventHandler.register()
             // Grouped with the Cobblemon-dependent hooks: it reads NPCEntity like they do.
             TrainerGaze.register()
+            LeagueRuns.register()
         } catch (e: Exception) {
             LOGGER.error("Failed to register battle hooks. Is Cobblemon installed?", e)
         }
@@ -165,6 +185,9 @@ object CobblemonTrainers {
             // word can only be said once the intros are in.
             TrainerIntros.reload(manager)
             TrainerRegistry.reload(manager)
+            // Leagues last: they name trainers, and one naming a trainer nobody provides is
+            // dropped rather than left unfinishable.
+            TrainerLeagues.reload(manager)
             warnAboutMisfiledJson(manager)
             // A pack may have changed the image behind a skin name we already resolved.
             TrainerSkins.clearCache()
@@ -188,7 +211,8 @@ object CobblemonTrainers {
 
             val misfiled = manager.listResources(DATAPACK_ROOT, json).keys
                 .filterNot { it.path.startsWith("${TrainerRegistry.DATAPACK_DIRECTORY}/") }
-                .filterNot { it.path.startsWith("${TrainerIntros.DATAPACK_DIRECTORY}/") } +
+                .filterNot { it.path.startsWith("${TrainerIntros.DATAPACK_DIRECTORY}/") }
+                .filterNot { it.path.startsWith("${TrainerLeagues.DATAPACK_DIRECTORY}/") } +
                 manager.listResources(TrainerIntros.LEGACY_DIRECTORY, json).keys
 
             if (misfiled.isEmpty()) return
@@ -197,11 +221,12 @@ object CobblemonTrainers {
             val rest = misfiled.size - MISFILED_SAMPLE
 
             LOGGER.warn(
-                "Ignoring {} file(s) filed outside {}/ and {}/, which is where trainers and " +
-                    "intros are now read from: {}{}",
+                "Ignoring {} file(s) filed outside {}/, {}/ and {}/, which is where trainers, " +
+                    "intros and leagues are read from: {}{}",
                 misfiled.size,
                 TrainerRegistry.DATAPACK_DIRECTORY,
                 TrainerIntros.DATAPACK_DIRECTORY,
+                TrainerLeagues.DATAPACK_DIRECTORY,
                 named,
                 if (rest > 0) " and $rest more" else ""
             )

@@ -67,7 +67,6 @@ val verifyLoaderIndependence = tasks.register("verifyLoaderIndependence") {
     }
 }
 tasks.named("check") { dependsOn(verifyLoaderIndependence) }
-
 kotlin {
     compilerOptions {
         jvmTarget = JvmTarget.JVM_21

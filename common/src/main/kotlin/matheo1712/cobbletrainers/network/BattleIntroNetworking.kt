@@ -7,10 +7,12 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import matheo1712.cobbletrainers.CobblemonTrainers
 import matheo1712.cobbletrainers.battle.TrainerBattleIntro
+import matheo1712.cobbletrainers.battle.TrainerLevelScaling
 import matheo1712.cobbletrainers.intro.TrainerIntro
 import matheo1712.cobbletrainers.parser.ShowdownTeamParser
 import matheo1712.cobbletrainers.trainers.TrainerDefinition
 import matheo1712.cobbletrainers.trainers.TrainerRegistry
+import matheo1712.cobbletrainers.trainers.TrainerTeamPreview
 import net.minecraft.network.RegistryFriendlyByteBuf
 import net.minecraft.network.codec.StreamCodec
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload
@@ -27,9 +29,9 @@ import net.minecraft.server.level.ServerPlayer
  * category and level are, how many Pokémon they field, which entity in the world is them, and
  * their team when - and only when - a layer draws one.
  *
- * The trainer's skin rides along too, as the same [TrainerSkinPayload] the battle phone is
- * answered with: it is what a `figure` layer falls back to when the entity is not there to
- * pose, and the phone's own request would be turned down for a trainer that is not `listed`.
+ * The trainer's skin rides along too, pushed through [TrainerSkinNetworking]: it is what a
+ * `figure` layer falls back to when the entity is not there to pose, and a client's own request
+ * would be turned down for a trainer that is not `listed`.
  */
 object BattleIntroNetworking {
 
@@ -60,7 +62,7 @@ object BattleIntroNetworking {
         introId: ResourceLocation,
         intro: TrainerIntro
     ) {
-        BattlePhoneNetworking.pushSkin(player, trainerId.toString(), definition)
+        TrainerSkinNetworking.pushSkin(player, trainerId.toString(), definition)
 
         val category = TrainerRegistry.categoryOf(trainerId)
             ?.let { TrainerRegistry.categoryName(it) }
@@ -73,13 +75,13 @@ object BattleIntroNetworking {
                 trainerId = trainerId.toString(),
                 trainerName = definition.name,
                 category = category,
-                level = definition.battle.level,
+                level = TrainerLevelScaling.levelFor(player, definition) ?: definition.battle.level.value,
                 teamSize = ShowdownTeamParser.countPokemon(definition.team),
                 npcId = npc.id,
                 scene = intro,
                 // Only a scene that draws one pays for building it - and only such a scene ever
                 // shows the player what they are about to fight.
-                team = if (intro.needsTeam()) BattlePhoneNetworking.teamOf(definition, trainerId) else emptyList()
+                team = if (intro.needsTeam()) TrainerTeamPreview.of(definition, trainerId, player) else emptyList()
             )
         )
     }

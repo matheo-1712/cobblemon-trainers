@@ -1,0 +1,32 @@
+{
+  "name": "Le Conseil",
+  "host": {
+    "name": "Arbitre du Conseil",
+    "skin": {
+      "type": "player_username",
+      "value": "Notch"
+    },
+    "messages": {
+      "greeting": "Trois dresseurs, l'un après l'autre, et personne ne soigne ton équipe entre deux. Tu entres ?",
+      "decline": "Reviens quand ton équipe sera prête.",
+      "between": "Pas le temps de souffler.",
+      "win": "Le Conseil s'incline. Bien joué.",
+      "lose": "Le Conseil reste invaincu. Reviens plus fort."
+    }
+  },
+  "trainers": [
+    "conseil/portier",
+    "conseil/stratege",
+    "conseil/maitre"
+  ],
+  "rewards": [
+    {
+      "item": "cobblemon:master_ball",
+      "firstWinOnly": true
+    },
+    {
+      "item": "cobblemon:rare_candy",
+      "count": 3
+    }
+  ]
+}

@@ -30,6 +30,9 @@ class TrainerProgress : SavedData() {
     /** Trainer ID -> UUIDs of the players who have beaten it. */
     private val defeatedBy = mutableMapOf<ResourceLocation, MutableSet<UUID>>()
 
+    /** League ID -> UUIDs of the players who have finished it. */
+    private val completedBy = mutableMapOf<ResourceLocation, MutableSet<UUID>>()
+
     fun hasDefeated(trainer: ResourceLocation, player: UUID): Boolean =
         defeatedBy[trainer]?.contains(player) == true
 
@@ -64,16 +67,37 @@ class TrainerProgress : SavedData() {
         return true
     }
 
+    fun hasCompletedLeague(league: ResourceLocation, player: UUID): Boolean =
+        completedBy[league]?.contains(player) == true
+
+    /**
+     * Records a league seen through to its last trainer. Kept beside the victories rather than
+     * derived from them: beating every member one by one, healed in between, is not finishing
+     * the league.
+     *
+     * @return true when this was the player's first time through that league.
+     */
+    fun recordLeague(league: ResourceLocation, player: UUID): Boolean {
+        val first = completedBy.getOrPut(league) { mutableSetOf() }.add(player)
+        if (first) setDirty()
+        return first
+    }
+
     override fun save(tag: CompoundTag, registries: HolderLookup.Provider): CompoundTag {
+        tag.put(DEFEATED_KEY, write(defeatedBy))
+        tag.put(LEAGUES_KEY, write(completedBy))
+        return tag
+    }
+
+    private fun write(records: Map<ResourceLocation, Set<UUID>>): CompoundTag {
         val entries = CompoundTag()
-        defeatedBy.forEach { (trainer, players) ->
+        records.forEach { (id, players) ->
             if (players.isEmpty()) return@forEach
             val list = ListTag()
             players.forEach { list.add(StringTag.valueOf(it.toString())) }
-            entries.put(trainer.toString(), list)
+            entries.put(id.toString(), list)
         }
-        tag.put(DEFEATED_KEY, entries)
-        return tag
+        return entries
     }
 
     companion object {
@@ -81,6 +105,7 @@ class TrainerProgress : SavedData() {
         private const val FILE_NAME = "cobblemon_trainers_progress"
 
         private const val DEFEATED_KEY = "defeated"
+        private const val LEAGUES_KEY = "leagues"
 
         /**
          * The data fixer type is only consulted when the saved version is older than the
@@ -98,23 +123,26 @@ class TrainerProgress : SavedData() {
 
         internal fun load(tag: CompoundTag): TrainerProgress {
             val progress = TrainerProgress()
-            val entries = tag.getCompound(DEFEATED_KEY)
+            read(tag.getCompound(DEFEATED_KEY), progress.defeatedBy)
+            // Absent from a file written before leagues existed, which reads as an empty one.
+            read(tag.getCompound(LEAGUES_KEY), progress.completedBy)
+            return progress
+        }
 
+        private fun read(entries: CompoundTag, into: MutableMap<ResourceLocation, MutableSet<UUID>>) {
             for (key in entries.allKeys) {
                 // A trainer that no longer exists in any datapack keeps its entry: the pack may
                 // simply be disabled for now, and dropping it would silently reset every player.
-                val trainer = ResourceLocation.tryParse(key)
-                if (trainer == null) {
-                    CobblemonTrainers.LOGGER.warn("Ignoring invalid trainer ID in progress data: {}", key)
+                val id = ResourceLocation.tryParse(key)
+                if (id == null) {
+                    CobblemonTrainers.LOGGER.warn("Ignoring invalid ID in progress data: {}", key)
                     continue
                 }
 
                 val players = entries.getList(key, Tag.TAG_STRING.toInt())
                     .mapNotNull { parseUuid(it.asString) }
-                if (players.isNotEmpty()) progress.defeatedBy[trainer] = players.toMutableSet()
+                if (players.isNotEmpty()) into[id] = players.toMutableSet()
             }
-
-            return progress
         }
 
         /** A UUID that no longer parses means a corrupted file: skip it rather than fail the load. */

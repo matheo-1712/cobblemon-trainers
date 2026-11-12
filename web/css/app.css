@@ -249,6 +249,12 @@ textarea.input { resize: vertical; }
 .switch input:checked + .switch-mark::after { left: 17px; background: var(--blue-bright); }
 .switch-text { font-size: 12px; color: var(--muted); }
 .switch-inline { white-space: nowrap; }
+.level-field { display: flex; flex-direction: column; gap: 8px; }
+.level-field .field-hint { margin: 0; }
+.level-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; }
+.level-row[hidden] { display: none; }
+.level-part { display: flex; flex-direction: column; gap: 3px; }
+.level-part-label { font-size: 11px; color: var(--muted); }
 
 .tags { display: flex; flex-wrap: wrap; gap: 6px; }
 .tag {

@@ -8,6 +8,9 @@ import com.cobblemon.mod.common.util.isInBattle
 import com.cobblemon.mod.common.util.party
 import matheo1712.cobbletrainers.CobblemonTrainers
 import matheo1712.cobbletrainers.dialogue.TrainerDialogue
+import matheo1712.cobbletrainers.league.LeagueDialogue
+import matheo1712.cobbletrainers.league.LeagueRuns
+import matheo1712.cobbletrainers.league.TrainerLeagues
 import matheo1712.cobbletrainers.trainers.TrainerDefinition
 import matheo1712.cobbletrainers.trainers.TrainerRegistry
 import matheo1712.cobbletrainers.trainers.TrainerLock
@@ -43,6 +46,16 @@ class TrainerBattleInteraction : NPCInteractConfiguration {
     override val type: String = TYPE
 
     override fun interact(npc: NPCEntity, player: ServerPlayer): Boolean {
+        // A league's host wears this interaction too, without being a trainer: it has no
+        // battle of its own, only a tournament to offer.
+        if (TrainerLeagues.idFromAspects(npc.aspects) != null) {
+            LeagueDialogue.greet(npc, player)
+            return true
+        }
+        // A trainer a tournament spawned is started by its run, never by a click: not by the
+        // player it came for, whose battle is already on its way, and not by a passer-by.
+        if (LeagueRuns.isOpponent(npc)) return true
+
         val trainerId = TrainerRegistry.idFromAspects(npc.aspects)
         val definition = trainerId?.let { TrainerRegistry.get(it) }
 
@@ -230,6 +243,10 @@ class TrainerBattleInteraction : NPCInteractConfiguration {
         /** The battle itself, with nothing left to decide. Also what an intro ends on. */
         fun openBattle(npc: NPCEntity, player: ServerPlayer, definition: TrainerDefinition?) {
             val format = battleFormatOf(definition?.battle?.format)
+
+            // Asked here, at the last moment, so the level follows the party the player battles
+            // with - not the one they had when the dialogue or the intro opened.
+            if (definition != null) TrainerLevelScaling.apply(npc, player, definition)
 
             BattleBuilder.pvn(
                 player = player,
