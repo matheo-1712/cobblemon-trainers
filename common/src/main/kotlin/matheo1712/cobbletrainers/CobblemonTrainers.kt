@@ -10,6 +10,7 @@ import matheo1712.cobbletrainers.block.TrainerBlocks
 import matheo1712.cobbletrainers.command.TrainerCommands
 import matheo1712.cobbletrainers.intro.TrainerIntros
 import matheo1712.cobbletrainers.item.TrainerItems
+import matheo1712.cobbletrainers.league.LeagueRuns
 import matheo1712.cobbletrainers.league.TrainerLeagues
 import matheo1712.cobbletrainers.network.BattleIntroNetworking
 import matheo1712.cobbletrainers.network.BattleLeadNetworking
@@ -49,6 +50,7 @@ import org.slf4j.LoggerFactory
  * - A trainer spawner block, which keeps one trainer standing where it is placed
  * - A battle phone item, the same listing in a screen, for every player
  * - Calling a trainer from that screen, for a trainer that declares where it is to be found
+ * - Leagues: a host a player signs up with, then trainers one after the other with no healing
  */
 object CobblemonTrainers {
 
@@ -118,6 +120,21 @@ object CobblemonTrainers {
      */
     const val CALL_ASPECT_PREFIX = "trainer_call:"
 
+    /**
+     * Prefix of the aspect naming the league an NPC is the host of, followed by the league ID.
+     * A host carries this *instead of* [TRAINER_ASPECT_PREFIX]: it is not a trainer, and this
+     * is what sends its right-click to [matheo1712.cobbletrainers.league.LeagueDialogue].
+     */
+    const val LEAGUE_HOST_ASPECT_PREFIX = "league_host:"
+
+    /**
+     * Prefix of the aspect naming the player a tournament spawned a trainer for, followed by
+     * their UUID. Same idea as [CALL_ASPECT_PREFIX]: it is what lets
+     * [matheo1712.cobbletrainers.league.LeagueRuns] recognise a trainer whose run a restart
+     * has forgotten.
+     */
+    const val LEAGUE_RUN_ASPECT_PREFIX = "league_run:"
+
     @JvmField
     val LOGGER: Logger = LoggerFactory.getLogger(MOD_ID)
 
@@ -146,6 +163,7 @@ object CobblemonTrainers {
             TrainerBattleEventHandler.register()
             // Grouped with the Cobblemon-dependent hooks: it reads NPCEntity like they do.
             TrainerGaze.register()
+            LeagueRuns.register()
         } catch (e: Exception) {
             LOGGER.error("Failed to register battle hooks. Is Cobblemon installed?", e)
         }

@@ -20,7 +20,7 @@ pages restent la référence : c'est ici qu'on vient quand on veut savoir *pourq
 | [DIFFICULTE.md](DIFFICULTE.md) | Ce que fait exactement `battle.difficulty`, de `0` à `5` |
 | [GIMMICKS.md](GIMMICKS.md) | Méga-évolution, Z-Move, dynamax, téracristal : `battle.gimmicks`, la gemme, le cristal Z, le type Tera |
 | [INTROS.md](INTROS.md) | Écrire l'écran de versus d'un dresseur : les calques, leur place, leurs temps et leurs sons |
-| [LIGUES.md](LIGUES.md) | Enchaîner des dresseurs sans soin entre les combats : le fichier de ligue, le déroulé, ce qui est gardé |
+| [LIGUES.md](LIGUES.md) | Un tournoi : un hôte auprès duquel on s'inscrit, puis des dresseurs à la suite sans aucun soin |
 | [COSMETIQUES.md](COSMETIQUES.md) | Habiller un dresseur : armure, objet en main, bracelet méga |
 
 Un pack d'exemple couvrant chaque option vit dans

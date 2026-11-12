@@ -55,6 +55,7 @@ object TrainerBattleEventHandler {
             // The other half of a trainer battle's edges: the intro one waits on before it
             // opens, where TrainerBattleRange watches the one already open.
             TrainerBattleIntro.tick()
+            LeagueRuns.tick(it)
         }
         // A battle left behind by a world that closed mid-fight would otherwise hold on to its
         // trainer for the lifetime of the game, and so would an intro nothing is going to open.
@@ -84,11 +85,8 @@ object TrainerBattleEventHandler {
         // Cobblemon only measures how far a player has strayed in a battle against a wild
         // Pokémon, so a trainer battle has to be measured here. See TrainerBattleRange.
         TrainerBattleRange.watch(battle, npc)
-        // A league run starts, or moves on, with the battle that really opened - not with the
-        // click that asked for it.
-        if (trainerId != null) {
-            players.forEach { LeagueRuns.battleStarted(it, trainerId, battle.battleId) }
-        }
+        // A tournament waits on the battle that really opened, not on the one it asked for.
+        players.forEach { LeagueRuns.battleStarted(it, npc, battle.battleId) }
         // Cobblemon has no "battle over" event - see the class docs - so everything that has to
         // happen whichever way a battle ends hangs off this one handler.
         battle.onEndHandlers.add { ended ->
@@ -132,9 +130,9 @@ object TrainerBattleEventHandler {
         // After the trainer's own record and rewards, so a league's come last in the chat.
         players.forEach { player ->
             if (player in winningPlayers) {
-                LeagueRuns.battleWon(player, trainerId, battle.battleId)
+                LeagueRuns.battleWon(player, battle.battleId)
             } else {
-                LeagueRuns.battleLost(player, trainerId, battle.battleId)
+                LeagueRuns.battleLost(player, battle.battleId)
             }
         }
     }

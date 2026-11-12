@@ -25,6 +25,7 @@ progression sans donner le moindre pouvoir.
 | [`defeat`](#defeat) | Écrit une victoire sans combat |
 | [`debugai`](#debugai) | Montre en chat ce que le mod corrige chez l'IA |
 | [`testintro`](INTROS.md#tester-en-jeu) | Joue une intro sans combat |
+| [`league`](LIGUES.md#lhôte) | Pose l'hôte d'une ligue, et fixe [où ses dresseurs apparaissent](LIGUES.md#larène) |
 
 ## L'ID d'un dresseur
 

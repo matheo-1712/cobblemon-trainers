@@ -16,6 +16,7 @@ import net.minecraft.commands.Commands
  * /cobblemontrainers spawn <id> [<x> <y> <z>]
  * /cobblemontrainers list [<player>]
  * /cobblemontrainers defeat <id|all> [<players>] [reset]
+ * /cobblemontrainers league <league_id> [<x> <y> <z>]
  * ```
  *
  * **The permission check lives here, on the root**, and covers every verb: level 2, operators.
@@ -38,6 +39,7 @@ object TrainerCommands {
                 .then(SpawnTrainerCommand.node())
                 .then(ListTrainersCommand.node())
                 .then(DefeatTrainerCommand.node())
+                .then(LeagueCommand.node())
                 .then(DebugAiCommand.node())
                 .then(TestIntroCommand.node())
         )

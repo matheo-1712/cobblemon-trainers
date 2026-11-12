@@ -16,9 +16,8 @@ import net.minecraft.server.packs.resources.ResourceManager
  * provides is dropped whole, with a word in the log - a league missing a link cannot be
  * finished, and a league nobody can finish is worse than none.
  *
- * **A trainer belongs to one league at most.** Its place in a league is what decides whether it
- * accepts a challenge, and two leagues answering that for the same trainer would have to
- * disagree sooner or later. The first league to claim a trainer, in ID order, keeps it.
+ * Being named by a league changes nothing about a trainer. The league spawns its own copy when
+ * that trainer's turn comes; one standing elsewhere in the world is still an ordinary trainer.
  */
 object TrainerLeagues {
 
@@ -31,18 +30,10 @@ object TrainerLeagues {
 
     private val leagues = mutableMapOf<ResourceLocation, LeagueEntry>()
 
-    /** Trainer ID -> the league it belongs to and its place in it. */
-    private val memberships = mutableMapOf<ResourceLocation, Membership>()
-
-    /** A trainer's seat in a league: which one, and how many are fought before it. */
-    class Membership(val league: LeagueEntry, val index: Int)
-
     fun reload(manager: ResourceManager) {
         leagues.clear()
-        memberships.clear()
 
         manager.listResources(DATAPACK_DIRECTORY) { path -> path.path.endsWith(JSON_EXTENSION) }
-            .toSortedMap(compareBy { it.toString() })
             .forEach { (location, resource) ->
                 val id = ResourceLocation.tryBuild(
                     location.namespace,
@@ -53,7 +44,7 @@ object TrainerLeagues {
                     val definition = resource.open().use { stream ->
                         stream.bufferedReader().use { GSON.fromJson(it, TrainerLeague::class.java) }
                     }
-                    resolve(id, definition)?.let(::register)
+                    resolve(id, definition)?.let { leagues[id] = it }
                 } catch (e: Exception) {
                     CobblemonTrainers.LOGGER.error("Failed to load league {}", location, e)
                 }
@@ -73,9 +64,7 @@ object TrainerLeagues {
      * author reads their log - never in front of a player three battles in.
      */
     private fun resolve(id: ResourceLocation, definition: TrainerLeague): LeagueEntry? {
-        val members = mutableListOf<ResourceLocation>()
-
-        for (declared in definition.trainers) {
+        val members = definition.trainers.map { declared ->
             val trainerId = trainerIdOf(declared, id.namespace)
             if (trainerId == null || TrainerRegistry.get(trainerId) == null) {
                 CobblemonTrainers.LOGGER.error(
@@ -84,21 +73,7 @@ object TrainerLeagues {
                 )
                 return null
             }
-            if (trainerId in members) {
-                CobblemonTrainers.LOGGER.warn(
-                    "League {} names the trainer {} more than once, keeping its first place only",
-                    id, trainerId
-                )
-                continue
-            }
-            memberships[trainerId]?.let { taken ->
-                CobblemonTrainers.LOGGER.error(
-                    "League {} names the trainer {}, which already belongs to {}: the league is ignored",
-                    id, trainerId, taken.league.id
-                )
-                return null
-            }
-            members += trainerId
+            trainerId
         }
 
         if (members.isEmpty()) {
@@ -106,51 +81,22 @@ object TrainerLeagues {
             return null
         }
 
-        val entry = LeagueEntry(id, definition, members)
-        warnAboutMembers(entry)
-        return entry
-    }
+        definition.host.skin.validate(id)
 
-    private fun register(entry: LeagueEntry) {
-        leagues[entry.id] = entry
-        entry.members.forEachIndexed { index, trainerId ->
-            memberships[trainerId] = Membership(entry, index)
-        }
-    }
-
-    /** What a pack can write that loads, and still does not do what its author meant. */
-    private fun warnAboutMembers(entry: LeagueEntry) {
-        if (entry.definition.heal !in 0.0..1.0) {
-            CobblemonTrainers.LOGGER.warn(
-                "League {} declares heal {}, read as {}: it is a share of the maximum HP, from 0 to 1",
-                entry.id, entry.definition.heal, entry.heal
-            )
-        }
-
-        for (trainerId in entry.members) {
+        for (trainerId in members.distinct()) {
             val trainer = TrainerRegistry.get(trainerId) ?: continue
-
-            // A league is lost and started again. A link that fights once only turns the
-            // first lost run into the last one.
-            if (!trainer.progress.allowsRematch) {
-                CobblemonTrainers.LOGGER.warn(
-                    "League {}: {} refuses rematches, so a player who loses further down can never start over",
-                    entry.id, trainerId
-                )
-            }
-
             // Such a format battles on healed copies: what happens to them never reaches the
             // real team, so there is nothing to carry into the next battle.
             val format = trainer.battle.format
-            if (entry.carriesDamage && format.isNotBlank() &&
-                TrainerBattleInteraction.battleFormatOf(format).adjustLevel > 0
-            ) {
+            if (format.isNotBlank() && TrainerBattleInteraction.battleFormatOf(format).adjustLevel > 0) {
                 CobblemonTrainers.LOGGER.warn(
                     "League {}: {} battles in '{}', which heals both sides - the damage of that battle is not carried over",
-                    entry.id, trainerId, format
+                    id, trainerId, format
                 )
             }
         }
+
+        return LeagueEntry(id, definition, members)
     }
 
     /** A bare path is one of the league's own pack; anything with a colon is a full ID. */
@@ -167,8 +113,21 @@ object TrainerLeagues {
 
     fun get(id: ResourceLocation): LeagueEntry? = leagues[id]
 
-    fun ids(): Set<ResourceLocation> = leagues.keys
+    fun ids(): Set<ResourceLocation> = leagues.keys.toSet()
 
-    /** The league a trainer is fought in and its place there, or null for a free trainer. */
-    fun membershipOf(trainerId: ResourceLocation): Membership? = memberships[trainerId]
+    /**
+     * Resolves the ID typed in a command, the way [TrainerRegistry.resolveId] does: Brigadier
+     * hands a bare name over under the `minecraft` namespace, so that one is matched on its path.
+     */
+    fun resolveId(input: ResourceLocation): ResourceLocation? {
+        if (input in leagues) return input
+        if (input.namespace != ResourceLocation.DEFAULT_NAMESPACE) return null
+        return leagues.keys.firstOrNull { it.path == input.path }
+    }
+
+    /** The league a host stands for, read from the aspect it was spawned with. */
+    fun idFromAspects(aspects: Collection<String>): ResourceLocation? {
+        val aspect = aspects.find { it.startsWith(CobblemonTrainers.LEAGUE_HOST_ASPECT_PREFIX) } ?: return null
+        return ResourceLocation.tryParse(aspect.removePrefix(CobblemonTrainers.LEAGUE_HOST_ASPECT_PREFIX))
+    }
 }

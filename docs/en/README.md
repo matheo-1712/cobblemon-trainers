@@ -21,7 +21,7 @@ the reference: this is where you come to find out *why*.
 | [DIFFICULTY.md](DIFFICULTY.md) | Exactly what `battle.difficulty` does, from `0` to `5` |
 | [GIMMICKS.md](GIMMICKS.md) | Mega Evolution, Z-Moves, Dynamax, Terastallization: `battle.gimmicks`, the stone, the Z-Crystal, the Tera type |
 | [INTROS.md](INTROS.md) | Writing a trainer's versus screen: the layers, where they sit, when they arrive and what they sound like |
-| [LEAGUES.md](LEAGUES.md) | Chaining trainers with no healing in between: the league file, how it plays, what is kept |
+| [LEAGUES.md](LEAGUES.md) | A tournament: a host to sign up with, then trainers in a row with no healing |
 | [COSMETICS.md](COSMETICS.md) | Dressing a trainer: armour, an item in hand, a Mega Bracelet |
 
 An example pack covering every option lives in
