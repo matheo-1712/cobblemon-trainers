@@ -51,9 +51,10 @@ def verify(path, version, loader="fabric"):
         jar.getinfo("matheo1712/cobbletrainers/CobblemonTrainers.class")
         jar.getinfo("matheo1712/cobbletrainers/battle/ai/TrainerBattleAI.class")
         jar.getinfo("assets/cobblemon-trainers/lang/en_us.json")
-        for color in ("black", "green", "pink", "red", "white", "yellow"):
-            jar.getinfo(f"assets/cobblemon-trainers/models/item/battle_phone_{color}.json")
-            jar.getinfo(f"assets/cobblemon-trainers/textures/gui/battle_phone/{color}/frame.png")
+        # The battle phone is its own mod now, Cobblemon BattlePhone: a copy left in this jar
+        # would register its items twice.
+        if any("battle_phone" in name or "/battlephone/" in name for name in names):
+            raise ValueError("Battle phone content in the Cobblemon Trainers jar")
         if any(name.startswith("data/cobblemonrlm/") for name in names):
             raise ValueError("Example trainers must not be bundled in the mod")
     print(f"Verified {loader} release {version}: {path}")
