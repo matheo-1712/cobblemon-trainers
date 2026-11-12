@@ -1,5 +1,6 @@
 package matheo1712.cobbletrainers.trainers
 
+import matheo1712.cobbletrainers.league.TrainerLeagues
 import matheo1712.cobbletrainers.platform.Platform
 
 import com.cobblemon.mod.common.entity.npc.NPCEntity
@@ -56,7 +57,10 @@ object TrainerGaze {
 
     private fun giveGaze(entity: Entity) {
         if (entity !is NPCEntity) return
-        if (TrainerRegistry.idFromAspects(entity.aspects) == null) return
+        // A league's host is not a trainer, but it waits to be spoken to like one.
+        if (TrainerRegistry.idFromAspects(entity.aspects) == null &&
+            TrainerLeagues.idFromAspects(entity.aspects) == null
+        ) return
 
         // The accessor is only on Mob once the mixin has been applied, so the compiler cannot
         // see it on NPCEntity and rejects the cast outright. The hop through Any is what every

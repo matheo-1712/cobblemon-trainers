@@ -47,9 +47,25 @@ const SCHEMA = (() => {
     k: 'battle', t: 'group', doc: 'DATAPACK.md#battle',
     l: t('Combat', 'Battle'),
     fields: [
-      { k: 'level', t: 'num', def: 1, min: 1, max: 100, l: t('Niveau', 'Level'),
-        h: t('Niveau des Pokémon qui n’ont pas de ligne Level:.',
-             'Level of the Pokémon with no Level: line of their own.') },
+      { k: 'level', t: 'level', def: 1, doc: 'DATAPACK.md#battle', l: t('Niveau', 'Level'),
+        parts: {
+          auto: t('S’adapter au joueur', 'Match the player'),
+          value: t('Niveau', 'Level'),
+          offset: t('Écart (+ / −)', 'Offset (+ / −)'),
+          min: t('Niveau minimum', 'Minimum level'),
+          max: t('Niveau maximum', 'Maximum level'),
+          none: t('aucun', 'none'),
+          fixed: t('Niveau des Pokémon qui n’ont pas de ligne Level:.',
+                   'Level of the Pokémon with no Level: line of their own.'),
+          same: t('Toute l’équipe prend le niveau du Pokémon le plus haut du joueur, à chaque combat.',
+                  'The whole team takes the level of the player’s highest Pokémon, every battle.'),
+          above: t('Toute l’équipe prend {n} niveaux de plus que le Pokémon le plus haut du joueur, à chaque combat.',
+                   'The whole team takes {n} levels more than the player’s highest Pokémon, every battle.'),
+          below: t('Toute l’équipe prend {n} niveaux de moins que le Pokémon le plus haut du joueur, à chaque combat.',
+                   'The whole team takes {n} levels fewer than the player’s highest Pokémon, every battle.'),
+          floor: t('Jamais sous le niveau {n}.', 'Never below level {n}.'),
+          ceil: t('Jamais au-dessus du niveau {n}.', 'Never above level {n}.')
+        } },
       { k: 'format', t: 'sel', def: 'singles', l: t('Format', 'Format'),
         options: [
           ['singles', t('Simple (1v1)', 'Singles (1v1)')],

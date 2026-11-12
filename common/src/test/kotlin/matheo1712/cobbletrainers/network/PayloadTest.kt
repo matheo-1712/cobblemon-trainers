@@ -23,10 +23,8 @@ class PayloadTest {
         }
     }
 
-    @Test fun `phone and intro payloads use the same complete team format`() {
+    @Test fun `intro payloads carry the complete team format`() {
         val team = listOf(TrainerTeamMember("cobblemon:eevee", listOf("shiny"), 50, "Évoli"))
-        val phone = TrainerTeamPayload("pack:erika", team)
-        assertEquals(phone, roundTrip(TrainerTeamPayload.CODEC, phone))
         val intro = BattleIntroPayload("pack:intro", "pack:erika", "Érika", "League", 50, 1, 123,
             TrainerIntro(layers = listOf(IntroLayer(type = "pokemon", at = 5, length = 8, rotation = 90f))), team, preview = true)
         assertEquals(intro, roundTrip(BattleIntroPayload.CODEC, intro))

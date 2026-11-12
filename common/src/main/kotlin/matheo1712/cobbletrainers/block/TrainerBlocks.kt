@@ -3,13 +3,12 @@ package matheo1712.cobbletrainers.block
 import matheo1712.cobbletrainers.platform.Platform
 
 import matheo1712.cobbletrainers.CobblemonTrainers
-import matheo1712.cobbletrainers.item.TrainerItems
-import net.minecraft.core.Registry
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.item.CreativeModeTab
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
+import net.minecraft.world.level.ItemLike
 import net.minecraft.world.level.block.entity.BlockEntityType
 import net.minecraft.world.level.block.state.BlockBehaviour
 import net.minecraft.world.level.material.PushReaction
@@ -85,10 +84,28 @@ object TrainerBlocks {
         .title(CobblemonTrainers.lang("item_group"))
         .icon { ItemStack(TRAINER_SPAWNER_ITEM) }
         .displayItems { _, output ->
-            TrainerItems.BATTLE_PHONES.forEach { output.accept(it) }
-            output.accept(TRAINER_SPAWNER_ITEM)
+            // Read each time the tab is filled, so whatever was added at init is there.
+            tabItems().forEach { output.accept(it) }
         }
         .build()
+
+    /** What other parts - and later other mods - list in the tab, by the position asked for. */
+    private val tabExtras = mutableListOf<Pair<Int, List<ItemLike>>>()
+
+    /**
+     * Lists [items] in the mod's creative tab, before the entry at [index] of what is already
+     * there - the spawner being entry 0 to begin with. Call it during init, before the tab is
+     * first opened.
+     */
+    fun addToTab(index: Int, items: List<ItemLike>) {
+        tabExtras += index to items
+    }
+
+    private fun tabItems(): List<ItemLike> {
+        val items = mutableListOf<ItemLike>(TRAINER_SPAWNER_ITEM)
+        tabExtras.forEach { (index, extra) -> items.addAll(index.coerceIn(0, items.size), extra) }
+        return items
+    }
 
     fun register() {
         Platform.current.register(BuiltInRegistries.BLOCK, TRAINER_SPAWNER_ID, TRAINER_SPAWNER)

@@ -50,6 +50,9 @@ class NeoForgeTrainerPlatform : TrainerPlatform {
         bus.addListener { event: RegisterEvent ->
             // Intrusive block/item holders can only be created after NeoForge unfreezes
             // the registries. Blocks precede all other registries used by this mod.
+            // Registrations queued by a mod built on this one, while blocks are being
+            // registered, are in the list by the time the item registry is handed out:
+            // RegisterEvent goes through every mod for one registry before the next.
             if (event.registryKey == Registries.BLOCK) CobblemonTrainers.onInitialize()
             registrations.forEach { it(event) }
         }

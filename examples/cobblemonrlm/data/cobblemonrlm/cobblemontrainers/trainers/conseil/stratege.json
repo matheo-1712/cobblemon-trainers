@@ -1,0 +1,11 @@
+{
+  "name": "Stratège du Conseil",
+  "battle": {
+    "level": 42,
+    "difficulty": 3
+  },
+  "team": [
+    "Alakazam\nAbility: Magic Guard\nLevel: 42\n- Psychic\n- Shadow Ball\n- Calm Mind",
+    "Snorlax\nAbility: Thick Fat\nLevel: 42\n- Body Slam\n- Earthquake\n- Rest"
+  ]
+}

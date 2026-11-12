@@ -342,7 +342,7 @@ object TrainerCalls {
      * them, several dozen blocks and a wall away. Searching around the caller's own Y answers
      * the cave and the open field with one rule.
      */
-    private fun standingSpot(level: ServerLevel, x: Int, z: Int, aroundY: Int): BlockPos? {
+    internal fun standingSpot(level: ServerLevel, x: Int, z: Int, aroundY: Int): BlockPos? {
         // Never generate or load a chunk to answer a button press. Asked in chunk coordinates:
         // both hasChunkAt overloads are deprecated, hasChunk is the one that is not.
         if (!level.hasChunk(SectionPos.blockToSectionCoord(x), SectionPos.blockToSectionCoord(z))) return null

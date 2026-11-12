@@ -38,6 +38,9 @@ object TrainerSpawner {
      * @param extraAspects Aspects applied on top of the trainer ID one. Used by the trainer
      *   spawner block to mark the trainers it owns; aspects are saved to NBT, so such a mark
      *   survives a restart.
+     * @param identityAspect The aspect saying what this NPC is. A trainer's names its
+     *   definition; a league's host is spawned through here too and names its league instead,
+     *   which is all that tells the two apart on right-click.
      * @return the spawned [com.cobblemon.mod.common.entity.npc.NPCEntity], or null on failure.
      */
     fun spawn(
@@ -47,7 +50,8 @@ object TrainerSpawner {
         definition: TrainerDefinition,
         trainerId: ResourceLocation,
         yRot: Float = 0f,
-        extraAspects: Collection<String> = emptyList()
+        extraAspects: Collection<String> = emptyList(),
+        identityAspect: String = CobblemonTrainers.TRAINER_ASPECT_PREFIX + trainerId
     ): NPCEntity? {
         // 1. Resolve the NPC class shipped by the mod. No fallback to an arbitrary class:
         //    failing loudly beats spawning an NPC that behaves unpredictably.
@@ -76,7 +80,7 @@ object TrainerSpawner {
 
         // 4. Tag the entity with its trainer ID. Applied aspects are serialized to NBT, which
         //    is how the definition is found again after a restart.
-        npc.appliedAspects.add(CobblemonTrainers.TRAINER_ASPECT_PREFIX + trainerId)
+        npc.appliedAspects.add(identityAspect)
         npc.appliedAspects.addAll(extraAspects)
         // A custom resolver owns its geometry, texture and pose. Do not impose player-rig
         // aspects on it, and never change the NPC class shared by all trainers.
@@ -102,7 +106,7 @@ object TrainerSpawner {
 
         // 6. initialize() resets `party` to whatever the NPC class provides, so the trainer
         //    team has to be assigned afterwards.
-        npc.initialize(definition.battle.level)
+        npc.initialize(definition.battle.level.value)
         // Cobblemon synchronizes this override and persists it as ForcedResourceIdentifier.
         if (modelId != null) npc.forcedResourceIdentifier = modelId
 
@@ -155,7 +159,7 @@ object TrainerSpawner {
         for (properties in pokemonProps) {
             // A `Level:` line on the Pokémon wins over the trainer-wide level.
             if (properties.level == null) {
-                properties.level = definition.battle.level
+                properties.level = definition.battle.level.value
             }
             // create() is where a property the parser accepted meets Cobblemon's registries -
             // an unknown species or held item throws here. One bad entry costs its Pokémon, not
