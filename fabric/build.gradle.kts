@@ -346,7 +346,11 @@ publishMods {
 // configure the maven publication
 publishing {
 	publications {
+		// What other mods build against - Cobblemon BattlePhone first: the remapped jar, under a
+		// name that says which loader it is for. `publishToMavenLocal` is enough to develop
+		// against it from another repository.
 		register<MavenPublication>("mavenJava") {
+			artifactId = "${rootProject.name}-fabric"
 			from(components["java"])
 		}
 	}

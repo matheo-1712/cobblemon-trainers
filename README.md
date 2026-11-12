@@ -27,13 +27,8 @@ poser un dans un bâtiment sauvegardé pour que chaque copie générée arrive a
 déjà en place. Un village de dresseurs se construit une fois.
 
 **Côté joueur, la façon de rencontrer un dresseur est complètement différente** : tout passe
-par le **Battle Phone**, un objet, pas une commande.
-
-Il se **craft**, à l'établi : quatre lingots de fer aux coins, quatre lingots de cuivre sur
-les côtés, et une **noigrume au choix** au centre. Sa couleur donne celle du téléphone :
-noir, bleu, vert, rose, rouge, blanc ou jaune.
-
-<p align="center"><img src="https://raw.githubusercontent.com/matheo-1712/cobblemon-trainers/refs/heads/master/assets/battle_phone_craft.png" alt="Battle Phone recipe"></p>
+par le **Battle Phone**, un objet, pas une commande. Il est livré par un mod compagnon,
+**[Cobblemon BattlePhone](#le-battle-phone)**, construit sur celui-ci.
 
 Le joueur ouvre son Battle Phone, choisit un dresseur dans la liste, et l'appelle. Mais un
 dresseur ne vient que **là où il a dit qu'il serait** : dans les mesas la nuit, sous un orage,
@@ -60,9 +55,12 @@ Place le jar correspondant à ton loader dans `mods/`, avec Cobblemon. Le jar Fa
 NeoForge est `cobblemon-trainers-neoforge-<version>.jar` et demande Kotlin for Forge.
 En solo, il n'y a rien de plus à faire.
 
-**En multijoueur, le mod est requis des deux côtés** : le serveur et chaque joueur. Le Battle
-Phone, l'écran du bloc de dresseur et la musique de combat sont des choses qu'un client doit
+**En multijoueur, le mod est requis des deux côtés** : le serveur et chaque joueur. L'écran du
+bloc de dresseur, l'écran de versus et la musique de combat sont des choses qu'un client doit
 avoir pour en profiter - un client sans le mod se connecte, mais n'y a pas droit.
+
+Le Battle Phone est un mod à part, [Cobblemon BattlePhone](#le-battle-phone), à installer à
+côté de celui-ci, lui aussi des deux côtés.
 
 ## Utilisation
 
@@ -125,56 +123,23 @@ que le format permet.
 
 ## Le Battle Phone
 
-`/cobblemontrainers list` est réservé aux opérateurs. Le **Battle Phone**
-(`cobblemon-trainers:battle_phone`) est la même chose pour tout le monde : un clic droit et
-l'écran liste les dresseurs du monde, le skin de chacun, et dit lesquels sont déjà vaincus.
+`/cobblemontrainers list` est réservé aux opérateurs. Pour les joueurs, il y a le **Battle
+Phone**, livré par le mod compagnon **Cobblemon BattlePhone** : un clic droit et l'écran liste
+les dresseurs du monde, ce qu'ils rapportent, ceux qui sont déjà vaincus, et appelle ceux qui
+déclarent un lieu. Il lit tout ce qu'il affiche dans ce mod-ci - le suivi de progression d'un
+pack (`progress.listed`, `requires.hidden`, `rewards[].hidden`) n'a de sens qu'avec lui.
 
-Les dresseurs sont **triés par datapack** : les flèches en haut de la liste (ou les touches
-gauche et droite) passent d'un pack à l'autre, avec un onglet « tous les datapacks » en
-premier dès qu'il y en a plusieurs - celui-là sépare les packs par un intertitre. À
-l'intérieur d'un pack, un intertitre par **catégorie** - le dossier où le pack range ses
-dresseurs -, chacun avec son propre compteur.
-
-Cliquer une ligne montre le dresseur en entier à droite, avec son niveau, la taille de son
-équipe et son état - vaincu, vaincu sans revanche possible, encore debout, ou fermé tant que
-ses conditions ne sont pas remplies, auquel cas la liste de ce qui manque remplace son
-équipe. À côté de lui, ce que le battre rapporte : une case par objet, avec sa quantité, et
-au-delà de quatre la dernière case compte le reste et le nomme au survol. Contrairement à son
-équipe, les récompenses sont visibles avant de l'avoir battu - c'est ce qui donne envie
-d'essayer -, et un pack peut en garder une secrète avec `"hidden": true`. Une récompense qui
-ne tombe qu'à la première victoire porte un marqueur, et son icône est grisée une fois
-réclamée. À côté, six cases pour son équipe : elles restent fermées jusqu'à la victoire, puis
-affichent les modèles de ses Pokémon, formes et chromatiques comprises. Passer la souris sur
-l'une d'elles donne le nom et le niveau du Pokémon.
-
-L'objet ne retient rien : il lit la progression du serveur, donc deux exemplaires affichent
-la même chose et le perdre ne perd rien. Il se craft avec du fer, du cuivre et une noigrume
-de la couleur voulue - voir [le craft](#ce-qui-distingue-ce-mod) -, se trouve dans l'onglet créatif
-**Cobblemon Trainers**, ou s'obtient avec :
-
-```
-/give @s cobblemon-trainers:battle_phone
-```
-
-Cette commande donne le modèle bleu historique. Pour une autre couleur, utilise
-`battle_phone_black`, `battle_phone_green`, `battle_phone_pink`, `battle_phone_red`,
-`battle_phone_white` ou `battle_phone_yellow` après `cobblemon-trainers:`. Toutes les couleurs
-ouvrent les mêmes dresseurs et montrent la même progression ; le cadre et les couleurs de
-l'interface suivent celles du téléphone utilisé.
-
-Seuls les dresseurs en `"listed": true` y apparaissent, comme dans `/cobblemontrainers list`,
-et un dresseur verrouillé peut se cacher entièrement jusqu'à ce que ses conditions soient
-remplies - voir [docs/DATAPACK.md](docs/DATAPACK.md#le-suivi-de-progression).
+Ses objets gardent les ID qu'ils avaient quand il faisait partie de ce mod
+(`cobblemon-trainers:battle_phone` et ses couleurs) : un monde qui en contient les retrouve dès
+que Cobblemon BattlePhone est installé.
 
 ### Appeler un dresseur
 
-Un dresseur qui déclare **où il se trouve** est appelable depuis sa fiche : le Battle Phone
-affiche son lieu, et un bouton **Appeler** le fait venir à quelques dizaines de blocs quand le
-joueur y est. Un dresseur qui ne déclare rien - un champion dans son arène - n'a pas de bouton
-et se trouve à pied.
-
-Un joueur ne peut avoir qu'un seul dresseur appelé à la fois, et un dresseur verrouillé n'est
-jamais appelable. Le combat se lance toujours au clic droit sur le dresseur.
+Un dresseur qui déclare **où il se trouve** est appelable depuis sa fiche du Battle Phone : un
+bouton **Appeler** le fait venir à quelques dizaines de blocs quand le joueur y est. Un
+dresseur qui ne déclare rien - un champion dans son arène - n'a pas de bouton et se trouve à
+pied. Un joueur ne peut avoir qu'un seul dresseur appelé à la fois, et un dresseur verrouillé
+n'est jamais appelable. Le combat se lance toujours au clic droit sur le dresseur.
 
 **➜ Tout ça est dans [docs/SPAWNING.md](docs/SPAWNING.md)** : le bloc `location`, ses
 conditions, ses textes, et ce que fait le mod autour.

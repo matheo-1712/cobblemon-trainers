@@ -17,8 +17,8 @@ rester côté serveur ? ».
 Ce qui y vit aujourd'hui : `client.MinecraftMixin`, qui branche la lecture des `assets/` d'un
 pack posé dans `mods/` (voir « Livrer un pack ») ; `client.ClientLevelMixin`, qui rend le bloc
 de dresseur visible quand on tient son item ; l'entrypoint `CobblemonTrainersClient`, qui
-ouvre les deux écrans du mod et reçoit ce qui les alimente ; ces deux écrans eux-mêmes, sous
-`client.gui` (voir « Le bloc de dresseur » et « Le Battle Phone ») ;
+ouvre l'écran du bloc de dresseur et reçoit ce qui alimente les écrans ; cet écran lui-même,
+sous `client.gui` (voir « Le bloc de dresseur ») ;
 `client.ClientPokemonSelection`, qui annonce au serveur le Pokémon sélectionné parce que
 Cobblemon ne le lui dit jamais (voir « Le Pokémon qui ouvre le combat ») ; le couple
 `client.ClientBattleMusic` / `client.MusicManagerMixin`, qui joue le thème de combat en boucle
@@ -26,9 +26,9 @@ et garde la musique du monde silencieuse pendant ce temps (voir « Musique de co
 `client.gui.BattleIntroScreen`, l'écran de versus qui annonce un combat de champion (voir
 « L'écran de versus ») ; et `client.render`, qui dessine ce qu'un dresseur porte et tient,
 puisque Cobblemon n'en dessine rien (voir « La tenue d'un dresseur »).
-Aucun renderer d'entité n'est enregistré : le Battle Phone dessine les skins à plat depuis
-l'image, et pour les Pokémon d'une équipe il appelle le `drawProfilePokemon` de Cobblemon.
-La tenue, elle, est dessinée dans le monde, mais depuis un mixin plutôt qu'un renderer à nous.
+Aucun renderer d'entité n'est enregistré : un skin dessiné dans un écran l'est à plat depuis
+l'image (`TrainerSkinRenderer`). La tenue, elle, est dessinée dans le monde, mais depuis un
+mixin plutôt qu'un renderer à nous.
 
 Le code, les commentaires et les logs sont en **anglais**. Tout texte affiché au joueur
 passe par `assets/cobblemon-trainers/lang/` - jamais de littéral en dur.
@@ -261,10 +261,10 @@ messages, musique et récompenses de combat.
   dresseur ».
 - **`network.TrainerSpawnerNetworking`** - les deux `CustomPacketPayload` de l'écran de ce
   bloc, et la validation côté serveur de ce qui revient.
-- **`item.TrainerItems` / `BattlePhoneItem`** - l'objet qui ouvre le suivi de progression.
-  Voir « Le Battle Phone ».
-- **`network.BattlePhoneNetworking`** - les `CustomPacketPayload` de cet écran : le
-  listing, la demande de skin et la réponse, celles de l'équipe, et l'appel d'un dresseur.
+- **`network.TrainerSkinNetworking`** - le skin d'un dresseur pour un écran sans entité :
+  demandé par le client, ou poussé par le serveur avant l'écran de versus.
+- **`trainers.TrainerTeamPreview`** - l'équipe d'un dresseur telle qu'un écran la dessine.
+  Montrer ou non est la décision de l'appelant.
 - **`network.BattleLeadNetworking`** - le Pokémon sélectionné, du client vers le serveur.
 - **`network.BattleMusicNetworking`** - l'autre paquet qui n'appartient pas à un écran : le
   thème de combat à jouer, ou son arrêt. Voir « Musique de combat ».
@@ -274,22 +274,53 @@ messages, musique et récompenses de combat.
   et avec cache. Voir « Skins ».
 - **`trainers.TrainerOutfit`** - le bloc `cosmetics` d'un dresseur posé dans les six
   emplacements d'équipement de son entité. Voir « La tenue d'un dresseur ».
-- **`client.CobblemonTrainersClient`** - l'unique entrypoint client.
+- **`client.CobblemonTrainersClient`** - l'entrypoint client du mod, à côté de celui du Battle
+  Phone.
 - **`client.ClientPokemonSelection`** - la sélection de l'overlay, poussée vers le serveur.
 - **`client.ClientBattleMusic`** - le thème de combat, joué et tenu côté client, que lit aussi
   `client.MusicManagerMixin`.
-- **`client.gui.TrainerSpawnerScreen` / `client.gui.BattlePhoneScreen`** - les deux écrans.
+- **`client.gui.TrainerSpawnerScreen`** - l'écran du bloc de dresseur.
 - **`client.gui.BattleIntroScreen`** - le troisième, celui que personne n'ouvre : l'écran de
   versus, levé par le serveur avant le combat. C'est le seul moteur de rendu des intros, et le
   seul endroit du mod qui pose un modèle d'entité dans un écran.
 - **`client.gui.TrainerSkinRenderer` / `client.cache.TrainerSkinCache`** - le dessin d'un skin
-  à plat, et les textures que le Battle Phone a reçues.
+  à plat, et les textures reçues par `TrainerSkinNetworking`, que lisent le Battle Phone et
+  l'écran de versus.
 - **`client.cache.TrainerSkinOverrides`** - le seul endroit qui décide si un resource pack du
   client remplace le skin qu'un dresseur a reçu du serveur. Voir « Skins ».
 - **`client.render.TrainerRig` / `client.render.TrainerOutfitRenderer`** - le mannequin humanoïde
   calé sur les os de Cobblemon, et ce qu'on y accroche. Même section.
-- **`client.cache.TrainerTeamCache`** - les équipes que le Battle Phone a reçues, prêtes à
-  dessiner.
+
+### Les mods construits sur celui-ci
+
+Le mod est une **API de dresseurs** que d'autres mods utilisent. Le premier est **Cobblemon
+BattlePhone**, l'objet de suivi de progression, sorti dans son propre dépôt
+(`cobblemon-battlephone`, à côté de celui-ci) : il lit tout ce qu'il affiche ici. Sa doc
+interne, dont tout ce que ce fichier disait du Battle Phone, est dans son `CLAUDE.md`.
+
+Points à ne pas redécouvrir :
+
+- **Il compile contre les jars publiés**, `matheo1712.cobbletrainers:cobblemon-trainers-fabric`
+  et `-neoforge`, pas contre ce dépôt. En développement : `./gradlew publishToMavenLocal` ici,
+  puis le build là-bas. Une classe qu'il utilise ne peut donc pas être `internal` -
+  `TrainerTeamCodec` l'était et ne l'est plus.
+- **Ce qu'il lit ici** : `TrainerRegistry` (liste triée, catégories), `TrainerProgress`,
+  `TrainerLock`, `TrainerRewards.preview`, `TrainerPlace`, `TrainerCalls`,
+  `TrainerLevelScaling`, `ShowdownTeamParser.countPokemon`, le canal de skins
+  (`TrainerSkinNetworking`, `TrainerSkinCache`), l'équipe dessinable (`TrainerTeamPreview`,
+  `TrainerTeamCodec`, `TrainerTeamMember`), la plateforme (`Platform`, `ClientPlatform`) et
+  `TrainerBlocks.addToTab`. Changer l'une de ces signatures casse un autre dépôt : c'est la
+  surface publique de fait, en attendant un paquet `api` qui la nomme.
+- **Il passe par notre plateforme pour s'enregistrer.** Sous NeoForge, ses enregistrements sont
+  mis en file pendant le `RegisterEvent` des blocs et donnés au registre par notre propre
+  listener ; le commentaire de `NeoForgeTrainerPlatform.attach` dit pourquoi l'ordre tient.
+- **Ses objets gardent nos ID** (`cobblemon-trainers:battle_phone*`), pour que les téléphones
+  déjà dans les inventaires survivent à la séparation. Il livre donc des fichiers sous notre
+  namespace - modèles, textures d'objet, recettes et leurs advancements. **Ne rien créer ici
+  sous ces chemins**, et `verify-release.py` refuse tout `battle_phone` dans notre jar : un
+  doublon enregistrerait les objets deux fois.
+- **Ses clés de traduction ne sont plus ici.** Seules `requirement.line` et
+  `category.uncategorized` restent lues par lui, via `CobblemonTrainers.lang`.
 
 ### Musique de combat
 
@@ -771,165 +802,6 @@ Points à ne pas redécouvrir :
   défaut, donc l'onglet restait invisible pour l'opérateur à qui il est destiné. Ne pas le
   remettre sans avoir résolu ça.
 
-### Le Battle Phone
-
-`cobblemon-trainers:battle_phone` ouvre le suivi de progression : les dresseurs `listed`, un
-onglet par datapack, un intertitre par catégorie, et le skin de chacun. C'est le pendant
-joueur de `/cobblemontrainers list`, qui reste opérateur - l'objet ne donne aucun pouvoir, il lit.
-
-**Le craft du Battle Phone** est `data/cobblemon-trainers/recipe/battle_phone.json` : quatre
-lingots de fer aux coins, quatre de cuivre sur les côtés, une noigrume bleue au centre. Trois
-choses à savoir avant d'y toucher :
-
-- **Le dossier est `recipe/`, au singulier**, comme `advancement/` depuis 1.21.
-- **Les ingrédients sont des items, pas des tags.** `c:ingots/iron` marcherait - Cobblemon
-  l'emploie - mais un tag vide échoue *en silence* : la recette disparaît sans un mot dans le
-  log. Deux lingots vanilla ne valent pas ce risque.
-- **La noigrume vient de Cobblemon** (`cobblemon:blue_apricorn`), qui est une dépendance dure :
-  la recette ne peut donc pas se retrouver sans son ingrédient.
-
-Points à ne pas redécouvrir :
-
-- **L'onglet, c'est le namespace.** Un « datapack » n'existe pas à l'exécution : ce que le mod
-  connaît d'un dresseur, c'est l'ID que lui a donné le pack qui l'a fourni. Le regroupement se
-  fait donc sur le namespace, côté client, sur une liste que le serveur envoie déjà dans
-  l'ordre d'affichage. L'onglet « tous les datapacks » n'apparaît qu'à partir de deux
-  namespaces, sinon il doublerait le seul autre.
-- **Le client ne regroupe jamais, il découpe.** Les intertitres de catégorie sont les runs de
-  lignes voisines qui portent le même `category` : c'est le serveur qui a trié, et refaire un
-  `groupBy` ici pourrait contredire son ordre. Un pack dont tous les dresseurs sont à la racine
-  n'a aucun intertitre - un titre unique serait une ligne dépensée pour rien.
-- **Le listing vient du serveur**, pour les mêmes raisons que l'écran du bloc : le client n'a
-  ni `TrainerRegistry` ni `TrainerProgress`. Pas de `MenuType` non plus, il n'y a pas
-  d'inventaire.
-- **Les skins ne sont pas dans le listing.** Chacun pèse quelques kilo-octets et un monde peut
-  compter cent dresseurs : ils sont demandés un par un, quand une ligne en a besoin, et servis
-  depuis le cache de `TrainerSkins`. `TrainerSkinCache.get` a donc le droit de répondre null,
-  ce qui veut dire « demandé, pas encore arrivé ».
-- **Le serveur répond toujours, même sans image.** Une absence de réponse laisserait le client
-  attendre indéfiniment, et il redemanderait à chaque frame. Un skin irrésolu est donc une
-  entrée de cache sans texture.
-- **L'ID demandé est revalidé** contre `TrainerRegistry`, son `listed` et son verrou : la
-  demande vient d'un client, donc rien ne garantit qu'il renvoie un des dresseurs qu'on lui a
-  proposés - et un dresseur caché n'a jamais été proposé.
-- **Les skins sont dessinés à plat**, face par face depuis l'image (`TrainerSkinRenderer`), et
-  non par le renderer d'entité : un dresseur jamais rencontré n'a pas d'entité à afficher.
-  C'est aussi ce qui garde le mod sans renderer.
-- **`GuiGraphics.blit` laisse l'état de blending à son appelant**, et dessiner du texte
-  termine son propre batch - ce qui *désactive* le blending au passage. Un `enableBlend()` en
-  début de `render()` ne suffit donc pas : c'est chaque blit qui l'active, d'où le helper
-  `blit` de l'écran. Sans ça, le cadre effacerait ce qu'il recouvre.
-- **`ShowdownTeamParser.countPokemon` existe pour cet écran.** Compter l'équipe avec `parse`
-  ferait passer chaque espèce, capacité et objet de chaque dresseur par les registres de
-  Cobblemon à chaque ouverture.
-- **Les textures sont les nôtres**, sous
-  `assets/cobblemon-trainers/textures/gui/battle_phone/`, volontairement neutres : un cadre,
-  une case, deux flèches, un marqueur. Elles ne dépendent pas des assets de Cobblemon - une
-  version antérieure les empruntait au Pokédex, ne pas y revenir. Le trou transparent de
-  `frame.png` doit correspondre aux constantes `INNER_*` de l'écran : c'est lui qui délimite la
-  zone dessinée.
-- **Les textures sont libérées à la déconnexion** (`ClientPlayConnectionEvents.DISCONNECT`) :
-  un autre serveur peut avoir d'autres dresseurs sous les mêmes ID.
-- **L'équipe n'est envoyée qu'après la victoire.** Le serveur revérifie `TrainerProgress`
-  avant de répondre : la fiche est une récompense, pas un outil pour repérer le prochain
-  combat. Un dresseur pas encore battu reçoit une réponse *vide*, pas une absence de réponse,
-  pour la même raison que les skins.
-- **L'équipe passe par `create()`**, comme à l'apparition d'un dresseur, parce que c'est la
-  seule façon de connaître les **aspects** finaux d'un Pokémon : le parseur pose une forme
-  dans la chaîne de propriétés, et seul `create()` la transforme en aspects - ceux qui
-  choisissent le modèle affiché (forme régionale, chromatique). D'où
-  `ShowdownTeamParser.countPokemon` pour le listing, qui lui n'a besoin que du nombre.
-- **Les modèles sont rendus par `drawProfilePokemon`** (`com.cobblemon.mod.common.client.gui`),
-  avec un `FloatingState` par case, jeté quand la sélection change : un état appartient au
-  modèle pour lequel il a été posé. C'est lui qui met un Wailord et un Joltik à la même échelle
-  utile, et **l'appel ne nomme que les paramètres qu'il veut** - ce qui est la seule raison pour
-  laquelle le passage à Cobblemon 1.8 n'a rien cassé ici. Sa signature a bougé : le booléen
-  `applyProfileTransform` est devenu un `ProfileTransformType` (`PROFILE`, `NONE`, `POKEDEX`,
-  `SUMMARY`, pour les `profilePokedexScale` et compagnie des posers), et un `int` de lumière a
-  été ajouté en fin de liste. Les deux sont laissés à leur défaut, et `PROFILE` est exactement
-  ce que valait l'ancien `true` - vérifié dans le bytecode des deux versions. Passer l'un des
-  deux positionnellement casserait au prochain paramètre ajouté.
-- **La taille tient en deux facteurs, pas un.** Le `scale` de `drawProfilePokemon` est un
-  `matrixStack.scale` brut : seul, il rend un Pokémon haut de quelques pixels. Cobblemon met un
-  `scale(2.5f, 2.5f, 1f)` sur la pose *avant* l'appel et passe `4.5f` - c'est ce couple qui est
-  repris ici, y compris son écrasement en profondeur, le `2.5` étant le seul des deux à porter
-  sur z. Ne pas les fusionner en un seul nombre.
-- **Le modèle descend depuis le point de translation**, il ne se tient pas dessus : viser le
-  haut de la case, pas le bas. Un modèle occupe à peu près la hauteur d'une case de la grille.
-- **L'ID du dresseur n'est plus affiché** dans la fiche, volontairement : c'est le namespace
-  qui compte pour le joueur, et il est déjà dans le sélecteur et dans les en-têtes de la
-  liste. Ne pas le remettre.
-- **Les lignes de la liste n'ont pas toutes la même hauteur** - un en-tête de datapack est
-  plus court qu'un dresseur -, donc l'affichage, le clic et le calcul du défilement parcourent
-  les lignes au lieu de diviser par une hauteur. Les en-têtes n'existent que dans l'onglet
-  « tous les datapacks » ; ailleurs le sélecteur nomme déjà le pack.
-- **Le bouton d'appel est dessiné en rectangles**, pas en texture, comme tout ce qui n'est pas
-  l'une des six images. Il est logé au bout de la bande du statut : c'est la seule zone libre
-  qui reste en haut, l'équipe prenant tout le dessus et le cadre commençant quatre pixels sous
-  la ligne de statut. Voir « Appeler un dresseur ».
-- **Les récompenses tiennent dans un rail à côté du dresseur**, une case par objet. C'est ce qui
-  a fait décaler la figure vers la gauche : l'écran du haut n'a pas de bande libre en dessous -
-  il s'arrête quatre pixels sous le statut -, donc la place a été prise sur la largeur de la
-  colonne de gauche, pas sur la hauteur. La plaque est celle du lieu et du bouton d'appel, accent
-  compris : un objet posé seul à côté du dresseur se lisait comme quelque chose qui avait glissé
-  de l'équipe.
-- **Le rail ne grandit jamais avec la liste.** Il est haut de ce qu'il a de récompenses - une
-  seule fait une case, pas une colonne vide avec quelque chose en haut - et plafonné à quatre,
-  ce que la bande entre l'équipe et le statut peut tenir. Au-delà, la dernière case compte le
-  reste et le nomme au survol, donc quarante récompenses dessinent exactement le même rail que
-  quatre. La liste de ce survol est bornée à son tour : une infobulle plus haute que la fenêtre
-  ne répond pas mieux que pas d'infobulle.
-- **L'infobulle de l'écran est une liste de lignes**, pas une ligne, depuis ce rail. Les autres
-  survols - équipe, bouton d'appel - n'en donnent qu'une et la rendent telle quelle.
-- **Le compte est celui de vanilla** (`renderItemDecorations`), dans le coin de l'icône, qui
-  n'écrit rien pour un objet seul - c'est déjà ce qu'un joueur lit comme « un ». Un « 1x » posé
-  à côté de l'icône a existé : il coûtait une colonne de large pour ne rien dire.
-- **Elles arrivent en `ItemStack`, pas en ID.** Le serveur les résout avec
-  `TrainerRewards.preview`, exactement la résolution qui les remet au vainqueur : une fiche ne
-  peut donc pas annoncer une récompense qui ne serait jamais donnée, et le client n'a ni ID à
-  résoudre ni compte à borner. `ItemStack.OPTIONAL_STREAM_CODEC` fait le transport.
-- **Elles sont visibles avant la victoire**, contrairement à l'équipe, et c'est délibéré : une
-  équipe est une récompense pour avoir gagné, une récompense est la raison d'essayer. Un pack qui
-  veut garder la surprise pose `hidden` sur la ligne concernée - c'est le seul endroit où
-  `TrainerRewards.preview` et `grant` divergent volontairement, et le filtre est côté serveur :
-  ce qui n'est pas envoyé ne se lit pas sur le réseau.
-- **Le drapeau est par récompense, pas par dresseur.** Cacher tout un lot se fait en marquant
-  chaque ligne. Un interrupteur au niveau du dresseur en plus de celui-ci ferait deux réglages
-  pour un même résultat, donc deux façons de se contredire.
-- **Une récompense unique porte le marqueur de la ligne de statut** : le contour tant qu'elle
-  est due, la bille pleine une fois réclamée, et l'objet réclamé passe sous un voile de la
-  couleur de la plaque. Ce sont les deux mêmes formes que « battu / pas encore » sur le même
-  écran, donc le rail répond à « est-ce que je l'aurai encore » sans légende, et l'infobulle le
-  dit en mots pour qui lit la marque comme une décoration.
-- **La colonne du marqueur n'existe que si une case dessinée la demande.** Le rail passe de 26 à
-  36 pixels et reste centré dans les deux cas. Une colonne de cases vides coûterait aux icônes
-  leur place dans la bande.
-- **Le rail est centré sur ce qui se voit, pas sur les repères du code.** `REWARD_CENTER_X` tombe
-  entre le bord du skin et le premier slot de l'équipe. Centrer sur `TEAM_X` collait le rail au
-  dresseur : une case d'équipe porte dix-huit pixels d'air avant son slot, donc son bord gauche
-  n'est nulle part sur l'écran. `TEAM_SLOT_INSET` et `TEAM_SLOTS_WIDTH` existent pour ça, et la
-  plaque du lieu s'aligne dessus elle aussi.
-- **`TEAM_X` reste une constante, `TEAM_TOP` est calculé.** Le partage horizontal a été essayé -
-  répartir à parts égales tout ce qui reste à droite de la figure - puis retiré : ça déplaçait
-  l'équipe entre un dresseur qui donne quelque chose et un qui ne donne rien, et la colonne était
-  déjà bien là où elle était. En hauteur en revanche, un `UPPER_Y + 46` en dur laissait un pixel
-  sous la dernière rangée et treize au-dessus de la première : `TEAM_TOP` se lit maintenant sur
-  ses deux voisins, la ligne du niveau et la plaque du lieu, ce qui garde les deux bouts égaux.
-- **Le capot de `frame.png` avait 20 pixels de bordure à gauche et 13 à droite.** L'écran du haut
-  n'était donc pas centré dans son cadre, ce qui se lit tout de suite comme un fond raté du côté
-  étroit. Sept colonnes de corps ont été retirées à gauche - le biseau extérieur passe de 31 à 38
-  et les deux bordures font 13. Le trou, lui, n'a pas bougé : aucune constante de l'écran ne
-  change, et la base en dessous non plus, qui déborde le capot de ce côté de toute façon.
-- **Le voile passe par `RenderType.guiOverlay()`**, celui dont vanilla éclaire ses propres
-  cases : un `fill` ordinaire se dessine *sous* le modèle d'un objet, donc il ne griserait rien
-  du tout.
-- **Les objets se dessinent après les aplats et avant les modèles.** `GuiGraphics.renderItem`
-  vide le lot en cours et gère lui-même la profondeur, donc il ne doit pas couper une série de
-  `fill` ou de blits - même raison que pour les modèles, un cran plus tôt.
-- **`const val REWARD_TOP = TEAM_TOP` doit être déclaré après `TEAM_TOP`.** Une constante Kotlin
-  ne regarde pas en avant dans le même objet, et l'erreur (« Variable must be initialized »)
-  ne dit pas que c'est une question d'ordre.
-
 ### Appeler un dresseur
 
 Un joueur fait venir un dresseur depuis sa fiche du Battle Phone. Le mod ne fait **jamais**
@@ -1228,11 +1100,6 @@ Le mod ne livre aucun advancement **de jeu** : ils vivraient dans tous les monde
 contrairement à un dresseur, un advancement n'a pas d'interrupteur `listed`. Les exemples sont
 dans `examples/cobblemonrlm/data/cobblemonrlm/advancement/` (dossier au **singulier** depuis
 1.21).
-
-La seule exception est `advancement/recipes/battle_phone.json`, qui n'est pas un objectif mais
-le déblocage de recette du Battle Phone : sans lui la recette existe mais n'apparaît jamais
-dans le livre de recettes. Il est invisible dans l'arbre et ne fait ni toast ni annonce, comme
-tous ceux de vanilla. Voir « Le craft du Battle Phone ».
 
 Points à ne pas redécouvrir :
 
