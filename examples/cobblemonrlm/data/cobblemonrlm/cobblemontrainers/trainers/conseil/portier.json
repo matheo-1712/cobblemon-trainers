@@ -1,0 +1,11 @@
+{
+  "name": "Portier du Conseil",
+  "battle": {
+    "level": 40,
+    "difficulty": 3
+  },
+  "team": [
+    "Arcanine\nAbility: Intimidate\nLevel: 40\n- Flamethrower\n- Extreme Speed\n- Crunch",
+    "Gyarados\nAbility: Intimidate\nLevel: 40\n- Waterfall\n- Ice Fang\n- Dragon Dance"
+  ]
+}

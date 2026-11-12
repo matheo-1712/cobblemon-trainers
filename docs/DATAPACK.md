@@ -41,8 +41,10 @@ mon_pack/
         │   └── champions/              ← un dossier = une catégorie
         │       ├── category.json       ← présentation de la catégorie (facultatif)
         │       └── erika.json          → mon_pack:champions/erika
-        └── intro/                      ← les écrans de versus (voir INTROS.md)
-            └── arene.json              → mon_pack:arene
+        ├── intro/                      ← les écrans de versus (voir INTROS.md)
+        │   └── arene.json              → mon_pack:arene
+        └── leagues/                    ← les ligues (voir LIGUES.md)
+            └── conseil.json            → mon_pack:conseil
 ```
 
 ```json
@@ -54,7 +56,7 @@ mon_pack/
 - Le dossier lu est `cobblemontrainers/`, directement sous ton namespace - au même niveau que
   les `species/` et `npcs/` de Cobblemon. Il porte le nom du mod plutôt qu'un `trainers/`
   générique, ce qui évite les collisions avec d'autres mods. Tout ce que le mod lit y est
-  rangé, un sous-dossier par type : `trainers/` et [`intro/`](INTROS.md).
+  rangé, un sous-dossier par type : `trainers/`, [`intro/`](INTROS.md) et [`leagues/`](LIGUES.md).
 - **L'ID est `<namespace>:<chemin>`, sous-dossiers compris**, `trainers/` non compté :
   `trainers/champions/erika.json` donne `mon_pack:champions/erika`. Le dossier est aussi la
   [catégorie](#catégories) du dresseur.

@@ -5,7 +5,7 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 ## Projet
 
 Mod Fabric et NeoForge pour Minecraft 1.21.1 qui ajoute des dresseurs Pokémon configurables à
-Cobblemon 1.8.1. Code principal en Kotlin (`matheo1712.cobbletrainers`), les mixins en Java.
+Cobblemon 1.8.4. Code principal en Kotlin (`matheo1712.cobbletrainers`), les mixins en Java.
 L'essentiel du travail se fait côté serveur logique - les dresseurs viennent de datapacks et
 combattent là-bas - mais **le mod a un côté client, requis, et c'est un endroit légitime pour
 ce qui appartient au client** : un écran, un dessin, une instance sonore, un réglage que seul
@@ -100,8 +100,30 @@ hérite du JDK de Gradle et le loader refuse de démarrer. Le CI utilise le mêm
 
 Toutes les versions sont dans `gradle.properties`, jamais en dur dans `build.gradle.kts`.
 Cobblemon et Architectury sont tirés du **Maven Modrinth** et référencés par **ID de
-version Modrinth** (`cobblemon_version=gBW3vLC7`), pas par numéro sémantique : pour
+version Modrinth** (`cobblemon_version=PdOzYHKU`), pas par numéro sémantique : pour
 changer de version, il faut récupérer le nouvel ID sur Modrinth.
+
+**Un ID de version n'est pas l'ID du projet.** Les deux se ressemblent - huit caractères
+alphanumériques - et celui du projet Cobblemon, `MdwFAVRL`, se lit partout : c'est lui que Mega
+Showdown déclare en dépendance. Posé dans `cobblemon_version`, il fait échouer Gradle à la
+**configuration** de `:common` (« Could not find maven.modrinth:cobblemon:MdwFAVRL »), donc avant
+la moindre compilation. Et chaque version de Cobblemon porte **un ID par loader** - `PdOzYHKU`
+pour le jar Fabric de 1.8.4, `xsVHrAsY` pour celui de NeoForge -, d'où les deux propriétés.
+`/v2/project/<ID>` répond pour un ID de projet et `/v2/version/<ID>` pour un ID de version :
+c'est ce qui les distingue en une requête.
+
+**`:common` compile contre Fabric API, et ce n'est pas une entorse à l'indépendance de loader.**
+Rien ne l'importe - `verifyLoaderIndependence` refuse tout `net.fabricmc` dans ses sources - et la
+dépendance est `modCompileOnly`, donc elle ne part ni dans le jar ni à l'exécution. Elle est là
+pour le **remapper**. Depuis 1.8.2, Cobblemon enregistre ses resource reloaders par une classe
+anonyme qui implémente `IdentifiableResourceReloadListener`, une interface de Fabric API : sans
+elle sur le classpath, tiny-remapper ne voit pas que la méthode surcharge
+`PreparableReloadListener.reload` et la laisse sous son nom intermediary `method_25931`. Les
+*types* sont bien remappés, le *nom de méthode* non - d'où un jar qui compile parfaitement et un
+client de dev qui meurt dans `Minecraft.<init>` sur un `AbstractMethodError`, dans du code de
+Cobblemon, avant que la moindre ligne du mod tourne. Loom ne garde **qu'une copie remappée par
+mod**, partagée entre les projets : c'est donc le classpath le plus pauvre qui demande le
+remapping qui décide pour tout le monde, et la poser dans `:fabric` seul ne change rien.
 
 Mega Showdown, `accessories`, `owo` et `architectury` sont là aussi, dans la configuration
 `devMods` : rien ne compile contre eux, ils ne servent qu'au jeu de dev (voir « Les gimmicks de
@@ -1541,6 +1563,21 @@ Points à ne pas redécouvrir :
   se voyait pas avant que la couche ne garde une mémoire entre les tours. `DecisionKey` rend la
   réponse déjà donnée tant qu'elle reste valide. Sans ça, la seconde passe lisait un `struck`
   que la première venait de remplir : une Frimousse intacte y paraissait cassée.
+- **Une place sur le banc ne se promet qu'une fois, et c'est `willBeSwitchedIn` qui le tient.**
+  `onChoiceRequested` demande une décision **par emplacement actif** puis ne remet ce drapeau à
+  faux qu'une fois toute la requête répondue : c'est lui, et lui seul, qui empêche le second
+  emplacement d'un combat double de rappeler le Pokémon que le premier vient de prendre.
+  Cobblemon le pose dans `considerSwitching` et ne lit le banc qu'à travers `canBeSentOut()`,
+  qui le consulte - d'où un `PassActionResponse` parfaitement légal pour un emplacement qu'il ne
+  peut plus remplir. Le filet de sécurité de forced-switch, lui, choisissait à la main sur
+  `health` et `isSentOut` : il offrait donc le même remplaçant aux deux emplacements vidés d'un
+  même tour, Showdown répondait `Can't switch: The Pokémon in slot N can only switch in once`,
+  et cette erreur n'atteint personne - le camp qui l'a envoyée ne peut plus jouer du tout.
+  D'où deux règles : tout ce qui regarde le banc passe par `canBeSentOut()`, et **toute** réponse
+  de switch qui sort de la couche repasse par `reserve` pour poser le drapeau - y compris une
+  réponse rendue depuis le cache, les drapeaux étant effacés entre les deux passes d'un tour. Le
+  `release` de `correctSwitch` est l'inverse : un switch que la couche refuse rend sa place, et
+  s'en passer coûtait au voisin un remplaçant pourtant libre.
 - **Rien de *nous* ne doit remonter de `choose()`.** Un combat attend cette réponse : une
   exception y laisserait le joueur enfermé dans un combat où personne ne peut jouer. D'où le
   `try/catch`, qui rend la décision de Cobblemon telle quelle. Il entoure nos corrections

@@ -41,8 +41,10 @@ my_pack/
         │   └── champions/              ← a folder is a category
         │       ├── category.json       ← how the category shows up (optional)
         │       └── erika.json          → my_pack:champions/erika
-        └── intro/                      ← the versus screens (see INTROS.md)
-            └── gym.json                → my_pack:gym
+        ├── intro/                      ← the versus screens (see INTROS.md)
+        │   └── gym.json                → my_pack:gym
+        └── leagues/                    ← the leagues (see LEAGUES.md)
+            └── council.json            → my_pack:council
 ```
 
 ```json
@@ -54,7 +56,7 @@ my_pack/
 - The folder being read is `cobblemontrainers/`, straight under your namespace - the same
   level as Cobblemon's own `species/` and `npcs/`. It is named after the mod rather than a
   generic `trainers/`, which keeps it from colliding with other mods. Everything the mod reads
-  sits in it, one sub-folder per kind: `trainers/` and [`intro/`](INTROS.md).
+  sits in it, one sub-folder per kind: `trainers/`, [`intro/`](INTROS.md) and [`leagues/`](LEAGUES.md).
 - **The ID is `<namespace>:<path>`, subfolders included**, `trainers/` left out:
   `trainers/champions/erika.json` gives `my_pack:champions/erika`. That folder is also the
   trainer's [category](#categories).
