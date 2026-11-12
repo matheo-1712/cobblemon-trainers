@@ -1,6 +1,5 @@
 package matheo1712.cobbletrainers.neoforge
 
-import matheo1712.cobbletrainers.battlephone.client.BattlePhoneClient
 import matheo1712.cobbletrainers.client.CobblemonTrainersClient
 import matheo1712.cobbletrainers.client.platform.TrainerClientPlatform
 import matheo1712.cobbletrainers.platform.Platform
@@ -17,7 +16,6 @@ class NeoForgeTrainerClientPlatform : TrainerClientPlatform {
     companion object {
         fun initialize(bus: IEventBus) {
             CobblemonTrainersClient.onInitializeClient()
-            BattlePhoneClient.onInitializeClient()
             bus.addListener { event: RegisterClientReloadListenersEvent ->
                 (Platform.current as NeoForgeTrainerPlatform).clientReloads.forEach(event::registerReloadListener)
             }

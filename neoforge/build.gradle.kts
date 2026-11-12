@@ -5,6 +5,7 @@ plugins {
     id("net.neoforged.moddev")
     id("org.jetbrains.kotlin.jvm")
     id("me.modmuss50.mod-publish-plugin")
+    `maven-publish`
 }
 
 group = rootProject.group
@@ -53,6 +54,16 @@ val copyExamplePack = tasks.register<Sync>("copyExamplePack") {
 }
 tasks.matching { it.name == "runClient" || it.name == "runServer" }.configureEach {
     dependsOn(copyExamplePack)
+}
+
+// What other mods build against on NeoForge, the counterpart of the Fabric publication.
+publishing {
+    publications {
+        register<MavenPublication>("mavenJava") {
+            artifactId = "${rootProject.name}-neoforge"
+            from(components["java"])
+        }
+    }
 }
 
 val modVersion = project.version.toString()

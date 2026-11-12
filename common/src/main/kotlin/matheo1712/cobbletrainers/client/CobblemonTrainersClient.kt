@@ -24,8 +24,8 @@ import net.minecraft.server.packs.resources.ResourceManager
  * on the server. What cannot be: its screens - the trainer spawner's and the versus screen -
  * since a screen only exists on a client. This registers the packets that open them, the one
  * that feeds screens their trainer skins, and the one thing here that is not a screen: the
- * party slot the player has selected, which Cobblemon keeps client-side. The battle phone has
- * its own client entrypoint, [matheo1712.cobbletrainers.battlephone.client.BattlePhoneClient].
+ * party slot the player has selected, which Cobblemon keeps client-side. The battle phone is a
+ * mod of its own now, Cobblemon BattlePhone, built on this one.
  *
  * Drawing is the other thing only a client can do: a trainer's clothes are hung on Cobblemon's
  * model by [matheo1712.cobbletrainers.client.render.TrainerOutfitRenderer], out of a mixin

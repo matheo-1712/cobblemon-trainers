@@ -67,27 +67,6 @@ val verifyLoaderIndependence = tasks.register("verifyLoaderIndependence") {
     }
 }
 tasks.named("check") { dependsOn(verifyLoaderIndependence) }
-
-// The battle phone is on its way to a mod of its own, built on this one. Until it moves out,
-// nothing outside its package may lean on it: the day it leaves, the rest must still compile.
-val verifyApiBoundary = tasks.register("verifyApiBoundary") {
-    group = "verification"
-    description = "Rejects imports of the battle phone outside its own package."
-    val phonePackage = "matheo1712/cobbletrainers/battlephone/"
-    val sources = fileTree("src") {
-        include("**/*.kt", "**/*.java")
-        exclude("**/$phonePackage**")
-    }
-    inputs.files(sources)
-    doLast {
-        val forbidden = Regex("(?m)^\\s*import\\s+matheo1712\\.cobbletrainers\\.battlephone\\b")
-        val violations = sources.files.filter { forbidden.containsMatchIn(it.readText()) }
-        check(violations.isEmpty()) { "Battle phone imported from outside its package: ${violations.joinToString()}" }
-    }
-}
-tasks.named("check") { dependsOn(verifyApiBoundary) }
-tasks.named("compileKotlin") { dependsOn(verifyApiBoundary) }
-
 kotlin {
     compilerOptions {
         jvmTarget = JvmTarget.JVM_21

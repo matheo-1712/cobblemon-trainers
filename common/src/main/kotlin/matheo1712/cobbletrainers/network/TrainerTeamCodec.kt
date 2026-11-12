@@ -20,7 +20,7 @@ data class TrainerTeamMember(
 )
 
 /** Shared wire format for teams revealed by the phone and by intro layers. */
-internal object TrainerTeamCodec : StreamCodec<FriendlyByteBuf, List<TrainerTeamMember>> {
+object TrainerTeamCodec : StreamCodec<FriendlyByteBuf, List<TrainerTeamMember>> {
     override fun encode(buf: FriendlyByteBuf, members: List<TrainerTeamMember>) {
         buf.writeVarInt(members.size)
         for (member in members) {

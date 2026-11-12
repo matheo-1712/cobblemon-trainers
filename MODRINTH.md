@@ -29,14 +29,8 @@ into a saved building is enough for every generated copy to come with *its own* 
 in place. A village of trainers is built once.
 
 **On the player side, meeting a trainer works nothing like that**: it all goes through the
-**Battle Phone**, an item, not a command.
-
-It is **crafted**: four iron ingots in the corners, four copper ingots on the sides, and an
-**apricorn of your choice** in the middle. Black, blue, green, pink, red, white and yellow
-apricorns each make a matching Battle Phone. Its screen frame and interface colors match the
-phone, while every color opens the same trainer list.
-
-<p align="center"><img src="https://raw.githubusercontent.com/matheo-1712/cobblemon-trainers/refs/heads/master/assets/battle_phone_craft.png" alt="Battle Phone recipe"></p>
+**Battle Phone**, an item, not a command. It ships in a companion mod, **Cobblemon
+BattlePhone**, built on this one: install both.
 
 Open the Battle Phone, pick a trainer from the list, call them. But a trainer only comes
 **where they said they would be**: in the badlands at night, in a thunderstorm, on a structure,
@@ -143,16 +137,14 @@ its full `<pack>:<trainer>` ID, and searches both halves - typing `jac` finds
 
 ## The Battle Phone
 
-`/cobblemontrainers list` is for operators. The **Battle Phone**
-(`cobblemon-trainers:battle_phone`) is the same board for everyone else: right-click it and
-every listed trainer of the world is there, one tab per datapack, a heading per category,
-each with its skin and its state - beaten, beaten for good, still standing, or locked with the
-list of what's missing.
+`/cobblemontrainers list` is for operators. The **Battle Phone** is the same board for everyone
+else, and it is now a mod of its own: **Cobblemon BattlePhone**, built on Cobblemon Trainers.
+Right-click it and every listed trainer of the world is there, one tab per datapack, with
+their state, their rewards, and - once beaten - their team.
 
-Click a line and the trainer fills the right-hand page: level, team size, and six slots that
-stay shut until you win, then show their Pokémon's models, forms and shinies included. The item
-stores nothing - it reads the server - so losing it loses nothing. Find it in the
-**Cobblemon Trainers** creative tab, or:
+The phones keep the IDs they had in this mod (`cobblemon-trainers:battle_phone` and its
+colours), so a world that already has some finds them again as soon as Cobblemon BattlePhone
+is installed.
 
 ---
 
