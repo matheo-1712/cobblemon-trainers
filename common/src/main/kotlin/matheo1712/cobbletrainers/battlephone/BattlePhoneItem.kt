@@ -1,7 +1,6 @@
-package matheo1712.cobbletrainers.item
+package matheo1712.cobbletrainers.battlephone
 
 import matheo1712.cobbletrainers.CobblemonTrainers
-import matheo1712.cobbletrainers.network.BattlePhoneNetworking
 import net.minecraft.ChatFormatting
 import net.minecraft.network.chat.Component
 import net.minecraft.server.level.ServerPlayer

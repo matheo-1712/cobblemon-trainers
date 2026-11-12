@@ -1,6 +1,7 @@
-package matheo1712.cobbletrainers.client.gui
+package matheo1712.cobbletrainers.battlephone.client
 
 import matheo1712.cobbletrainers.client.platform.ClientPlatform
+import matheo1712.cobbletrainers.client.gui.TrainerSkinRenderer
 
 import com.cobblemon.mod.common.client.gui.drawProfilePokemon
 import com.cobblemon.mod.common.api.npc.NPCClasses
@@ -12,10 +13,9 @@ import com.cobblemon.mod.common.util.math.fromEulerXYZDegrees
 import com.mojang.blaze3d.systems.RenderSystem
 import matheo1712.cobbletrainers.CobblemonTrainers
 import matheo1712.cobbletrainers.client.cache.TrainerSkinCache
-import matheo1712.cobbletrainers.client.cache.TrainerTeamCache
-import matheo1712.cobbletrainers.network.BattlePhoneEntry
-import matheo1712.cobbletrainers.network.CallTrainerPayload
-import matheo1712.cobbletrainers.network.OpenBattlePhonePayload
+import matheo1712.cobbletrainers.battlephone.BattlePhoneEntry
+import matheo1712.cobbletrainers.battlephone.CallTrainerPayload
+import matheo1712.cobbletrainers.battlephone.OpenBattlePhonePayload
 import matheo1712.cobbletrainers.trainers.RewardPreview
 import matheo1712.cobbletrainers.trainers.TrainerOutfit
 import matheo1712.cobbletrainers.trainers.TrainerSpawner

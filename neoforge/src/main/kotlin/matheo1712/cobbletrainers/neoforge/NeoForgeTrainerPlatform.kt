@@ -2,6 +2,7 @@ package matheo1712.cobbletrainers.neoforge
 
 import com.mojang.brigadier.CommandDispatcher
 import matheo1712.cobbletrainers.CobblemonTrainers
+import matheo1712.cobbletrainers.battlephone.BattlePhone
 import matheo1712.cobbletrainers.platform.TrainerPlatform
 import net.minecraft.commands.CommandSourceStack
 import net.minecraft.core.Registry
@@ -50,7 +51,11 @@ class NeoForgeTrainerPlatform : TrainerPlatform {
         bus.addListener { event: RegisterEvent ->
             // Intrusive block/item holders can only be created after NeoForge unfreezes
             // the registries. Blocks precede all other registries used by this mod.
-            if (event.registryKey == Registries.BLOCK) CobblemonTrainers.onInitialize()
+            if (event.registryKey == Registries.BLOCK) {
+                CobblemonTrainers.onInitialize()
+                // Its own init until it becomes a mod of its own: see BattlePhone.
+                BattlePhone.onInitialize()
+            }
             registrations.forEach { it(event) }
         }
         bus.addListener { event: RegisterPayloadHandlersEvent ->

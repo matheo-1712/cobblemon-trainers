@@ -1,23 +1,21 @@
-package matheo1712.cobbletrainers.item
+package matheo1712.cobbletrainers.battlephone
 
 import matheo1712.cobbletrainers.platform.Platform
 
 import matheo1712.cobbletrainers.CobblemonTrainers
-import net.minecraft.core.Registry
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.item.Item
 
 /**
- * The plain items shipped by the mod - the ones that are not the item form of a block, which
- * [matheo1712.cobbletrainers.block.TrainerBlocks] registers alongside it.
+ * The battle phones, one per colour.
  *
- * Everything is created eagerly as a property of this object, so touching [register] is what
- * pulls it all in - call it from the mod initializer, before the registries freeze. The mod's
- * creative tab lives in [matheo1712.cobbletrainers.block.TrainerBlocks] and picks these up
- * from there.
+ * They keep the `cobblemon-trainers:` IDs they always had, so the phones already sitting in
+ * inventories still resolve. Everything is created eagerly as a property of this object, so
+ * touching [register] is what pulls it all in - call it from [BattlePhone.onInitialize], before
+ * the registries freeze.
  */
-object TrainerItems {
+object BattlePhoneItems {
 
     val BATTLE_PHONE_ID: ResourceLocation = CobblemonTrainers.id("battle_phone")
 

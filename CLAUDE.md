@@ -261,10 +261,14 @@ messages, musique et récompenses de combat.
   dresseur ».
 - **`network.TrainerSpawnerNetworking`** - les deux `CustomPacketPayload` de l'écran de ce
   bloc, et la validation côté serveur de ce qui revient.
-- **`item.TrainerItems` / `BattlePhoneItem`** - l'objet qui ouvre le suivi de progression.
-  Voir « Le Battle Phone ».
-- **`network.BattlePhoneNetworking`** - les `CustomPacketPayload` de cet écran : le
-  listing, la demande de skin et la réponse, celles de l'équipe, et l'appel d'un dresseur.
+- **`battlephone.*`** - tout le Battle Phone, et rien d'autre : `BattlePhone` (son init),
+  `BattlePhoneItems` / `BattlePhoneItem`, `BattlePhoneNetworking` (le listing, l'équipe et
+  l'appel d'un dresseur), et sous `battlephone.client` son entrypoint `BattlePhoneClient`, son
+  écran et `TrainerTeamCache`. Voir « Le Battle Phone » et « La frontière du Battle Phone ».
+- **`network.TrainerSkinNetworking`** - le skin d'un dresseur pour un écran sans entité :
+  demandé par le client, ou poussé par le serveur avant l'écran de versus.
+- **`trainers.TrainerTeamPreview`** - l'équipe d'un dresseur telle qu'un écran la dessine.
+  Montrer ou non est la décision de l'appelant.
 - **`network.BattleLeadNetworking`** - le Pokémon sélectionné, du client vers le serveur.
 - **`network.BattleMusicNetworking`** - l'autre paquet qui n'appartient pas à un écran : le
   thème de combat à jouer, ou son arrêt. Voir « Musique de combat ».
@@ -274,22 +278,43 @@ messages, musique et récompenses de combat.
   et avec cache. Voir « Skins ».
 - **`trainers.TrainerOutfit`** - le bloc `cosmetics` d'un dresseur posé dans les six
   emplacements d'équipement de son entité. Voir « La tenue d'un dresseur ».
-- **`client.CobblemonTrainersClient`** - l'unique entrypoint client.
+- **`client.CobblemonTrainersClient`** - l'entrypoint client du mod, à côté de celui du Battle
+  Phone.
 - **`client.ClientPokemonSelection`** - la sélection de l'overlay, poussée vers le serveur.
 - **`client.ClientBattleMusic`** - le thème de combat, joué et tenu côté client, que lit aussi
   `client.MusicManagerMixin`.
-- **`client.gui.TrainerSpawnerScreen` / `client.gui.BattlePhoneScreen`** - les deux écrans.
+- **`client.gui.TrainerSpawnerScreen`** - l'écran du bloc de dresseur.
 - **`client.gui.BattleIntroScreen`** - le troisième, celui que personne n'ouvre : l'écran de
   versus, levé par le serveur avant le combat. C'est le seul moteur de rendu des intros, et le
   seul endroit du mod qui pose un modèle d'entité dans un écran.
 - **`client.gui.TrainerSkinRenderer` / `client.cache.TrainerSkinCache`** - le dessin d'un skin
-  à plat, et les textures que le Battle Phone a reçues.
+  à plat, et les textures reçues par `TrainerSkinNetworking`, que lisent le Battle Phone et
+  l'écran de versus.
 - **`client.cache.TrainerSkinOverrides`** - le seul endroit qui décide si un resource pack du
   client remplace le skin qu'un dresseur a reçu du serveur. Voir « Skins ».
 - **`client.render.TrainerRig` / `client.render.TrainerOutfitRenderer`** - le mannequin humanoïde
   calé sur les os de Cobblemon, et ce qu'on y accroche. Même section.
-- **`client.cache.TrainerTeamCache`** - les équipes que le Battle Phone a reçues, prêtes à
-  dessiner.
+
+### La frontière du Battle Phone
+
+Le mod devient une **API de dresseurs** que d'autres mods utilisent, et le Battle Phone en sort
+pour devenir un mod à part, Cobblemon BattlePhone, dans son propre dépôt. Ce dépôt garde l'ID
+`cobblemon-trainers`, la page Modrinth et tout le reste. En attendant, le téléphone vit dans le
+paquet `battlephone`, et c'est le premier client de l'API.
+
+- **Rien hors de `battlephone` ne l'importe**, et `verifyApiBoundary` le refuse à la
+  compilation, tests compris. Le jour où le paquet part, le reste doit compiler sans lui.
+- **Les entrypoints des loaders le démarrent**, juste après le mod (`CobblemonTrainersFabric`,
+  `CobblemonTrainersFabricClient`, le `RegisterEvent` de `NeoForgeTrainerPlatform` et
+  `NeoForgeTrainerClientPlatform`). `CobblemonTrainers.onInitialize` ne le connaît pas.
+- **Ce que le téléphone partageait avec l'écran de versus est passé côté API** : le canal de
+  skins (`TrainerSkinNetworking`, `TrainerSkinCache`) et l'équipe dessinable
+  (`TrainerTeamPreview`, `TrainerTeamMember`). La règle « l'équipe seulement après la
+  victoire » reste dans `BattlePhoneNetworking` : c'est celle du téléphone, pas de l'API.
+- **L'onglet créatif accepte des objets d'ailleurs** (`TrainerBlocks.addToTab`), ce qui garde
+  les téléphones devant le bloc, où ils ont toujours été.
+- **Les ID ne bougent pas** : objets, paquets réseau et clés de traduction restent en
+  `cobblemon-trainers:`. Les renommer est la phase où le téléphone sort, pas celle-ci.
 
 ### Musique de combat
 

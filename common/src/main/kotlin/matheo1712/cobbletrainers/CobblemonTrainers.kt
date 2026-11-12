@@ -9,13 +9,12 @@ import matheo1712.cobbletrainers.battle.TrainerBattleInteraction
 import matheo1712.cobbletrainers.block.TrainerBlocks
 import matheo1712.cobbletrainers.command.TrainerCommands
 import matheo1712.cobbletrainers.intro.TrainerIntros
-import matheo1712.cobbletrainers.item.TrainerItems
 import matheo1712.cobbletrainers.league.LeagueRuns
 import matheo1712.cobbletrainers.league.TrainerLeagues
 import matheo1712.cobbletrainers.network.BattleIntroNetworking
 import matheo1712.cobbletrainers.network.BattleLeadNetworking
 import matheo1712.cobbletrainers.network.BattleMusicNetworking
-import matheo1712.cobbletrainers.network.BattlePhoneNetworking
+import matheo1712.cobbletrainers.network.TrainerSkinNetworking
 import matheo1712.cobbletrainers.network.TrainerSpawnerNetworking
 import matheo1712.cobbletrainers.trainers.TrainerCalls
 import matheo1712.cobbletrainers.trainers.TrainerGaze
@@ -148,9 +147,8 @@ object CobblemonTrainers {
         TrainerDefeatedTrigger.register()
         LeagueCompletedTrigger.register()
         TrainerBlocks.register()
-        TrainerItems.register()
         TrainerSpawnerNetworking.register()
-        BattlePhoneNetworking.register()
+        TrainerSkinNetworking.register()
         BattleLeadNetworking.register()
         BattleMusicNetworking.register()
         BattleIntroNetworking.register()

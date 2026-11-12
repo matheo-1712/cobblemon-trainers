@@ -1,13 +1,14 @@
-package matheo1712.cobbletrainers.network
+package matheo1712.cobbletrainers.battlephone
 
 import matheo1712.cobbletrainers.platform.Platform
 
 import matheo1712.cobbletrainers.CobblemonTrainers
 import matheo1712.cobbletrainers.battle.TrainerLevelScaling
+import matheo1712.cobbletrainers.network.TrainerTeamCodec
+import matheo1712.cobbletrainers.network.TrainerTeamMember
 import matheo1712.cobbletrainers.parser.ShowdownTeamParser
 import matheo1712.cobbletrainers.trainers.RewardPreview
 import matheo1712.cobbletrainers.trainers.TrainerRegistry
-import matheo1712.cobbletrainers.trainers.TrainerDefinition
 import matheo1712.cobbletrainers.trainers.TrainerCosmetics
 import matheo1712.cobbletrainers.trainers.TrainerTrinkets
 import matheo1712.cobbletrainers.trainers.TrainerCalls
@@ -15,7 +16,7 @@ import matheo1712.cobbletrainers.trainers.TrainerLock
 import matheo1712.cobbletrainers.trainers.TrainerPlace
 import matheo1712.cobbletrainers.trainers.TrainerProgress
 import matheo1712.cobbletrainers.trainers.TrainerRewards
-import matheo1712.cobbletrainers.trainers.TrainerSkins
+import matheo1712.cobbletrainers.trainers.TrainerTeamPreview
 import net.minecraft.ChatFormatting
 import net.minecraft.network.RegistryFriendlyByteBuf
 import net.minecraft.network.chat.Component
@@ -33,25 +34,19 @@ import net.minecraft.world.item.ItemStack
  * victories from a [matheo1712.cobbletrainers.trainers.TrainerProgress] save file, neither of which the client has. So
  * right-clicking the item sends the whole listing over, and the client opens a screen with it.
  *
- * Skins are not in that listing. They are images - a few kilobytes each - and a world may hold
- * a hundred trainers, so they are asked for one at a time, as the screen needs them, and
- * answered from the [TrainerSkins] cache. The listing does carry outfit item IDs so the client
- * can build a detached model preview without waiting for the trainer entity to spawn. Teams
- * work the same way, and are only ever sent for a trainer the asking player has beaten.
+ * Skins are not in that listing: they come one at a time through the mod's own skin channel,
+ * [matheo1712.cobbletrainers.network.TrainerSkinNetworking]. The listing does carry outfit item
+ * IDs so the client can build a detached model preview without waiting for the trainer entity
+ * to spawn. Teams are asked for one at a time too, and are only ever sent for a trainer the
+ * asking player has beaten.
  */
 object BattlePhoneNetworking {
 
     fun register() {
         Platform.current.registerS2C(OpenBattlePhonePayload.TYPE, OpenBattlePhonePayload.CODEC)
-        Platform.current.registerS2C(TrainerSkinPayload.TYPE, TrainerSkinPayload.CODEC)
         Platform.current.registerS2C(TrainerTeamPayload.TYPE, TrainerTeamPayload.CODEC)
-        Platform.current.registerC2S(RequestTrainerSkinPayload.TYPE, RequestTrainerSkinPayload.CODEC)
         Platform.current.registerC2S(RequestTrainerTeamPayload.TYPE, RequestTrainerTeamPayload.CODEC)
         Platform.current.registerC2S(CallTrainerPayload.TYPE, CallTrainerPayload.CODEC)
-
-        Platform.current.receive(RequestTrainerSkinPayload.TYPE) { payload, player ->
-            sendSkin(player, payload.trainerId)
-        }
 
         Platform.current.receive(RequestTrainerTeamPayload.TYPE) { payload, player ->
             sendTeam(player, payload.trainerId)
@@ -108,61 +103,10 @@ object BattlePhoneNetworking {
     }
 
     /**
-     * Answers a skin request. Always answers, even when there is no image: the screen would
-     * otherwise wait on it forever and ask again on every frame.
-     */
-    private fun sendSkin(player: ServerPlayer, rawId: String) {
-        if (!Platform.current.canSend(player, TrainerSkinPayload.TYPE)) return
-
-        val id = ResourceLocation.tryParse(rawId) ?: return
-        // Only trainers the phone itself listed for this player: the request comes from a
-        // client, so it is the client's word that the ID is one we offered - and a hidden
-        // trainer was never offered.
-        val definition = TrainerRegistry.get(id)
-            ?.takeIf { it.progress.listed && !TrainerLock.isHiddenFrom(player, id, it) }
-            ?: run {
-                Platform.current.send(player, TrainerSkinPayload(rawId, "default", ByteArray(0)))
-                return
-            }
-
-        pushSkin(player, rawId, definition)
-    }
-
-    /**
-     * Sends a trainer's skin to a client that has not asked for it, for a screen about to need
-     * it - the battle intro, raised on a player already standing in front of the trainer. What
-     * that player is allowed to see is the caller's business: [sendSkin] is the one answering a
-     * client, and the only one that has to doubt the ID it was handed.
-     *
-     * The resolution is the same, so a skin resolved for one screen is served to the other from
-     * the [TrainerSkins] cache, and the client files both under one entry.
-     */
-    fun pushSkin(player: ServerPlayer, rawId: String, definition: TrainerDefinition) {
-        if (!Platform.current.canSend(player, TrainerSkinPayload.TYPE)) return
-
-        val server = player.server
-        TrainerSkins.resolveAsync(server, definition.skin) { texture ->
-            server.execute {
-                if (player.hasDisconnected()) return@execute
-                Platform.current.send(
-                    player,
-                    TrainerSkinPayload(
-                        trainerId = rawId,
-                        model = texture?.model?.name?.lowercase() ?: "default",
-                        texture = texture?.texture ?: ByteArray(0),
-                        modelResource = definition.skin.modelId()?.toString() ?: "",
-                        aspects = definition.skin.modelAspects().toList(),
-                        textureResource = definition.skin.textureId()?.toString() ?: ""
-                    )
-                )
-            }
-        }
-    }
-
-    /**
      * Answers a team request, but only for a trainer the asking player has already beaten:
      * the phone shows a team as a reward, not as a way to scout the next fight. An unbeaten
-     * trainer gets an empty answer rather than no answer, for the same reason as above.
+     * trainer gets an empty answer rather than no answer: the screen would otherwise wait on it
+     * forever and ask again on every frame.
      */
     private fun sendTeam(player: ServerPlayer, rawId: String) {
         if (!Platform.current.canSend(player, TrainerTeamPayload.TYPE)) return
@@ -173,47 +117,12 @@ object BattlePhoneNetworking {
         val members = if (id != null && definition != null &&
             TrainerProgress.of(player.server).hasDefeated(id, player.uuid)
         ) {
-            teamOf(definition, id, player)
+            TrainerTeamPreview.of(definition, id, player)
         } else {
             emptyList()
         }
 
         Platform.current.send(player, TrainerTeamPayload(rawId, members))
-    }
-
-    /**
-     * Builds the team the way [matheo1712.cobbletrainers.trainers.TrainerSpawner] does - shared
-     * with the battle intro, whose `pokemon` layers need exactly this. That detour is the only
-     * way to know the
-     * aspects a Pokémon ends up with: the parser puts a form in the property string, and only
-     * `create()` turns it into the aspect set the client needs to draw the right model. One
-     * bad entry costs its slot, not the whole team.
-     *
-     * A trainer whose `battle.level` is automatic is shown at the level it would fight [player] at,
-     * over every `Level:` line, exactly as [TrainerLevelScaling] sets it in battle.
-     */
-    fun teamOf(definition: TrainerDefinition, trainerId: ResourceLocation, player: ServerPlayer): List<TrainerTeamMember> {
-        val scaled = TrainerLevelScaling.levelFor(player, definition)
-        return ShowdownTeamParser.parse(definition.team).mapNotNull { properties ->
-            if (scaled != null) properties.level = scaled
-            else if (properties.level == null) properties.level = definition.battle.level.value
-            try {
-                val pokemon = ShowdownTeamParser.createPokemon(properties)
-                TrainerTeamMember(
-                    species = pokemon.species.resourceIdentifier.toString(),
-                    aspects = pokemon.aspects.toList(),
-                    level = pokemon.level,
-                    nickname = pokemon.nickname?.string.orEmpty()
-                )
-            } catch (e: Exception) {
-                CobblemonTrainers.LOGGER.warn(
-                    "Skipping a Pokémon of trainer {} in the battle phone: {}",
-                    trainerId,
-                    e.message
-                )
-                null
-            }
-        }
     }
 }
 
@@ -378,106 +287,6 @@ data class OpenBattlePhonePayload(val entries: List<BattlePhoneEntry>, val color
             )
     }
 }
-
-/** Client -> server: "send me the skin of that trainer". Validated server-side, never trusted. */
-data class RequestTrainerSkinPayload(val trainerId: String) : CustomPacketPayload {
-
-    override fun type(): CustomPacketPayload.Type<RequestTrainerSkinPayload> = TYPE
-
-    companion object {
-        val TYPE: CustomPacketPayload.Type<RequestTrainerSkinPayload> =
-            CustomPacketPayload.Type(CobblemonTrainers.id("request_trainer_skin"))
-
-        val CODEC: StreamCodec<RegistryFriendlyByteBuf, RequestTrainerSkinPayload> =
-            CustomPacketPayload.codec(
-                { payload, buf -> buf.writeUtf(payload.trainerId) },
-                { buf -> RequestTrainerSkinPayload(buf.readUtf()) }
-            )
-    }
-}
-
-/**
- * Server -> client: the skin image of one trainer, as the bytes of its PNG.
- *
- * The bytes travel rather than a path, for the same reason `NPC_PLAYER_TEXTURE` carries them:
- * a texture shipped in a pack installed on the server alone still shows up on every client.
- * A custom model sends its resolver ID and aspects instead of player PNG bytes. Its assets
- * are loaded from client resource packs. An empty array without a model means a placeholder.
- *
- * [textureResource] travels beside the bytes, never instead of them: it is the path the pack
- * declared, which lets a client holding the same file in its own resource packs draw that one.
- * Empty for every skin type but `texture`, which is the only one that names a path.
- */
-data class TrainerSkinPayload(
-    val trainerId: String,
-    val model: String,
-    val texture: ByteArray,
-    val modelResource: String = "",
-    val aspects: List<String> = emptyList(),
-    val textureResource: String = ""
-) : CustomPacketPayload {
-
-    override fun type(): CustomPacketPayload.Type<TrainerSkinPayload> = TYPE
-
-    // A data class over a ByteArray compares by identity, which would be a trap for anyone
-    // reusing this. Compare by content instead.
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is TrainerSkinPayload) return false
-        return trainerId == other.trainerId && model == other.model && texture.contentEquals(other.texture) &&
-            modelResource == other.modelResource && aspects == other.aspects &&
-            textureResource == other.textureResource
-    }
-
-    override fun hashCode(): Int =
-        31 * (31 * (31 * (31 * (31 * trainerId.hashCode() + model.hashCode()) + texture.contentHashCode()) +
-            modelResource.hashCode()) + aspects.hashCode()) + textureResource.hashCode()
-
-    companion object {
-        val TYPE: CustomPacketPayload.Type<TrainerSkinPayload> =
-            // Bumped with every field added: an older codec would read the new trailing field
-            // as part of the one before it. v2 added the model metadata, v3 the texture path.
-            CustomPacketPayload.Type(CobblemonTrainers.id("trainer_skin_v3"))
-
-        val CODEC: StreamCodec<RegistryFriendlyByteBuf, TrainerSkinPayload> =
-            CustomPacketPayload.codec(
-                { payload, buf ->
-                    buf.writeUtf(payload.trainerId)
-                    buf.writeUtf(payload.model)
-                    buf.writeByteArray(payload.texture)
-                    buf.writeUtf(payload.modelResource)
-                    buf.writeCollection(payload.aspects) { buffer, aspect -> buffer.writeUtf(aspect) }
-                    buf.writeUtf(payload.textureResource)
-                },
-                { buf ->
-                    TrainerSkinPayload(
-                        trainerId = buf.readUtf(),
-                        model = buf.readUtf(),
-                        texture = buf.readByteArray(),
-                        modelResource = buf.readUtf(),
-                        aspects = buf.readList { it.readUtf() },
-                        textureResource = buf.readUtf()
-                    )
-                }
-            )
-    }
-}
-
-/**
- * One Pokémon of a revealed team.
- *
- * @param species Full species ID, `cobblemon:pikachu`, so the client looks it up in its own
- *   synced registry rather than guessing from a name.
- * @param aspects What the Pokémon ended up with once built - this is what picks the model, a
- *   regional form and a shiny included.
- * @param nickname Empty when the Pokémon has none.
- */
-data class TrainerTeamMember(
-    val species: String,
-    val aspects: List<String>,
-    val level: Int,
-    val nickname: String
-)
 
 /** Client -> server: "show me that trainer's team". Answered only for a beaten trainer. */
 data class RequestTrainerTeamPayload(val trainerId: String) : CustomPacketPayload {

@@ -4,18 +4,14 @@ import matheo1712.cobbletrainers.client.platform.ClientPlatform
 import matheo1712.cobbletrainers.platform.Platform
 
 import matheo1712.cobbletrainers.client.gui.BattleIntroScreen
-import matheo1712.cobbletrainers.client.gui.BattlePhoneScreen
 import matheo1712.cobbletrainers.client.cache.TrainerSkinCache
 import matheo1712.cobbletrainers.client.cache.TrainerSkinOverrides
-import matheo1712.cobbletrainers.client.cache.TrainerTeamCache
 import matheo1712.cobbletrainers.client.gui.TrainerSpawnerScreen
 import matheo1712.cobbletrainers.client.render.TrainerOutfitRenderer
 import matheo1712.cobbletrainers.network.BattleIntroPayload
 import matheo1712.cobbletrainers.network.BattleMusicPayload
-import matheo1712.cobbletrainers.network.OpenBattlePhonePayload
 import matheo1712.cobbletrainers.network.OpenTrainerSpawnerPayload
 import matheo1712.cobbletrainers.network.TrainerSkinPayload
-import matheo1712.cobbletrainers.network.TrainerTeamPayload
 import matheo1712.cobbletrainers.CobblemonTrainers
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.packs.PackType
@@ -25,10 +21,11 @@ import net.minecraft.server.packs.resources.ResourceManager
  * Client entrypoint.
  *
  * The mod is a server-side affair almost everywhere - trainers come from datapacks and fight
- * on the server. What cannot be: the two screens. The trainer spawner has one, and so does the
- * battle phone; a screen only exists on a client. This registers the packets that open them,
- * the two that feed the phone its skins and its teams, and the one thing here that is not a
- * screen: the party slot the player has selected, which Cobblemon keeps client-side.
+ * on the server. What cannot be: its screens - the trainer spawner's and the versus screen -
+ * since a screen only exists on a client. This registers the packets that open them, the one
+ * that feeds screens their trainer skins, and the one thing here that is not a screen: the
+ * party slot the player has selected, which Cobblemon keeps client-side. The battle phone has
+ * its own client entrypoint, [matheo1712.cobbletrainers.battlephone.client.BattlePhoneClient].
  *
  * Drawing is the other thing only a client can do: a trainer's clothes are hung on Cobblemon's
  * model by [matheo1712.cobbletrainers.client.render.TrainerOutfitRenderer], out of a mixin
@@ -44,16 +41,10 @@ object CobblemonTrainersClient {
             client.setScreen(TrainerSpawnerScreen(payload))
         }
 
-        ClientPlatform.current.receive(OpenBattlePhonePayload.TYPE) { payload, client ->
-            client.setScreen(BattlePhoneScreen(payload))
-        }
-
+        // Skins a screen draws without an entity to read them from: the versus screen, and
+        // any listing built on the mod - see TrainerSkinNetworking.
         ClientPlatform.current.receive(TrainerSkinPayload.TYPE) { payload, _ ->
             TrainerSkinCache.accept(payload)
-        }
-
-        ClientPlatform.current.receive(TrainerTeamPayload.TYPE) { payload, _ ->
-            TrainerTeamCache.accept(payload)
         }
 
         // A screen too, but one nobody opened: the trainer's versus screen, raised by the
@@ -74,7 +65,6 @@ object CobblemonTrainersClient {
         // trainers under the same IDs, and the textures are ours to free.
         ClientPlatform.current.onDisconnect {
             TrainerSkinCache.clear()
-            TrainerTeamCache.clear()
             ClientBattleMusic.clear()
         }
 

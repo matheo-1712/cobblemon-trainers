@@ -1,11 +1,11 @@
-package matheo1712.cobbletrainers.client.cache
+package matheo1712.cobbletrainers.battlephone.client
 
 import matheo1712.cobbletrainers.client.platform.ClientPlatform
 
 import com.cobblemon.mod.common.api.pokemon.PokemonSpecies
 import com.cobblemon.mod.common.pokemon.RenderablePokemon
-import matheo1712.cobbletrainers.network.RequestTrainerTeamPayload
-import matheo1712.cobbletrainers.network.TrainerTeamPayload
+import matheo1712.cobbletrainers.battlephone.RequestTrainerTeamPayload
+import matheo1712.cobbletrainers.battlephone.TrainerTeamPayload
 import net.minecraft.resources.ResourceLocation
 
 /**
@@ -20,7 +20,8 @@ import net.minecraft.resources.ResourceLocation
  * means resolving the species against the client registry, which is synced, so a species the
  * client does not know - a pack loaded on the server alone - simply drops out of the team.
  *
- * Everything here runs on the client thread, like [TrainerSkinCache].
+ * Everything here runs on the client thread, like
+ * [matheo1712.cobbletrainers.client.cache.TrainerSkinCache].
  */
 object TrainerTeamCache {
 
