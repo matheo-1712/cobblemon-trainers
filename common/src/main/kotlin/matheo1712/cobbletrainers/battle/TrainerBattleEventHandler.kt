@@ -87,9 +87,13 @@ object TrainerBattleEventHandler {
         TrainerBattleRange.watch(battle, npc)
         // A tournament waits on the battle that really opened, not on the one it asked for.
         players.forEach { LeagueRuns.battleStarted(it, npc, battle.battleId) }
+        // Taken now, before the first turn can Mega Evolve anyone. See TrainerBattleForms.
+        val forms = TrainerBattleForms.snapshot(npc)
         // Cobblemon has no "battle over" event - see the class docs - so everything that has to
         // happen whichever way a battle ends hangs off this one handler.
         battle.onEndHandlers.add { ended ->
+            // A trainer who won would otherwise keep the form they ended the battle in.
+            TrainerBattleForms.restore(forms)
             CobblemonTrainers.LOGGER.debug(
                 "Trainer battle ended: battle {}, trainer {}, ended {}, players {}",
                 ended.battleId,

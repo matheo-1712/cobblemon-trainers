@@ -218,6 +218,8 @@ messages, musique et récompenses de combat.
   s'arrête, celle d'un combat contre un Pokémon sauvage. Même section.
 - **`battle.TrainerLevelScaling`** - le niveau d'un dresseur dont le `battle.level` est automatique. Voir
   « Le niveau automatique ».
+- **`battle.TrainerBattleForms`** - remet l'équipe d'un dresseur dans les formes avec lesquelles
+  elle est entrée en combat. Voir « Les gimmicks de combat ».
 - **`battle.TrainerSendOut`** - l'endroit où le dresseur lance son Pokémon : devant lui. Voir
   « Le Pokémon lancé devant le dresseur ».
 - **`battle.TrainerBattleIntro`** - l'écran de versus d'un dresseur qui en déclare un, et
@@ -1556,6 +1558,16 @@ Points à ne pas redécouvrir :
   exactement pareil pour le dynamax - il parcourt `battle.players`. Conséquence assumée : un
   dresseur se sert de son gimmick face à un joueur qui n'a pas l'objet, et c'est au pack de
   compenser.
+- **Une forme de combat survit au combat d'un dresseur qui gagne.** Mega Showdown pose la méga
+  sur le vrai Pokémon (`originalPokemon`), pas sur la copie d'un format `_50`, et ne la retire
+  qu'à un Pokémon K.O. ou à l'équipe d'un **joueur** en fin de combat. Le Mysdibule d'un dresseur
+  qui avait battu le joueur restait donc méga entre deux combats - il sortait déjà méga, et ne
+  pouvait plus méga-évoluer. `TrainerBattleForms` note les *features* de l'équipe à
+  `BATTLE_STARTED_POST` et les réécrit dans un `onEndHandlers`, seul point commun à toutes les
+  fins de combat (voir « Fin de combat »). Rien d'autre n'est restauré : PV, PP et statut
+  appartiennent à `healParty`. Une feature ajoutée en combat est retirée, et le code ne nomme ni
+  gimmick ni mod - ce qu'un combat change est remis. Un dresseur déjà coincé dans sa méga avant ce
+  correctif repart de cette forme ; le bouton **Réapparaître** de son bloc le remet d'aplomb.
 - **Le gimmick est posé hors du garde `CorrectionLevel`.** `choose()` rendait la décision de
   Cobblemon telle quelle en dessous de la difficulté 3 ; un dresseur facile n'aurait donc jamais
   méga-évolué. C'est le pack qui a donné la gemme et écrit le mot, pas l'IA qui a eu une bonne

@@ -79,6 +79,8 @@ méga-évolution ne coûte pas de tour.
 - **Jamais sur un changement de Pokémon** : la méga part avec l'attaque du tour.
 - **La difficulté n'y change rien.** Un dresseur en `difficulty: 0` méga-évolue quand même : le
   pack a donné la gemme et écrit le mot, ce n'est pas une question d'intelligence de l'IA.
+- **Le combat fini, l'équipe reprend sa forme normale**, que le dresseur ait gagné ou perdu : le
+  combat suivant s'ouvre donc sans méga, et la méga redevient possible.
 
 ## La gemme
 

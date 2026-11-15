@@ -77,6 +77,8 @@ trainers do in the games, and it cannot be the wrong call: mega evolving costs n
 - **Never on a switch**: the mega evolution goes out with the turn's move.
 - **Difficulty changes nothing.** A trainer at `difficulty: 0` still mega evolves: the pack
   handed over the stone and wrote the word, and that is not a question of how well the AI plays.
+- **Once the battle is over, the team goes back to its normal form**, whether the trainer won or
+  lost: the next battle opens without the mega evolution, and it is there to make again.
 
 ## The stone
 
