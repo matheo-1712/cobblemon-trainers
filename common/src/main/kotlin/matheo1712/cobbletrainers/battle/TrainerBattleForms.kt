@@ -32,11 +32,12 @@ object TrainerBattleForms {
     /** Writes [snapshot] back, re-deriving aspects and form only for a Pokémon that changed. */
     fun restore(snapshot: Snapshot) {
         snapshot.teams.forEach { (pokemon, before) ->
-            val changed = Features.restore(pokemon.features, before, SPECIES_FEATURES)
-            if (changed.isEmpty()) return@forEach
+            val changes = Features.restore(pokemon.features, before, SPECIES_FEATURES)
+            if (!changes.any) return@forEach
             // The client is told feature by feature, then the aspects - and the form they pick -
-            // are worked out again from the features, as Cobblemon does when one is set.
-            changed.forEach { pokemon.markFeatureDirty(it) }
+            // are worked out again from the features, as Cobblemon does when one is set. A dropped
+            // feature has nothing to sync on its own: the aspects it gave are what goes.
+            changes.rewritten.forEach { pokemon.markFeatureDirty(it) }
             pokemon.updateAspects()
             pokemon.updateForm()
         }
@@ -59,22 +60,30 @@ object TrainerBattleForms {
         fun <F> capture(features: List<F>, access: Access<F>): Map<String, CompoundTag> =
             features.associate { access.name(it) to access.save(it) }
 
+        /** What [restore] did: the features it rewrote, and whether it dropped any. */
+        class Changes<F>(val rewritten: List<F>, val dropped: Boolean) {
+            val any: Boolean get() = dropped || rewritten.isNotEmpty()
+        }
+
         /**
-         * Puts [features] back the way [before] had them, and returns the features it rewrote.
+         * Puts [features] back the way [before] had them.
          *
          * A feature the battle added is dropped: it was not there when the battle opened, so it
-         * is not part of what the trainer fights with. One the battle removed cannot be rebuilt
-         * from its saved value alone - its provider is not ours to call - and stays out; no
-         * battle form works that way.
+         * is not part of what the trainer fights with. That is the Mega Evolution's case - a
+         * trainer's Pokémon is created without `mega_evolution`, which Mega Showdown adds when it
+         * evolves - so a drop alone is a change, and the form has to be worked out again for it.
+         * One the battle removed cannot be rebuilt from its saved value alone - its provider is not
+         * ours to call - and stays out; no battle form works that way.
          */
-        fun <F> restore(features: MutableList<F>, before: Map<String, CompoundTag>, access: Access<F>): List<F> {
-            features.removeIf { access.name(it) !in before }
-            return features.filter { feature ->
+        fun <F> restore(features: MutableList<F>, before: Map<String, CompoundTag>, access: Access<F>): Changes<F> {
+            val dropped = features.removeIf { access.name(it) !in before }
+            val rewritten = features.filter { feature ->
                 val saved = before.getValue(access.name(feature))
                 if (access.save(feature) == saved) return@filter false
                 access.load(feature, saved)
                 true
             }
+            return Changes(rewritten, dropped)
         }
     }
 }

@@ -22,10 +22,11 @@ class TrainerBattleFormsTest {
         val before = Features.capture(features, access)
 
         mega.value = "mega"
-        val changed = Features.restore(features, before, access)
+        val changes = Features.restore(features, before, access)
 
         assertEquals("none", mega.value)
-        assertEquals(listOf(mega), changed)
+        assertEquals(listOf(mega), changes.rewritten)
+        assertTrue(changes.any)
         assertEquals("true", regional.value)
     }
 
@@ -33,17 +34,24 @@ class TrainerBattleFormsTest {
         val features = mutableListOf(Feature("rlm", "true"), Feature("mega_evolution", "none"))
         val before = Features.capture(features, access)
 
-        assertTrue(Features.restore(features, before, access).isEmpty())
+        assertFalse(Features.restore(features, before, access).any)
         assertEquals(2, features.size)
     }
 
-    @Test fun `a feature the battle added is dropped`() {
+    /**
+     * The case seen in game: a trainer's Mawile is created without `mega_evolution`, Mega Showdown
+     * adds it when it evolves. Dropping it has to count as a change, or the form is never worked
+     * out again and the Pokémon stays Mega.
+     */
+    @Test fun `a feature the battle added is dropped and counts as a change`() {
         val features = mutableListOf(Feature("rlm", "true"))
         val before = Features.capture(features, access)
 
         features += Feature("mega_evolution", "mega")
-        Features.restore(features, before, access)
+        val changes = Features.restore(features, before, access)
 
         assertEquals(listOf("rlm"), features.map { it.name })
+        assertTrue(changes.any)
+        assertTrue(changes.rewritten.isEmpty())
     }
 }
