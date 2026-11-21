@@ -575,6 +575,13 @@ Points à ne pas redécouvrir :
   plusieurs joueurs, seul le camp gagnant est récompensé. `PlayerBattleActor.entity` est nul
   pour un joueur déconnecté ; on ne lui donne rien et on n'enregistre rien, donc le dresseur
   l'attend toujours.
+- **Une récompense peut être une `command` plutôt qu'un `item`**, jamais les deux (ligne
+  refusée). Elle est lancée depuis la source du vainqueur (`@s`, `~`) élevée au
+  `functionCompilationLevel` du serveur : un pack n'y gagne rien qu'une fonction ne lui donnait
+  déjà. La sortie est supprimée pour ne pas montrer « Gave 1 … » au joueur, donc l'analyse est
+  faite à part (`Commands.getParseException`) et l'échec passe par un `CommandResultCallback` -
+  sans ces deux-là, une commande cassée ne laisserait aucune trace. `preview` l'écarte comme une
+  `hidden` : rien à dessiner. Les ligues en profitent sans code, elles passent par `grant`.
 - **`Inventory.placeItemBackInInventory` fait tout le travail** de remise : il découpe en
   piles et jette au sol ce qui ne rentre pas. Mais il **vide l'`ItemStack` qu'on lui passe**,
   en le découpant jusqu'à zéro : lire son nom ou sa quantité après coup donne « Air » et 0.

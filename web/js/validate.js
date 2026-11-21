@@ -141,6 +141,15 @@ const Validate = (() => {
     }
 
     (doc.rewards || []).forEach((reward, index) => {
+      const hasCommand = typeof reward.command === 'string' && reward.command.trim() !== '';
+      if (hasCommand) {
+        if (typeof reward.item === 'string' && reward.item.trim() !== '') {
+          say(found, 'error',
+            'Récompense #' + (index + 1) + ' : un objet ou une commande, pas les deux - le mod ignore la ligne.',
+            'Reward #' + (index + 1) + ': an item or a command, not both - the mod skips the line.');
+        }
+        return;
+      }
       // Component values belong to Minecraft's parser; only check the item ID here.
       const itemId = typeof reward.item === 'string' ? reward.item.trim().split('[', 1)[0] : '';
       if (!NAMESPACED.test(itemId)) {
@@ -149,10 +158,10 @@ const Validate = (() => {
           'Reward #' + (index + 1) + ': a full id is required, namespace included.');
       }
     });
-    if ((doc.rewards || []).length && (doc.rewards || []).every((reward) => reward.hidden)) {
+    if ((doc.rewards || []).length && (doc.rewards || []).every((reward) => reward.hidden || (reward.command || '').trim())) {
       say(found, 'info',
-        'Toutes les récompenses sont secrètes : la fiche du Battle Phone n’en montrera aucune.',
-        'Every reward is hidden: the Battle Phone card will show none of them.');
+        'Toutes les récompenses sont secrètes ou des commandes : la fiche du Battle Phone n’en montrera aucune.',
+        'Every reward is hidden or a command: the Battle Phone card will show none of them.');
     }
 
     const requires = doc.requires || {};
