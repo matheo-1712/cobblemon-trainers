@@ -151,10 +151,11 @@ Tout est facultatif : `{}` donne un dresseur valide, quoique peu intéressant.
 | `name` | `Trainer` | Nom affiché au-dessus du dresseur |
 | `skin` | Steve | [Skin](#skins) |
 | `team` | `[]` | L'équipe, **un Pokémon par entrée**, au [format Showdown](#le-format-déquipe) |
+| `teams` | `[]` | Équipes par tranche : `{"maxLevel": 15, "team": [...]}`. À l'ouverture du combat, la première dont `maxLevel` ≥ niveau du dresseur remplace `team` ; au-delà de toutes, `team` |
 | `battle` | - | Le combat, ci-dessous |
 | `messages` | - | [Ce que le dresseur dit](#messages) |
 | `progress` | - | Ce que le battre change |
-| `rewards` | `[]` | Objets remis au vainqueur |
+| `rewards` | `[]` | Objets remis et commandes lancées pour le vainqueur |
 | `requires` | - | [Conditions pour le combattre](#conditions-pour-combattre) |
 | `notCallable` | `false` | `true` bloque l'appel depuis le Battle Phone ([détails](SPAWNING.md)) |
 | `location` | - | [Où le trouver, et l'appeler depuis le Battle Phone](SPAWNING.md) |
@@ -419,7 +420,8 @@ qu'on a battu pour le réinvoquer ne remet pas le compteur à zéro.
 | Champ | Défaut | Rôle |
 | --- | --- | --- |
 | `item` | - | ID complet, avec composants facultatifs entre `[]` comme dans `/give` en 1.21.1 ; sans commande ni quantité |
-| `count` | `1` | Combien, ramené dans 1-6400 |
+| `command` | - | Commande lancée pour le vainqueur, à la place d'un `item` ; voir [ci-dessous](#une-commande-en-récompense) |
+| `count` | `1` | Combien, ramené dans 1-6400 ; objets seulement |
 | `hidden` | `false` | Ne pas l'annoncer dans le Battle Phone |
 | `firstWinOnly` | `false` | Ne tomber qu'à la première victoire de ce joueur |
 
@@ -449,6 +451,29 @@ entièrement secrètes.
   { "item": "cobblemon:master_ball", "hidden": true }
 ]
 ```
+
+### Une commande en récompense
+
+Une ligne porte un `item` **ou** une `command`, jamais les deux - la ligne serait ignorée avec un
+avertissement. `hidden` et `firstWinOnly` s'y appliquent pareil.
+
+```json
+"rewards": [
+  { "command": "xp add @s 500 points" },
+  { "command": "eco give {player} 1000", "firstWinOnly": true }
+]
+```
+
+| Règle | Détail |
+| --- | --- |
+| Exécutant | Le vainqueur : `@s` et `~` le désignent, lui et sa position |
+| `{player}` | Remplacé par son pseudo, pour les commandes qui prennent un nom plutôt qu'un sélecteur |
+| Permission | Celle des fonctions de datapack (`function-permission-level`, 2 par défaut) |
+| Sortie | Masquée au joueur ; un échec est écrit dans le log du serveur |
+| `/` initial | Facultatif |
+| Battle Phone | Jamais affichée : il n'y a rien à dessiner |
+
+Chaque vainqueur d'un combat à plusieurs lance la commande pour lui-même.
 
 ### Farmable ou pas
 
@@ -818,7 +843,7 @@ Voir [le README](../README.md#le-bloc-de-dresseur).
 | Un dresseur `requires` n'apparaît pas dans le Battle Phone | C'est le comportement par défaut (`hidden: true`). Mets `"hidden": false` |
 | Le clic droit répond « déjà battu » | `"rematch": "never"` et ce joueur l'a vaincu. Réinvoquer le dresseur n'y change rien |
 | L'advancement ne se déclenche pas | Dossier `data/<ns>/advancement/` (au singulier en 1.21), ou `trainer`/`category` qui ne correspond à aucun ID chargé. `/cobblemontrainers defeat <id>` le vérifie en une commande |
-| Aucune récompense à la victoire | `rewards` absent, `"firstWinOnly": true` sur une victoire qui n'est pas la première, ou objet introuvable |
+| Aucune récompense à la victoire | `rewards` absent, `"firstWinOnly": true` sur une victoire qui n'est pas la première, objet introuvable, ou commande en échec (voir le log) |
 | Le dresseur manque dans `/cobblemontrainers list` | `"listed": false`, ou pas chargé du tout - `/cobblemontrainers spawn` le dira |
 | Le combat en double est refusé | Moins de 2 Pokémon d'un des deux côtés, le tien compris |
 | Une stat EV/IV semble ignorée | Nom de stat hors de la liste reconnue |

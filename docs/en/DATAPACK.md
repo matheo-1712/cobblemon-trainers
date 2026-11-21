@@ -149,10 +149,11 @@ Everything is optional: `{}` is a valid trainer, if not a very interesting one.
 | `name` | `Trainer` | The name shown above the trainer |
 | `skin` | Steve | [Skin](#skins) |
 | `team` | `[]` | The team, **one Pokémon per entry**, in [Showdown format](#the-team-format) |
+| `teams` | `[]` | Teams by level tier: `{"maxLevel": 15, "team": [...]}`. When the battle opens, the first whose `maxLevel` ≥ the trainer's level replaces `team`; past all of them, `team` |
 | `battle` | - | The battle itself, below |
 | `messages` | - | What the trainer says |
 | `progress` | - | What beating them changes |
-| `rewards` | `[]` | Items handed to the winner |
+| `rewards` | `[]` | Items handed to and commands run for the winner |
 | `requires` | - | [What it takes to battle them](#locking-a-trainer) |
 | `notCallable` | `false` | `true` blocks Battle Phone calls ([details](SPAWNING.md)) |
 | `location` | - | [Where to find them, and calling them from the Battle Phone](SPAWNING.md) |
@@ -393,7 +394,8 @@ beat to spawn them again does not reset anything.
 | Field | Default | What it does |
 | --- | --- | --- |
 | `item` | - | Full ID, with optional components in `[]` as in `/give` in 1.21.1; without the command or count |
-| `count` | `1` | How many, clamped to 1-6400 |
+| `command` | - | Command run for the winner, instead of an `item`; see [below](#a-command-as-a-reward) |
+| `count` | `1` | How many, clamped to 1-6400; items only |
 | `hidden` | `false` | Keep it off the Battle Phone |
 | `firstWinOnly` | `false` | Only drop on this player's first win |
 
@@ -422,6 +424,29 @@ line `hidden` is how you get a trainer whose rewards are a complete surprise.
   { "item": "cobblemon:master_ball", "hidden": true }
 ]
 ```
+
+### A command as a reward
+
+A line carries an `item` **or** a `command`, never both - the line would be skipped with a
+warning. `hidden` and `firstWinOnly` apply to it the same way.
+
+```json
+"rewards": [
+  { "command": "xp add @s 500 points" },
+  { "command": "eco give {player} 1000", "firstWinOnly": true }
+]
+```
+
+| Rule | Detail |
+| --- | --- |
+| Executor | The winner: `@s` and `~` are them and their position |
+| `{player}` | Replaced by their name, for commands that take a name rather than a selector |
+| Permission | That of datapack functions (`function-permission-level`, 2 by default) |
+| Output | Hidden from the player; a failure is written to the server log |
+| Leading `/` | Optional |
+| Battle Phone | Never shown: there is nothing to draw |
+
+Each winner of a multi-player battle runs the command for themselves.
 
 ### Farmable or not
 
@@ -789,7 +814,7 @@ game, by right-clicking it. See [the README](../../README.md#le-bloc-de-dresseur
 | A `requires` trainer is missing from the Battle Phone | That is the default (`hidden: true`). Set `"hidden": false` |
 | Right-clicking answers "already beaten" | `"rematch": "never"` and that player has won. Spawning the trainer again changes nothing |
 | The advancement never fires | Folder `data/<ns>/advancement/` (singular since 1.21), or a `trainer`/`category` matching no loaded ID. `/cobblemontrainers defeat <id>` checks it in one command |
-| No reward on a win | No `rewards`, `"firstWinOnly": true` on a win that is not the first, or an item that cannot be found |
+| No reward on a win | No `rewards`, `"firstWinOnly": true` on a win that is not the first, an item that cannot be found, or a failing command (see the log) |
 | The trainer is missing from `/cobblemontrainers list` | `"listed": false`, or not loaded at all - `/cobblemontrainers spawn` will tell you |
 | The doubles battle is refused | Fewer than 2 Pokémon on one of the two sides, yours included |
 | An EV/IV stat looks ignored | A stat name outside the recognised list |

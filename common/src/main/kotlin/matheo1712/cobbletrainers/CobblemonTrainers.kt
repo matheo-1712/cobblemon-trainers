@@ -80,6 +80,13 @@ object CobblemonTrainers {
     const val SPAWNER_ASPECT_PREFIX = "trainer_spawner:"
 
     /**
+     * Prefix of the aspect naming the level tier the entity's party was built from, followed by
+     * [matheo1712.cobbletrainers.trainers.TrainerTeams.keyFor]. Saved to NBT with the party, so a
+     * restart does not rebuild a team that is already the right one.
+     */
+    const val TEAM_ASPECT_PREFIX = "trainer_team:"
+
+    /**
      * Prefix of the aspect carrying one of the trinkets a trainer wears, followed by the place
      * it hangs and the item ID (`trainer_trinket:wrist:mega_showdown:mega_bracelet`).
      *

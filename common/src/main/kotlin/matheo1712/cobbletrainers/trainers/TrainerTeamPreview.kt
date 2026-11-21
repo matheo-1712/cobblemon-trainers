@@ -22,11 +22,13 @@ object TrainerTeamPreview {
      * bad entry costs its slot, not the whole team.
      *
      * A trainer whose `battle.level` is automatic is shown at the level it would fight [player] at,
-     * over every `Level:` line, exactly as [TrainerLevelScaling] sets it in battle.
+     * over every `Level:` line, exactly as [TrainerLevelScaling] sets it in battle - and with the
+     * level tier of `teams` the battle would pick, see [TrainerTeams].
      */
     fun of(definition: TrainerDefinition, trainerId: ResourceLocation, player: ServerPlayer): List<TrainerTeamMember> {
         val scaled = TrainerLevelScaling.levelFor(player, definition)
-        return ShowdownTeamParser.parse(definition.team).mapNotNull { properties ->
+        val team = TrainerTeams.teamFor(definition, TrainerLevelScaling.battleLevel(player, definition))
+        return ShowdownTeamParser.parse(team).mapNotNull { properties ->
             if (scaled != null) properties.level = scaled
             else if (properties.level == null) properties.level = definition.battle.level.value
             try {

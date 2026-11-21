@@ -4,6 +4,8 @@ import matheo1712.cobbletrainers.CobblemonTrainers
 import net.minecraft.ChatFormatting
 import com.mojang.brigadier.StringReader
 import com.mojang.brigadier.exceptions.CommandSyntaxException
+import net.minecraft.commands.CommandResultCallback
+import net.minecraft.commands.Commands
 import net.minecraft.commands.arguments.item.ItemInput
 import net.minecraft.commands.arguments.item.ItemParser
 import net.minecraft.core.HolderLookup
@@ -36,6 +38,10 @@ object TrainerRewards {
     fun grant(player: ServerPlayer, rewards: List<TrainerReward>, firstWin: Boolean) {
         for (reward in rewards) {
             if (!isDue(reward, firstWin)) continue
+            if (reward.command.isNotBlank()) {
+                runCommand(player, reward)
+                continue
+            }
             val stack = toStack(reward, player.registryAccess(), complain = true) ?: continue
 
             // Read before giving: `placeItemBackInInventory` splits the stack until nothing is
@@ -65,6 +71,9 @@ object TrainerRewards {
      * forgotten it. [RewardPreview.due] carries the answer instead, and the screen strikes the
      * entry rather than losing it.
      *
+     * A command reward is left out too: it has no item to draw, and its text is written for
+     * the server, not for a player.
+     *
      * The one place the two deliberately part company is [TrainerReward.hidden]: a hidden reward
      * is dropped here and still handed over by [grant]. It is filtered server-side rather than
      * sent and skipped by the screen, for the same reason a hidden trainer never reaches the
@@ -74,7 +83,7 @@ object TrainerRewards {
      *   whether a [TrainerReward.firstWinOnly] entry is still owed or already claimed.
      */
     fun preview(rewards: List<TrainerReward>, registries: HolderLookup.Provider, firstWin: Boolean): List<RewardPreview> =
-        rewards.filter { !it.hidden }.mapNotNull { reward ->
+        rewards.filter { !it.hidden && it.command.isBlank() }.mapNotNull { reward ->
             toStack(reward, registries, complain = false)?.let {
                 RewardPreview(it, once = reward.firstWinOnly, due = isDue(reward, firstWin))
             }
@@ -86,6 +95,43 @@ object TrainerRewards {
      */
     private fun isDue(reward: TrainerReward, firstWin: Boolean): Boolean =
         firstWin || !reward.firstWinOnly
+
+    /**
+     * Runs a command reward for the winner.
+     *
+     * The source is the player's own - so `@s`, `~` and `execute` read as them - raised to the
+     * level datapack functions run at, which is what a pack can already reach with a function:
+     * a reward opens nothing the pack could not do already. Output is suppressed so the winner
+     * does not read "Gave 1 [Diamond] to ..." in chat, which is why a failure is logged here
+     * instead - a silenced command that does nothing would otherwise leave no trace at all.
+     *
+     * Never throws: a broken command costs its own line, the other rewards are still handed out.
+     */
+    private fun runCommand(player: ServerPlayer, reward: TrainerReward) {
+        if (reward.item.isNotBlank()) {
+            LOGGER.warn("Reward sets both 'item' ({}) and 'command' ({}), skipping it", reward.item, reward.command)
+            return
+        }
+        val server = player.server
+        val command = reward.command.trim().removePrefix("/").replace("{player}", player.gameProfile.name)
+        val source = player.createCommandSourceStack()
+            .withPermission(server.functionCompilationLevel)
+            .withSuppressedOutput()
+            .withCallback(CommandResultCallback { success, _ ->
+                if (!success) LOGGER.warn("Reward command '{}' failed for {}", command, player.gameProfile.name)
+            })
+        try {
+            val parsed = server.commands.dispatcher.parse(command, source)
+            // Caught here because the suppressed source would swallow the parser's own message.
+            Commands.getParseException(parsed)?.let {
+                LOGGER.warn("Invalid reward command '{}': {}", command, it.message)
+                return
+            }
+            server.commands.performCommand(parsed, command)
+        } catch (exception: RuntimeException) {
+            LOGGER.warn("Reward command '{}' threw for {}", command, player.gameProfile.name, exception)
+        }
+    }
 
     /**
      * Resolves one reward entry into a stack, or null when the item cannot be resolved - a

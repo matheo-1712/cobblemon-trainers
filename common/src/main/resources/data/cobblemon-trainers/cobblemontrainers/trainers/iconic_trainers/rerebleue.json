@@ -35,7 +35,7 @@
     { "item": "cobblemon:rare_candy", "count": 2, "firstWinOnly": true }
   ],
   "team": [
-    "Flugel (Torterra) @ Rocky Helmet \nAspects: tree=cherry  \nAbility: Shell Armor  \nEVs: 252 HP / 184 Def / 72 SpD  \nRelaxed Nature  \n- Earthquake  \n- Wood Hammer  \n- Stealth Rock  \n- Shell Smash",
+    "Flugel (Torterra) @ Rocky Helmet \nAspects: tree=cherry  \nAbility: Shell Armor  \nEVs: 252 HP / 184 Def / 72 SpD  \nRelaxed Nature  \n- Earthquake  \n- Wood Hammer  \n- Stealth Rock  \n- Stone Edge",
     "Ram (Hydreigon) (F) @ Choice Scarf\nAbility: Levitate\nTera Type: Fire\nEVs: 4 HP / 252 SpA / 252 Spe\nTimid Nature\nIVs: 0 Atk\n- Dark Pulse\n- Draco Meteor\n- Earth Power\n- Fire Blast",
     "Al (Mimikyu) (M) @ Life Orb\nAbility: Disguise\nTera Type: Fairy\nEVs: 4 HP / 252 Atk / 252 Spe\nJolly Nature\n- Play Rough\n- Shadow Claw\n- Shadow Sneak\n- Swords Dance",
     "Pételgeuse (Lucario) (M) @ Lucarionite\nFallback Item: Life Orb\nAbility: Justified  \nTera Type: Fighting  \nEVs: 4 HP / 252 Atk / 252 Spe  \nJolly Nature  \n- Close Combat  \n- Swords Dance  \n- Meteor Mash  \n- Extreme Speed",

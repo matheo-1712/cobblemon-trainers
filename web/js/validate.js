@@ -141,6 +141,15 @@ const Validate = (() => {
     }
 
     (doc.rewards || []).forEach((reward, index) => {
+      const hasCommand = typeof reward.command === 'string' && reward.command.trim() !== '';
+      if (hasCommand) {
+        if (typeof reward.item === 'string' && reward.item.trim() !== '') {
+          say(found, 'error',
+            'Récompense #' + (index + 1) + ' : un objet ou une commande, pas les deux - le mod ignore la ligne.',
+            'Reward #' + (index + 1) + ': an item or a command, not both - the mod skips the line.');
+        }
+        return;
+      }
       // Component values belong to Minecraft's parser; only check the item ID here.
       const itemId = typeof reward.item === 'string' ? reward.item.trim().split('[', 1)[0] : '';
       if (!NAMESPACED.test(itemId)) {
@@ -149,10 +158,10 @@ const Validate = (() => {
           'Reward #' + (index + 1) + ': a full id is required, namespace included.');
       }
     });
-    if ((doc.rewards || []).length && (doc.rewards || []).every((reward) => reward.hidden)) {
+    if ((doc.rewards || []).length && (doc.rewards || []).every((reward) => reward.hidden || (reward.command || '').trim())) {
       say(found, 'info',
-        'Toutes les récompenses sont secrètes : la fiche du Battle Phone n’en montrera aucune.',
-        'Every reward is hidden: the Battle Phone card will show none of them.');
+        'Toutes les récompenses sont secrètes ou des commandes : la fiche du Battle Phone n’en montrera aucune.',
+        'Every reward is hidden or a command: the Battle Phone card will show none of them.');
     }
 
     const requires = doc.requires || {};
@@ -215,48 +224,76 @@ const Validate = (() => {
       }
     });
 
-    const team = doc.team || [];
-    if (team.length === 0) {
-      say(found, 'warn',
-        'Aucun Pokémon : Cobblemon refusera le combat.',
-        'No Pokémon: Cobblemon will refuse the battle.');
-    }
-    const places = { doubles: 2, doubles_50: 2, triples: 3, triples_50: 3 }[battle.format] || 1;
-    if (team.length && team.length < places) {
-      say(found, 'error',
-        'Ce format demande au moins ' + places + ' Pokémon de chaque côté.',
-        'This format needs at least ' + places + ' Pokémon on each side.');
-    }
-    team.forEach((entry, index) => {
-      const lines = String(entry).split('\n').map((line) => line.trim()).filter(Boolean);
-      if (lines.length === 0) {
-        say(found, 'error',
-          'Pokémon #' + (index + 1) + ' est vide.',
-          'Pokémon #' + (index + 1) + ' is empty.');
-        return;
-      }
-      if (lines.filter((line) => line.startsWith('-')).length > 4) {
+    const tiers = Array.isArray(doc.teams) ? doc.teams : [];
+    let highest = -Infinity;
+    tiers.forEach((tier, index) => {
+      const max = tier && Number.isInteger(tier.maxLevel) ? tier.maxLevel : Infinity;
+      const name = 'teams[' + index + ']';
+      if (max <= highest) {
         say(found, 'warn',
-          'Pokémon #' + (index + 1) + ' : plus de quatre capacités, les suivantes sont ignorées.',
-          'Pokémon #' + (index + 1) + ': more than four moves, the extra ones are ignored.');
+          name + ' (≤ ' + max + ') ne sert jamais : une tranche précédente couvre déjà jusqu’au niveau ' + highest + '. Les tranches sont essayées dans l’ordre.',
+          name + ' (≤ ' + max + ') is never used: an earlier tier already covers up to level ' + highest + '. Tiers are tried in order.');
       }
-      const species = lines[0].split('@')[0].trim();
-      if (!species) {
-        say(found, 'error',
-          'Pokémon #' + (index + 1) + ' : la première ligne doit nommer une espèce.',
-          'Pokémon #' + (index + 1) + ': the first line has to name a species.');
-      }
-      if (/-(Alola|Galar|Hisui|Paldea|Wash|Heat|Frost|Fan|Mow|Therian|Origin)\b/i.test(species)) {
-        say(found, 'warn',
-          'Pokémon #' + (index + 1) + ' : le suffixe de forme d’un export Showdown n’est pas lu. Les formes passent par une ligne Aspects:.',
-          'Pokémon #' + (index + 1) + ': the form suffix of a Showdown export is not read. Forms go through an Aspects: line.');
-      }
-      if (/^Tera Type:/m.test(entry) === false && (battle.gimmicks || []).includes('terastal')) {
-        say(found, 'info',
-          'Pokémon #' + (index + 1) + ' sans ligne Tera Type: téracristallisera dans son type primaire.',
-          'Pokémon #' + (index + 1) + ' has no Tera Type: line, so it will terastallize into its primary type.');
-      }
+      highest = Math.max(highest, max);
     });
+    if (tiers.length && !(doc.team || []).length && highest < Infinity) {
+      say(found, 'warn',
+        'team est vide : au-delà du niveau ' + highest + ', la dernière tranche, le dresseur n’a aucun Pokémon.',
+        'team is empty: past level ' + highest + ', the last tier, the trainer has no Pokémon.');
+    }
+
+    const checkTeam = (team, where) => {
+      const prefix = where ? where + ' · ' : '';
+      if (team.length === 0) {
+        say(found, 'warn',
+          prefix + 'Aucun Pokémon : Cobblemon refusera le combat.',
+          prefix + 'No Pokémon: Cobblemon will refuse the battle.');
+      }
+      const places = { doubles: 2, doubles_50: 2, triples: 3, triples_50: 3 }[battle.format] || 1;
+      if (team.length && team.length < places) {
+        say(found, 'error',
+          prefix + 'Ce format demande au moins ' + places + ' Pokémon de chaque côté.',
+          prefix + 'This format needs at least ' + places + ' Pokémon on each side.');
+      }
+      team.forEach((entry, index) => {
+        const lines = String(entry).split('\n').map((line) => line.trim()).filter(Boolean);
+        if (lines.length === 0) {
+          say(found, 'error',
+            prefix + 'Pokémon #' + (index + 1) + ' est vide.',
+            prefix + 'Pokémon #' + (index + 1) + ' is empty.');
+          return;
+        }
+        if (lines.filter((line) => line.startsWith('-')).length > 4) {
+          say(found, 'warn',
+            prefix + 'Pokémon #' + (index + 1) + ' : plus de quatre capacités, les suivantes sont ignorées.',
+            prefix + 'Pokémon #' + (index + 1) + ': more than four moves, the extra ones are ignored.');
+        }
+        const species = lines[0].split('@')[0].trim();
+        if (!species) {
+          say(found, 'error',
+            prefix + 'Pokémon #' + (index + 1) + ' : la première ligne doit nommer une espèce.',
+            prefix + 'Pokémon #' + (index + 1) + ': the first line has to name a species.');
+        }
+        if (/-(Alola|Galar|Hisui|Paldea|Wash|Heat|Frost|Fan|Mow|Therian|Origin)\b/i.test(species)) {
+          say(found, 'warn',
+            prefix + 'Pokémon #' + (index + 1) + ' : le suffixe de forme d’un export Showdown n’est pas lu. Les formes passent par une ligne Aspects:.',
+            prefix + 'Pokémon #' + (index + 1) + ': the form suffix of a Showdown export is not read. Forms go through an Aspects: line.');
+        }
+        if (/^Tera Type:/m.test(entry) === false && (battle.gimmicks || []).includes('terastal')) {
+          say(found, 'info',
+            prefix + 'Pokémon #' + (index + 1) + ' sans ligne Tera Type: téracristallisera dans son type primaire.',
+            prefix + 'Pokémon #' + (index + 1) + ' has no Tera Type: line, so it will terastallize into its primary type.');
+        }
+      });
+    };
+    if (tiers.length && (doc.team || []).length && highest === Infinity) {
+      say(found, 'warn',
+        'team ne sert jamais : une tranche sans plafond couvre déjà tous les niveaux.',
+        'team is never used: a tier with no cap already covers every level.');
+    }
+    // The plain team is only checked when a battle can reach it; empty past the tiers is said above.
+    if (!tiers.length || (highest < Infinity && (doc.team || []).length)) checkTeam(doc.team || [], tiers.length ? 'team' : '');
+    tiers.forEach((tier, index) => checkTeam((tier && tier.team) || [], 'teams[' + index + ']'));
   };
 
   /* ---- an intro -------------------------------------------------------- */
