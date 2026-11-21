@@ -67,6 +67,8 @@ loom {
 		preferGradleTask.set(true)
 		appendProjectPathToDisplayName.set(false)
 		displayName.set(if (name == "client") "Minecraft Client (Fabric)" else "Minecraft Server (Fabric)")
+		// A fixed name rather than a random PlayerNNN, so the dev world keeps one player.
+		if (name == "client") programArgs("--username", providers.gradleProperty("dev_username").get())
 	}
 	mods {
 		create("cobblemon-trainers") {

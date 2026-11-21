@@ -28,7 +28,7 @@ sourceSets.main {
 neoForge {
     version = providers.gradleProperty("neoforge_version").get()
     runs {
-        create("client") { client() }
+        create("client") { client(); programArguments.addAll("--username", providers.gradleProperty("dev_username").get()) }
         create("server") { server(); programArgument("--nogui") }
     }
     mods { create("cobblemon_trainers") { sourceSet(sourceSets.main.get()) } }
