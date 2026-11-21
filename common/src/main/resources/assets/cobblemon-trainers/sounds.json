@@ -97,5 +97,14 @@
           "stream": true
         }
       ]
+    },
+    "battle_music.giratina_arceus": {
+      "subtitle": "cobblemon-trainers.subtitles.battle_music",
+      "sounds": [
+        {
+          "name": "cobblemon-trainers:battle_music/giratina_battle_arceus",
+          "stream": true
+        }
+      ]
     }
 }

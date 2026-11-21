@@ -146,6 +146,8 @@
   "trainer.cobblemon-trainers.ultra-rerebleue.win": "Pas mal ! tu t'es bien débrouillé. ",
   "trainer.cobblemon-trainers.ultra-rerebleue.lose": "Trop facile \uD83D\uDE0E",
   "trainer.cobblemon-trainers.ultra-rerebleue.locked": "Tu n'es pas encore prêt pour celui-là.",
+  "trainer.cobblemon-trainers.multiloutre.locked": "Tu n'es pas encore prêt pour celui-là.",
+  "trainer.cobblemon-trainers.mr-azertor.locked": "Tu n'es pas encore prêt pour celui-là.",
 
   "trainer.cobblemon-trainers.theazertor.name": "TheAzertor",
   "trainer.cobblemon-trainers.theazertor.greeting": "Hey, envie de combattre l'ancien Champion d'Alola ?",

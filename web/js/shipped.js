@@ -11,6 +11,7 @@ const SHIPPED = {
     "battle_music.corvault",
     "battle_music.default",
     "battle_music.dianthea",
+    "battle_music.giratina_arceus",
     "battle_music.ivor",
     "battle_music.jacinthe",
     "battle_music.lysandre",
