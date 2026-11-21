@@ -37,6 +37,15 @@ class TrainerRewardsTest {
         assertTrue(rematch[1].due)
     }
 
+    @Test fun `command rewards never reach the phone preview`() {
+        val previews = TrainerRewards.preview(listOf(
+            TrainerReward(command = "give @s minecraft:diamond"),
+            TrainerReward("minecraft:apple", command = "say both"),
+            TrainerReward("minecraft:apple")
+        ), registries, firstWin = true)
+        assertEquals(listOf(Items.APPLE), previews.map { it.stack.item })
+    }
+
     @Test fun `bad reward IDs do not remove valid rewards and quantities stay bounded`() {
         val previews = TrainerRewards.preview(listOf(
             TrainerReward(""), TrainerReward("BAD ID"), TrainerReward("missing:item"),
