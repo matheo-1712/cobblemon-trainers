@@ -75,6 +75,9 @@ une page de vente, pas une page du wiki.
 
 Sur Windows, utiliser `.\gradlew.bat`.
 
+Le joueur de `runClient` s'appelle `dev_username` (`gradle.properties`), passé en `--username` aux
+deux loaders. Le client reste hors ligne : c'est un nom, pas un compte, donc pas de skin.
+
 Les tests unitaires vivent dans `common/src/test` (`.\gradlew.bat :common:test`) et ne couvrent
 que ce qui tourne sans monde. Le reste de la vérification passe par `runClient`/`runServer`, dont les mondes vivent dans `fabric/run/`
 (gitignoré). **Ne pas mettre de jar Cobblemon dans `fabric/run/mods/`** : il est déjà fourni par
