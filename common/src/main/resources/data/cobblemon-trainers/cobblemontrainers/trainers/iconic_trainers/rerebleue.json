@@ -31,7 +31,6 @@
     "biome": "minecraft:plains"
   },
   "rewards": [
-    { "command": "give @p cobblemon:ultra_ball 16" },
     { "item": "cobblemon:ultra_ball", "count": 16, "firstWinOnly": true },
     { "item": "cobblemon:rare_candy", "count": 2, "firstWinOnly": true }
   ],
