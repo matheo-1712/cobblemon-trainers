@@ -149,6 +149,7 @@ Everything is optional: `{}` is a valid trainer, if not a very interesting one.
 | `name` | `Trainer` | The name shown above the trainer |
 | `skin` | Steve | [Skin](#skins) |
 | `team` | `[]` | The team, **one Pokémon per entry**, in [Showdown format](#the-team-format) |
+| `teams` | `[]` | Teams by level tier: `{"maxLevel": 15, "team": [...]}`. When the battle opens, the first whose `maxLevel` ≥ the trainer's level replaces `team`; past all of them, `team` |
 | `battle` | - | The battle itself, below |
 | `messages` | - | What the trainer says |
 | `progress` | - | What beating them changes |

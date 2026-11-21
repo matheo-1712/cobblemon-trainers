@@ -13,6 +13,7 @@ import matheo1712.cobbletrainers.league.LeagueRuns
 import matheo1712.cobbletrainers.league.TrainerLeagues
 import matheo1712.cobbletrainers.trainers.TrainerDefinition
 import matheo1712.cobbletrainers.trainers.TrainerRegistry
+import matheo1712.cobbletrainers.trainers.TrainerSpawner
 import matheo1712.cobbletrainers.trainers.TrainerLock
 import matheo1712.cobbletrainers.trainers.TrainerProgress
 import net.minecraft.ChatFormatting
@@ -245,8 +246,15 @@ class TrainerBattleInteraction : NPCInteractConfiguration {
             val format = battleFormatOf(definition?.battle?.format)
 
             // Asked here, at the last moment, so the level follows the party the player battles
-            // with - not the one they had when the dialogue or the intro opened.
-            if (definition != null) TrainerLevelScaling.apply(npc, player, definition)
+            // with - not the one they had when the dialogue or the intro opened. The level tier of
+            // `teams` is picked first, on that same level: the team is rebuilt only when it moves.
+            if (definition != null) {
+                // A trainer already fighting someone else keeps the party that battle runs on.
+                if (!TrainerBattleState.inLiveBattle(npc.battleIds)) TrainerRegistry.idFromAspects(npc.aspects)?.let { trainerId ->
+                    TrainerSpawner.ensureTeam(npc, definition, trainerId, TrainerLevelScaling.battleLevel(player, definition))
+                }
+                TrainerLevelScaling.apply(npc, player, definition)
+            }
 
             BattleBuilder.pvn(
                 player = player,

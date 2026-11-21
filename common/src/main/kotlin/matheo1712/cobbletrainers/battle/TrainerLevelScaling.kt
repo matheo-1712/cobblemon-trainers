@@ -39,6 +39,14 @@ object TrainerLevelScaling {
     }
 
     /**
+     * The level of a battle against [player]: [levelFor], or the trainer's own level when it does
+     * not follow the player - or when there is no player to follow, at spawn. This is what picks
+     * the level tier of `teams`, so a `_50` format picks on `battle.level.value`.
+     */
+    fun battleLevel(player: ServerPlayer?, definition: TrainerDefinition): Int =
+        player?.let { levelFor(it, definition) } ?: definition.battle.level.value
+
+    /**
      * Sets the trainer's team to the level [levelFor] answers, right before the battle.
      *
      * The entity's own store is changed, since that is what `pvn` battles with. Nothing is lost

@@ -75,8 +75,8 @@ une page de vente, pas une page du wiki.
 
 Sur Windows, utiliser `.\gradlew.bat`.
 
-Il n'existe pas de source set `src/test` - `build` ne lance donc aucun test.
-Toute vérification passe par `runClient`/`runServer`, dont les mondes vivent dans `fabric/run/`
+Les tests unitaires vivent dans `common/src/test` (`.\gradlew.bat :common:test`) et ne couvrent
+que ce qui tourne sans monde. Le reste de la vérification passe par `runClient`/`runServer`, dont les mondes vivent dans `fabric/run/`
 (gitignoré). **Ne pas mettre de jar Cobblemon dans `fabric/run/mods/`** : il est déjà fourni par
 `modImplementation`, et le doublon fait planter le client au démarrage. Mega Showdown et ses
 dépendances, elles, y sont bien - c'est `copyDevMods` qui les y dépose avant chaque `runClient`,
@@ -216,6 +216,8 @@ messages, musique et récompenses de combat.
   plus bas).
 - **`battle.TrainerBattleRange`** - la distance au-delà de laquelle un combat de dresseur
   s'arrête, celle d'un combat contre un Pokémon sauvage. Même section.
+- **`trainers.TrainerTeams`** - l'équipe d'un dresseur selon le niveau du combat, depuis son
+  `teams`. Voir « Les équipes par tranche ».
 - **`battle.TrainerLevelScaling`** - le niveau d'un dresseur dont le `battle.level` est automatique. Voir
   « Le niveau automatique ».
 - **`battle.TrainerBattleForms`** - remet l'équipe d'un dresseur dans les formes avec lesquelles
@@ -967,6 +969,35 @@ Points à ne pas redécouvrir :
   chargement.
 - **`min` au-dessus de `max` ne lève pas** : les bornes sont appliquées l'une après l'autre,
   `max` gagne, et le chargement l'a dit. Un `coerceIn` lèverait en plein combat.
+
+### Les équipes par tranche
+
+`teams` est une liste de `{maxLevel, team}` : la première tranche dont le plafond couvre le niveau
+du combat remplace `team`, qui reste l'équipe au-delà de toutes. `TrainerTeams` est la seule règle,
+lue par l'apparition, le combat, la fiche d'équipe et l'écran de versus.
+
+Points à ne pas redécouvrir :
+
+- **Le choix se fait dans `openBattle`, juste avant le niveau**, et sur le même niveau
+  (`TrainerLevelScaling.battleLevel`) : l'équipe suit le joueur qui défie, pas celui qui a fait
+  apparaître le dresseur. À l'apparition, faute de joueur, c'est `battle.level.value`. Un format
+  `_50` choisit donc aussi sur `value`.
+- **L'équipe n'est reconstruite que si la tranche change.** L'aspect `trainer_team:<maxLevel>`
+  (`TEAM_ASPECT_PREFIX`) dit de quelle tranche vient `npc.party`, et voyage en NBT avec elle : un
+  redémarrage ne reconstruit rien. La clé est le plafond, pas l'index, pour qu'un `/reload` qui
+  insère une tranche devant ne fasse pas tout reconstruire.
+- **Un dresseur en combat garde son équipe, mais `battleIds` ne suffit pas à le dire.** Cobblemon
+  y laisse l'id d'un combat fermé quelques secondes après `end()` : un garde qui ne lisait que lui
+  refusait de changer de tranche à un dresseur redéfié aussitôt, qui gardait alors l'équipe du
+  combat précédent. `TrainerBattleState.inLiveBattle` demande au `BattleRegistry`, qui oublie un
+  combat dès qu'il se ferme.
+- **Changer de tranche perd l'usure d'un `healParty: false`.** C'est une autre équipe, il n'y a
+  rien à quoi la reporter.
+- **La rétrogradation automatique a été écartée.** Remonter une lignée d'évolution bute sur
+  toutes les évolutions qui ne sont pas un niveau (pierre, bonheur, échange) et laisserait un
+  Salamèche avec les capacités d'un Dracaufeu. Les espèces sont au pack.
+- **Pas de `minLevel`** : la tranche d'avant le donne. Un plafond qui ne monte pas rend une
+  tranche inatteignable, et le chargement le dit.
 
 ### Le regard des dresseurs
 

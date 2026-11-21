@@ -1,0 +1,32 @@
+{
+  "name": "Dresseur par tranche",
+  "skin": {
+    "type": "player_username",
+    "value": "Notch"
+  },
+  "battle": {
+    "level": { "auto": true, "min": 5 }
+  },
+  "teams": [
+    {
+      "maxLevel": 15,
+      "team": [
+        "Charmander\nAbility: Blaze\n- Ember\n- Scratch\n- Growl",
+        "Pidgey\nAbility: Keen Eye\n- Gust\n- Tackle"
+      ]
+    },
+    {
+      "maxLevel": 35,
+      "team": [
+        "Charmeleon\nAbility: Blaze\n- Flamethrower\n- Slash\n- Dragon Breath",
+        "Pidgeotto\nAbility: Keen Eye\n- Wing Attack\n- Quick Attack",
+        "Growlithe\nAbility: Intimidate\n- Flame Wheel\n- Bite"
+      ]
+    }
+  ],
+  "team": [
+    "Charizard @ cobblemon:leftovers\nAbility: Blaze\n- Flamethrower\n- Air Slash\n- Dragon Pulse\n- Focus Blast",
+    "Pidgeot\nAbility: Keen Eye\n- Hurricane\n- Quick Attack\n- Roost",
+    "Arcanine\nAbility: Intimidate\n- Flare Blitz\n- Extreme Speed\n- Crunch"
+  ]
+}

@@ -10,7 +10,7 @@ const App = (() => {
   const el = Form.el;
   const T = (key, ...args) => I18N.t(key, ...args);
 
-  let tab = { trainer: 'form', intro: 'layers', category: 'form', advancement: 'form' };
+  let tab = { trainer: 'form', intro: 'layers', category: 'form', advancement: 'form', tier: -1 };
   /*
    * What the intro editor holds between renders: where the playhead is, which view is up,
    * which layer is selected, and the two aids. It outlives every render, so a drag that ends
@@ -433,9 +433,80 @@ const App = (() => {
     return card;
   };
 
+  /**
+   * The team tab edits one list at a time: the plain `team`, or the `team` of one of the level
+   * tiers in `teams`. Which one is a view, kept in `tab`, never in the pack.
+   */
+  const renderTiers = (entry) => {
+    const tiers = entry.doc.teams || [];
+    if (!(tab.tier >= 0 && tab.tier < tiers.length)) tab.tier = -1;
+
+    const bar = el('div', 'tabs');
+    const button = (label, index) => {
+      const one = el('button', 'tab' + (tab.tier === index ? ' tab-on' : ''), label);
+      one.type = 'button';
+      one.addEventListener('click', () => { tab.tier = index; render(); });
+      bar.appendChild(one);
+    };
+    tiers.forEach((tier, index) => button(Number.isInteger(tier.maxLevel)
+      ? T('team.tier.upto', tier.maxLevel) : T('team.tier.open'), index));
+    button(tiers.length ? T('team.tier.beyond') : T('team.tier.default'), -1);
+
+    const add = el('button', 'tab', '+ ' + T('team.tier.add'));
+    add.type = 'button';
+    add.addEventListener('click', () => {
+      const last = tiers.reduce((top, tier) => Math.max(top, Number.isInteger(tier.maxLevel) ? tier.maxLevel : 0), 0);
+      entry.doc.teams = [...tiers, { maxLevel: last + 10, team: [] }];
+      tab.tier = entry.doc.teams.length - 1;
+      Pack.changed();
+    });
+    bar.appendChild(add);
+
+    const wrap = el('div');
+    wrap.appendChild(el('p', 'field-hint', T('team.tier.hint')));
+    wrap.appendChild(bar);
+
+    if (tab.tier >= 0) {
+      const tier = tiers[tab.tier];
+      const row = el('div', 'row');
+      row.appendChild(el('span', 'muted', T('team.tier.max')));
+      const max = el('input', 'input');
+      max.type = 'number';
+      max.min = '1';
+      max.value = Number.isInteger(tier.maxLevel) ? tier.maxLevel : '';
+      max.addEventListener('change', () => {
+        const value = parseInt(max.value, 10);
+        if (Number.isInteger(value)) tier.maxLevel = value; else delete tier.maxLevel;
+        Pack.changed();
+      });
+      row.appendChild(max);
+      const kill = el('button', 'btn btn-ghost btn-small', T('team.tier.remove'));
+      kill.type = 'button';
+      kill.addEventListener('click', () => {
+        tiers.splice(tab.tier, 1);
+        if (tiers.length === 0) delete entry.doc.teams;
+        tab.tier = -1;
+        Pack.changed();
+      });
+      row.appendChild(kill);
+      wrap.appendChild(row);
+    }
+    return wrap;
+  };
+
   const renderTeam = (entry) => {
     const wrap = el('div', 'team');
-    const team = entry.doc.team || [];
+    wrap.appendChild(renderTiers(entry));
+
+    // The list being edited, and how to write it back: a tier keeps its `team` even empty, the
+    // plain one is dropped when empty, as before.
+    const tier = tab.tier >= 0 ? entry.doc.teams[tab.tier] : null;
+    const team = tier ? (tier.team = tier.team || []) : (entry.doc.team || []);
+    const store = (list) => {
+      if (tier) tier.team = list;
+      else if (list.length) entry.doc.team = list;
+      else delete entry.doc.team;
+    };
 
     wrap.appendChild(el('p', 'field-hint', T('team.hint')));
     wrap.appendChild(el('p', 'field-hint', T('team.extra')));
@@ -460,7 +531,7 @@ const App = (() => {
       kill.type = 'button';
       kill.addEventListener('click', () => {
         team.splice(index, 1);
-        if (team.length === 0) delete entry.doc.team;
+        store(team);
         Pack.changed();
       });
       actions.appendChild(kill);
@@ -473,7 +544,7 @@ const App = (() => {
       area.spellcheck = false;
       area.addEventListener('input', () => {
         team[index] = area.value;
-        entry.doc.team = team;
+        store(team);
         Pack.save();
         renderChecks(entry);
       });
@@ -488,7 +559,7 @@ const App = (() => {
     const add = el('button', 'btn btn-small', '+ ' + T('team.add'));
     add.type = 'button';
     add.addEventListener('click', () => {
-      entry.doc.team = [...team, ''];
+      store([...team, '']);
       Pack.changed();
     });
     bar.appendChild(add);
@@ -499,7 +570,7 @@ const App = (() => {
       const text = window.prompt(T('team.paste'));
       if (!text) return;
       const split = text.split(/\n\s*\n/).map((one) => one.trim()).filter(Boolean);
-      entry.doc.team = [...team, ...split];
+      store([...team, ...split]);
       Pack.changed();
     });
     bar.appendChild(paste);
@@ -567,6 +638,9 @@ const App = (() => {
     const card = el('div', 'side-card');
     card.appendChild(el('h4', null, T('team.title')));
     card.appendChild(el('p', 'muted small', T('team.count', team.length)));
+    if ((entry.doc.teams || []).length) {
+      card.appendChild(el('p', 'muted small', T('team.tier.count', entry.doc.teams.length)));
+    }
     team.slice(0, 6).forEach((member) => {
       const species = String(member).split('\n')[0].split('@')[0].trim() || '—';
       card.appendChild(el('div', 'chip', species));

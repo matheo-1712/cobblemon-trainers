@@ -13,6 +13,7 @@ import matheo1712.cobbletrainers.parser.ShowdownTeamParser
 import matheo1712.cobbletrainers.trainers.TrainerDefinition
 import matheo1712.cobbletrainers.trainers.TrainerRegistry
 import matheo1712.cobbletrainers.trainers.TrainerTeamPreview
+import matheo1712.cobbletrainers.trainers.TrainerTeams
 import net.minecraft.network.RegistryFriendlyByteBuf
 import net.minecraft.network.codec.StreamCodec
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload
@@ -68,6 +69,7 @@ object BattleIntroNetworking {
             ?.let { TrainerRegistry.categoryName(it) }
             .orEmpty()
 
+        val level = TrainerLevelScaling.battleLevel(player, definition)
         Platform.current.send(
             player,
             BattleIntroPayload(
@@ -75,8 +77,8 @@ object BattleIntroNetworking {
                 trainerId = trainerId.toString(),
                 trainerName = definition.name,
                 category = category,
-                level = TrainerLevelScaling.levelFor(player, definition) ?: definition.battle.level.value,
-                teamSize = ShowdownTeamParser.countPokemon(definition.team),
+                level = level,
+                teamSize = ShowdownTeamParser.countPokemon(TrainerTeams.teamFor(definition, level)),
                 npcId = npc.id,
                 scene = intro,
                 // Only a scene that draws one pays for building it - and only such a scene ever

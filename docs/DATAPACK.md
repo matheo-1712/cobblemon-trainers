@@ -151,6 +151,7 @@ Tout est facultatif : `{}` donne un dresseur valide, quoique peu intéressant.
 | `name` | `Trainer` | Nom affiché au-dessus du dresseur |
 | `skin` | Steve | [Skin](#skins) |
 | `team` | `[]` | L'équipe, **un Pokémon par entrée**, au [format Showdown](#le-format-déquipe) |
+| `teams` | `[]` | Équipes par tranche : `{"maxLevel": 15, "team": [...]}`. À l'ouverture du combat, la première dont `maxLevel` ≥ niveau du dresseur remplace `team` ; au-delà de toutes, `team` |
 | `battle` | - | Le combat, ci-dessous |
 | `messages` | - | [Ce que le dresseur dit](#messages) |
 | `progress` | - | Ce que le battre change |

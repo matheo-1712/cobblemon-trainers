@@ -30,7 +30,10 @@ import net.minecraft.resources.ResourceLocation
  *
  * @param name Display name shown above the trainer.
  * @param skin Skin configuration.
- * @param team Showdown-formatted team, one Pokémon per entry.
+ * @param team Showdown-formatted team, one Pokémon per entry. With [teams], the team past every
+ *   tier.
+ * @param teams Teams by level tier: the first whose `maxLevel` covers the level of the battle
+ *   replaces [team]. See [TrainerTeams].
  * @param battle How the fight goes.
  * @param messages What the trainer says.
  * @param progress What a victory over this trainer is worth, and for how long.
@@ -46,6 +49,7 @@ data class TrainerDefinition(
     val name: String = "Trainer",
     val skin: TrainerSkin = TrainerSkin(),
     val team: List<String> = emptyList(),
+    val teams: List<TrainerTeamTier> = emptyList(),
     val battle: TrainerBattleSettings = TrainerBattleSettings(),
     val messages: TrainerMessages = TrainerMessages(),
     val progress: TrainerProgressRules = TrainerProgressRules(),
@@ -77,6 +81,7 @@ data class TrainerDefinition(
         progress.validate(id)
         location?.validate(id)
         cosmetics.validate(id)
+        TrainerTeams.validate(id, this)
     }
 }
 

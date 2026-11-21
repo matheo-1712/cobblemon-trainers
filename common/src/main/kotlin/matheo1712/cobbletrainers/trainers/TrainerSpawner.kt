@@ -110,7 +110,7 @@ object TrainerSpawner {
         // Cobblemon synchronizes this override and persists it as ForcedResourceIdentifier.
         if (modelId != null) npc.forcedResourceIdentifier = modelId
 
-        applyTeam(npc, definition, trainerId)
+        applyTeam(npc, definition, trainerId, definition.battle.level.value)
         TrainerOutfit.dress(npc, definition.cosmetics)
         npc.updateAspects()
 
@@ -146,12 +146,43 @@ object TrainerSpawner {
      * `provide()` does beyond that copy is the level default and the store itself, both
      * reproduced below.
      */
-    private fun applyTeam(npc: NPCEntity, definition: TrainerDefinition, trainerId: ResourceLocation) {
-        if (definition.team.isEmpty()) return
+    /**
+     * Rebuilds the trainer's party when the level tier of this battle is not the one it was
+     * built from - see [TrainerTeams]. A trainer without `teams` is never touched.
+     *
+     * Rebuilding throws away the wear a `healParty: false` trainer carried: it is another team,
+     * so there is nothing to carry it over to.
+     */
+    fun ensureTeam(npc: NPCEntity, definition: TrainerDefinition, trainerId: ResourceLocation, level: Int) {
+        if (definition.teams.isEmpty()) return
+        val key = CobblemonTrainers.TEAM_ASPECT_PREFIX + TrainerTeams.keyFor(definition, level)
+        if (key in npc.appliedAspects) return
 
-        val pokemonProps = ShowdownTeamParser.parse(definition.team)
+        LOGGER.debug("Trainer {} switches to team tier {} for level {}", trainerId, key, level)
+        applyTeam(npc, definition, trainerId, level)
+        npc.updateAspects()
+    }
+
+    /**
+     * Builds the party of the level tier [level] falls in, and records that tier on the entity.
+     * The caller refreshes the aspects.
+     */
+    private fun applyTeam(npc: NPCEntity, definition: TrainerDefinition, trainerId: ResourceLocation, level: Int) {
+        npc.appliedAspects.removeIf { it.startsWith(CobblemonTrainers.TEAM_ASPECT_PREFIX) }
+        npc.appliedAspects.add(CobblemonTrainers.TEAM_ASPECT_PREFIX + TrainerTeams.keyFor(definition, level))
+
+        // The party is replaced even when this tier has nobody to give: keeping the previous tier's
+        // Pokémon under the new tier's name would fight with a team no screen describes.
+        val team = TrainerTeams.teamFor(definition, level)
+        if (team.isEmpty()) {
+            if (npc.party != null) npc.party = NPCPartyStore(npc)
+            return
+        }
+
+        val pokemonProps = ShowdownTeamParser.parse(team)
         if (pokemonProps.isEmpty()) {
             LOGGER.warn("Trainer {} has no valid Pokémon in its team", trainerId)
+            if (npc.party != null) npc.party = NPCPartyStore(npc)
             return
         }
 
